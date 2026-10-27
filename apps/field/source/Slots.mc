@@ -16,6 +16,8 @@ module Slots {
     const FLOORS = 4;
     const DISTANCE = 5;
     const STRESS = 6;
+    const SUNRISE = 7;
+    const SUNSET = 8;
 
     function label(kind as Number) as String {
         switch (kind) {
@@ -26,6 +28,8 @@ module Slots {
             case FLOORS:       return "FLOORS";
             case DISTANCE:     return "DIST";
             case STRESS:       return "STRESS";
+            case SUNRISE:      return "SUNRISE";
+            case SUNSET:       return "SUNSET";
         }
         return "";
     }
@@ -35,6 +39,8 @@ module Slots {
             case HEART_RATE:   return 0xFF4D4D;
             case BODY_BATTERY: return 0x46D18A;
             case STRESS:       return 0xFF7A3D;
+            case SUNRISE:      return 0xFFB020;
+            case SUNSET:       return 0xFF7A3D;
         }
         return 0xF2F2F2;
     }
@@ -49,6 +55,8 @@ module Slots {
             case FLOORS:       return floors();
             case DISTANCE:     return distance();
             case STRESS:       return newestSample(:getStressHistory);
+            case SUNRISE:      return sunTime(0);
+            case SUNSET:       return sunTime(1);
         }
         return "--";
     }
@@ -63,6 +71,8 @@ module Slots {
             case CALORIES:     return Complications.COMPLICATION_TYPE_CALORIES;
             case FLOORS:       return Complications.COMPLICATION_TYPE_FLOORS_CLIMBED;
             case STRESS:       return Complications.COMPLICATION_TYPE_STRESS;
+            case SUNRISE:      return Complications.COMPLICATION_TYPE_SUNRISE;
+            case SUNSET:       return Complications.COMPLICATION_TYPE_SUNSET;
         }
         return null;
     }
@@ -93,6 +103,12 @@ module Slots {
     function distance() as String {
         var cm = ActivityMonitor.getInfo().distance;
         return (cm != null) ? Lib.Fmt.distance(cm) : "--";
+    }
+
+    // Today's sunrise (index 0) or sunset (index 1) as a clock time.
+    function sunTime(index as Number) as String {
+        var seconds = Lib.Sun.today()[index];
+        return (seconds != null) ? Lib.Fmt.clock(seconds) : "--";
     }
 
     // Newest sample of a SensorHistory series (Body Battery, stress), 0-100.

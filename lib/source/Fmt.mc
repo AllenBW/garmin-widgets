@@ -32,6 +32,19 @@ module Lib {
             return (whole / 24).toString() + "d " + (whole % 24).toString() + "h";
         }
 
+        // Seconds since midnight -> "6:52" or "17:41", following the 12/24 h setting
+        function clock(secondsSinceMidnight as Number) as String {
+            var hour = (secondsSinceMidnight / 3600) % 24;
+            var min = (secondsSinceMidnight / 60) % 60;
+            if (!System.getDeviceSettings().is24Hour) {
+                hour = hour % 12;
+                if (hour == 0) {
+                    hour = 12;
+                }
+            }
+            return Lang.format("$1$:$2$", [hour.format("%d"), min.format("%02d")]);
+        }
+
         // Centimetres -> "3.2 km" or "2.0 mi", following the device setting
         function distance(cm as Number) as String {
             var metric = System.getDeviceSettings().distanceUnits == System.UNIT_METRIC;

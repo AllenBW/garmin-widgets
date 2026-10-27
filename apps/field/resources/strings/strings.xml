@@ -23,6 +23,11 @@
     <string id="SlotFloors">Floors climbed</string>
     <string id="SlotDistance">Distance</string>
     <string id="SlotStress">Stress</string>
+    <string id="SlotSunrise">Sunrise</string>
+    <string id="SlotSunset">Sunset</string>
 
-    <string id="ShowFooterTitle">Show weather and notifications</string>
+    <string id="FooterTitle">Footer</string>
+    <string id="FooterSun">Sunrise and sunset</string>
+    <string id="FooterWeather">Weather and notifications</string>
+    <string id="FooterOff">Off</string>
 </strings>
