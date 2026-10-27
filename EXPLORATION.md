@@ -24,7 +24,8 @@ line. Researched late October 2026.
   BLE, the network and FIT recording. ✅
 - Every fēnix 8 Pro is **non-solar**, so the "non-solar" requirement holds
   automatically. All variants share a **454×454 round touch display** ✅. The
-  SDK reportedly exposes them under a **single device ID, `fenix8pro47mm`** ⚠️.
+  SDK exposes them under a **single device ID, `fenix8pro47mm`** ✅ (SDK 9.3.0
+  lists "fēnix® 8 Pro 47mm / 51mm / MicroLED / quatix® 8 Pro" as one entry).
 - The fēnix 8 family is on the **current platform generation**: Connect IQ 9,
   API level 6.0 ⚠️. The newest SDK is **9.3.0** (20 Oct 2026). It lets apps
   use the **microphone, the speaker and LTE**, and Garmin explicitly lists the
@@ -50,7 +51,7 @@ line. Researched late October 2026.
 | Battery, smartwatch mode | up to 27 days (AOD off) | up to 27 days | up to 10 days |
 | Connectivity | BT, Wi-Fi, LTE, inReach satellite | same | same |
 | Speaker / mic | yes | yes | yes |
-| CIQ device ID | `fenix8pro47mm` ⚠️ (one ID covers all three) | ← | ← |
+| CIQ device ID | `fenix8pro47mm` ✅ (one ID covers all three, plus the quatix 8 Pro) | ← | ← |
 | Launcher icon | 65×65 ⚠️ | ← | ← |
 
 The regular fēnix 8 47 mm uses a different panel: 1.3" at 416×416 on the AMOLED
@@ -80,7 +81,7 @@ the supported app types. Fill in §9 from it.
 
 | App type | What it is | Gets input? | Notable access | Main limits |
 |---|---|---|---|---|
-| **Watch face** | Replaces the home screen | No buttons. Touch taps are possible on touch devices via `WatchFaceDelegate.onPress` (CIQ 4.2+) | Time, battery, steps, HR, weather, **complications** (subscribe to native data), settings, background service for web data | About 128 KB of RAM ⚠️. Redrawn once a minute in sleep mode. AMOLED burn-in rules. No direct web requests from the foreground. |
+| **Watch face** | Replaces the home screen | No buttons. One gesture: **press and hold** via `WatchFaceDelegate.onPress` (CIQ 4.2+). Plain taps only reach a face inside the on-device config editor (`onTap`, 5.1+) ✅ | Time, battery, steps, HR, weather, **complications** (subscribe to native data), settings, background service for web data | About 128 KB of RAM ⚠️. Redrawn once a minute in sleep mode. AMOLED burn-in rules. No direct web requests from the foreground. |
 | **Data field** | One field on a native activity's data screen | No (it runs inside the native activity) | Live activity metrics, ANT+ and BLE sensors, **writes FIT developer fields** that show up in Garmin Connect | About 128 KB ⚠️. Up to **4 CIQ data fields** active at once on the fēnix 8 ✅ |
 | **Glance / widget** | A row in the glance loop that opens into a full app | Yes, once opened | Like a device app | Glance view about 64 KB ⚠️ |
 | **Device app** | A full-screen app launched from the apps menu or a hot key | Full: buttons, touch, menus | GPS (`Position`), sensors and sensor history, **FIT recording** (`ActivityRecording`), **BLE central** (up to 3 registered profiles ✅), `Communications` (web requests, OAuth, phone messaging), storage, vibration and tones, **QR codes** (9.1), **mic/speaker** (9.3), **LTE control** (9.3) | Fēnix 8 figure unconfirmed. The fēnix 7 Pro allows about 768 KB ⚠️ |
@@ -170,7 +171,7 @@ before building on any of it.
   days). Treat AOD power as a design budget.
 - Use `dc.setAntiAlias(true)` (behind a `has` check) for smooth arcs on 454 px.
 
-The starter face in `watchface/` implements these rules.
+The Field face in `apps/field/` implements these rules (`Lib.Aod`).
 
 ---
 
@@ -178,7 +179,7 @@ The starter face in `watchface/` implements these rules.
 
 | Piece | Notes |
 |---|---|
-| **Connect IQ SDK Manager** | Downloads SDKs and per-device files. Install SDK **9.3.x** and the fēnix 8 Pro device. |
+| **Connect IQ SDK Manager** | Downloads SDKs and per-device files. The SDK itself is a public download (`developer.garmin.com/downloads/connect-iq/sdks/sdks.json`), but the **device files need a Garmin account login**, through the GUI manager or the community CLI `connect-iq-sdk-manager` (`brew install lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager-cli`). ✅ |
 | **VS Code + Monkey C extension** | Official IDE path: build, run in the simulator, debug, "Generate Developer Key". |
 | **Java** | Needed by the `monkeyc` compiler. |
 | **Simulator** | Windows, macOS and Linux (Ubuntu, needs webkit2gtk). Simulates sleep mode, the burn-in checker, settings, low battery, GPS playback and more. |
@@ -187,9 +188,10 @@ The starter face in `watchface/` implements these rules.
 | **CI** | Building with `monkeyc` in Docker works (community images such as `cedric-dufour/connectiq-sdk-docker` and `wistrand/garmin-dev`). Running tests needs the simulator, which needs an X server or Xvfb, so plan for a heavier CI image. |
 | **Testing on the watch** | Build for the exact device ID, then copy the `.prg` to `GARMIN/APPS` over USB. The watch uses **MTP**: on macOS this needs a tool such as OpenMTP, on Linux `jmtpfs`/gvfs. Sideloads need SDK 7.4.3 or later. Garmin watches have no "developer mode". |
 
-The SDK could not be downloaded in the cloud session where this was written,
-because its network policy blocked `developer.garmin.com`. The starter code has
-**not been compiled yet**. The first step on a dev machine is to build it.
+SDK 9.3.0 is installed on the development Mac (27 Oct 2026) under
+`~/Library/Application Support/Garmin/ConnectIQ/Sdks/`, with the VS Code
+extension and a developer key in `~/.garmin/`. See `README.md` for the state of
+the device files and the first build.
 
 ---
 
@@ -211,7 +213,7 @@ because its network policy blocked `developer.garmin.com`. The starter code has
 
 These are ordered by effort. Each is a separate project.
 
-1. **A custom watch face** (starter in `watchface/`). It teaches layouts,
+1. **A custom watch face** (`apps/field/`). It teaches layouts,
    AMOLED rules, settings, complications and memory profiling, and is the
    lowest-risk way into the toolchain.
 2. **A data field** that writes a FIT developer field, for any activity metric
@@ -232,8 +234,8 @@ The concrete designs we chose are in [`designs/DESIGNS.md`](designs/DESIGNS.md).
 
 ## 9. Open questions (to verify once the SDK is installed)
 
-- [ ] The exact device ID or IDs in the SDK device list, and whether the
-      MicroLED gets its own.
+- [x] The exact device ID: `fenix8pro47mm` covers the 47 mm, 51 mm, MicroLED
+      and quatix 8 Pro (SDK 9.3.0 device-reference and API docs).
 - [ ] Memory limits for watch face, data field, glance, background and device
       app (from `compiler.json`).
 - [ ] The current API level on the shipped firmware (expected 6.0), and whether

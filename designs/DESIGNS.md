@@ -16,7 +16,7 @@ in the SDK before relying on it.
 
 | # | Design | Type | Value | Effort | Main risk |
 |---|---|---|---|---|---|
-| 1 | **Field** | Watch face | Everyday face, the thing we'll look at most | S | None. It grows from `watchface/` |
+| 1 | **Field** | Watch face | Everyday face, the thing we'll look at most | S | None. Built in `apps/field/` |
 | 2 | **Battery Planner** | Glance + app | Drain history and a charge-by date. Native only shows a current estimate | M | Background storage and sampling budget |
 | 3 | **Daylight** | Watch face | Distinctive 24 h sun dial for outdoor use | M | Sun maths and a 24 h dial readable at a glance |
 | 4 | **Readiness** | Watch face | Body metrics without opening widgets | M | Which metrics CIQ actually exposes |
@@ -50,8 +50,11 @@ check dozens of times a day, with nothing else.
 hairline. Everything shifts by up to ±12 px, one step a minute. Lit pixels
 stay well under 10 %.
 
-**Interaction:** tapping a slot opens the native widget for that complication,
-via `WatchFaceDelegate.onPress` → `Complications.exitTo(id)` ⚠️.
+**Interaction:** pressing and holding a slot opens the native widget for
+that complication, via `WatchFaceDelegate.onPress` → `Complications.exitTo(id)`
+✅ (API). `onPress` is the touch-and-hold event; a plain tap never reaches a
+watch face outside the config editor. Needs the `ComplicationSubscriber`
+permission. Untested on hardware ⚠️.
 
 **Data**
 
@@ -188,13 +191,15 @@ in the golden/blue hour and the moon. Keep it small.
 
 ## Shared building blocks
 
-- **`lib/` barrel** (a Monkey C library shared by every app):
-  - `Aod`: burn-in offsets and the hollow-text helper
-  - `Arcs`: clockwise arcs from 12 o'clock, plus ring gauges
-  - `Sun`: solar elevation, golden/blue hour
-  - `Moon`: phase
-  - `Fmt`: durations and units
-- **One jungle per app** in `apps/<name>/`. The existing `watchface/` becomes
+- **`lib/` barrel** (`Lib`, a Monkey C library shared by every app; each
+  sub-module is an annotation so an app only links what it uses):
+  - `Aod` (done): burn-in offsets, dimmed colours and the hollow-text helper
+  - `Arcs` (done): clockwise arcs from 12 o'clock, plus ring gauges
+  - `Fmt` (done): thousands separators, durations, distance, temperature
+  - `Sun` (todo, with Daylight): solar elevation, golden/blue hour
+  - `Moon` (todo, with Sun & Moon): phase
+- **One jungle per app** in `apps/<name>/`, linked to the barrel with
+  `base.barrelPath = ../../lib/monkey.jungle`. The starter face became
   `apps/field/`.
 - **Palette:** true black background. Off-white, two greys, and one accent per
   app (amber, cyan, green, orange). The accent is a user setting on the faces.

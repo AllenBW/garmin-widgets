@@ -1,29 +1,67 @@
 # garmin-widgets
 
 Connect IQ watch faces, widgets and apps for the **Garmin fēnix 8 Pro** (47 mm / 51 mm
-AMOLED and 51 mm MicroLED, all non-solar).
+AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 
 - [`EXPLORATION.md`](EXPLORATION.md) covers what the watch lets us modify:
   app types, APIs by SDK version, AMOLED rules, the toolchain, distribution,
   hard limits and open questions.
 - [`designs/DESIGNS.md`](designs/DESIGNS.md) has the first designs, ranked (Field, Battery
   Planner, Daylight, Readiness, Sun & Moon), with mockups in `designs/svg/`.
-- [`watchface/`](watchface/) is a starter AMOLED-aware watch face in Monkey C.
+- [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
+- [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
+  (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting).
 
-> **Status:** the starter face has not been compiled yet. Build it first and
-> fix anything the compiler reports. See "Open questions" in `EXPLORATION.md`.
+> **Status:** Field is written but **not yet compiled**: the fēnix 8 Pro device
+> files need a Garmin account login to download (see Setup, step 3). Expect
+> the first build to report things to fix.
+
+## Layout
+
+```
+apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, resources/
+lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt}.mc
+designs/         DESIGNS.md, mockups.py, svg/
+scripts/         build.sh, sim.sh, sdk-env.sh
+```
+
+Each app is its own Connect IQ project (open `apps/field/` as the VS Code
+workspace folder). It links the barrel with two jungle lines:
+
+```
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = aod;arcs;fmt
+```
 
 ## Setup
 
-1. Install Java (17 or later) and the
-   [Connect IQ SDK Manager](https://developer.garmin.com/connect-iq/sdk/).
-2. In the SDK Manager, install **SDK 9.3.x** and the **fēnix 8 Pro** device files.
-3. Install VS Code and the **Monkey C** extension, then run
-   *Monkey C: Verify Installation*.
-4. Generate a developer key once and keep it **outside** the repo (`*.der` is
-   gitignored):
+1. Install Java 17+ and the Connect IQ SDK. Either use the
+   [SDK Manager](https://developer.garmin.com/connect-iq/sdk/) (GUI, needs a
+   Garmin login), or download the SDK directly: the list is at
+   `https://developer.garmin.com/downloads/connect-iq/sdks/sdks.json`, unpack
+   the macOS `.dmg` into `~/Library/Application Support/Garmin/ConnectIQ/Sdks/`
+   and write that folder's path into `.../ConnectIQ/current-sdk.cfg`.
+   SDK **9.3.0** is what this repo is built against.
+2. Install VS Code and the **Monkey C** extension
+   (`code --install-extension garmin.monkey-c`).
+3. Download the **fēnix 8 Pro device files**. This needs a Garmin account.
+   With the community CLI:
 
    ```sh
+   brew install lindell/connect-iq-sdk-manager-cli/connect-iq-sdk-manager-cli
+   connect-iq-sdk-manager agreement accept
+   connect-iq-sdk-manager login                 # interactive Garmin sign-in
+   connect-iq-sdk-manager device download --manifest apps/field/manifest.xml
+   ```
+
+   or open the SDK Manager, sign in, and download "fēnix 8 Pro" under Devices.
+   Either way the files land in `.../ConnectIQ/Devices/fenix8pro47mm/`, and
+   `compiler.json` there is the source of truth for memory limits and fonts.
+4. Generate a developer key once and keep it **outside** the repo (`*.der`
+   and `*.pem` are gitignored):
+
+   ```sh
+   mkdir -p ~/.garmin
    openssl genrsa -out ~/.garmin/developer_key.pem 4096
    openssl pkcs8 -topk8 -inform PEM -outform DER \
      -in ~/.garmin/developer_key.pem -out ~/.garmin/developer_key.der -nocrypt
@@ -33,26 +71,28 @@ AMOLED and 51 mm MicroLED, all non-solar).
 
 ## Build and run
 
-From `watchface/`, with the SDK `bin/` directory on `PATH`:
+```sh
+scripts/build.sh field                 # -> apps/field/bin/field.prg
+scripts/build.sh field fenix8pro47mm -l 2   # extra args go to monkeyc (-l = type check level)
+scripts/sim.sh field                   # starts the simulator and loads the build
+```
+
+The scripts read the SDK from `current-sdk.cfg` and the key from
+`~/.garmin/developer_key.der` (override with `CIQ_DEVELOPER_KEY`). By hand:
 
 ```sh
-# build for the simulator / a sideload
-monkeyc -d fenix8pro47mm -f monkey.jungle -o bin/StarterFace.prg -y ~/.garmin/developer_key.der
-
-# start the simulator, then load the build into it
-connectiq &
-monkeydo bin/StarterFace.prg fenix8pro47mm
-
-# package for the Connect IQ Store (or a private beta upload)
-monkeyc -e -r -f monkey.jungle -o bin/StarterFace.iq -y ~/.garmin/developer_key.der
+cd apps/field
+monkeyc -d fenix8pro47mm -f monkey.jungle -o bin/field.prg -y ~/.garmin/developer_key.der -w
+monkeydo bin/field.prg fenix8pro47mm                    # simulator must be running
+monkeyc -e -r -f monkey.jungle -o bin/field.iq -y ~/.garmin/developer_key.der   # store/beta package
 ```
 
 In the simulator, use **Settings → Low Power Mode** to see the always-on
-layout, and **File → View Memory** to check peak memory against the watch
-face limit.
+layout, **File → View Memory** to check peak memory against the watch face
+limit, and the burn-in checker under Settings to verify the 10 % rule.
 
 ## Sideload to the watch
 
 Connect the watch over USB. It shows up as an MTP device: use OpenMTP on macOS,
-or `jmtpfs`/your file manager on Linux. Copy `bin/StarterFace.prg` into
+or `jmtpfs`/your file manager on Linux. Copy `apps/field/bin/field.prg` into
 `GARMIN/APPS/`, eject, then pick the face under *Watch Face* on the watch.

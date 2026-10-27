@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="58d5fd5cfa6041a3a5cceb791ee4b133" type="watchface" name="@Strings.AppName" entry="FieldApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+        <iq:products>
+            <!-- One device ID covers the fenix 8 Pro 47 mm, 51 mm and MicroLED (SDK 9.3 device-reference) -->
+            <iq:product id="fenix8pro47mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- press-and-hold on a slot opens the matching native widget -->
+            <iq:uses-permission id="ComplicationSubscriber"/>
+            <!-- Body Battery and stress come from SensorHistory -->
+            <iq:uses-permission id="SensorHistory"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>

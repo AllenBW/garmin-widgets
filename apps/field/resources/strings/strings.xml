@@ -1,0 +1,23 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Field</string>
+
+    <string id="AccentColorTitle">Accent color</string>
+    <string id="ColorAmber">Amber</string>
+    <string id="ColorCyan">Cyan</string>
+    <string id="ColorGreen">Green</string>
+    <string id="ColorOrange">Orange</string>
+    <string id="ColorWhite">White</string>
+
+    <string id="Slot1Title">Left slot</string>
+    <string id="Slot2Title">Middle slot</string>
+    <string id="Slot3Title">Right slot</string>
+    <string id="SlotHeartRate">Heart rate</string>
+    <string id="SlotSteps">Steps</string>
+    <string id="SlotBodyBattery">Body Battery</string>
+    <string id="SlotCalories">Calories</string>
+    <string id="SlotFloors">Floors climbed</string>
+    <string id="SlotDistance">Distance</string>
+    <string id="SlotStress">Stress</string>
+
+    <string id="ShowFooterTitle">Show weather and notifications</string>
+</strings>

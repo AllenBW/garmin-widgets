@@ -1,4 +1,12 @@
+# build output
 bin/
+*.prg
+*.prg.debug.xml
+*.iq
+*.barrel
+
+# developer keys: never commit these
 *.der
 *.pem
+
 .DS_Store
