@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 
 module Lib {
 
@@ -20,6 +21,12 @@ module Lib {
                 deg -= 360;
             }
             return deg;
+        }
+
+        // The point at radius r and deg12 degrees clockwise from 12 o'clock.
+        function point(cx as Numeric, cy as Numeric, r as Numeric, deg12 as Numeric) as Graphics.Point2D {
+            var rad = Math.toRadians(deg12);
+            return [cx + r * Math.sin(rad).toFloat(), cy - r * Math.cos(rad).toFloat()] as Graphics.Point2D;
         }
 
         // Arc from startDeg12, sweeping sweepDeg degrees clockwise, with the

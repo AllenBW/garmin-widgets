@@ -4,6 +4,7 @@ import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.SensorHistory;
+import Toybox.Weather;
 
 // What a slot on the Field face can show. The numbers are the values stored
 // in the Slot1..Slot3 properties (resources/settings/settings.xml).
@@ -18,6 +19,10 @@ module Slots {
     const STRESS = 6;
     const SUNRISE = 7;
     const SUNSET = 8;
+    const CALENDAR = 9;
+    const RECOVERY = 10;
+    const SLEEP = 11;
+    const HIGH_LOW = 12;
 
     function label(kind as Number) as String {
         switch (kind) {
@@ -30,6 +35,10 @@ module Slots {
             case STRESS:       return "STRESS";
             case SUNRISE:      return "SUNRISE";
             case SUNSET:       return "SUNSET";
+            case CALENDAR:     return "NEXT EVENT";
+            case RECOVERY:     return "RECOVERY";
+            case SLEEP:        return "SLEEP";
+            case HIGH_LOW:     return "HI / LO";
         }
         return "";
     }
@@ -57,6 +66,10 @@ module Slots {
             case STRESS:       return newestSample(:getStressHistory);
             case SUNRISE:      return sunTime(0);
             case SUNSET:       return sunTime(1);
+            case CALENDAR:     return complicationText(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
+            case RECOVERY:     return recovery();
+            case SLEEP:        return complicationText(Complications.COMPLICATION_TYPE_SLEEP_SCORE);
+            case HIGH_LOW:     return highLow();
         }
         return "--";
     }
@@ -73,6 +86,10 @@ module Slots {
             case STRESS:       return Complications.COMPLICATION_TYPE_STRESS;
             case SUNRISE:      return Complications.COMPLICATION_TYPE_SUNRISE;
             case SUNSET:       return Complications.COMPLICATION_TYPE_SUNSET;
+            case CALENDAR:     return Complications.COMPLICATION_TYPE_CALENDAR_EVENTS;
+            case RECOVERY:     return Complications.COMPLICATION_TYPE_RECOVERY_TIME;
+            case SLEEP:        return Complications.COMPLICATION_TYPE_SLEEP_SCORE;
+            case HIGH_LOW:     return Complications.COMPLICATION_TYPE_HIGH_LOW_TEMPERATURE;
         }
         return null;
     }
@@ -109,6 +126,46 @@ module Slots {
     function sunTime(index as Number) as String {
         var seconds = Lib.Sun.today()[index];
         return (seconds != null) ? Lib.Fmt.clock(seconds) : "--";
+    }
+
+    // Hours until recovered from the last activity, "0h" when recovered.
+    function recovery() as String {
+        var info = ActivityMonitor.getInfo();
+        var hours = (info has :timeToRecovery) ? info.timeToRecovery : null;
+        return (hours != null) ? hours.toString() + "h" : "--";
+    }
+
+    // Today's forecast high and low, "18/9°"
+    function highLow() as String {
+        if (!(Toybox has :Weather) || !(Weather has :getDailyForecast)) {
+            return "--";
+        }
+        var days = Weather.getDailyForecast();
+        if (days == null || days.size() == 0) {
+            return "--";
+        }
+        var high = days[0].highTemperature;
+        var low = days[0].lowTemperature;
+        if (high == null || low == null) {
+            return "--";
+        }
+        return Lib.Fmt.temperatureValue(high) + "/" + Lib.Fmt.temperature(low);
+    }
+
+    // A complication's value as text (a Number or a String), or "--".
+    function complicationText(type as Complications.Type) as String {
+        if (!(Toybox has :Complications)) {
+            return "--";
+        }
+        try {
+            var value = Complications.getComplication(new Complications.Id(type)).value;
+            if (value instanceof Number || value instanceof String) {
+                return value.toString();
+            }
+        } catch (e) {
+            // not available on this watch
+        }
+        return "--";
     }
 
     // Newest sample of a SensorHistory series (Body Battery, stress), 0-100.

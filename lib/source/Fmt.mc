@@ -54,9 +54,14 @@ module Lib {
 
         // Celsius -> "18°" or "64°", following the device setting
         function temperature(celsius as Numeric) as String {
+            return temperatureValue(celsius) + "°";
+        }
+
+        // Celsius -> "18" or "64" (no unit), following the device setting
+        function temperatureValue(celsius as Numeric) as String {
             var metric = System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC;
             var value = metric ? celsius : celsius * 9.0 / 5.0 + 32.0;
-            return Math.round(value).toNumber().toString() + "°";
+            return Math.round(value).toNumber().toString();
         }
 
         // A TrueType font at `size` pixels, or `fallback` when the device has no
