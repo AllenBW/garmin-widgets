@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 454 454" width="454" height="454">
+<defs><clipPath id="face"><circle cx="227.0" cy="227.0" r="227.0"/></clipPath></defs>
+<circle cx="227.0" cy="227.0" r="227.0" fill="#000000"/>
+<g clip-path="url(#face)">
+<text x="231.0" y="210.0" font-size="96" fill="none" font-weight="300" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" stroke="#8A8A8A" stroke-width="1.6">10:08</text>
+<text x="231.0" y="290.0" font-size="22" fill="#5A5A5A" font-weight="400" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >BB 74 · SLEEP 82</text>
+</g>
+<circle cx="227.0" cy="227.0" r="226.0" fill="none" stroke="#3a3a3a" stroke-width="2"/>
+<!-- AOD: hollow time + one summary line -->
+</svg>

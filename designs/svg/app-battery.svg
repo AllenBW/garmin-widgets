@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 454 454" width="454" height="454">
+<defs><clipPath id="face"><circle cx="227.0" cy="227.0" r="227.0"/></clipPath></defs>
+<circle cx="227.0" cy="227.0" r="227.0" fill="#000000"/>
+<g clip-path="url(#face)">
+<text x="227.0" y="76.0" font-size="20" fill="#3EC6E0" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" letter-spacing="2">BATTERY PLANNER</text>
+<text x="227.0" y="140.0" font-size="84" fill="#F2F2F2" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >6d 4h</text>
+<text x="227.0" y="196.0" font-size="20" fill="#8A8A8A" font-weight="400" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >at your 7-day pace · charge by Sun 2 Nov</text>
+<rect x="112" y="294" width="22" height="36" rx="4" fill="#3EC6E0"/>
+<text x="123.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >W</text>
+<rect x="146" y="286" width="22" height="44" rx="4" fill="#3EC6E0"/>
+<text x="157.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >T</text>
+<rect x="180" y="298" width="22" height="32" rx="4" fill="#3EC6E0"/>
+<text x="191.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >F</text>
+<rect x="214" y="234" width="22" height="96" rx="4" fill="#FF7A3D"/>
+<text x="225.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >S</text>
+<rect x="248" y="290" width="22" height="40" rx="4" fill="#3EC6E0"/>
+<text x="259.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >S</text>
+<rect x="282" y="282" width="22" height="48" rx="4" fill="#3EC6E0"/>
+<text x="293.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >M</text>
+<rect x="316" y="294" width="22" height="36" rx="4" fill="#3EC6E0"/>
+<text x="327.0" y="348.0" font-size="16" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >T</text>
+<text x="227.0" y="374.0" font-size="18" fill="#8A8A8A" font-weight="400" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >avg −11%/day · Sat −24% (3h activity)</text>
+</g>
+<circle cx="227.0" cy="227.0" r="226.0" fill="none" stroke="#3a3a3a" stroke-width="2"/>
+</svg>

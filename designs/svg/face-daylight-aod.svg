@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 454 454" width="454" height="454">
+<defs><clipPath id="face"><circle cx="227.0" cy="227.0" r="227.0"/></clipPath></defs>
+<circle cx="227.0" cy="227.0" r="227.0" fill="#000000"/>
+<g clip-path="url(#face)">
+<line x1="227.0" y1="433.0" x2="227.0" y2="449.0" stroke="#5A5A5A" stroke-width="2"/>
+<line x1="21.0" y1="227.0" x2="5.0" y2="227.0" stroke="#5A5A5A" stroke-width="2"/>
+<line x1="227.0" y1="21.0" x2="227.0" y2="5.0" stroke="#5A5A5A" stroke-width="2"/>
+<line x1="433.0" y1="227.0" x2="449.0" y2="227.0" stroke="#5A5A5A" stroke-width="2"/>
+<circle cx="135.0" cy="53.9" r="12" fill="none" stroke="#8A8A8A" stroke-width="2"/>
+<text x="223.0" y="226.0" font-size="84" fill="none" font-weight="300" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" stroke="#8A8A8A" stroke-width="1.6">10:08</text>
+<text x="223.0" y="282.0" font-size="20" fill="#5A5A5A" font-weight="400" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >↓ 17:41</text>
+</g>
+<circle cx="227.0" cy="227.0" r="226.0" fill="none" stroke="#3a3a3a" stroke-width="2"/>
+<!-- AOD: cardinal ticks, hollow sun marker, hollow time -->
+</svg>
