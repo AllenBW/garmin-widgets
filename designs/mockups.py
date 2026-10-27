@@ -84,10 +84,9 @@ def heart(x, y, s, color):
 
 def field_active():
     b = []
-    # Battery ring with gap at the bottom for the days-left readout
-    b.append(arc(214, 200, 160, TRACK, 10))
-    b.append(arc(214, 200, 200 + 320 * 0.72, AMBER, 10))
-    b.append(text(C, 424, '72% · 6d 4h', 20, GRAY))
+    # Bezel ring: progress to the daily step goal, clockwise from 12 o'clock
+    b.append(arc(214, 0, 0, TRACK, 10))
+    b.append(arc(214, 0, 360 * 0.70, AMBER, 10))
     # Date
     b.append(text(C, 112, 'TUE 27 OCT', 30, GRAY, 500, extra='letter-spacing="2"'))
     # Time
@@ -109,8 +108,8 @@ def field_aod():
     dx, dy = 6, -4
     b.append(text(C + dx, 132 + dy, 'TUE 27', 24, DIM))
     b.append(outline_text(C + dx, 220 + dy, '10:08', 116, GRAY, 1.8))
-    b.append(arc(214, 200, 200 + 320 * 0.72, '#4a3a10', 2))
-    screen('face-field-aod', '\n'.join(b), 'AOD: hollow digits, thin 2px battery hairline, shift +-12px per minute')
+    b.append(arc(206, 0, 360 * 0.70, '#4a3a10', 2))
+    screen('face-field-aod', '\n'.join(b), 'AOD: hollow digits, thin 2px hairline ring, shift +-12px per minute')
 
 
 # ---------------------------------------------------------------------------

@@ -1,3 +1,4 @@
+import Toybox.ActivityMonitor;
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -18,9 +19,10 @@ import Toybox.Weather;
 //   NUMBER_MILD 113, NUMBER_MEDIUM 153, NUMBER_HOT 173, NUMBER_THAI_HOT 210.
 // "10:08" is 264 px wide in NUMBER_MEDIUM; "8,412" is 109 px wide in SMALL.
 //
-// Active:    battery ring (gap at 6 o'clock with "72% · 6d 4h"), date, time,
-//            three slots (settings), footer with weather and notifications.
-// Always-on: hollow time, dim date, 2 px battery hairline, everything shifted
+// Active:    bezel ring (step goal progress by default; battery or off in
+//            settings), date, time, three slots (settings), footer with
+//            weather and notifications.
+// Always-on: hollow time, dim date, 2 px hairline ring, everything shifted
 //            a few pixels each minute. Well under 10 % of pixels lit.
 class FieldView extends WatchUi.WatchFace {
 
@@ -30,15 +32,17 @@ class FieldView extends WatchUi.WatchFace {
     private const DIM = 0x5A5A5A;
     private const TRACK = 0x262626;
 
-    // Battery ring: degrees clockwise from 12 o'clock (see Lib.Arcs)
-    private const RING_START = 210;
-    private const RING_SPAN = 300;
+    // What the bezel ring shows (resources/settings/properties.xml "Ring")
+    private const RING_STEPS = 0;
+    private const RING_BATTERY = 1;
+    private const RING_OFF = 2;
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
 
     // Settings (resources/settings/properties.xml)
     private var _accent as Number = 0xFFB020;
+    private var _ring as Number = RING_STEPS;
     private var _slots as Array<Number> = [Slots.HEART_RATE, Slots.STEPS, Slots.BODY_BATTERY];
     private var _showFooter as Boolean = true;
 
@@ -62,6 +66,7 @@ class FieldView extends WatchUi.WatchFace {
 
     function reloadSettings() as Void {
         _accent = numberProperty("AccentColor", 0xFFB020);
+        _ring = numberProperty("Ring", RING_STEPS);
         _slots = [
             numberProperty("Slot1", Slots.HEART_RATE),
             numberProperty("Slot2", Slots.STEPS),
@@ -115,20 +120,12 @@ class FieldView extends WatchUi.WatchFace {
         var cy = h / 2;
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        // Battery ring: 300 degrees clockwise from 7 o'clock, 60 degree gap at
-        // the bottom (214 px wide at 454) for the readout
-        var stats = System.getSystemStats();
-        var pct = stats.battery;
-        Lib.Arcs.drawGauge(dc, cx, cy, w * 0.471, RING_START, RING_SPAN, pct / 100.0,
-            (w * 0.022).toNumber(), TRACK, _accent);
-
-        // Battery readout in the gap (XTINY, about 140 px wide)
-        var batt = pct.format("%d") + "%";
-        if (stats has :batteryInDays) {
-            batt += " · " + Lib.Fmt.duration(stats.batteryInDays * 24.0);
+        // Bezel ring: a full circle filled clockwise from 12 o'clock
+        var fraction = ringFraction();
+        if (fraction != null) {
+            Lib.Arcs.drawGauge(dc, cx, cy, w * 0.471, 0, 360, fraction,
+                (w * 0.022).toNumber(), TRACK, _accent);
         }
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.925).toNumber(), Graphics.FONT_XTINY, batt, center);
 
         // Date (TINY: 47 px box, sits above the time box)
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
@@ -159,16 +156,36 @@ class FieldView extends WatchUi.WatchFace {
         // Footer: weather and notification count (XTINY, 37 px box). The chord
         // is about 316 px wide here, so drop the sky description if needed.
         if (_showFooter) {
-            var maxWidth = (w * 0.56).toNumber();   // clears the ring at this height
+            var maxWidth = (w * 0.53).toNumber();   // clears the ring at this height
             var text = footerText(true);
             if (dc.getTextWidthInPixels(text, Graphics.FONT_XTINY) > maxWidth) {
                 text = footerText(false);
             }
             if (text.length() > 0) {
                 dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, (h * 0.835).toNumber(), Graphics.FONT_XTINY, text, center);
+                dc.drawText(cx, (h * 0.85).toNumber(), Graphics.FONT_XTINY, text, center);
             }
         }
+    }
+
+    // How much of the bezel ring to fill (0..1), or null when the ring is off.
+    private function ringFraction() as Float? {
+        if (_ring == RING_OFF) {
+            return null;
+        }
+        if (_ring == RING_BATTERY) {
+            return System.getSystemStats().battery / 100.0;
+        }
+        if (_ring == RING_STEPS) {
+            var info = ActivityMonitor.getInfo();
+            var steps = info.steps;
+            var goal = info.stepGoal;
+            if (steps == null || goal == null || goal <= 0) {
+                return 0.0;
+            }
+            return steps.toFloat() / goal;
+        }
+        return null;
     }
 
     private function footerText(withSky as Boolean) as String {
@@ -205,10 +222,12 @@ class FieldView extends WatchUi.WatchFace {
         var cx = w / 2 + off[0];
         var cy = h / 2 + off[1];
 
-        // 2 px battery hairline in a quarter-brightness accent
-        var pct = System.getSystemStats().battery;
-        dc.setColor(Lib.Aod.dim(_accent), Graphics.COLOR_TRANSPARENT);
-        Lib.Arcs.drawClockwise(dc, cx, cy, w * 0.454, RING_START, RING_SPAN * pct / 100.0, 2);
+        // 2 px hairline ring in a quarter-brightness accent
+        var fraction = ringFraction();
+        if (fraction != null && fraction > 0.0) {
+            dc.setColor(Lib.Aod.dim(_accent), Graphics.COLOR_TRANSPARENT);
+            Lib.Arcs.drawClockwise(dc, cx, cy, w * 0.454, 0, 360.0 * fraction, 2);
+        }
 
         // Short date, dim
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);

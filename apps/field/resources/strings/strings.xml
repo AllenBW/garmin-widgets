@@ -8,6 +8,11 @@
     <string id="ColorOrange">Orange</string>
     <string id="ColorWhite">White</string>
 
+    <string id="RingTitle">Bezel ring</string>
+    <string id="RingSteps">Step goal progress</string>
+    <string id="RingBattery">Battery</string>
+    <string id="RingOff">Off</string>
+
     <string id="Slot1Title">Left slot</string>
     <string id="Slot2Title">Middle slot</string>
     <string id="Slot3Title">Right slot</string>

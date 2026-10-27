@@ -40,15 +40,19 @@ Considered and dropped:
 check dozens of times a day, with nothing else.
 
 **Layout (active)**
-- Battery ring around the bezel, with a gap at 6 o'clock for "72% · 6d 4h".
+- A ring around the bezel, filled clockwise from 12 o'clock. By default it
+  shows progress to the daily step goal; settings switch it to battery or
+  off. (The first cut showed battery with a "72% · 6d 4h" readout in a gap at
+  6 o'clock; dropped, since a watch that lasts weeks doesn't need its battery
+  on the home screen.)
 - Date above the time; very large time in the centre.
 - Three slots: **HR · Steps · Body Battery**. Each slot can be set to another
   complication in settings.
 - A footer with weather and notification count.
 
-**Always-on:** hollow time digits, the date in dim grey, and a 2 px battery
-hairline. Everything shifts by up to ±12 px, one step a minute. Lit pixels
-stay well under 10 %.
+**Always-on:** hollow time digits, the date in dim grey, and a 2 px hairline
+ring. Everything shifts by up to ±12 px, one step a minute. Lit pixels stay
+well under 10 %.
 
 **Interaction:** pressing and holding a slot opens the native widget for
 that complication, via `WatchFaceDelegate.onPress` → `Complications.exitTo(id)`
@@ -67,8 +71,13 @@ permission. Untested on hardware ⚠️.
 | Weather | `Weather.getCurrentConditions()` ✅ |
 | Notifications | `System.getDeviceSettings().notificationCount` ✅ |
 
-**Settings:** accent colour, slot 1–3 contents, 12/24 h follows the system,
-and whether to show the footer.
+**Settings:** accent colour, what the ring shows (step goal, battery, off),
+slot 1–3 contents, 12/24 h follows the system, and whether to show the footer.
+
+**Fonts (measured in the simulator at 454 px):** time `FONT_NUMBER_MEDIUM`
+(153 px box), date `FONT_TINY`, values `FONT_SMALL`, footer `FONT_XTINY`, slot
+labels a 22 px `RobotoCondensedRegular` vector font. The system fonts are much
+larger than the mockup's CSS sizes suggest: `FONT_NUMBER_THAI_HOT` is 210 px.
 
 ---
 

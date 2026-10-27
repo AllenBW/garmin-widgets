@@ -10,6 +10,14 @@
         </settingConfig>
     </setting>
 
+    <setting propertyKey="@Properties.Ring" title="@Strings.RingTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.RingSteps</listEntry>
+            <listEntry value="1">@Strings.RingBattery</listEntry>
+            <listEntry value="2">@Strings.RingOff</listEntry>
+        </settingConfig>
+    </setting>
+
     <setting propertyKey="@Properties.Slot1" title="@Strings.Slot1Title">
         <settingConfig type="list">
             <listEntry value="0">@Strings.SlotHeartRate</listEntry>

@@ -20,24 +20,24 @@ records where the project stands so the next session can carry on.
   - Five designs with mockups (`designs/`)
   - Repo layout: `apps/<name>/` per app plus the shared `lib/` barrel
     (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`), and `scripts/build.sh` / `scripts/sim.sh`
-  - **Field** watch face (`apps/field/`): battery ring with days-left readout,
-    date, time, three configurable slots (HR, steps, Body Battery, calories,
-    floors, distance, stress), weather and notification footer, always-on
-    layout with hollow digits and per-minute shifting, press-and-hold on a
-    slot opens the native widget, settings for accent colour, slots and footer
-- **Not yet compiled.** The device files for `fenix8pro47mm` need a Garmin
-  login (`connect-iq-sdk-manager login`, then
-  `device download --manifest apps/field/manifest.xml`). Until then nothing
-  here has been through `monkeyc`, so expect the first build to surface
-  type-check and API errors. Candidates to check first:
-  - `Lib.Aod.drawHollowText` relies on overdrawing in black to hollow the
-    glyphs; if anti-aliasing leaves grey fringes, switch to a dim solid font.
-  - `Slots.newestSample` uses `SensorHistory` with `:period => 1`.
-  - `FieldDelegate.onPress` → `Complications.exitTo(new Complications.Id(type))`.
-  - Font sizes (`FONT_NUMBER_THAI_HOT`, `FONT_MEDIUM`, ...) against the
-    454 px mockup; adjust the layout fractions in `FieldView` if needed.
-- **Unverified:** memory limits and API level from `compiler.json`, and the
+  - **Field** watch face (`apps/field/`): bezel ring (step goal by default,
+    battery or off in settings), date, time, three configurable slots (HR,
+    steps, Body Battery, calories, floors, distance, stress), weather and
+    notification footer, always-on layout with hollow digits and per-minute
+    shifting, press-and-hold on a slot opens the native widget. Compiles
+    cleanly (`-l 3`) for `fenix8pro47mm`, `fenix847mm` and `fenix843mm`, and
+    the active layout has been checked by eye in the simulator; the always-on
+    layout has not.
+- **Still to check in the simulator:** Low Power Mode (the hollow digits from
+  `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing leaves grey
+  fringes, switch to a dim solid font), the burn-in checker, peak memory
+  (File → View Memory), and the 416 px layout on `fenix843mm`.
+- **Still to check on a watch:** press-and-hold → `Complications.exitTo`,
+  `SensorHistory` Body Battery/stress, settings in Garmin Connect, and the
   APIs still marked ⚠️ in `EXPLORATION.md` and `designs/DESIGNS.md`.
+- **Permissions on the dev Mac:** the Claude shell can't take screenshots or
+  drive the simulator's menus (Screen Recording / Automation not granted), so
+  visual checks go through pasted screenshots.
 
 ## Rules
 
@@ -48,15 +48,12 @@ records where the project stands so the next session can carry on.
 
 ## Next steps
 
-1. Log in and download the device files, then record the memory limits and
-   API level from `compiler.json` in `EXPLORATION.md` §9.
-2. `scripts/build.sh field`, fix what the compiler reports, then
-   `scripts/sim.sh field`: check the active layout, Low Power Mode, the
-   burn-in checker and peak memory. Sideload to the watch and test the
-   press-and-hold and the settings in Garmin Connect.
-3. Consider the on-device watch face editor (`resources/configs/watchface.xml`,
+1. `scripts/sim.sh field`: check Low Power Mode, the burn-in checker and peak
+   memory. Sideload to the watch and test the press-and-hold and the settings
+   in Garmin Connect.
+2. Consider the on-device watch face editor (`resources/configs/watchface.xml`,
    `WatchFaceConfig`, SDK sample `ConfigurableWatchFace`) for the slots and
    accent colour once the basics work.
-4. **Battery Planner** (design #2) as `apps/battery/`. Before **Readiness**
+3. **Battery Planner** (design #2) as `apps/battery/`. Before **Readiness**
    (#4), check which complications the SDK exposes (the list is in
    `<sdk>/doc/Toybox/Complications.html`).
