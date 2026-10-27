@@ -107,11 +107,9 @@ def field_active():
         b.append(text(x, 312, label, 17, DIM, 600, extra='letter-spacing="1"'))
         b.append(text(x, 345, val, 38, col, 600))
     b.append(heart(117, 286, 16, RED))
-    # Footer: sunrise and sunset (weather + notifications is a setting)
-    b.append(sun_marker(150, 386, 12, AMBER, rise=True))
-    b.append(text(196, 386, '6:52', 22, GRAY))
-    b.append(sun_marker(262, 386, 12, ORANGE, rise=False))
-    b.append(text(310, 386, '17:41', 22, GRAY))
+    # Footer: the next sun event only (weather + notifications is a setting)
+    b.append(sun_marker(C - 34, 386, 12, ORANGE, rise=False))
+    b.append(text(C + 12, 386, '17:41', 22, GRAY))
     screen('face-field-active', '\n'.join(b))
 
 

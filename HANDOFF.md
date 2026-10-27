@@ -23,7 +23,7 @@ records where the project stands so the next session can carry on.
   - **Field** watch face (`apps/field/`): bezel ring (step goal by default,
     battery or off in settings), date, time, three configurable slots (HR,
     steps, Body Battery, calories, floors, distance, stress, sunrise, sunset),
-    a footer with sunrise and sunset (or weather and notifications, or off),
+    a footer with the next sun event (or weather and notifications, or off),
     always-on layout with hollow digits, the next sun event and per-minute
     shifting, press-and-hold on a slot opens the native widget. Compiles
     cleanly (`-l 3`) for `fenix8pro47mm`, `fenix847mm` and `fenix843mm`, and

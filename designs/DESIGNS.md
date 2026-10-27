@@ -48,8 +48,9 @@ check dozens of times a day, with nothing else.
 - Date above the time; very large time in the centre.
 - Three slots: **HR · Steps · Body Battery**. Each slot can be set to another
   value in settings, including sunrise and sunset.
-- A footer with **sunrise and sunset** (▲ 6:52  ▼ 17:41). Settings switch it
-  to weather plus notification count, or off.
+- A footer with the **next sun event** only: ▲ 6:52 until the sun is up, then
+  ▼ 17:41, then tomorrow's sunrise. One value, not two. Settings switch the
+  footer to weather plus notification count, or off.
 
 **Always-on:** hollow time digits, the date in dim grey, the next sun event,
 and a 2 px hairline ring. Everything shifts by up to ±12 px, one step a
@@ -74,7 +75,7 @@ permission. Untested on hardware ⚠️.
 | Sunrise, sunset | sunrise/sunset complications (seconds since local midnight, the watch's own figures) ✅, falling back to `Weather.getSunrise/getSunset` with the weather observation position or the last activity location (`Lib.Sun`) |
 
 **Settings:** accent colour, what the ring shows (step goal, battery, off),
-slot 1–3 contents, the footer (sunrise and sunset, weather and notifications,
+slot 1–3 contents, the footer (next sun event, weather and notifications,
 off), and 12/24 h follows the system.
 
 **Fonts (measured in the simulator at 454 px):** time `FONT_NUMBER_MEDIUM`
