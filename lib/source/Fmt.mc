@@ -46,6 +46,22 @@ module Lib {
             return Math.round(value).toNumber().toString() + "°";
         }
 
+        // A TrueType font at `size` pixels, or `fallback` when the device has no
+        // vector fonts. Face names on the fenix 8 family (SDK 9.3 simulator):
+        // RobotoRegular, RobotoMedium, RobotoCondensedRegular, RobotoCondensedBold,
+        // BionicMedium, BionicBold.
+        function vectorFont(face as String, size as Number, fallback as FontType) as FontType {
+            if (!(Graphics has :getVectorFont)) {
+                return fallback;
+            }
+            try {
+                var font = Graphics.getVectorFont({:face => face, :size => size});
+                return (font != null) ? font : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        }
+
         // The first font in `fonts` that fits `text` within maxWidth pixels,
         // or the last one if none does.
         function fitFont(dc as Dc, text as String, fonts as Array<FontType>, maxWidth as Number) as FontType {

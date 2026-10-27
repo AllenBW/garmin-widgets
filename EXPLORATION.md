@@ -250,8 +250,15 @@ The concrete designs we chose are in [`designs/DESIGNS.md`](designs/DESIGNS.md).
 - [ ] The 9.3 theme API, `Audio` module names and permissions, and LTE APIs.
       Read the SDK API docs.
 - [ ] Whether `makeWebRequest` over LTE needs an active LTE/inReach plan.
-- [ ] Custom fonts and bitmap budget at 454 px: how many glyph sets fit in
-      128 KB.
+- [x] Fonts: the fēnix 8 family ships TrueType fonts, so
+      `Graphics.getVectorFont({:face => ..., :size => px})` gives any size
+      without bitmap font resources. Face names (no hyphens): `RobotoRegular`,
+      `RobotoMedium`, `RobotoCondensedRegular`, `RobotoCondensedBold`,
+      `BionicMedium`, `BionicBold`. System font heights at 454 px
+      (`getFontHeight`): XTINY 37, TINY 47, SMALL 53, MEDIUM 61, LARGE 71,
+      NUMBER_MILD 113, NUMBER_MEDIUM 153, NUMBER_HOT 173, NUMBER_THAI_HOT 210.
+- [ ] Bitmap budget at 454 px, if we ever need custom bitmap fonts or large
+      images.
 
 ---
 
