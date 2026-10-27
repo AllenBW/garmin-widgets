@@ -153,8 +153,9 @@ class FieldView extends WatchUi.WatchFace {
         var parts = [] as Array<String>;
         if (Toybox has :Weather) {
             var cc = Weather.getCurrentConditions();
-            if (cc != null && cc.temperature != null) {
-                var temp = Lib.Fmt.temperature(cc.temperature);
+            var celsius = (cc != null) ? cc.temperature : null;
+            if (cc != null && celsius != null) {
+                var temp = Lib.Fmt.temperature(celsius);
                 var sky = WeatherText.describe(cc.condition);
                 parts.add(sky.length() > 0 ? temp + " " + sky : temp);
             }

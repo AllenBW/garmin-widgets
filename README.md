@@ -12,9 +12,11 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting).
 
-> **Status:** Field is written but **not yet compiled**: the fēnix 8 Pro device
-> files need a Garmin account login to download (see Setup, step 3). Expect
-> the first build to report things to fix.
+> **Status:** Field compiles cleanly at the strict type-check level for the
+> fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
+> fēnix 8 43 mm (`fenix843mm`), and loads in the simulator. It has not been
+> checked on a watch yet, and the simulator's Low Power Mode and burn-in
+> checker still need a look by eye.
 
 ## Layout
 
@@ -54,9 +56,12 @@ base.Lib.annotations = aod;arcs;fmt
    connect-iq-sdk-manager device download --manifest apps/field/manifest.xml
    ```
 
-   or open the SDK Manager, sign in, and download "fēnix 8 Pro" under Devices.
-   Either way the files land in `.../ConnectIQ/Devices/fenix8pro47mm/`, and
-   `compiler.json` there is the source of truth for memory limits and fonts.
+   or open the SDK Manager, sign in, and download the fēnix 8 devices.
+   The CLI stores them in `~/.Garmin/ConnectIQ/Devices/` and `Fonts/`; on macOS
+   the SDK looks in `~/Library/Application Support/Garmin/ConnectIQ/`, so link
+   those two folders there (`ln -s ~/.Garmin/ConnectIQ/Devices "~/Library/Application Support/Garmin/ConnectIQ/Devices"`,
+   same for `Fonts`). `compiler.json` in each device folder is the source of
+   truth for memory limits and the API level.
 4. Generate a developer key once and keep it **outside** the repo (`*.der`
    and `*.pem` are gitignored):
 
@@ -72,8 +77,8 @@ base.Lib.annotations = aod;arcs;fmt
 ## Build and run
 
 ```sh
-scripts/build.sh field                 # -> apps/field/bin/field.prg
-scripts/build.sh field fenix8pro47mm -l 2   # extra args go to monkeyc (-l = type check level)
+scripts/build.sh field                 # -> apps/field/bin/field.prg for fenix8pro47mm
+scripts/build.sh field fenix843mm -l 3      # other device; extra args go to monkeyc (-l 3 = strict types)
 scripts/sim.sh field                   # starts the simulator and loads the build
 ```
 

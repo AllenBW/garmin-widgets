@@ -10,6 +10,8 @@
     <iq:barrel id="01cb49eb9f324410940f13009c6aee5b" module="Lib" version="0.1.0" minApiLevel="5.0.0">
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
         </iq:products>
         <iq:permissions/>
         <iq:languages/>
