@@ -1,0 +1,53 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+
+    <setting propertyKey="@Properties.AccentColor" title="@Strings.AccentColorTitle">
+        <settingConfig type="list">
+            <listEntry value="0xFFB020">@Strings.ColorAmber</listEntry>
+            <listEntry value="0x3EC6E0">@Strings.ColorCyan</listEntry>
+            <listEntry value="0x46D18A">@Strings.ColorGreen</listEntry>
+            <listEntry value="0xFF7A3D">@Strings.ColorOrange</listEntry>
+            <listEntry value="0xF2F2F2">@Strings.ColorWhite</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.Slot1" title="@Strings.Slot1Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.SlotHeartRate</listEntry>
+            <listEntry value="1">@Strings.SlotSteps</listEntry>
+            <listEntry value="2">@Strings.SlotBodyBattery</listEntry>
+            <listEntry value="3">@Strings.SlotCalories</listEntry>
+            <listEntry value="4">@Strings.SlotFloors</listEntry>
+            <listEntry value="5">@Strings.SlotDistance</listEntry>
+            <listEntry value="6">@Strings.SlotStress</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.Slot2" title="@Strings.Slot2Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.SlotHeartRate</listEntry>
+            <listEntry value="1">@Strings.SlotSteps</listEntry>
+            <listEntry value="2">@Strings.SlotBodyBattery</listEntry>
+            <listEntry value="3">@Strings.SlotCalories</listEntry>
+            <listEntry value="4">@Strings.SlotFloors</listEntry>
+            <listEntry value="5">@Strings.SlotDistance</listEntry>
+            <listEntry value="6">@Strings.SlotStress</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.Slot3" title="@Strings.Slot3Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.SlotHeartRate</listEntry>
+            <listEntry value="1">@Strings.SlotSteps</listEntry>
+            <listEntry value="2">@Strings.SlotBodyBattery</listEntry>
+            <listEntry value="3">@Strings.SlotCalories</listEntry>
+            <listEntry value="4">@Strings.SlotFloors</listEntry>
+            <listEntry value="5">@Strings.SlotDistance</listEntry>
+            <listEntry value="6">@Strings.SlotStress</listEntry>
+        </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.ShowFooter" title="@Strings.ShowFooterTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+
+</settings>
