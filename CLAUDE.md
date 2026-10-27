@@ -28,7 +28,7 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 
 - `EXPLORATION.md`: what the platform lets us do, with sources
 - `designs/`: design specs and mockups (`DESIGNS.md`, `mockups.py` → `svg/`)
-- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`)
+- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`)
 - `apps/<name>/`: one Connect IQ project per app (`apps/field/` is the Field
   watch face, design #1)
 - `scripts/`: build and simulator helpers

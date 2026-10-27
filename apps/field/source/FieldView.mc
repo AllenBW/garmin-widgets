@@ -21,9 +21,10 @@ import Toybox.Weather;
 //
 // Active:    bezel ring (step goal progress by default; battery or off in
 //            settings), date, time, three slots (settings), footer with
-//            weather and notifications.
-// Always-on: hollow time, dim date, 2 px hairline ring, everything shifted
-//            a few pixels each minute. Well under 10 % of pixels lit.
+//            sunrise and sunset (or weather and notifications, or off).
+// Always-on: hollow time, dim date, the next sun event, 2 px hairline ring,
+//            everything shifted a few pixels each minute. Well under 10 % of
+//            pixels lit.
 class FieldView extends WatchUi.WatchFace {
 
     // Palette (designs/mockups.py)
@@ -37,6 +38,14 @@ class FieldView extends WatchUi.WatchFace {
     private const RING_BATTERY = 1;
     private const RING_OFF = 2;
 
+    // What the footer shows ("Footer")
+    private const FOOTER_SUN = 0;
+    private const FOOTER_WEATHER = 1;
+    private const FOOTER_OFF = 2;
+
+    private const AMBER = 0xFFB020;
+    private const ORANGE = 0xFF7A3D;
+
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
 
@@ -44,7 +53,7 @@ class FieldView extends WatchUi.WatchFace {
     private var _accent as Number = 0xFFB020;
     private var _ring as Number = RING_STEPS;
     private var _slots as Array<Number> = [Slots.HEART_RATE, Slots.STEPS, Slots.BODY_BATTERY];
-    private var _showFooter as Boolean = true;
+    private var _footer as Number = FOOTER_SUN;
 
     // Hit areas of the three slots, [x, y, halfWidth, halfHeight], filled in
     // by drawActive so the delegate can map a press to a slot.
@@ -72,8 +81,7 @@ class FieldView extends WatchUi.WatchFace {
             numberProperty("Slot2", Slots.STEPS),
             numberProperty("Slot3", Slots.BODY_BATTERY)
         ];
-        var footer = Application.Properties.getValue("ShowFooter");
-        _showFooter = (footer instanceof Boolean) ? footer : true;
+        _footer = numberProperty("Footer", FOOTER_SUN);
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -153,19 +161,65 @@ class FieldView extends WatchUi.WatchFace {
         }
         _slotBoxes = boxes;
 
-        // Footer: weather and notification count (XTINY, 37 px box). The chord
-        // is about 316 px wide here, so drop the sky description if needed.
-        if (_showFooter) {
-            var maxWidth = (w * 0.53).toNumber();   // clears the ring at this height
+        // Footer (XTINY, 37 px box); at most about 240 px wide here to clear
+        // the ring on both sides.
+        var footerY = (h * 0.85).toNumber();
+        var maxWidth = (w * 0.53).toNumber();
+        if (_footer == FOOTER_OFF) {
+            // nothing
+        } else if (_footer == FOOTER_SUN) {
+            drawSunFooter(dc, cx, footerY, w, GRAY, AMBER, ORANGE);
+        } else if (_footer == FOOTER_WEATHER) {
             var text = footerText(true);
             if (dc.getTextWidthInPixels(text, Graphics.FONT_XTINY) > maxWidth) {
                 text = footerText(false);
             }
             if (text.length() > 0) {
                 dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, (h * 0.85).toNumber(), Graphics.FONT_XTINY, text, center);
+                dc.drawText(cx, footerY, Graphics.FONT_XTINY, text, center);
             }
         }
+    }
+
+    // "▲ 6:52   ▼ 17:41", centred on cx. The triangles are drawn, since the
+    // system fonts have no arrow glyphs.
+    private function drawSunFooter(dc as Dc, cx as Number, y as Number, w as Number,
+                                   textColor as ColorType, riseColor as ColorType, setColor as ColorType) as Void {
+        var times = Lib.Sun.today();
+        var rise = times[0];
+        var set = times[1];
+        if (rise == null && set == null) {
+            return;
+        }
+        var font = Graphics.FONT_XTINY;
+        var riseText = (rise != null) ? Lib.Fmt.clock(rise) : "--";
+        var setText = (set != null) ? Lib.Fmt.clock(set) : "--";
+        var tri = (w * 0.026).toNumber();
+        var gap = (w * 0.018).toNumber();
+        var mid = (w * 0.06).toNumber();
+        var riseWidth = dc.getTextWidthInPixels(riseText, font);
+        var setWidth = dc.getTextWidthInPixels(setText, font);
+        var x = cx - (tri + gap + riseWidth + mid + tri + gap + setWidth) / 2;
+        x += drawSunTime(dc, x, y, true, riseText, tri, gap, font, riseColor, textColor) + mid;
+        drawSunTime(dc, x, y, false, setText, tri, gap, font, setColor, textColor);
+    }
+
+    // A triangle (up for sunrise, down for sunset) and a time, left-aligned
+    // at x and centred on y. Returns the width drawn.
+    private function drawSunTime(dc as Dc, x as Number, y as Number, isRise as Boolean, text as String,
+                                 tri as Number, gap as Number, font as FontType,
+                                 triColor as ColorType, textColor as ColorType) as Number {
+        var half = tri / 2;
+        var mx = x + half;
+        dc.setColor(triColor, Graphics.COLOR_TRANSPARENT);
+        if (isRise) {
+            dc.fillPolygon([[mx, y - half], [mx - half, y + half], [mx + half, y + half]]);
+        } else {
+            dc.fillPolygon([[mx, y + half], [mx - half, y - half], [mx + half, y - half]]);
+        }
+        dc.setColor(textColor, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x + tri + gap, y, font, text, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+        return tri + gap + dc.getTextWidthInPixels(text, font);
     }
 
     // How much of the bezel ring to fill (0..1), or null when the ring is off.
@@ -238,20 +292,24 @@ class FieldView extends WatchUi.WatchFace {
         // Hollow time: only the glyph outlines are lit
         Lib.Aod.drawHollowText(dc, cx, (h * 0.485).toNumber() + off[1],
             Graphics.FONT_NUMBER_MEDIUM, timeString(), GRAY, center);
+
+        // Next sun event, dim
+        var next = Lib.Sun.next(Lib.Sun.today());
+        if (next != null) {
+            var font = Graphics.FONT_XTINY;
+            var text = Lib.Fmt.clock(next[1]);
+            var tri = (w * 0.02).toNumber();
+            var gap = (w * 0.018).toNumber();
+            var x = cx - (tri + gap + dc.getTextWidthInPixels(text, font)) / 2;
+            drawSunTime(dc, x, (h * 0.72).toNumber() + off[1], next[0], text, tri, gap, font, DIM, DIM);
+        }
     }
 
     // ---------------------------------------------------------------- shared
 
     private function timeString() as String {
         var clock = System.getClockTime();
-        var hour = clock.hour;
-        if (!System.getDeviceSettings().is24Hour) {
-            hour = hour % 12;
-            if (hour == 0) {
-                hour = 12;
-            }
-        }
-        return Lang.format("$1$:$2$", [hour.format("%d"), clock.min.format("%02d")]);
+        return Lib.Fmt.clock(clock.hour * 3600 + clock.min * 60);
     }
 
     private function numberProperty(key as String, fallback as Number) as Number {

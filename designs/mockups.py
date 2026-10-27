@@ -72,6 +72,16 @@ def screen(name, body, note=None):
         f.write('\n'.join(parts) + '\n')
 
 
+def sun_marker(x, y, s, color, rise=True):
+    """Small triangle: up for sunrise, down for sunset."""
+    h = s / 2
+    if rise:
+        pts = f'{x:.1f},{y - h:.1f} {x - h:.1f},{y + h:.1f} {x + h:.1f},{y + h:.1f}'
+    else:
+        pts = f'{x:.1f},{y + h:.1f} {x - h:.1f},{y - h:.1f} {x + h:.1f},{y - h:.1f}'
+    return f'<polygon points="{pts}" fill="{color}"/>'
+
+
 def heart(x, y, s, color):
     return (f'<path transform="translate({x - s / 2:.1f},{y - s / 2:.1f}) scale({s / 24:.3f})" '
             f'd="M12 21s-7.5-4.6-10-9.2C.3 8.4 2.2 4.5 6 4.5c2.2 0 3.6 1.3 4.5 2.6l1.5 2 1.5-2c.9-1.3 2.3-2.6 4.5-2.6 3.8 0 5.7 3.9 4 7.3C19.5 16.4 12 21 12 21z" '
@@ -97,8 +107,11 @@ def field_active():
         b.append(text(x, 312, label, 17, DIM, 600, extra='letter-spacing="1"'))
         b.append(text(x, 345, val, 38, col, 600))
     b.append(heart(117, 286, 16, RED))
-    # Weather + notifications row
-    b.append(text(C, 390, '18° ⛅   ✉ 3', 22, GRAY))
+    # Footer: sunrise and sunset (weather + notifications is a setting)
+    b.append(sun_marker(150, 386, 12, AMBER, rise=True))
+    b.append(text(196, 386, '6:52', 22, GRAY))
+    b.append(sun_marker(262, 386, 12, ORANGE, rise=False))
+    b.append(text(310, 386, '17:41', 22, GRAY))
     screen('face-field-active', '\n'.join(b))
 
 
@@ -108,8 +121,10 @@ def field_aod():
     dx, dy = 6, -4
     b.append(text(C + dx, 132 + dy, 'TUE 27', 24, DIM))
     b.append(outline_text(C + dx, 220 + dy, '10:08', 116, GRAY, 1.8))
+    b.append(sun_marker(C + dx - 30, 327 + dy, 9, DIM, rise=False))
+    b.append(text(C + dx + 12, 327 + dy, '17:41', 20, DIM))
     b.append(arc(206, 0, 360 * 0.70, '#4a3a10', 2))
-    screen('face-field-aod', '\n'.join(b), 'AOD: hollow digits, thin 2px hairline ring, shift +-12px per minute')
+    screen('face-field-aod', '\n'.join(b), 'AOD: hollow digits, next sun event, thin 2px hairline ring, shift +-12px per minute')
 
 
 # ---------------------------------------------------------------------------

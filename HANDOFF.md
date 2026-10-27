@@ -19,11 +19,12 @@ records where the project stands so the next session can carry on.
   - Platform exploration with sources (`EXPLORATION.md`)
   - Five designs with mockups (`designs/`)
   - Repo layout: `apps/<name>/` per app plus the shared `lib/` barrel
-    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`), and `scripts/build.sh` / `scripts/sim.sh`
+    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`), and `scripts/build.sh` / `scripts/sim.sh`
   - **Field** watch face (`apps/field/`): bezel ring (step goal by default,
     battery or off in settings), date, time, three configurable slots (HR,
-    steps, Body Battery, calories, floors, distance, stress), weather and
-    notification footer, always-on layout with hollow digits and per-minute
+    steps, Body Battery, calories, floors, distance, stress, sunrise, sunset),
+    a footer with sunrise and sunset (or weather and notifications, or off),
+    always-on layout with hollow digits, the next sun event and per-minute
     shifting, press-and-hold on a slot opens the native widget. Compiles
     cleanly (`-l 3`) for `fenix8pro47mm`, `fenix847mm` and `fenix843mm`, and
     the active layout has been checked by eye in the simulator; the always-on

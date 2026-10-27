@@ -47,12 +47,13 @@ check dozens of times a day, with nothing else.
   on the home screen.)
 - Date above the time; very large time in the centre.
 - Three slots: **HR · Steps · Body Battery**. Each slot can be set to another
-  complication in settings.
-- A footer with weather and notification count.
+  value in settings, including sunrise and sunset.
+- A footer with **sunrise and sunset** (▲ 6:52  ▼ 17:41). Settings switch it
+  to weather plus notification count, or off.
 
-**Always-on:** hollow time digits, the date in dim grey, and a 2 px hairline
-ring. Everything shifts by up to ±12 px, one step a minute. Lit pixels stay
-well under 10 %.
+**Always-on:** hollow time digits, the date in dim grey, the next sun event,
+and a 2 px hairline ring. Everything shifts by up to ±12 px, one step a
+minute. Lit pixels stay well under 10 %.
 
 **Interaction:** pressing and holding a slot opens the native widget for
 that complication, via `WatchFaceDelegate.onPress` → `Complications.exitTo(id)`
@@ -70,9 +71,11 @@ permission. Untested on hardware ⚠️.
 | Body Battery | `Complications` body-battery type ⚠️, or `SensorHistory` (needs the `SensorHistory` permission) |
 | Weather | `Weather.getCurrentConditions()` ✅ |
 | Notifications | `System.getDeviceSettings().notificationCount` ✅ |
+| Sunrise, sunset | sunrise/sunset complications (seconds since local midnight, the watch's own figures) ✅, falling back to `Weather.getSunrise/getSunset` with the weather observation position or the last activity location (`Lib.Sun`) |
 
 **Settings:** accent colour, what the ring shows (step goal, battery, off),
-slot 1–3 contents, 12/24 h follows the system, and whether to show the footer.
+slot 1–3 contents, the footer (sunrise and sunset, weather and notifications,
+off), and 12/24 h follows the system.
 
 **Fonts (measured in the simulator at 454 px):** time `FONT_NUMBER_MEDIUM`
 (153 px box), date `FONT_TINY`, values `FONT_SMALL`, footer `FONT_XTINY`, slot
@@ -204,8 +207,11 @@ in the golden/blue hour and the moon. Keep it small.
   sub-module is an annotation so an app only links what it uses):
   - `Aod` (done): burn-in offsets, dimmed colours and the hollow-text helper
   - `Arcs` (done): clockwise arcs from 12 o'clock, plus ring gauges
-  - `Fmt` (done): thousands separators, durations, distance, temperature
-  - `Sun` (todo, with Daylight): solar elevation, golden/blue hour
+  - `Fmt` (done): thousands separators, durations, clock times, distance,
+    temperature, vector fonts
+  - `Sun` (started): today's sunrise and sunset and the next event, from the
+    complications with a Weather fallback. Solar elevation and golden/blue
+    hour come with Daylight.
   - `Moon` (todo, with Sun & Moon): phase
 - **One jungle per app** in `apps/<name>/`, linked to the barrel with
   `base.barrelPath = ../../lib/monkey.jungle`. The starter face became

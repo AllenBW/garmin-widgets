@@ -27,6 +27,8 @@
             <listEntry value="4">@Strings.SlotFloors</listEntry>
             <listEntry value="5">@Strings.SlotDistance</listEntry>
             <listEntry value="6">@Strings.SlotStress</listEntry>
+            <listEntry value="7">@Strings.SlotSunrise</listEntry>
+            <listEntry value="8">@Strings.SlotSunset</listEntry>
         </settingConfig>
     </setting>
 
@@ -39,6 +41,8 @@
             <listEntry value="4">@Strings.SlotFloors</listEntry>
             <listEntry value="5">@Strings.SlotDistance</listEntry>
             <listEntry value="6">@Strings.SlotStress</listEntry>
+            <listEntry value="7">@Strings.SlotSunrise</listEntry>
+            <listEntry value="8">@Strings.SlotSunset</listEntry>
         </settingConfig>
     </setting>
 
@@ -51,11 +55,17 @@
             <listEntry value="4">@Strings.SlotFloors</listEntry>
             <listEntry value="5">@Strings.SlotDistance</listEntry>
             <listEntry value="6">@Strings.SlotStress</listEntry>
+            <listEntry value="7">@Strings.SlotSunrise</listEntry>
+            <listEntry value="8">@Strings.SlotSunset</listEntry>
         </settingConfig>
     </setting>
 
-    <setting propertyKey="@Properties.ShowFooter" title="@Strings.ShowFooterTitle">
-        <settingConfig type="boolean"/>
+    <setting propertyKey="@Properties.Footer" title="@Strings.FooterTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.FooterSun</listEntry>
+            <listEntry value="1">@Strings.FooterWeather</listEntry>
+            <listEntry value="2">@Strings.FooterOff</listEntry>
+        </settingConfig>
     </setting>
 
 </settings>
