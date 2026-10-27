@@ -12,6 +12,12 @@ import Toybox.Weather;
 // every position is a fraction of the screen size so it survives other
 // round AMOLED devices.
 //
+// System font heights measured in the simulator at 454x454 (getFontHeight,
+// which includes line spacing; the ink is roughly 70 % of it):
+//   XTINY 37, TINY 47, SMALL 53, MEDIUM 61, LARGE 71,
+//   NUMBER_MILD 113, NUMBER_MEDIUM 153, NUMBER_HOT 173, NUMBER_THAI_HOT 210.
+// "10:08" is 264 px wide in NUMBER_MEDIUM; "8,412" is 109 px wide in SMALL.
+//
 // Active:    battery ring (gap at 6 o'clock with "72% · 6d 4h"), date, time,
 //            three slots (settings), footer with weather and notifications.
 // Always-on: hollow time, dim date, 2 px battery hairline, everything shifted
@@ -23,6 +29,10 @@ class FieldView extends WatchUi.WatchFace {
     private const GRAY = 0x8A8A8A;
     private const DIM = 0x5A5A5A;
     private const TRACK = 0x262626;
+
+    // Battery ring: degrees clockwise from 12 o'clock (see Lib.Arcs)
+    private const RING_START = 210;
+    private const RING_SPAN = 300;
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -36,10 +46,18 @@ class FieldView extends WatchUi.WatchFace {
     // by drawActive so the delegate can map a press to a slot.
     private var _slotBoxes as Array<Array<Number>> = [] as Array<Array<Number>>;
 
+    // Slot labels: a 22 px condensed vector font (XTINY, the smallest system
+    // font, is 37 px and too wide for "BODY BATT" in a 118 px column).
+    private var _labelFont as FontType = Graphics.FONT_XTINY;
+
     function initialize() {
         WatchFace.initialize();
         _burnIn = Lib.Aod.required();
         reloadSettings();
+    }
+
+    function onLayout(dc as Dc) as Void {
+        _labelFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (dc.getWidth() * 0.048).toNumber(), Graphics.FONT_XTINY);
     }
 
     function reloadSettings() as Void {
@@ -97,72 +115,76 @@ class FieldView extends WatchUi.WatchFace {
         var cy = h / 2;
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        // Battery ring: 320 degrees clockwise from 7 o'clock, gap at the bottom
+        // Battery ring: 300 degrees clockwise from 7 o'clock, 60 degree gap at
+        // the bottom (214 px wide at 454) for the readout
         var stats = System.getSystemStats();
         var pct = stats.battery;
-        Lib.Arcs.drawGauge(dc, cx, cy, w * 0.471, 200, 320, pct / 100.0,
+        Lib.Arcs.drawGauge(dc, cx, cy, w * 0.471, RING_START, RING_SPAN, pct / 100.0,
             (w * 0.022).toNumber(), TRACK, _accent);
 
-        // Battery readout in the gap
+        // Battery readout in the gap (XTINY, about 140 px wide)
         var batt = pct.format("%d") + "%";
         if (stats has :batteryInDays) {
             batt += " · " + Lib.Fmt.duration(stats.batteryInDays * 24.0);
         }
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.934).toNumber(), Graphics.FONT_XTINY, batt, center);
+        dc.drawText(cx, (h * 0.925).toNumber(), Graphics.FONT_XTINY, batt, center);
 
-        // Date
+        // Date (TINY: 47 px box, sits above the time box)
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.247).toNumber(), Graphics.FONT_SMALL, date, center);
+        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, date, center);
 
-        // Time
+        // Time (NUMBER_MEDIUM: 153 px box, ink about 105 px, 264 px wide)
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.463).toNumber(), Graphics.FONT_NUMBER_THAI_HOT, timeString(), center);
+        dc.drawText(cx, (h * 0.452).toNumber(), Graphics.FONT_NUMBER_MEDIUM, timeString(), center);
 
-        // Three slots
-        var xs = [w * 0.258, w * 0.5, w * 0.742];
-        var labelY = (h * 0.687).toNumber();
-        var valueY = (h * 0.760).toNumber();
+        // Three slots, 118 px apart at 454: condensed label over a SMALL value
+        var xs = [w * 0.24, w * 0.5, w * 0.76];
+        var labelY = (h * 0.655).toNumber();
+        var valueY = (h * 0.735).toNumber();
         var boxes = [] as Array<Array<Number>>;
         for (var i = 0; i < 3; i++) {
             var kind = _slots[i];
             var x = xs[i].toNumber();
             dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, labelY, Graphics.FONT_XTINY, Slots.label(kind), center);
+            dc.drawText(x, labelY, _labelFont, Slots.label(kind), center);
             dc.setColor(Slots.color(kind), Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, valueY, Graphics.FONT_MEDIUM, Slots.value(kind), center);
-            boxes.add([x, (labelY + valueY) / 2, (w * 0.12).toNumber(), (h * 0.09).toNumber()]);
+            dc.drawText(x, valueY, Graphics.FONT_SMALL, Slots.value(kind), center);
+            boxes.add([x, (labelY + valueY) / 2, (w * 0.13).toNumber(), (h * 0.10).toNumber()]);
         }
         _slotBoxes = boxes;
 
-        // Footer: weather and notification count
+        // Footer: weather and notification count (XTINY, 37 px box). The chord
+        // is about 316 px wide here, so drop the sky description if needed.
         if (_showFooter) {
-            var text = footerText();
+            var maxWidth = (w * 0.56).toNumber();   // clears the ring at this height
+            var text = footerText(true);
+            if (dc.getTextWidthInPixels(text, Graphics.FONT_XTINY) > maxWidth) {
+                text = footerText(false);
+            }
             if (text.length() > 0) {
-                var font = Lib.Fmt.fitFont(dc, text,
-                    [Graphics.FONT_TINY, Graphics.FONT_XTINY], (w * 0.70).toNumber());
                 dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(cx, (h * 0.859).toNumber(), font, text, center);
+                dc.drawText(cx, (h * 0.835).toNumber(), Graphics.FONT_XTINY, text, center);
             }
         }
     }
 
-    private function footerText() as String {
+    private function footerText(withSky as Boolean) as String {
         var parts = [] as Array<String>;
         if (Toybox has :Weather) {
             var cc = Weather.getCurrentConditions();
             var celsius = (cc != null) ? cc.temperature : null;
             if (cc != null && celsius != null) {
                 var temp = Lib.Fmt.temperature(celsius);
-                var sky = WeatherText.describe(cc.condition);
+                var sky = withSky ? WeatherText.describe(cc.condition) : "";
                 parts.add(sky.length() > 0 ? temp + " " + sky : temp);
             }
         }
         var n = System.getDeviceSettings().notificationCount;
         if (n > 0) {
-            parts.add(n.toString() + (n == 1 ? " notification" : " notifications"));
+            parts.add(n.toString() + (withSky ? (n == 1 ? " notification" : " notifications") : " notif"));
         }
         var text = "";
         for (var i = 0; i < parts.size(); i++) {
@@ -186,7 +208,7 @@ class FieldView extends WatchUi.WatchFace {
         // 2 px battery hairline in a quarter-brightness accent
         var pct = System.getSystemStats().battery;
         dc.setColor(Lib.Aod.dim(_accent), Graphics.COLOR_TRANSPARENT);
-        Lib.Arcs.drawClockwise(dc, cx, cy, w * 0.454, 200, 320.0 * pct / 100.0, 2);
+        Lib.Arcs.drawClockwise(dc, cx, cy, w * 0.454, RING_START, RING_SPAN * pct / 100.0, 2);
 
         // Short date, dim
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
@@ -196,7 +218,7 @@ class FieldView extends WatchUi.WatchFace {
 
         // Hollow time: only the glyph outlines are lit
         Lib.Aod.drawHollowText(dc, cx, (h * 0.485).toNumber() + off[1],
-            Graphics.FONT_NUMBER_THAI_HOT, timeString(), GRAY, center);
+            Graphics.FONT_NUMBER_MEDIUM, timeString(), GRAY, center);
     }
 
     // ---------------------------------------------------------------- shared
