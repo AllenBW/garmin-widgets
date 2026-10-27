@@ -88,15 +88,34 @@ def heart(x, y, s, color):
             f'fill="{color}"/>')
 
 
+def hour_deg(h):
+    """24h dial: noon at the top, midnight at the bottom."""
+    return (h / 24 * 360 + 180) % 360
+
+
 # ---------------------------------------------------------------------------
 # Face 1: Field (everyday essentials)
 # ---------------------------------------------------------------------------
 
+def droplet(x, y, s, color):
+    r = s * 0.3
+    cy = y + s * 0.18
+    return (f'<circle cx="{x:.1f}" cy="{cy:.1f}" r="{r:.1f}" fill="{color}"/>'
+            f'<polygon points="{x:.1f},{y - s / 2:.1f} {x - r:.1f},{cy - 1:.1f} {x + r:.1f},{cy - 1:.1f}" fill="{color}"/>')
+
+
 def field_active():
     b = []
-    # Bezel ring: progress to the daily step goal, clockwise from 12 o'clock
-    b.append(arc(214, 0, 0, TRACK, 10))
-    b.append(arc(214, 0, 360 * 0.70, AMBER, 10))
+    # Bezel ring: a 24 h daylight dial, noon at the top. Night navy, daylight
+    # in the accent from sunrise to sunset, a sun marker at the current time.
+    rise, sset, now = 6 + 52 / 60, 17 + 41 / 60, 10 + 8 / 60
+    b.append(arc(214, 0, 0, NIGHT, 10))
+    b.append(arc(214, hour_deg(rise), hour_deg(sset), AMBER, 10, cap='butt'))
+    sx, sy = polar(214, hour_deg(now))
+    b.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="7" fill="{WHITE}" stroke="{BG}" stroke-width="2"/>')
+    # Signals row: only what applies right now (here: rain ahead)
+    b.append(droplet(196, 59, 16, CYAN))
+    b.append(text(236, 59, '60%', 20, GRAY))
     # Date
     b.append(text(C, 112, 'TUE 27 OCT', 30, GRAY, 500, extra='letter-spacing="2"'))
     # Time
@@ -107,7 +126,8 @@ def field_active():
         b.append(text(x, 312, label, 17, DIM, 600, extra='letter-spacing="1"'))
         b.append(text(x, 345, val, 38, col, 600))
     b.append(heart(117, 286, 16, RED))
-    # Footer: the next sun event only (weather + notifications is a setting)
+    # Footer: the next sun event only (weather + notifications is a setting).
+    # At night a moon-phase glyph sits to the left of the sunrise time.
     b.append(sun_marker(C - 34, 386, 12, ORANGE, rise=False))
     b.append(text(C + 12, 386, '17:41', 22, GRAY))
     screen('face-field-active', '\n'.join(b))
@@ -121,18 +141,17 @@ def field_aod():
     b.append(outline_text(C + dx, 220 + dy, '10:08', 116, GRAY, 1.8))
     b.append(sun_marker(C + dx - 30, 327 + dy, 9, DIM, rise=False))
     b.append(text(C + dx + 12, 327 + dy, '17:41', 20, DIM))
-    b.append(arc(206, 0, 360 * 0.70, '#4a3a10', 2))
+    # Daylight band as a dim 2 px hairline, hollow sun marker
+    rise, sset, now = 6 + 52 / 60, 17 + 41 / 60, 10 + 8 / 60
+    b.append(arc(206, hour_deg(rise), hour_deg(sset), '#4a3a10', 2, cap='butt'))
+    sx, sy = polar(206, hour_deg(now))
+    b.append(f'<circle cx="{sx:.1f}" cy="{sy:.1f}" r="7" fill="none" stroke="{DIM}" stroke-width="2"/>')
     screen('face-field-aod', '\n'.join(b), 'AOD: hollow digits, next sun event, thin 2px hairline ring, shift +-12px per minute')
 
 
 # ---------------------------------------------------------------------------
 # Face 2: Daylight (24-hour sun dial, outdoors)
 # ---------------------------------------------------------------------------
-
-def hour_deg(h):
-    """24h dial: noon at the top, midnight at the bottom."""
-    return (h / 24 * 360 + 180) % 360
-
 
 def daylight_active():
     b = []

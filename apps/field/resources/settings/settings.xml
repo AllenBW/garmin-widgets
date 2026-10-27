@@ -12,6 +12,7 @@
 
     <setting propertyKey="@Properties.Ring" title="@Strings.RingTitle">
         <settingConfig type="list">
+            <listEntry value="3">@Strings.RingDaylight</listEntry>
             <listEntry value="0">@Strings.RingSteps</listEntry>
             <listEntry value="1">@Strings.RingBattery</listEntry>
             <listEntry value="2">@Strings.RingOff</listEntry>
@@ -29,6 +30,10 @@
             <listEntry value="6">@Strings.SlotStress</listEntry>
             <listEntry value="7">@Strings.SlotSunrise</listEntry>
             <listEntry value="8">@Strings.SlotSunset</listEntry>
+            <listEntry value="9">@Strings.SlotCalendar</listEntry>
+            <listEntry value="10">@Strings.SlotRecovery</listEntry>
+            <listEntry value="11">@Strings.SlotSleep</listEntry>
+            <listEntry value="12">@Strings.SlotHighLow</listEntry>
         </settingConfig>
     </setting>
 
@@ -43,6 +48,10 @@
             <listEntry value="6">@Strings.SlotStress</listEntry>
             <listEntry value="7">@Strings.SlotSunrise</listEntry>
             <listEntry value="8">@Strings.SlotSunset</listEntry>
+            <listEntry value="9">@Strings.SlotCalendar</listEntry>
+            <listEntry value="10">@Strings.SlotRecovery</listEntry>
+            <listEntry value="11">@Strings.SlotSleep</listEntry>
+            <listEntry value="12">@Strings.SlotHighLow</listEntry>
         </settingConfig>
     </setting>
 
@@ -57,7 +66,15 @@
             <listEntry value="6">@Strings.SlotStress</listEntry>
             <listEntry value="7">@Strings.SlotSunrise</listEntry>
             <listEntry value="8">@Strings.SlotSunset</listEntry>
+            <listEntry value="9">@Strings.SlotCalendar</listEntry>
+            <listEntry value="10">@Strings.SlotRecovery</listEntry>
+            <listEntry value="11">@Strings.SlotSleep</listEntry>
+            <listEntry value="12">@Strings.SlotHighLow</listEntry>
         </settingConfig>
+    </setting>
+
+    <setting propertyKey="@Properties.Signals" title="@Strings.SignalsTitle">
+        <settingConfig type="boolean"/>
     </setting>
 
     <setting propertyKey="@Properties.Footer" title="@Strings.FooterTitle">

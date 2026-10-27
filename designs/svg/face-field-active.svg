@@ -2,8 +2,11 @@
 <defs><clipPath id="face"><circle cx="227.0" cy="227.0" r="227.0"/></clipPath></defs>
 <circle cx="227.0" cy="227.0" r="227.0" fill="#000000"/>
 <g clip-path="url(#face)">
-<circle cx="227.0" cy="227.0" r="214" fill="none" stroke="#262626" stroke-width="10"/>
-<path d="M227.0,13.0 A214,214 0 1 1 23.5,293.1" fill="none" stroke="#FFB020" stroke-width="10" stroke-linecap="round"/>
+<circle cx="227.0" cy="227.0" r="214" fill="none" stroke="#1A2A4A" stroke-width="10"/>
+<path d="M18.5,178.9 A214,214 0 0 1 440.3,209.3" fill="none" stroke="#FFB020" stroke-width="10" stroke-linecap="butt"/>
+<circle cx="126.5" cy="38.0" r="7" fill="#F2F2F2" stroke="#000000" stroke-width="2"/>
+<circle cx="196.0" cy="61.9" r="4.8" fill="#3EC6E0"/><polygon points="196.0,51.0 191.2,60.9 200.8,60.9" fill="#3EC6E0"/>
+<text x="236.0" y="59.0" font-size="20" fill="#8A8A8A" font-weight="400" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >60%</text>
 <text x="227.0" y="112.0" font-size="30" fill="#8A8A8A" font-weight="500" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" letter-spacing="2">TUE 27 OCT</text>
 <text x="227.0" y="210.0" font-size="128" fill="#F2F2F2" font-weight="700" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" >10:08</text>
 <text x="117.0" y="312.0" font-size="17" fill="#5A5A5A" font-weight="600" text-anchor="middle" dominant-baseline="middle" font-family="'Roboto Condensed','Arial Narrow',Arial,sans-serif" letter-spacing="1">HR</text>

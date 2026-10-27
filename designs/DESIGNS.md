@@ -40,21 +40,31 @@ Considered and dropped:
 check dozens of times a day, with nothing else.
 
 **Layout (active)**
-- A ring around the bezel, filled clockwise from 12 o'clock. By default it
-  shows progress to the daily step goal; settings switch it to battery or
-  off. (The first cut showed battery with a "72% · 6d 4h" readout in a gap at
-  6 o'clock; dropped, since a watch that lasts weeks doesn't need its battery
-  on the home screen.)
+- A ring around the bezel. By default it is a **24-hour daylight dial**: noon
+  at the top, night in navy, daylight in the accent colour from sunrise to
+  sunset, and a sun marker at the current time, so the shape of the day and
+  the light left are visible without a number. Settings switch the ring to
+  step-goal progress, battery, or off. (The first cut showed battery with a
+  "72% · 6d 4h" readout; dropped, since a watch that lasts weeks doesn't need
+  its battery on the home screen.)
+- A **signals row** at the top that is empty unless something applies: a
+  droplet with the chance when the hourly forecast puts rain at 40 % or more
+  in the next 3 hours, a red triangle with "hPa" when the barometer has
+  dropped 4 hPa in 3 hours (the storm-alert convention), a red dot when the
+  phone is disconnected, and a circle-with-bar for do not disturb.
 - Date above the time; very large time in the centre.
 - Three slots: **HR · Steps · Body Battery**. Each slot can be set to another
-  value in settings, including sunrise and sunset.
+  value in settings: calories, floors, distance, stress, sunrise, sunset, next
+  calendar event, recovery time, sleep score, or today's high/low.
 - A footer with the **next sun event** only: ▲ 6:52 until the sun is up, then
-  ▼ 17:41, then tomorrow's sunrise. One value, not two. Settings switch the
-  footer to weather plus notification count, or off.
+  ▼ 17:41, then tomorrow's sunrise. One value, not two. While the sun is down
+  a small **moon glyph** with tonight's phase sits beside it. Settings switch
+  the footer to weather plus notification count, or off.
 
 **Always-on:** hollow time digits, the date in dim grey, the next sun event,
-and a 2 px hairline ring. Everything shifts by up to ±12 px, one step a
-minute. Lit pixels stay well under 10 %.
+and a 2 px hairline ring (the daylight band and a hollow sun marker).
+Everything shifts by up to ±12 px, one step a minute. Lit pixels stay well
+under 10 %.
 
 **Interaction:** pressing and holding a slot opens the native widget for
 that complication, via `WatchFaceDelegate.onPress` → `Complications.exitTo(id)`
@@ -73,10 +83,16 @@ permission. Untested on hardware ⚠️.
 | Weather | `Weather.getCurrentConditions()` ✅ |
 | Notifications | `System.getDeviceSettings().notificationCount` ✅ |
 | Sunrise, sunset | sunrise/sunset complications (seconds since local midnight, the watch's own figures) ✅, falling back to `Weather.getSunrise/getSunset` with the weather observation position or the last activity location (`Lib.Sun`) |
+| Moon phase | synodic-month arithmetic from the clock (`Lib.Moon`), no data needed ✅ |
+| Rain ahead | `Weather.getHourlyForecast()` precipitationChance ✅ |
+| Pressure falling | `SensorHistory.getPressureHistory` over 3 h ✅ |
+| Phone, do not disturb | `System.getDeviceSettings().phoneConnected`, `.doNotDisturb` ✅ |
+| Next calendar event, sleep score, recovery, high/low | the matching complications ✅ (calendar is a time string; sleep 0–100; recovery via `ActivityMonitor.Info.timeToRecovery`; high/low from `Weather.getDailyForecast()`) |
 
-**Settings:** accent colour, what the ring shows (step goal, battery, off),
-slot 1–3 contents, the footer (next sun event, weather and notifications,
-off), and 12/24 h follows the system.
+**Settings:** accent colour, what the ring shows (daylight dial, step goal,
+battery, off), whether the signals row is shown, slot 1–3 contents, the
+footer (next sun event, weather and notifications, off), and 12/24 h follows
+the system.
 
 **Fonts (measured in the simulator at 454 px):** time `FONT_NUMBER_MEDIUM`
 (153 px box), date `FONT_TINY`, values `FONT_SMALL`, footer `FONT_XTINY`, slot
@@ -210,9 +226,10 @@ in the golden/blue hour and the moon. Keep it small.
   - `Arcs` (done): clockwise arcs from 12 o'clock, plus ring gauges
   - `Fmt` (done): thousands separators, durations, clock times, distance,
     temperature, vector fonts
-  - `Sun` (started): today's sunrise and sunset and the next event, from the
-    complications with a Weather fallback. Solar elevation and golden/blue
-    hour come with Daylight.
+  - `Sun` (started): today's sunrise and sunset, the next event, and where a
+    time sits on a 24 h dial, from the complications with a Weather fallback.
+    Solar elevation and golden/blue hour come with Daylight.
+  - `Moon` (done): phase, illumination, and a phase glyph.
   - `Moon` (todo, with Sun & Moon): phase
 - **One jungle per app** in `apps/<name>/`, linked to the barrel with
   `base.barrelPath = ../../lib/monkey.jungle`. The starter face became

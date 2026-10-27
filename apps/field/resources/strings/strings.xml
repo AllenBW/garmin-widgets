@@ -9,6 +9,7 @@
     <string id="ColorWhite">White</string>
 
     <string id="RingTitle">Bezel ring</string>
+    <string id="RingDaylight">Daylight (24 h dial)</string>
     <string id="RingSteps">Step goal progress</string>
     <string id="RingBattery">Battery</string>
     <string id="RingOff">Off</string>
@@ -25,6 +26,12 @@
     <string id="SlotStress">Stress</string>
     <string id="SlotSunrise">Sunrise</string>
     <string id="SlotSunset">Sunset</string>
+    <string id="SlotCalendar">Next calendar event</string>
+    <string id="SlotRecovery">Recovery time</string>
+    <string id="SlotSleep">Sleep score</string>
+    <string id="SlotHighLow">High / low temperature</string>
+
+    <string id="SignalsTitle">Show alerts (rain, pressure, phone, do not disturb)</string>
 
     <string id="FooterTitle">Footer</string>
     <string id="FooterSun">Next sunrise or sunset</string>

@@ -55,6 +55,13 @@ module Lib {
             return null;
         }
 
+        // Where a time of day sits on a 24-hour dial with noon at the top and
+        // midnight at the bottom: degrees clockwise from 12 o'clock.
+        function dialDegrees(secondsSinceMidnight as Number) as Float {
+            var deg = secondsSinceMidnight * 360.0 / 86400.0 + 180.0;
+            return (deg >= 360.0) ? deg - 360.0 : deg;
+        }
+
         function fromComplication(type as Complications.Type) as Number? {
             if (!(Toybox has :Complications)) {
                 return null;

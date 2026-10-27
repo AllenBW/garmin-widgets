@@ -11,7 +11,7 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
-  (sunrise and sunset).
+  (sunrise and sunset), `Moon` (phase).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
 > fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
