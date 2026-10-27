@@ -27,7 +27,7 @@
     <string id="SlotSunset">Sunset</string>
 
     <string id="FooterTitle">Footer</string>
-    <string id="FooterSun">Sunrise and sunset</string>
+    <string id="FooterSun">Next sunrise or sunset</string>
     <string id="FooterWeather">Weather and notifications</string>
     <string id="FooterOff">Off</string>
 </strings>

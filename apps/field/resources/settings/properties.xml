@@ -6,6 +6,6 @@
     <property id="Slot1" type="number">0</property>
     <property id="Slot2" type="number">1</property>
     <property id="Slot3" type="number">2</property>
-    <!-- Footer: 0 sunrise and sunset, 1 weather and notifications, 2 off -->
+    <!-- Footer: 0 next sun event, 1 weather and notifications, 2 off -->
     <property id="Footer" type="number">0</property>
 </properties>

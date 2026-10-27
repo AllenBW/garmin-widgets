@@ -20,8 +20,8 @@ import Toybox.Weather;
 // "10:08" is 264 px wide in NUMBER_MEDIUM; "8,412" is 109 px wide in SMALL.
 //
 // Active:    bezel ring (step goal progress by default; battery or off in
-//            settings), date, time, three slots (settings), footer with
-//            sunrise and sunset (or weather and notifications, or off).
+//            settings), date, time, three slots (settings), footer with the
+//            next sun event (or weather and notifications, or off).
 // Always-on: hollow time, dim date, the next sun event, 2 px hairline ring,
 //            everything shifted a few pixels each minute. Well under 10 % of
 //            pixels lit.
@@ -181,27 +181,21 @@ class FieldView extends WatchUi.WatchFace {
         }
     }
 
-    // "▲ 6:52   ▼ 17:41", centred on cx. The triangles are drawn, since the
-    // system fonts have no arrow glyphs.
+    // The next sun event only ("▲ 6:52" before sunrise, "▼ 17:41" during the
+    // day), centred on cx. The triangle is drawn, since the system fonts have
+    // no arrow glyphs.
     private function drawSunFooter(dc as Dc, cx as Number, y as Number, w as Number,
                                    textColor as ColorType, riseColor as ColorType, setColor as ColorType) as Void {
-        var times = Lib.Sun.today();
-        var rise = times[0];
-        var set = times[1];
-        if (rise == null && set == null) {
+        var next = Lib.Sun.next(Lib.Sun.today());
+        if (next == null) {
             return;
         }
         var font = Graphics.FONT_XTINY;
-        var riseText = (rise != null) ? Lib.Fmt.clock(rise) : "--";
-        var setText = (set != null) ? Lib.Fmt.clock(set) : "--";
+        var text = Lib.Fmt.clock(next[1]);
         var tri = (w * 0.026).toNumber();
         var gap = (w * 0.018).toNumber();
-        var mid = (w * 0.06).toNumber();
-        var riseWidth = dc.getTextWidthInPixels(riseText, font);
-        var setWidth = dc.getTextWidthInPixels(setText, font);
-        var x = cx - (tri + gap + riseWidth + mid + tri + gap + setWidth) / 2;
-        x += drawSunTime(dc, x, y, true, riseText, tri, gap, font, riseColor, textColor) + mid;
-        drawSunTime(dc, x, y, false, setText, tri, gap, font, setColor, textColor);
+        var x = cx - (tri + gap + dc.getTextWidthInPixels(text, font)) / 2;
+        drawSunTime(dc, x, y, next[0], text, tri, gap, font, next[0] ? riseColor : setColor, textColor);
     }
 
     // A triangle (up for sunrise, down for sunset) and a time, left-aligned
