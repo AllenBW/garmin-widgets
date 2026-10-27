@@ -9,9 +9,11 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   Artisan (`AllenBW/artisan`) or any other repository. Don't add integrations
   with, references to, or code from other projects unless the owner asks for
   them explicitly.
-- Target device ID: `fenix8pro47mm` (confirmed in SDK 9.3.0; it covers the
-  47 mm, 51 mm and MicroLED). Lay out relative to `dc.getWidth()` /
-  `dc.getHeight()`, never fixed pixels.
+- Target devices: `fenix8pro47mm` (fēnix 8 Pro 47 mm, 51 mm and MicroLED,
+  454×454), `fenix847mm` (fēnix 8 47/51 mm, 454×454) and `fenix843mm` (fēnix 8
+  43 mm, 416×416). All API 6.0.3, 128 KB watch face budget. Lay out relative
+  to `dc.getWidth()` / `dc.getHeight()`, never fixed pixels, and build for all
+  three before committing.
 - Every watch face must respect the AMOLED always-on rules: at most 10 % of
   pixels lit, shift the layout each minute, and check `requiresBurnInProtection`.
   Use `Lib.Aod` for this rather than re-implementing it.

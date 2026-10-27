@@ -27,14 +27,17 @@ line. Researched late October 2026.
   SDK exposes them under a **single device ID, `fenix8pro47mm`** ✅ (SDK 9.3.0
   lists "fēnix® 8 Pro 47mm / 51mm / MicroLED / quatix® 8 Pro" as one entry).
 - The fēnix 8 family is on the **current platform generation**: Connect IQ 9,
-  API level 6.0 ⚠️. The newest SDK is **9.3.0** (20 Oct 2026). It lets apps
+  **API level 6.0.3** ✅ (`compiler.json`, firmware 2339, for the 8 Pro, the 8
+  43 mm and the 8 47/51 mm alike). The newest SDK is **9.3.0** (20 Oct 2026). It lets apps
   use the **microphone, the speaker and LTE**, and Garmin explicitly lists the
   fēnix 8 Pro for all three ⚠️.
 - The fēnix 8 Pro has real **LTE and inReach satellite** hardware. As of SDK 9.3,
   CIQ apps can bring LTE up themselves for web requests ⚠️. Satellite messaging
   is **not** exposed to apps.
-- The biggest constraints are **memory** (about 128 KB for a watch face or
-  data field ⚠️), the **AMOLED always-on rules** (at most 10 % of pixels lit,
+- The biggest constraints are **memory** (**128 KB** for a watch face or
+  data field, 64 KB for a glance or background process, 768 KB for a device
+  app, 512 KB for an audio content provider ✅ from `compiler.json`), the
+  **AMOLED always-on rules** (at most 10 % of pixels lit,
   no pixel lit for more than 3 minutes ✅), and **background tasks** (at most
   once every 5 minutes, about 30 seconds each ✅).
 
@@ -45,7 +48,7 @@ line. Researched late October 2026.
 | | fēnix 8 Pro 47 mm | fēnix 8 Pro 51 mm | fēnix 8 Pro MicroLED 51 mm |
 |---|---|---|---|
 | Display | AMOLED, 1.4" | AMOLED, 1.4" | MicroLED, about 4,500 nits |
-| Resolution | 454×454 ✅ | 454×454 ✅ | 454×454 ⚠️ |
+| Resolution | 454×454 ✅ | 454×454 ✅ | 454×454 ✅ (same device files) |
 | Touch | yes, plus 5 buttons | yes | yes |
 | Solar | **no** | **no** | **no** |
 | Battery, smartwatch mode | up to 27 days (AOD off) | up to 27 days | up to 10 days |
@@ -54,15 +57,18 @@ line. Researched late October 2026.
 | CIQ device ID | `fenix8pro47mm` ✅ (one ID covers all three, plus the quatix 8 Pro) | ← | ← |
 | Launcher icon | 65×65 ⚠️ | ← | ← |
 
-The regular fēnix 8 47 mm uses a different panel: 1.3" at 416×416 on the AMOLED
-model, 260×260 on the solar MIP model. Never assume a resolution. Read
-`dc.getWidth()` / `dc.getHeight()` and lay out relative to the centre, so the
-same code runs on other fēnix 8 and fēnix 9 variants.
+The regular fēnix 8 AMOLED models are also targets, in case the Pro doesn't
+happen: `fenix843mm` is **416×416** (family `round-416x416`) and `fenix847mm`
+covers the 47 mm and 51 mm at **454×454**, with the same memory limits and API
+level as the Pro ✅. The solar models use a MIP panel (260×260 / 280×280) and
+are out of scope. Never assume a resolution. Read `dc.getWidth()` /
+`dc.getHeight()` and lay out relative to the centre.
 
-**Action item:** after installing the SDK, open
-`~/.Garmin/ConnectIQ/Devices/fenix8pro47mm/compiler.json` (Linux/macOS path).
-It is the source of truth for memory limits, fonts, colour depth, API level and
-the supported app types. Fill in §9 from it.
+Device files live in `~/.Garmin/ConnectIQ/Devices/<id>/` (symlinked into
+`~/Library/Application Support/Garmin/ConnectIQ/Devices` on the Mac so the SDK
+finds them). `compiler.json` there is the source of truth for memory limits,
+app types, colour depth (16 bpp) and API level; `simulator.json` has the
+display size, fonts and 326 ppi.
 
 ---
 
@@ -81,7 +87,7 @@ the supported app types. Fill in §9 from it.
 
 | App type | What it is | Gets input? | Notable access | Main limits |
 |---|---|---|---|---|
-| **Watch face** | Replaces the home screen | No buttons. One gesture: **press and hold** via `WatchFaceDelegate.onPress` (CIQ 4.2+). Plain taps only reach a face inside the on-device config editor (`onTap`, 5.1+) ✅ | Time, battery, steps, HR, weather, **complications** (subscribe to native data), settings, background service for web data | About 128 KB of RAM ⚠️. Redrawn once a minute in sleep mode. AMOLED burn-in rules. No direct web requests from the foreground. |
+| **Watch face** | Replaces the home screen | No buttons. One gesture: **press and hold** via `WatchFaceDelegate.onPress` (CIQ 4.2+). Plain taps only reach a face inside the on-device config editor (`onTap`, 5.1+) ✅ | Time, battery, steps, HR, weather, **complications** (subscribe to native data), settings, background service for web data | 128 KB of RAM ✅. Redrawn once a minute in sleep mode. AMOLED burn-in rules. No direct web requests from the foreground. |
 | **Data field** | One field on a native activity's data screen | No (it runs inside the native activity) | Live activity metrics, ANT+ and BLE sensors, **writes FIT developer fields** that show up in Garmin Connect | About 128 KB ⚠️. Up to **4 CIQ data fields** active at once on the fēnix 8 ✅ |
 | **Glance / widget** | A row in the glance loop that opens into a full app | Yes, once opened | Like a device app | Glance view about 64 KB ⚠️ |
 | **Device app** | A full-screen app launched from the apps menu or a hot key | Full: buttons, touch, menus | GPS (`Position`), sensors and sensor history, **FIT recording** (`ActivityRecording`), **BLE central** (up to 3 registered profiles ✅), `Communications` (web requests, OAuth, phone messaging), storage, vibration and tones, **QR codes** (9.1), **mic/speaker** (9.3), **LTE control** (9.3) | Fēnix 8 figure unconfirmed. The fēnix 7 Pro allows about 768 KB ⚠️ |
@@ -236,10 +242,10 @@ The concrete designs we chose are in [`designs/DESIGNS.md`](designs/DESIGNS.md).
 
 - [x] The exact device ID: `fenix8pro47mm` covers the 47 mm, 51 mm, MicroLED
       and quatix 8 Pro (SDK 9.3.0 device-reference and API docs).
-- [ ] Memory limits for watch face, data field, glance, background and device
-      app (from `compiler.json`).
-- [ ] The current API level on the shipped firmware (expected 6.0), and whether
-      9.3 features need a firmware update.
+- [x] Memory limits: watch face 128 KB, data field 128 KB, glance 64 KB,
+      background 64 KB, device app 768 KB, audio provider 512 KB.
+- [x] API level 6.0.3 in the SDK 9.3.0 device files (firmware 2339). Whether
+      the watch's installed firmware matches is still to check on hardware.
 - [ ] Whether the on-device customization bug is fixed in current firmware.
 - [ ] The 9.3 theme API, `Audio` module names and permissions, and LTE APIs.
       Read the SDK API docs.

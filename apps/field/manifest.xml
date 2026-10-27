@@ -2,8 +2,11 @@
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <iq:application id="58d5fd5cfa6041a3a5cceb791ee4b133" type="watchface" name="@Strings.AppName" entry="FieldApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
         <iq:products>
-            <!-- One device ID covers the fenix 8 Pro 47 mm, 51 mm and MicroLED (SDK 9.3 device-reference) -->
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
             <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
         </iq:products>
         <iq:permissions>
             <!-- press-and-hold on a slot opens the matching native widget -->
