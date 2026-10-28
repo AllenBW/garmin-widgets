@@ -9,6 +9,8 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`designs/DESIGNS.md`](designs/DESIGNS.md) has the first designs, ranked (Field, Battery
   Planner, Daylight, Readiness, Sun & Moon), with mockups in `designs/svg/`.
 - [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
+- [`apps/battery/`](apps/battery/) is **Battery Planner**, a glance and app
+  that projects when to charge from the last week's drain (design #2).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset), `Moon` (phase).
@@ -21,11 +23,16 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > `Lib` maths is checked against known values. Code plus data is 13 KB of
 > the 128 KB watch face budget. It has not been checked on a watch yet, and
 > the simulator's Low Power Mode and burn-in checker still need a look by eye.
+> Battery Planner builds cleanly for the same three devices and its seven
+> tests pass (projection maths, the storage ring buffer, the background
+> sampler, and drawing the glance and the app); it has not been looked at
+> in the simulator or run on a watch yet.
 
 ## Layout
 
 ```
 apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, tests/, resources/
+apps/battery/    Battery Planner glance + app, same layout
 lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
 scripts/         build.sh, sim.sh, test.sh, sdk-env.sh
@@ -85,12 +92,16 @@ scripts/build.sh field                 # -> apps/field/bin/field.prg for fenix8p
 scripts/build.sh field fenix843mm -l 3      # other device; extra args go to monkeyc (-l 3 = strict types)
 scripts/sim.sh field                   # starts the simulator and loads the build
 scripts/test.sh field [fenix843mm]     # builds with --unit-test and runs the tests in the simulator
+scripts/build.sh battery && scripts/sim.sh battery   # same for the Battery Planner
 ```
 
 Unit tests live in `apps/<app>/tests/`, are annotated `(:test)` and are left
 out of normal builds. `monkeydo … -t` prints one line per test and a RESULTS
-table, then exits. (If it prints nothing after switching the simulator to a
-new device, kill the `MonkeyDoDeux` java process and run it again.)
+table, then exits. If it prints nothing at all, the simulator has a stale
+connection: quit and reopen the simulator (`connectiq`) and run it again.
+
+In the simulator, **Simulation → Background Events → Temporal Event** fires
+the Battery Planner's sampler by hand, and Select in the app logs a sample.
 
 The scripts read the SDK from `current-sdk.cfg` and the key from
 `~/.garmin/developer_key.der` (override with `CIQ_DEVELOPER_KEY`). By hand:
