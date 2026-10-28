@@ -357,7 +357,10 @@ across the sky inside it.
   o'clock marks the direction you face.
 - Inside, the sky seen from above: the horizon is a dim ring and straight
   up is the centre. Dim amber dots mark the sun at every full hour it is
-  up; an amber ▲ on the ring is sunrise, an orange ▼ sunset. The sun right
+  up, with every third hour labelled in small grey figures (the label sits
+  away from the centre, or towards it when the dot is near the horizon,
+  and is dropped while the sun covers that dot); an amber ▲ on the ring
+  is sunrise, an orange ▼ sunset. The sun right
   now is an amber disc with a hairline out to the ring so its bearing can
   be read off the ticks; below the horizon it becomes a hollow circle on
   the ring at its bearing.
@@ -373,8 +376,8 @@ the rose glides. `Lib.Solar.altAz` (NOAA) gives the sun's altitude and
 bearing now, at every full hour of the day and at sunrise and sunset, from
 `Lib.Location`. Once the sun has set the path shown is tomorrow's.
 
-**Not done:** a mockup in `mockups.py`; hour labels on the dots; the
-moon's bearing; a day picker for the path. Magnetic declination is not
+**Not done:** a mockup in `mockups.py`; the moon's bearing; a day picker
+for the path. Magnetic declination is not
 needed: the watch reports a true-north heading.
 
 ---

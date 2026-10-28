@@ -14,7 +14,7 @@ class SunSky {
     var set as Number? = null;
     var riseAz as Float? = null;           // and the bearings they happen at
     var setAz as Float? = null;
-    var hours as Array<[Float, Float]> = [] as Array<[Float, Float]>;   // [alt, az] at each full hour the sun is up
+    var hours as Array<[Number, Float, Float]> = [] as Array<[Number, Float, Float]>;   // [hour, alt, az] at each full hour the sun is up
     var nextIsRise as Boolean = true;
     var nextEvent as Number? = null;       // the next sunrise or sunset
     var nextAz as Float? = null;
@@ -63,11 +63,11 @@ module CompassModel {
         if (set != null) {
             s.setAz = Lib.Solar.altAz(lat, lon, set)[1];
         }
-        var hours = [] as Array<[Float, Float]>;
+        var hours = [] as Array<[Number, Float, Float]>;
         for (var h = 0; h < 24; h++) {
             var pos = Lib.Solar.altAz(lat, lon, dayStart + h * 3600);
             if (pos[0] > 0.0) {
-                hours.add(pos);
+                hours.add([h, pos[0], pos[1]]);
             }
         }
         s.hours = hours;

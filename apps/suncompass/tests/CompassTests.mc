@@ -4,6 +4,7 @@ import Toybox.Math;
 import Toybox.System;
 import Toybox.Test;
 import Toybox.Time;
+import Toybox.Time.Gregorian;
 
 // Run No Evil tests for Sun Compass: scripts/test.sh suncompass [device].
 // Reference positions are from the NOAA solar calculator equations, cross-
@@ -45,8 +46,11 @@ function testModelPath(logger as Logger) as Boolean {
     Test.assertMessage(riseAz != null && (riseAz - 128.4).abs() < 0.5, "sunrise bearing 128");
     Test.assertMessage(setAz != null && (setAz - 231.6).abs() < 0.5, "sunset bearing 232");
     Test.assertEqualMessage(morning.hours.size(), 7, "the sun is up at seven full hours, 09:00 to 15:00");
+    // The dots are at the watch's local full hours, so their labels follow the simulator's time zone
+    var noonLocal = Gregorian.info(new Time.Moment(day + 12 * 3600), Time.FORMAT_SHORT).hour;
     var noon = morning.hours[3];
-    Test.assertMessage((noon[0] - 15.05).abs() < 0.3 && (noon[1] - 180.28).abs() < 0.3, "the fourth dot is noon");
+    Test.assertMessage(noon[0] == noonLocal && (noon[1] - 15.05).abs() < 0.3 && (noon[2] - 180.28).abs() < 0.3, "the fourth dot is noon: " + noon);
+    Test.assertMessage(morning.hours[0][0] == (noonLocal + 21) % 24 && morning.hours[6][0] == (noonLocal + 3) % 24, "dots from 09:00 to 15:00 GMT");
     logger.debug(CompassText.headline(morning) + " / " + CompassText.detail(morning));
     Test.assertEqualMessage(CompassText.headline(morning), "Sun 152° SE", "headline");
     var line = CompassText.nextLine(morning);
@@ -99,6 +103,12 @@ function testBearings(logger as Logger) as Boolean {
     Test.assertEqualMessage(CompassText.degrees(359.7), "0°", "rounds to 0");
     Test.assertEqualMessage(CompassText.degrees(148.4), "148°", "rounds down");
     Test.assertEqualMessage(CompassText.degrees(-0.83), "-1°", "negative");
+
+    var label = CompassText.hourLabel(15);   // "15", or "3" on a 12-hour watch
+    Test.assertMessage(label.equals("15") || label.equals("3"), "hour label: " + label);
+    label = CompassText.hourLabel(0);
+    Test.assertMessage(label.equals("0") || label.equals("12"), "midnight label: " + label);
+    Test.assertEqualMessage(CompassText.hourLabel(12), "12", "noon label");
     return true;
 }
 
