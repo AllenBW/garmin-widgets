@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Horizon launcher icon (64 px): a 12-hour ring with a rain stretch in cyan, night in navy, a hand at now -->
+  <g transform="scale(1)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#262626" stroke-width="6"/>
+    <path d="M52.8,44 A24,24 0 0 1 11.2,44" fill="none" stroke="#1A2A4A" stroke-width="6"/>
+    <path d="M44,11.2 A24,24 0 0 1 56,32" fill="none" stroke="#3EC6E0" stroke-width="6"/>
+    <circle cx="32" cy="8" r="4" fill="#F2F2F2"/>
+  </g>
+</svg>

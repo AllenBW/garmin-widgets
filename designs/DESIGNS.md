@@ -22,7 +22,7 @@ in the SDK before relying on it.
 | 4 | **Readiness** | Watch face | Body metrics without opening widgets | M | Which metrics CIQ actually exposes |
 | 5 | **Sun & Moon** | Glance + app | Golden/blue hour and moon phase, offline | S–M | Built in `apps/sunmoon/` |
 | 6 | **Night Sky** | Watch face | The real sky overhead: stars, constellations, Moon, planets | M | Built in `apps/nightsky/` |
-| 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Hourly forecast coverage |
+| 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
 | 8 | **Sun Compass** | App | A live compass rose with today's sun path across it | S–M | Magnetometer heading |
 
 Considered and dropped:
@@ -307,6 +307,39 @@ update looks at the brightest 80 stars only and draws in under 30 ms.
 
 **Not done:** a settings toggle for the constellation lines; star names on
 a long press; the Milky Way.
+
+---
+
+## 7. Horizon: the next twelve hours on the bezel
+
+**Purpose:** one glance answers "what's coming": dry until three, meeting
+at four, dark by six.
+
+**Layout (active)**
+- An ordinary 12-hour dial, but the bezel is the twelve hours ahead, one
+  segment per hour starting at the current hour: dark grey by day, navy
+  once the sun is down, and blue where rain is likely (three shades: 20, 40
+  and 60 % chance). A white dot on the ring marks now, like an hour hand.
+- A triangle just inside the ring where the sun sets (orange) or rises
+  (amber) if that is within twelve hours; a white diamond where the next
+  calendar event is.
+- Centre: date, time, the rain outlook in words ("rain from 15:00, 70%",
+  "rain now, 80%", "no rain in the next 12 h", "no forecast"), then the
+  temperature, the sun event and the event time with the same glyphs.
+
+**Always-on:** a 2 px hairline showing only the rain hours in dim blue, a
+hollow dot at now, hollow time, the next sun event; shifted each minute.
+
+**Data:** `Weather.getHourlyForecast()` (precipitation chance per hour, 12
+to 13 hours ahead on the watch), `Lib.Solar` with `Lib.Location` for the
+day/night tint and the sun marker (the watch's own sunrise/sunset when no
+location was ever known), the calendar complication's "16:00" string parsed
+for the diamond, `Weather.getCurrentConditions()` for the temperature.
+Everything is worked out in `HorizonModel.build()` from plain numbers, so
+the tests feed it a synthetic day.
+
+**Not done:** a mockup in `mockups.py`; the event title (the complication
+only gives its time); a rain threshold setting.
 
 ---
 

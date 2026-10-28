@@ -78,6 +78,14 @@ records where the project stands so the next session can carry on.
     holds the maths (Schlyter), checked in the tests against published
     positions. Placing the sky costs 6 ms; always-on uses the brightest 80
     stars. Five tests pass. Not looked at by eye.
+  - **Horizon** (`apps/horizon/`, watch face): the bezel is the next twelve
+    hours, one segment per hour from the current one: grey by day, navy at
+    night, blue in three shades for rain chance from the hourly forecast; a
+    dot at now, a sun triangle and a calendar diamond on the ring; centre
+    has date, time, the rain outlook in words, then temperature, sun event
+    and event time. `HorizonModel.build()` is pure and tested with a
+    synthetic day; the calendar complication's time string is parsed
+    ("16:00", "4:05 pm"). Four tests pass. Not looked at by eye.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -121,9 +129,6 @@ records where the project stands so the next session can carry on.
 5. Settings for Daylight (accent, show altitude/pressure), a constellation
    lines toggle for Night Sky, and the on-device editor for all faces, once
    the basics have been seen on a watch.
-6. Picked by the owner on 2026-10-28, in this order: **Horizon** face (the
-   bezel is the next 12 hours: rain chance per hour from
-   `Weather.getHourlyForecast()`, sunset/sunrise marker, the next calendar
-   event from its complication, a hand at now) and **Sun Compass** app (a
-   compass rose from `Sensor.getInfo().heading` with today's sun path from
-   `Lib.Sky`, needs the Sensor permission).
+6. Picked by the owner on 2026-10-28: **Sun Compass** app (a compass rose
+   from `Sensor.getInfo().heading` with today's sun path from `Lib.Sky`,
+   needs the Sensor permission) is the next build. Horizon is done.
