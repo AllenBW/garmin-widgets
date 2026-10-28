@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="65" height="65">
+  <!-- Sun Compass launcher icon (65 px): black disc, a compass ring with the sun on its path -->
+  <g transform="scale(1.015625)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#8A8A8A" stroke-width="2"/>
+    <path d="M32,6 L32,12 M32,52 L32,58 M6,32 L12,32 M52,32 L58,32" stroke="#F2F2F2" stroke-width="3" stroke-linecap="round"/>
+    <path d="M32,4 L36,10 L28,10 Z" fill="#FFB020"/>
+    <path d="M14,44 A20,20 0 0 1 50,44" fill="none" stroke="#9A6A14" stroke-width="2" stroke-dasharray="2,3"/>
+    <circle cx="40" cy="26" r="6" fill="#FFB020"/>
+  </g>
+</svg>
