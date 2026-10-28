@@ -16,7 +16,12 @@ module Lib {
 
         // 0 = new, 0.25 = first quarter, 0.5 = full, 0.75 = last quarter
         function phase() as Float {
-            var elapsed = (Time.now().value() - NEW_MOON_EPOCH).toFloat() / SYNODIC_SECONDS;
+            return phaseAt(Time.now().value());
+        }
+
+        // The phase at a Unix time (seconds)
+        function phaseAt(unixSeconds as Number) as Float {
+            var elapsed = (unixSeconds - NEW_MOON_EPOCH).toFloat() / SYNODIC_SECONDS;
             return elapsed - Math.floor(elapsed).toFloat();
         }
 

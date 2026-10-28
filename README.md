@@ -15,17 +15,20 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
 > fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
-> fēnix 8 43 mm (`fenix843mm`), and loads in the simulator. It has not been
-> checked on a watch yet, and the simulator's Low Power Mode and burn-in
-> checker still need a look by eye.
+> fēnix 8 43 mm (`fenix843mm`), loads in the simulator, and its unit tests
+> pass on all three (`scripts/test.sh field <device>`): every ring, footer
+> and slot mode is drawn awake and in always-on mode without error, and the
+> `Lib` maths is checked against known values. Code plus data is 13 KB of
+> the 128 KB watch face budget. It has not been checked on a watch yet, and
+> the simulator's Low Power Mode and burn-in checker still need a look by eye.
 
 ## Layout
 
 ```
-apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, resources/
-lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt}.mc
+apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, tests/, resources/
+lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
-scripts/         build.sh, sim.sh, sdk-env.sh
+scripts/         build.sh, sim.sh, test.sh, sdk-env.sh
 ```
 
 Each app is its own Connect IQ project (open `apps/field/` as the VS Code
@@ -33,7 +36,7 @@ workspace folder). It links the barrel with two jungle lines:
 
 ```
 base.barrelPath = ../../lib/monkey.jungle
-base.Lib.annotations = aod;arcs;fmt
+base.Lib.annotations = aod;arcs;fmt;sun;moon
 ```
 
 ## Setup
@@ -81,7 +84,13 @@ base.Lib.annotations = aod;arcs;fmt
 scripts/build.sh field                 # -> apps/field/bin/field.prg for fenix8pro47mm
 scripts/build.sh field fenix843mm -l 3      # other device; extra args go to monkeyc (-l 3 = strict types)
 scripts/sim.sh field                   # starts the simulator and loads the build
+scripts/test.sh field [fenix843mm]     # builds with --unit-test and runs the tests in the simulator
 ```
+
+Unit tests live in `apps/<app>/tests/`, are annotated `(:test)` and are left
+out of normal builds. `monkeydo … -t` prints one line per test and a RESULTS
+table, then exits. (If it prints nothing after switching the simulator to a
+new device, kill the `MonkeyDoDeux` java process and run it again.)
 
 The scripts read the SDK from `current-sdk.cfg` and the key from
 `~/.garmin/developer_key.der` (override with `CIQ_DEVELOPER_KEY`). By hand:
