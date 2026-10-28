@@ -25,6 +25,7 @@
             <iq:annotation>moon</iq:annotation>
             <iq:annotation>solar</iq:annotation>
             <iq:annotation>location</iq:annotation>
+            <iq:annotation>sky</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>
