@@ -130,6 +130,25 @@ sparkline of battery level.
 first day after install has no history, so it falls back to
 `batteryInDays`.
 
+**Built** as `apps/battery/` (a `widget`, so it sits in the glance loop):
+- `BatterySampler` (background, every 30 min) appends `[time, level,
+  charging]` to a flat array in `Application.Storage` (`BatteryLog`, newest
+  384 samples = 8 days). Select in the app logs a sample right away.
+- `BatteryModel` sums the drain between consecutive samples per local day,
+  skipping charging spans, level rises and gaps over 3 h. A day with 20 h of
+  coverage is complete; the pace is the median of complete days (or a rough
+  rate once 3 h of history exist). Time left = level ÷ pace; "charge by" is
+  when the level reaches a 10 % reserve. A day over 1.5× the pace is the
+  heavy day, annotated with that day's activity time from
+  `UserProfile.getUserActivityHistory()` (app only).
+- Glance: BATTERY / "6d 4h left" / "charge by Sun 2 Nov" plus a sparkline
+  of the level; theme light blue. App: the same in large type, seven bars,
+  the pace line. Both fall back to the watch's `batteryInDays` with "watch
+  estimate, logging day 1".
+- Glance code cannot use the `Lib` barrel (its `(:glance)` annotation would
+  be compiled into the watch faces that link `Lib`, which the compiler warns
+  about), so `BatteryText` carries its own `duration` and `shortDate`.
+
 ---
 
 ## 3. Daylight: 24-hour sun dial watch face

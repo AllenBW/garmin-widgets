@@ -39,10 +39,25 @@ records where the project stands so the next session can carry on.
     new and full moons), `Lib.Arcs`, `Lib.Aod` (all 25 offset cells in an
     hour) and `Lib.Fmt`. Memory: code + data 13.4 KB (`--build-stats 0`),
     about 30 KB in use at runtime, against the 128 KB watch face budget.
+  - **Battery Planner** (`apps/battery/`, a widget: glance + app): a
+    background service logs the battery level every 30 min into
+    `Application.Storage`; `BatteryModel` turns the week into a drain per
+    day, a pace (median of complete days), hours left and a charge-by date
+    (10 % reserve); the glance shows the headline, the charge-by date and a
+    sparkline, the app adds seven drain bars with the heavy day in orange and
+    its activity time. Falls back to the watch's `batteryInDays` until there
+    is history. Select in the app logs a sample. Seven tests pass on all
+    three devices (`scripts/test.sh battery`). Loaded once in the simulator
+    without console errors; not yet looked at by eye, and the background
+    service has only been exercised by the test (it calls `onTemporalEvent`
+    directly).
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
-  the 416 px layout on `fenix843mm` (it draws without error there).
+  the 416 px layout on `fenix843mm` (it draws without error there). For the
+  Battery Planner: the glance row (the simulator shows the glance loop from
+  the watch face), the app layout, and **Simulation → Background Events →
+  Temporal Event** to fire the sampler.
 - **Still to check on a watch:** press-and-hold → `Complications.exitTo`,
   `SensorHistory` Body Battery/stress, settings in Garmin Connect, and the
   APIs still marked ⚠️ in `EXPLORATION.md` and `designs/DESIGNS.md`.
@@ -65,6 +80,8 @@ records where the project stands so the next session can carry on.
 2. Consider the on-device watch face editor (`resources/configs/watchface.xml`,
    `WatchFaceConfig`, SDK sample `ConfigurableWatchFace`) for the slots and
    accent colour once the basics work.
-3. **Battery Planner** (design #2) as `apps/battery/`. Before **Readiness**
-   (#4), check which complications the SDK exposes (the list is in
-   `<sdk>/doc/Toybox/Complications.html`).
+3. Battery Planner on a watch: confirm the background service really fires
+   every 30 min (the log should grow by 48 samples a day) and that the
+   activity annotation finds activities. Then **Daylight** (#3) or
+   **Readiness** (#4); before Readiness, check which complications the SDK
+   exposes (the list is in `<sdk>/doc/Toybox/Complications.html`).

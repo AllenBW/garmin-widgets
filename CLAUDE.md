@@ -18,7 +18,12 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   pixels lit, shift the layout each minute, and check `requiresBurnInProtection`.
   Use `Lib.Aod` for this rather than re-implementing it.
 - Shared code goes in the `lib/` barrel as an annotated sub-module, and apps
-  link only the annotations they use (see `apps/field/monkey.jungle`).
+  link only the annotations they use (see `apps/field/monkey.jungle`). `Lib`
+  is foreground-only: code that runs in a glance or a background service
+  must carry `(:glance)` / `(:background)`, and those annotations on barrel
+  code would be compiled into the watch faces too, where the compiler warns.
+  Glance and background code keeps its own small helpers in the app (see
+  `apps/battery/source/BatteryText.mc`).
 - Build with `scripts/build.sh <app>`; run `scripts/sim.sh <app>` to see it in
   the simulator; `scripts/test.sh <app> [device]` runs the unit tests in
   `apps/<app>/tests/` (annotated `(:test)`, excluded from normal builds). Add a
@@ -33,5 +38,6 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 - `designs/`: design specs and mockups (`DESIGNS.md`, `mockups.py` → `svg/`)
 - `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`)
 - `apps/<name>/`: one Connect IQ project per app (`apps/field/` is the Field
-  watch face, design #1)
+  watch face, design #1; `apps/battery/` the Battery Planner glance + app,
+  design #2)
 - `scripts/`: build, simulator and test helpers
