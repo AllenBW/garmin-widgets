@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <!-- A widget: a row in the glance loop that opens into the full app -->
+    <iq:application id="0310b927c85c4324b7c3c69b52078ef0" type="widget" name="@Strings.AppName" entry="CompassApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+        <iq:products>
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
+            <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- only to read the watch's last GPS fix; no GPS is switched on -->
+            <iq:uses-permission id="Positioning"/>
+            <!-- the compass heading, while the app is on screen -->
+            <iq:uses-permission id="Sensor"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>

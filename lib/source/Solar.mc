@@ -81,13 +81,26 @@ module Lib {
 
         // The sun's altitude above the horizon, in degrees, at a Unix time
         function elevation(lat as Float, lon as Float, unix as Number) as Float {
+            return altAz(lat, lon, unix)[0];
+        }
+
+        // Where the sun is at a Unix time: [altitude above the horizon,
+        // azimuth clockwise from true north], both in degrees
+        function altAz(lat as Float, lon as Float, unix as Number) as [Float, Float] {
             var pos = position(century(unix));
             var minutes = (unix % 86400).toDouble() / 60.0d;
-            var hourAngle = norm360((minutes + pos[1] + 4.0d * lon) / 4.0d) - 180.0d;
+            var hourAngle = rad(norm360((minutes + pos[1] + 4.0d * lon) / 4.0d) - 180.0d);
             var latR = rad(lat);
             var decl = rad(pos[0]);
-            var sinEl = Math.sin(latR) * Math.sin(decl) + Math.cos(latR) * Math.cos(decl) * Math.cos(rad(hourAngle));
-            return Math.toDegrees(Math.asin(sinEl)).toFloat();
+            var cosH = Math.cos(hourAngle);
+            var sinEl = Math.sin(latR) * Math.sin(decl) + Math.cos(latR) * Math.cos(decl) * cosH;
+            if (sinEl > 1.0d) {
+                sinEl = 1.0d;
+            } else if (sinEl < -1.0d) {
+                sinEl = -1.0d;
+            }
+            var az = Math.toDegrees(Math.atan2(Math.sin(hourAngle), cosH * Math.sin(latR) - Math.tan(decl) * Math.cos(latR))) + 180.0d;
+            return [Math.toDegrees(Math.asin(sinEl)).toFloat(), norm360(az).toFloat()];
         }
 
         // Julian centuries since J2000.0 at a Unix time

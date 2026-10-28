@@ -23,7 +23,7 @@ in the SDK before relying on it.
 | 5 | **Sun & Moon** | Glance + app | Golden/blue hour and moon phase, offline | S–M | Built in `apps/sunmoon/` |
 | 6 | **Night Sky** | Watch face | The real sky overhead: stars, constellations, Moon, planets | M | Built in `apps/nightsky/` |
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
-| 8 | **Sun Compass** | App | A live compass rose with today's sun path across it | S–M | Magnetometer heading |
+| 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 
 Considered and dropped:
 
@@ -343,6 +343,42 @@ only gives its time); a rain threshold setting.
 
 ---
 
+## 8. Sun Compass: a compass rose with today's sun across it
+
+**Purpose:** answers "where will the sun be?": which way to point the
+camera, which side of the valley the campsite should be on, when the
+evening sun reaches the terrace. Hold the watch flat and the rose turns
+so the way you face is at the top, with the whole day's sun path drawn
+across the sky inside it.
+
+**Layout (app)**
+- Rim: ticks every 10°, longer every 30°, and the letters N (amber), E, S
+  and W inside them; all turn with the heading. A fixed amber wedge at 12
+  o'clock marks the direction you face.
+- Inside, the sky seen from above: the horizon is a dim ring and straight
+  up is the centre. Dim amber dots mark the sun at every full hour it is
+  up; an amber ▲ on the ring is sunrise, an orange ▼ sunset. The sun right
+  now is an amber disc with a hairline out to the ring so its bearing can
+  be read off the ticks; below the horizon it becomes a hollow circle on
+  the ring at its bearing.
+- Centre: the heading ("213° SW") and the next sun event with its bearing
+  ("sets 17:41 at 232°", "rises 7:12 at 108°", "up all day").
+- Glance: COMPASS, then "Sun 148° SE" or "Sun below horizon", then
+  "31° up, sets 17:41 at 232°". No sensor runs in the glance.
+
+**Data:** `Sensor.getInfo().heading` (true north, radians; needs the
+Sensor permission), polled four times a second while the app is on screen
+alongside the 1 Hz sensor event, and smoothed halfway to each reading so
+the rose glides. `Lib.Solar.altAz` (NOAA) gives the sun's altitude and
+bearing now, at every full hour of the day and at sunrise and sunset, from
+`Lib.Location`. Once the sun has set the path shown is tomorrow's.
+
+**Not done:** a mockup in `mockups.py`; hour labels on the dots; the
+moon's bearing; a day picker for the path. Magnetic declination is not
+needed: the watch reports a true-north heading.
+
+---
+
 ## Shared building blocks
 
 - **`lib/` barrel** (`Lib`, a Monkey C library shared by every app; each
@@ -355,14 +391,16 @@ only gives its time); a rain threshold setting.
     time sits on a 24 h dial, from the complications with a Weather fallback.
     Solar elevation and golden/blue hour come with Daylight.
   - `Moon` (done): phase, illumination, and a phase glyph.
-  - `Solar` (done, glance-safe): NOAA sun position and altitude crossings:
-    sunrise/sunset, golden and blue hour. Used by Sun & Moon and Daylight.
+  - `Solar` (done, glance-safe): NOAA sun position (altitude and bearing)
+    and altitude crossings: sunrise/sunset, golden and blue hour. Used by
+    Sun & Moon, Daylight, Horizon and Sun Compass.
   - `Location` (done, glance-safe): the last known position from the
     weather sync, the activity, the last GPS fix or the app's own storage.
   - `Fmt` is glance-safe too (countdown, clockAt, shortDate added).
   - `Sky` (done): sidereal time, altitude/azimuth from right ascension and
     declination, and the Sun, Moon, Venus, Mars, Jupiter and Saturn
-    (Schlyter's method). Night Sky uses it; Sun Compass will.
+    (Schlyter's method). Night Sky uses it. (Sun Compass uses `Solar`
+    instead: NOAA is the better sun model and it is glance-safe.)
 - **One jungle per app** in `apps/<name>/`, linked to the barrel with
   `base.barrelPath = ../../lib/monkey.jungle`. The starter face became
   `apps/field/`.

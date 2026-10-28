@@ -86,6 +86,19 @@ records where the project stands so the next session can carry on.
     and event time. `HorizonModel.build()` is pure and tested with a
     synthetic day; the calendar complication's time string is parsed
     ("16:00", "4:05 pm"). Four tests pass. Not looked at by eye.
+  - **Sun Compass** (`apps/suncompass/`, a widget: glance + app): a compass
+    rose (ticks, N/E/S/W) that turns so the heading is at the top, with
+    the sky seen from above inside it: horizon ring, hourly sun dots,
+    sunrise ▲ and sunset ▼ on the ring, the sun now as a disc (hollow on
+    the ring when it is down), the heading and the next sun event with its
+    bearing in the centre. `Lib.Solar.altAz` (new) gives the sun's
+    altitude and bearing; it agrees with an independent model to 0.02°.
+    The heading comes from `Sensor.getInfo().heading`, polled at 4 Hz
+    while the view is shown (plus the 1 Hz sensor event), smoothed; the
+    sensor is released in `onHide`. Four tests pass on all three devices;
+    a frame draws in about 60 ms in the simulator. Not looked at by eye.
+    If the simulator gives no heading the rose stays north-up and the
+    centre says "no compass".
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -129,6 +142,9 @@ records where the project stands so the next session can carry on.
 5. Settings for Daylight (accent, show altitude/pressure), a constellation
    lines toggle for Night Sky, and the on-device editor for all faces, once
    the basics have been seen on a watch.
-6. Picked by the owner on 2026-10-28: **Sun Compass** app (a compass rose
-   from `Sensor.getInfo().heading` with today's sun path from `Lib.Sky`,
-   needs the Sensor permission) is the next build. Horizon is done.
+6. Sun Compass (picked by the owner on 2026-10-28) is built. On a watch:
+   check the heading really updates at 4 Hz, how the smoothing feels, and
+   that the sensor stops when the app closes (battery). Possible follow-ups
+   the owner has not asked for yet: hour labels on the dots, the moon's
+   bearing, and the golden hour alert and sound level meter ideas from the
+   same conversation.
