@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="65" height="65">
+  <!-- Daylight launcher icon (65 px): a 24 h dial, night in navy, day in amber, the sun at the top -->
+  <g transform="scale(1.01562)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <circle cx="32" cy="32" r="24" fill="none" stroke="#1A2A4A" stroke-width="6"/>
+    <path d="M12.6,44 A24,24 0 0 1 51.4,44" fill="none" stroke="#FFB020" stroke-width="6"/>
+    <circle cx="32" cy="8" r="5" fill="#F2F2F2"/>
+  </g>
+</svg>

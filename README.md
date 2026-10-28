@@ -11,12 +11,14 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
 - [`apps/battery/`](apps/battery/) is **Battery Planner**, a glance and app
   that projects when to charge from the last week's drain (design #2).
+- [`apps/daylight/`](apps/daylight/) is **Daylight**, a 24 h sun-dial watch
+  face with golden hours, light left, altitude and pressure (design #3).
 - [`apps/sunmoon/`](apps/sunmoon/) is **Sun and Moon**, a glance and app with
   the next sun event, golden and blue hour and the moon, offline (design #5).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
-  golden and blue hour) and `GlanceFmt` (formatting for glances).
+  golden and blue hour) and `Location` (the last known position).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
 > fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
@@ -31,14 +33,17 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > sampler, and drawing the glance and the app); the app looked right in the
 > simulator. Sun and Moon builds cleanly too and its five tests pass (sun
 > times within a minute of the NOAA calculator, the golden and blue hour
-> windows, drawing); it has not been looked at in the simulator, which has
-> no location for it, or run on a watch.
+> windows, drawing). Daylight builds cleanly and its three tests pass (the
+> light-left line, dial placement, drawing both modes). The simulator
+> supplies a location (Garmin's Kansas office) for both, so their screens
+> show real times. Neither has been run on a watch.
 
 ## Layout
 
 ```
 apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, tests/, resources/
 apps/battery/    Battery Planner glance + app, same layout
+apps/daylight/   Daylight watch face, same layout
 apps/sunmoon/    Sun and Moon glance + app, same layout
 lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
@@ -101,7 +106,12 @@ scripts/sim.sh field                   # starts the simulator and loads the buil
 scripts/test.sh field [fenix843mm]     # builds with --unit-test and runs the tests in the simulator
 scripts/build.sh battery && scripts/sim.sh battery   # same for the Battery Planner
 scripts/build.sh sunmoon && scripts/sim.sh sunmoon   # and for Sun and Moon
+scripts/build.sh daylight && scripts/sim.sh daylight # and for Daylight
 ```
+
+`build.sh` and `test.sh` drop one expected monkeyc warning: a watch face
+that links a glance-safe `Lib` module (`Fmt`, `Solar`, `Location`) is told
+the `(:glance)` annotation is ignored, which is fine (see `CLAUDE.md`).
 
 Unit tests live in `apps/<app>/tests/`, are annotated `(:test)` and are left
 out of normal builds. `monkeydo … -t` prints one line per test and a RESULTS

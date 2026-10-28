@@ -19,7 +19,12 @@ source "$ROOT/scripts/sdk-env.sh"
 cd "$ROOT/apps/$APP"
 mkdir -p bin
 echo "monkeyc --unit-test -> apps/$APP/bin/$APP-test.prg ($DEVICE)"
-"$SDK/bin/monkeyc" -d "$DEVICE" -f monkey.jungle -o "bin/$APP-test.prg" -y "$KEY" -w -l 3 --unit-test
+set +e
+"$SDK/bin/monkeyc" -d "$DEVICE" -f monkey.jungle -o "bin/$APP-test.prg" -y "$KEY" -w -l 3 --unit-test 2>&1 \
+    | grep -v "The (:glance) annotation will be ignored"   # expected for Lib's glance-safe modules (CLAUDE.md)
+STATUS=${PIPESTATUS[0]}
+set -e
+[ "$STATUS" -eq 0 ] || exit "$STATUS"
 
 if ! pgrep -f "ConnectIQ.app|simulator" >/dev/null 2>&1; then
     "$SDK/bin/connectiq" &

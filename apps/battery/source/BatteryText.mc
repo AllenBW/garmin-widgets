@@ -3,7 +3,7 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 
 // The words on the glance and the app, in one place so both say the same
-// thing. Formatting comes from Lib.GlanceFmt, the glance-safe part of Lib.
+// thing. Lib.Fmt is glance-safe, so both can use it.
 (:glance)
 module BatteryText {
 
@@ -11,7 +11,7 @@ module BatteryText {
     function headline(s as BatterySummary) as String {
         var hours = s.hoursLeft;
         if (hours != null) {
-            return Lib.GlanceFmt.duration(hours) + " left";
+            return Lib.Fmt.duration(hours) + " left";
         }
         var days = s.watchDays;
         if (days != null) {
@@ -24,7 +24,7 @@ module BatteryText {
     function chargeLine(s as BatterySummary) as String {
         var by = s.chargeBy;
         if (by != null) {
-            return "charge by " + Lib.GlanceFmt.shortDate(by);
+            return "charge by " + Lib.Fmt.shortDate(by);
         }
         return "watch estimate, logging day 1";
     }
@@ -41,7 +41,7 @@ module BatteryText {
             if (drain != null) {
                 text += "  ·  " + dayName(s.dayStarts[heavy]) + " -" + drain.format("%.0f") + "%";
                 if (heavyHours >= 0.5) {
-                    text += " (" + Lib.GlanceFmt.duration(heavyHours) + " activity)";
+                    text += " (" + Lib.Fmt.duration(heavyHours) + " activity)";
                 }
             }
         }

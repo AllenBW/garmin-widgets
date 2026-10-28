@@ -91,12 +91,12 @@ function testModelWindows(logger as Logger) as Boolean {
 
 (:test)
 function testGlanceFmt(logger as Logger) as Boolean {
-    Test.assertEqualMessage(Lib.GlanceFmt.countdown(6 * 3600 + 48 * 60), "6h 48m", "hours and minutes");
-    Test.assertEqualMessage(Lib.GlanceFmt.countdown(45 * 60), "45m", "minutes");
-    Test.assertEqualMessage(Lib.GlanceFmt.countdown(30), "now", "now");
-    Test.assertEqualMessage(Lib.GlanceFmt.countdown(25 * 3600), "1d 1h", "days");
-    Test.assertEqualMessage(Lib.GlanceFmt.clock(6 * 3600 + 52 * 60), "6:52", "clock");
-    Test.assertMessage(Lib.GlanceFmt.localSeconds(Time.now().value()) < 86400, "local seconds");
+    Test.assertEqualMessage(Lib.Fmt.countdown(6 * 3600 + 48 * 60), "6h 48m", "hours and minutes");
+    Test.assertEqualMessage(Lib.Fmt.countdown(45 * 60), "45m", "minutes");
+    Test.assertEqualMessage(Lib.Fmt.countdown(30), "now", "now");
+    Test.assertEqualMessage(Lib.Fmt.countdown(25 * 3600), "1d 1h", "days");
+    Test.assertEqualMessage(Lib.Fmt.clock(6 * 3600 + 52 * 60), "6:52", "clock");
+    Test.assertMessage(Lib.Fmt.localSeconds(Time.now().value()) < 86400, "local seconds");
     return true;
 }
 
@@ -108,7 +108,7 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var screen = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
     var glanceDc = (Graphics.createBufferedBitmap({:width => (w * 0.77).toNumber(), :height => (h * 0.29).toNumber()}).get() as Graphics.BufferedBitmap).getDc();
 
-    var where = SunLocation.get();
+    var where = Lib.Location.get();
     logger.debug("location: " + where);
     var glance = new SunGlance();
     glance.onLayout(glanceDc);

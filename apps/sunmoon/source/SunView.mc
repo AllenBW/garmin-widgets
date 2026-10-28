@@ -67,8 +67,8 @@ class SunView extends WatchUi.View {
         var golden = s.goldenAt;
         var blue = s.blueAt;
         var rows = [
-            [s.goldenNow ? "Golden hour ends" : "Golden hour", (golden != null) ? Lib.GlanceFmt.clockAt(golden) : "--", ORANGE],
-            [s.blueNow ? "Blue hour ends" : "Blue hour", (blue != null) ? Lib.GlanceFmt.clockAt(blue) : "--", CYAN],
+            [s.goldenNow ? "Golden hour ends" : "Golden hour", (golden != null) ? Lib.Fmt.clockAt(golden) : "--", ORANGE],
+            [s.blueNow ? "Blue hour ends" : "Blue hour", (blue != null) ? Lib.Fmt.clockAt(blue) : "--", CYAN],
             ["Moon", moonText(), WHITE]
         ];
         if (today == null) {
@@ -125,8 +125,8 @@ class SunView extends WatchUi.View {
 
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         var timesY = horizonY + (h * 0.053).toNumber();
-        dc.drawText(cx - rx.toNumber(), timesY, _textFont, (rise != null) ? Lib.GlanceFmt.clockAt(rise) : "--", center);
-        dc.drawText(cx + rx.toNumber(), timesY, _textFont, (set != null) ? Lib.GlanceFmt.clockAt(set) : "--", center);
+        dc.drawText(cx - rx.toNumber(), timesY, _textFont, (rise != null) ? Lib.Fmt.clockAt(rise) : "--", center);
+        dc.drawText(cx + rx.toNumber(), timesY, _textFont, (set != null) ? Lib.Fmt.clockAt(set) : "--", center);
     }
 
     // "Waxing 78%", "Full", "New"

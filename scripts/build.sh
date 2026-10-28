@@ -23,4 +23,11 @@ source "$ROOT/scripts/sdk-env.sh"
 cd "$ROOT/apps/$APP"
 mkdir -p bin
 echo "monkeyc $(cat "$SDK/bin/version.txt") -> apps/$APP/bin/$APP.prg ($DEVICE)"
-"$SDK/bin/monkeyc" -d "$DEVICE" -f monkey.jungle -o "bin/$APP.prg" -y "$KEY" -w "$@"
+# Lib's glance-safe modules carry (:glance); in a watch face monkeyc warns that
+# the annotation is ignored (CLAUDE.md). That one expected line is dropped.
+set +e
+"$SDK/bin/monkeyc" -d "$DEVICE" -f monkey.jungle -o "bin/$APP.prg" -y "$KEY" -w "$@" 2>&1 \
+    | grep -v "The (:glance) annotation will be ignored"
+STATUS=${PIPESTATUS[0]}
+set -e
+exit "$STATUS"

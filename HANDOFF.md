@@ -19,9 +19,9 @@ records where the project stands so the next session can carry on.
   - Platform exploration with sources (`EXPLORATION.md`)
   - Five designs with mockups (`designs/`)
   - Repo layout: `apps/<name>/` per app plus the shared `lib/` barrel
-    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`, `Lib.Moon`, and the
-    glance-safe `Lib.Solar`, `Lib.GlanceFmt`), and `scripts/build.sh` /
-    `scripts/sim.sh` / `scripts/test.sh`
+    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`, `Lib.Moon`, `Lib.Solar`,
+    `Lib.Location`; `Fmt`, `Solar` and `Location` are glance-safe), and
+    `scripts/build.sh` / `scripts/sim.sh` / `scripts/test.sh`
   - **Field** watch face (`apps/field/`): a 24 h daylight dial on the bezel
     (step goal, battery or off in settings), a signals row that only shows
     rain ahead, pressure falling, phone disconnected or do not disturb, date,
@@ -63,6 +63,13 @@ records where the project stands so the next session can carry on.
     three devices. The simulator supplies no location in the test harness,
     so the "No location yet" path is what the tests draw; not looked at by
     eye, not run on a watch. Moonrise/moonset not done.
+  - **Daylight** (`apps/daylight/`, watch face): the 24 h dial (navy night,
+    amber day, orange golden hours from `Lib.Solar`, 24 ticks, a hand at
+    the current time), light left or time to sunrise, the time, sunrise and
+    sunset, altitude and sea-level pressure with a trend triangle; always-on
+    with cardinal ticks, hollow marker and hollow time. Falls back to the
+    watch's sunrise/sunset when no location was ever known. Three tests
+    pass on `fenix8pro47mm`. No settings. Not looked at by eye.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -98,6 +105,10 @@ records where the project stands so the next session can carry on.
    every 30 min (the log should grow by 48 samples a day) and that the
    activity annotation finds activities. Sun and Moon on a watch: confirm a
    location is found after a phone sync or a GPS activity.
-4. Then **Daylight** (#3, can reuse `Lib.Solar` for golden hour) or
-   **Readiness** (#4); before Readiness, check which complications the SDK
-   exposes (the list is in `<sdk>/doc/Toybox/Complications.html`).
+4. **Readiness** (#4) is the last design. The SDK 9.3 complication list
+   has Body Battery, stress, sleep score, recovery time, training status,
+   respiration, pulse ox and VO2 max, but no HRV status, Training
+   Readiness or resting HR (resting HR is in `UserProfile.getProfile()`).
+   So the face can show what the sketch wanted except HRV.
+5. Settings for Daylight (accent, show altitude/pressure) and the on-device
+   editor for all faces, once the basics have been seen on a watch.

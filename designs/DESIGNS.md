@@ -17,10 +17,10 @@ in the SDK before relying on it.
 | # | Design | Type | Value | Effort | Main risk |
 |---|---|---|---|---|---|
 | 1 | **Field** | Watch face | Everyday face, the thing we'll look at most | S | None. Built in `apps/field/` |
-| 2 | **Battery Planner** | Glance + app | Drain history and a charge-by date. Native only shows a current estimate | M | Background storage and sampling budget |
-| 3 | **Daylight** | Watch face | Distinctive 24 h sun dial for outdoor use | M | Sun maths and a 24 h dial readable at a glance |
+| 2 | **Battery Planner** | Glance + app | Drain history and a charge-by date. Native only shows a current estimate | M | Built in `apps/battery/` |
+| 3 | **Daylight** | Watch face | Distinctive 24 h sun dial for outdoor use | M | Built in `apps/daylight/` |
 | 4 | **Readiness** | Watch face | Body metrics without opening widgets | M | Which metrics CIQ actually exposes |
-| 5 | **Sun & Moon** | Glance + app | Golden/blue hour and moon phase, offline | S–M | Overlaps the native sunrise/sunset glance |
+| 5 | **Sun & Moon** | Glance + app | Golden/blue hour and moon phase, offline | S–M | Built in `apps/sunmoon/` |
 
 Considered and dropped:
 
@@ -145,9 +145,7 @@ first day after install has no history, so it falls back to
   of the level; theme light blue. App: the same in large type, seven bars,
   the pace line. Both fall back to the watch's `batteryInDays` with "watch
   estimate, logging day 1".
-- Glance code cannot use the `Lib` barrel (its `(:glance)` annotation would
-  be compiled into the watch faces that link `Lib`, which the compiler warns
-  about), so `BatteryText` carries its own `duration` and `shortDate`.
+- Formatting comes from `Lib.Fmt`, which is glance-safe.
 
 ---
 
@@ -181,6 +179,22 @@ next sun event.
 
 **Risks:** the location can be stale after travel. Show "location from
 <time>" in settings, and refresh it when any activity records GPS.
+
+**Built** as `apps/daylight/`:
+- The dial: navy all round, amber from sunrise to sunset, orange for the
+  golden hours (−4° to +6°, so each slice straddles sunrise or sunset),
+  24 ticks outside with 0 / 6 / 12 / 18 inside, a white hand and dot at the
+  current time. Times come from `Lib.Solar` with `Lib.Location`; with no
+  location ever known the watch's own sunrise/sunset (`Lib.Sun`) draw the
+  day band and there are no golden slices.
+- Centre: "7h 33m of light left" or "sunrise in 9h 12m", the time, the
+  sunrise and sunset times with drawn triangles, altitude (m or ft per the
+  device setting) and sea-level pressure with a trend triangle when the
+  barometer moved 1 hPa in 3 h.
+- Always-on: four cardinal ticks, a hollow sun marker, hollow time, the
+  next sun event; all shifted each minute by `Lib.Aod`.
+- No settings yet. Not done from the sketch: the "location from <time>"
+  note.
 
 ---
 
@@ -237,14 +251,14 @@ in the golden/blue hour and the moon. Keep it small.
 
 **Built** as `apps/sunmoon/` (a `widget`, app name "Sun and Moon" because the
 store rejects `&` in names):
-- `Lib.Solar` (new, glance-safe): the NOAA equations for declination and the
+- `Lib.Solar` (glance-safe): the NOAA equations for declination and the
   equation of time, `crossings()` for the times the sun reaches any altitude
   (two passes, within a minute of the NOAA calculator), `elevation()`, and
   `day()` for sunrise/sunset (−0.833°), golden hour (+6° to −4°) and blue
   hour (−4° to −6°), morning and evening.
-- `SunLocation`: weather observation point, else the activity's location,
+- `Lib.Location`: weather observation point, else the activity's location,
   else the watch's last GPS fix (`Position.getInfo()`, needs the Positioning
-  permission but switches nothing on), else the position this app saved.
+  permission but switches nothing on), else the position the app saved.
 - Glance: SUN / "Sunset 17:41" / "golden hour in 6h 48m" (or "golden hour,
   ends in 23m"); theme gold. App: the sun on a dotted half-ellipse between
   the sunrise and sunset times (a dim dot under the horizon at night), then
@@ -268,10 +282,10 @@ store rejects `&` in names):
     Solar elevation and golden/blue hour come with Daylight.
   - `Moon` (done): phase, illumination, and a phase glyph.
   - `Solar` (done, glance-safe): NOAA sun position and altitude crossings:
-    sunrise/sunset, golden and blue hour. Daylight (#3) should use it too,
-    at the cost of one compiler warning per build (see CLAUDE.md).
-  - `GlanceFmt` (done, glance-safe): the formatters a glance needs
-    (duration, countdown, clock, short date). Repeats two of `Fmt`'s.
+    sunrise/sunset, golden and blue hour. Used by Sun & Moon and Daylight.
+  - `Location` (done, glance-safe): the last known position from the
+    weather sync, the activity, the last GPS fix or the app's own storage.
+  - `Fmt` is glance-safe too (countdown, clockAt, shortDate added).
 - **One jungle per app** in `apps/<name>/`, linked to the barrel with
   `base.barrelPath = ../../lib/monkey.jungle`. The starter face became
   `apps/field/`.

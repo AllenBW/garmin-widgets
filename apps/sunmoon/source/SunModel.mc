@@ -23,7 +23,7 @@ module SunModel {
 
     // The status right now, from the last known location
     function status(now as Number) as SunStatus {
-        var where = SunLocation.get();
+        var where = Lib.Location.get();
         if (where == null) {
             return new SunStatus();
         }
