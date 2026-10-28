@@ -19,7 +19,7 @@ in the SDK before relying on it.
 | 1 | **Field** | Watch face | Everyday face, the thing we'll look at most | S | None. Built in `apps/field/` |
 | 2 | **Battery Planner** | Glance + app | Drain history and a charge-by date. Native only shows a current estimate | M | Built in `apps/battery/` |
 | 3 | **Daylight** | Watch face | Distinctive 24 h sun dial for outdoor use | M | Built in `apps/daylight/` |
-| 4 | **Readiness** | Watch face | Body metrics without opening widgets | M | Which metrics CIQ actually exposes |
+| 4 | **Readiness** | Watch face | Body metrics without opening widgets | M | Built in `apps/readiness/` |
 | 5 | **Sun & Moon** | Glance + app | Golden/blue hour and moon phase, offline | S–M | Built in `apps/sunmoon/` |
 | 6 | **Night Sky** | Watch face | The real sky overhead: stars, constellations, Moon, planets | M | Built in `apps/nightsky/` |
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
@@ -229,6 +229,28 @@ next sun event.
 and there's no evidence CIQ exposes them. Check the complication list in the
 SDK before committing to this face. If they're missing, this face may not beat
 the native ones.
+
+**Built** as `apps/readiness/`:
+- Sources, from the SDK 9.3 docs: Body Battery and stress are the newest
+  `SensorHistory` samples (stress falls back to `ActivityMonitor`); sleep
+  score (API 6.0.2), recovery time (minutes) and training status (a string)
+  are complications; resting heart rate is `UserProfile.getProfile()`. HRV
+  status and Training Readiness are indeed not exposed, so the face shows
+  the sketch minus those two.
+- The gauges fill upward on both sides (Body Battery clockwise from the
+  bottom left, stress from the bottom right), with the number and label
+  beside each. Tiles: "82 SLEEP", "14h RECOVERY" (rounded up; "ready" at
+  zero, "45m" under an hour), "48 RHR". Footer: "Training: Productive",
+  left out when the watch has no status.
+- Press and hold on a gauge, a tile or the footer opens the native widget
+  (`Complications.exitTo`); RHR opens the heart rate widget, the nearest
+  thing.
+- Metrics are read once a minute while awake and every five minutes
+  always-on, where the update has a power budget. Always-on is the hollow
+  time and "BB 74 · SLEEP 82", shifted each minute.
+- The simulator supplies values (Body Battery 88, stress 35, sleep score
+  15, 5 h recovery, resting HR 60, training "No Result"), so the layout can
+  be checked with real-looking numbers.
 
 ---
 

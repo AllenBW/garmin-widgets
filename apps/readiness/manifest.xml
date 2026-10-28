@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="58415a6ec6a6442cbdab8e92c9cac660" type="watchface" name="@Strings.AppName" entry="ReadinessApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+        <iq:products>
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
+            <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- sleep score, recovery time and training status; press-and-hold opens the native widgets -->
+            <iq:uses-permission id="ComplicationSubscriber"/>
+            <!-- Body Battery and stress -->
+            <iq:uses-permission id="SensorHistory"/>
+            <!-- resting heart rate -->
+            <iq:uses-permission id="UserProfile"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>

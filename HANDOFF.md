@@ -99,6 +99,15 @@ records where the project stands so the next session can carry on.
     a frame draws in about 60 ms in the simulator. Not looked at by eye.
     If the simulator gives no heading the rose stays north-up and the
     centre says "no compass".
+  - **Readiness** (`apps/readiness/`, watch face): Body Battery (green,
+    left) and stress (orange, right) gauges filling upward, date and time,
+    tiles for sleep score, recovery time and resting HR, the training
+    status as a cyan footer; press and hold opens the native widget.
+    Sources are in `Metrics.mc` (SensorHistory, complications, UserProfile);
+    HRV status and Training Readiness are not available to Connect IQ.
+    Metrics are read once a minute awake, every five minutes always-on.
+    Always-on: hollow time and "BB 74 · SLEEP 82". Three tests pass on all
+    three devices; the simulator supplies values. Not looked at by eye.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -134,11 +143,11 @@ records where the project stands so the next session can carry on.
    every 30 min (the log should grow by 48 samples a day) and that the
    activity annotation finds activities. Sun and Moon on a watch: confirm a
    location is found after a phone sync or a GPS activity.
-4. **Readiness** (#4) is the last design. The SDK 9.3 complication list
-   has Body Battery, stress, sleep score, recovery time, training status,
-   respiration, pulse ox and VO2 max, but no HRV status, Training
-   Readiness or resting HR (resting HR is in `UserProfile.getProfile()`).
-   So the face can show what the sketch wanted except HRV.
+4. Readiness (#4) is built, so every design in `designs/DESIGNS.md` now
+   exists. On a watch: check the sleep score and training status
+   complications return real values (the simulator gives 15 and "No
+   Result"), the recovery minutes, and that the always-on update stays
+   inside the power budget (`onPowerBudgetExceeded` prints to the console).
 5. Settings for Daylight (accent, show altitude/pressure), a constellation
    lines toggle for Night Sky, and the on-device editor for all faces, once
    the basics have been seen on a watch.
