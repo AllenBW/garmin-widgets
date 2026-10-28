@@ -1,0 +1,9 @@
+project.manifest = manifest.xml
+
+# Unit tests (tests/) are annotated (:test) and only compiled with --unit-test
+base.sourcePath = source;tests
+
+# Shared code: the Lib barrel at the repo root (lib/). solar and glancefmt
+# are glance-safe; fmt and moon are used by the full app only.
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = solar;glancefmt;fmt;moon

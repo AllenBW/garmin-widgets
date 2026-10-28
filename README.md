@@ -11,9 +11,12 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
 - [`apps/battery/`](apps/battery/) is **Battery Planner**, a glance and app
   that projects when to charge from the last week's drain (design #2).
+- [`apps/sunmoon/`](apps/sunmoon/) is **Sun and Moon**, a glance and app with
+  the next sun event, golden and blue hour and the moon, offline (design #5).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
-  (sunrise and sunset), `Moon` (phase).
+  (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
+  golden and blue hour) and `GlanceFmt` (formatting for glances).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
 > fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
@@ -25,14 +28,18 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > the simulator's Low Power Mode and burn-in checker still need a look by eye.
 > Battery Planner builds cleanly for the same three devices and its seven
 > tests pass (projection maths, the storage ring buffer, the background
-> sampler, and drawing the glance and the app); it has not been looked at
-> in the simulator or run on a watch yet.
+> sampler, and drawing the glance and the app); the app looked right in the
+> simulator. Sun and Moon builds cleanly too and its five tests pass (sun
+> times within a minute of the NOAA calculator, the golden and blue hour
+> windows, drawing); it has not been looked at in the simulator, which has
+> no location for it, or run on a watch.
 
 ## Layout
 
 ```
 apps/field/      Field watch face: manifest.xml, monkey.jungle, source/, tests/, resources/
 apps/battery/    Battery Planner glance + app, same layout
+apps/sunmoon/    Sun and Moon glance + app, same layout
 lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
 scripts/         build.sh, sim.sh, test.sh, sdk-env.sh
@@ -93,6 +100,7 @@ scripts/build.sh field fenix843mm -l 3      # other device; extra args go to mon
 scripts/sim.sh field                   # starts the simulator and loads the build
 scripts/test.sh field [fenix843mm]     # builds with --unit-test and runs the tests in the simulator
 scripts/build.sh battery && scripts/sim.sh battery   # same for the Battery Planner
+scripts/build.sh sunmoon && scripts/sim.sh sunmoon   # and for Sun and Moon
 ```
 
 Unit tests live in `apps/<app>/tests/`, are annotated `(:test)` and are left
