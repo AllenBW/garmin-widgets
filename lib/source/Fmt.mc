@@ -2,11 +2,13 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
 import Toybox.System;
+import Toybox.Time;
+import Toybox.Time.Gregorian;
 
 module Lib {
 
-    // Text formatting: numbers, durations, units.
-    (:fmt)
+    // Text formatting: numbers, durations, units. Glance-safe (see CLAUDE.md).
+    (:fmt, :glance)
     module Fmt {
 
         // 8412 -> "8,412"
@@ -30,6 +32,39 @@ module Lib {
                 return whole.toString() + "h";
             }
             return (whole / 24).toString() + "d " + (whole % 24).toString() + "h";
+        }
+
+        // Seconds -> "6h 48m", "48m", "1d 2h"; "now" when none are left
+        function countdown(seconds as Number) as String {
+            if (seconds < 60) {
+                return "now";
+            }
+            var minutes = seconds / 60;
+            if (minutes < 60) {
+                return minutes.toString() + "m";
+            }
+            var hours = minutes / 60;
+            if (hours < 24) {
+                return hours.toString() + "h " + (minutes % 60).format("%02d") + "m";
+            }
+            return (hours / 24).toString() + "d " + (hours % 24).toString() + "h";
+        }
+
+        // Unix seconds -> "17:41" in local time
+        function clockAt(unix as Number) as String {
+            return clock(localSeconds(unix));
+        }
+
+        // Unix seconds -> seconds since local midnight
+        function localSeconds(unix as Number) as Number {
+            var info = Gregorian.info(new Time.Moment(unix), Time.FORMAT_SHORT);
+            return info.hour * 3600 + info.min * 60 + info.sec;
+        }
+
+        // Moment -> "Sun 2 Nov"
+        function shortDate(moment as Time.Moment) as String {
+            var info = Gregorian.info(moment, Time.FORMAT_MEDIUM);
+            return Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]);
         }
 
         // Seconds since midnight -> "6:52" or "17:41", following the 12/24 h setting

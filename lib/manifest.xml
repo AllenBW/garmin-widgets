@@ -4,8 +4,8 @@
         Lib: code shared by every app in this repo (see designs/DESIGNS.md,
         "Shared building blocks"). Apps link it with
             base.barrelPath = ../../lib/monkey.jungle
-            base.Lib.annotations = aod;arcs;fmt;sun;moon      (faces: foreground-only modules)
-            base.Lib.annotations = solar;glancefmt;fmt;moon   (glance apps: solar and glancefmt are glance-safe)
+            base.Lib.annotations = aod;arcs;fmt;sun;moon
+        (fmt, solar and location are also glance-safe: see CLAUDE.md)
         and declare <iq:depends name="Lib" version="0.1.0"/> in their manifest.
     -->
     <iq:barrel id="01cb49eb9f324410940f13009c6aee5b" module="Lib" version="0.1.0" minApiLevel="5.0.0">
@@ -24,7 +24,7 @@
             <iq:annotation>sun</iq:annotation>
             <iq:annotation>moon</iq:annotation>
             <iq:annotation>solar</iq:annotation>
-            <iq:annotation>glancefmt</iq:annotation>
+            <iq:annotation>location</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>

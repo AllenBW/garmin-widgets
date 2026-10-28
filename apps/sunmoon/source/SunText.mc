@@ -10,7 +10,7 @@ module SunText {
         if (next == null) {
             return s.located ? "No sunset today" : "No location yet";
         }
-        return (s.nextIsRise ? "Sunrise " : "Sunset ") + Lib.GlanceFmt.clockAt(next);
+        return (s.nextIsRise ? "Sunrise " : "Sunset ") + Lib.Fmt.clockAt(next);
     }
 
     // "golden hour in 6h 48m" / "golden hour, ends in 23m"
@@ -20,8 +20,8 @@ module SunText {
             return s.located ? "no golden hour today" : "sync the phone or record a GPS activity";
         }
         if (s.goldenNow) {
-            return "golden hour, ends in " + Lib.GlanceFmt.countdown(at - now);
+            return "golden hour, ends in " + Lib.Fmt.countdown(at - now);
         }
-        return "golden hour in " + Lib.GlanceFmt.countdown(at - now);
+        return "golden hour in " + Lib.Fmt.countdown(at - now);
     }
 }
