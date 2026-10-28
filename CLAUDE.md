@@ -20,8 +20,11 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 - Shared code goes in the `lib/` barrel as an annotated sub-module, and apps
   link only the annotations they use (see `apps/field/monkey.jungle`).
 - Build with `scripts/build.sh <app>`; run `scripts/sim.sh <app>` to see it in
-  the simulator. Check the Garmin API docs that ship with the SDK
-  (`<sdk>/doc/Toybox/`) before using an API; don't rely on memory.
+  the simulator; `scripts/test.sh <app> [device]` runs the unit tests in
+  `apps/<app>/tests/` (annotated `(:test)`, excluded from normal builds). Add a
+  test for anything new in `lib/`, and keep the draw-every-mode test passing.
+  Check the Garmin API docs that ship with the SDK (`<sdk>/doc/Toybox/`)
+  before using an API; don't rely on memory.
 - Never commit developer keys (`*.der`, `*.pem`) or `bin/` output.
 
 ## Layout
@@ -31,4 +34,4 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 - `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`)
 - `apps/<name>/`: one Connect IQ project per app (`apps/field/` is the Field
   watch face, design #1)
-- `scripts/`: build and simulator helpers
+- `scripts/`: build, simulator and test helpers

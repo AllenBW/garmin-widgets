@@ -32,10 +32,17 @@ records where the project stands so the next session can carry on.
     cleanly (`-l 3`) for `fenix8pro47mm`, `fenix847mm` and `fenix843mm`, and
     the active layout has been checked by eye in the simulator; the always-on
     layout has not.
-- **Still to check in the simulator:** Low Power Mode (the hollow digits from
-  `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing leaves grey
-  fringes, switch to a dim solid font), the burn-in checker, peak memory
-  (File → View Memory), and the 416 px layout on `fenix843mm`.
+  - **Unit tests** (`apps/field/tests/`, `scripts/test.sh field <device>`):
+    nine tests, passing on all three devices. They draw the face into an
+    off-screen bitmap in every ring, footer and slot mode, awake and asleep,
+    check the press targets, and check `Lib.Sun`, `Lib.Moon` (against known
+    new and full moons), `Lib.Arcs`, `Lib.Aod` (all 25 offset cells in an
+    hour) and `Lib.Fmt`. Memory: code + data 13.4 KB (`--build-stats 0`),
+    about 30 KB in use at runtime, against the 128 KB watch face budget.
+- **Still to check in the simulator by eye:** Low Power Mode (the hollow
+  digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
+  leaves grey fringes, switch to a dim solid font), the burn-in checker, and
+  the 416 px layout on `fenix843mm` (it draws without error there).
 - **Still to check on a watch:** press-and-hold → `Complications.exitTo`,
   `SensorHistory` Body Battery/stress, settings in Garmin Connect, and the
   APIs still marked ⚠️ in `EXPLORATION.md` and `designs/DESIGNS.md`.
@@ -52,8 +59,8 @@ records where the project stands so the next session can carry on.
 
 ## Next steps
 
-1. `scripts/sim.sh field`: check Low Power Mode, the burn-in checker and peak
-   memory. Sideload to the watch and test the press-and-hold and the settings
+1. `scripts/sim.sh field`: check Low Power Mode and the burn-in checker by
+   eye. Sideload to the watch and test the press-and-hold and the settings
    in Garmin Connect.
 2. Consider the on-device watch face editor (`resources/configs/watchface.xml`,
    `WatchFaceConfig`, SDK sample `ConfigurableWatchFace`) for the slots and
