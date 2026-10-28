@@ -24,6 +24,7 @@ class CompassView extends WatchUi.View {
     private const POLL_MS = 250;
     private const SMOOTHING = 0.5;       // how far towards each new reading per poll
     private const SETTLED = 0.3;         // degrees: smaller moves are not worth a redraw
+    private const LABEL_EVERY = 3;       // hours between labelled dots
 
     private var _sky as SunSky?;
     private var _now as Number = 0;
@@ -32,6 +33,7 @@ class CompassView extends WatchUi.View {
     private var _headingFont as FontType = Graphics.FONT_NUMBER_MEDIUM;
     private var _lineFont as FontType = Graphics.FONT_XTINY;
     private var _letterFont as FontType = Graphics.FONT_SMALL;
+    private var _labelFont as FontType = Graphics.FONT_XTINY;
 
     function initialize() {
         View.initialize();
@@ -42,6 +44,7 @@ class CompassView extends WatchUi.View {
         _headingFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.10).toNumber(), Graphics.FONT_NUMBER_MEDIUM);
         _lineFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.042).toNumber(), Graphics.FONT_XTINY);
         _letterFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.06).toNumber(), Graphics.FONT_SMALL);
+        _labelFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.035).toNumber(), Graphics.FONT_XTINY);
     }
 
     function onShow() as Void {
@@ -160,9 +163,9 @@ class CompassView extends WatchUi.View {
         }
     }
 
-    // The horizon ring, the hourly sun positions, the sunrise and sunset
-    // marks, and the sun itself: in the dome when it is up, hollow on the
-    // ring at its bearing when it is down
+    // The horizon ring, the hourly sun positions with every third hour
+    // labelled, the sunrise and sunset marks, and the sun itself: in the
+    // dome when it is up, hollow on the ring at its bearing when it is down
     private function drawSky(dc as Dc, s as SunSky, w as Number, h as Number, turn as Float) as Void {
         var cx = w / 2;
         var cy = h / 2;
@@ -174,12 +177,32 @@ class CompassView extends WatchUi.View {
             return;
         }
 
+        var sun = project(s.up ? s.alt : 0.0, s.az, turn, cx, cy, ring);
         var dotR = (w * 0.009).toNumber();
-        dc.setColor(PATH, Graphics.COLOR_TRANSPARENT);
+        var labelGap = (w * 0.03).toNumber() + dotR;
+        var underSun = (w * 0.05).toNumber();
+        var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var hours = s.hours;
         for (var i = 0; i < hours.size(); i++) {
-            var p = project(hours[i][0], hours[i][1], turn, cx, cy, ring);
+            var hour = hours[i][0];
+            var p = project(hours[i][1], hours[i][2], turn, cx, cy, ring);
+            dc.setColor(PATH, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(p[0], p[1], dotR);
+            if (hour % LABEL_EVERY != 0) {
+                continue;
+            }
+            // The label sits away from the centre, or towards it when the
+            // dot is near the horizon, and is left out while the sun is on it
+            var dx = p[0] - cx;
+            var dy = p[1] - cy;
+            var dist = Math.sqrt(dx * dx + dy * dy).toFloat();
+            if (dist < 1.0 || ((p[0] - sun[0]).abs() < underSun && (p[1] - sun[1]).abs() < underSun)) {
+                continue;
+            }
+            var away = (dist < ring * 0.6) ? labelGap : -labelGap;
+            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(p[0] + (dx / dist * away).toNumber(), p[1] + (dy / dist * away).toNumber(),
+                        _labelFont, CompassText.hourLabel(hour), center);
         }
 
         var mark = (w * 0.024).toNumber();
@@ -194,7 +217,6 @@ class CompassView extends WatchUi.View {
             drawTriangle(dc, p[0], p[1], mark, false, ORANGE);
         }
 
-        var sun = project(s.up ? s.alt : 0.0, s.az, turn, cx, cy, ring);
         if (s.up) {
             // A hairline out to the horizon makes the bearing easy to read off the ticks
             var edge = project(0.0, s.az, turn, cx, cy, ring);

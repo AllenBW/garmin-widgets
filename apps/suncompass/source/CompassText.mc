@@ -1,4 +1,5 @@
 import Toybox.Lang;
+import Toybox.System;
 
 // The words for a SunSky, shared by the glance and the app
 (:glance)
@@ -37,6 +38,15 @@ module CompassText {
             return s.up ? "up all day" : "down all day";
         }
         return (s.nextIsRise ? "rises " : "sets ") + Lib.Fmt.clockAt(at) + " at " + degrees(az);
+    }
+
+    // The label for a full hour on the path: "15", or "3" on a 12-hour watch
+    function hourLabel(hour as Number) as String {
+        if (System.getDeviceSettings().is24Hour) {
+            return hour.toString();
+        }
+        var h = hour % 12;
+        return ((h == 0) ? 12 : h).toString();
     }
 
     // "148°": a bearing or altitude to the nearest degree, 360 shown as 0
