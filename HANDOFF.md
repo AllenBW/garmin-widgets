@@ -20,7 +20,7 @@ records where the project stands so the next session can carry on.
   - Five designs with mockups (`designs/`)
   - Repo layout: `apps/<name>/` per app plus the shared `lib/` barrel
     (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`, `Lib.Moon`, `Lib.Solar`,
-    `Lib.Location`; `Fmt`, `Solar` and `Location` are glance-safe), and
+    `Lib.Location`, `Lib.Sky`; `Fmt`, `Solar` and `Location` are glance-safe), and
     `scripts/build.sh` / `scripts/sim.sh` / `scripts/test.sh`
   - **Field** watch face (`apps/field/`): a 24 h daylight dial on the bezel
     (step goal, battery or off in settings), a signals row that only shows
@@ -70,6 +70,14 @@ records where the project stands so the next session can carry on.
     with cardinal ticks, hollow marker and hollow time. Falls back to the
     watch's sunrise/sunset when no location was ever known. Three tests
     pass on `fenix8pro47mm`. No settings. Not looked at by eye.
+  - **Night Sky** (`apps/nightsky/`, watch face): the sky overhead from the
+    last known location: 345 stars with asterism lines (generated into
+    `Stars.mc` by `designs/gen_stars.py` from the Yale Bright Star Catalog),
+    the Moon with its phase, Venus/Mars/Jupiter/Saturn lettered, the Sun by
+    day, north up and east left, the time on a black backing. `Lib.Sky`
+    holds the maths (Schlyter), checked in the tests against published
+    positions. Placing the sky costs 6 ms; always-on uses the brightest 80
+    stars. Five tests pass. Not looked at by eye.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -110,5 +118,12 @@ records where the project stands so the next session can carry on.
    respiration, pulse ox and VO2 max, but no HRV status, Training
    Readiness or resting HR (resting HR is in `UserProfile.getProfile()`).
    So the face can show what the sketch wanted except HRV.
-5. Settings for Daylight (accent, show altitude/pressure) and the on-device
-   editor for all faces, once the basics have been seen on a watch.
+5. Settings for Daylight (accent, show altitude/pressure), a constellation
+   lines toggle for Night Sky, and the on-device editor for all faces, once
+   the basics have been seen on a watch.
+6. Picked by the owner on 2026-10-28, in this order: **Horizon** face (the
+   bezel is the next 12 hours: rain chance per hour from
+   `Weather.getHourlyForecast()`, sunset/sunrise marker, the next calendar
+   event from its complication, a hand at now) and **Sun Compass** app (a
+   compass rose from `Sensor.getInfo().heading` with today's sun path from
+   `Lib.Sky`, needs the Sensor permission).
