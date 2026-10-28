@@ -23,7 +23,7 @@ class NightSkyView extends WatchUi.WatchFace {
     private const STAR4 = 0x5A5A5A;
     private const GRAY = 0x8A8A8A;
     private const DIM = 0x5A5A5A;
-    private const LINE = 0x22304A;
+    private const LINE = 0x161E33;
     private const AMBER = 0xFFB020;
     private const MARS = 0xFF6B4A;
     private const JUPITER = 0xF2E6C8;
