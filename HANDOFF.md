@@ -19,7 +19,9 @@ records where the project stands so the next session can carry on.
   - Platform exploration with sources (`EXPLORATION.md`)
   - Five designs with mockups (`designs/`)
   - Repo layout: `apps/<name>/` per app plus the shared `lib/` barrel
-    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`, `Lib.Moon`), and `scripts/build.sh` / `scripts/sim.sh`
+    (`Lib.Aod`, `Lib.Arcs`, `Lib.Fmt`, `Lib.Sun`, `Lib.Moon`, and the
+    glance-safe `Lib.Solar`, `Lib.GlanceFmt`), and `scripts/build.sh` /
+    `scripts/sim.sh` / `scripts/test.sh`
   - **Field** watch face (`apps/field/`): a 24 h daylight dial on the bezel
     (step goal, battery or off in settings), a signals row that only shows
     rain ahead, pressure falling, phone disconnected or do not disturb, date,
@@ -51,13 +53,25 @@ records where the project stands so the next session can carry on.
     without console errors; not yet looked at by eye, and the background
     service has only been exercised by the test (it calls `onTemporalEvent`
     directly).
+  - **Sun and Moon** (`apps/sunmoon/`, a widget: glance + app): `Lib.Solar`
+    (NOAA sun maths, within a minute of the NOAA calculator for New York
+    and London in the tests) gives sunrise/sunset, golden hour (+6° to −4°)
+    and blue hour (−4° to −6°); the glance shows the next sun event and a
+    golden hour countdown, the app the sun on its arc, the next golden and
+    blue hour and the moon. Location: weather observation point, activity
+    location, the last GPS fix, or the saved one. Five tests pass on all
+    three devices. The simulator supplies no location in the test harness,
+    so the "No location yet" path is what the tests draw; not looked at by
+    eye, not run on a watch. Moonrise/moonset not done.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
   the 416 px layout on `fenix843mm` (it draws without error there). For the
   Battery Planner: the glance row (the simulator shows the glance loop from
   the watch face), the app layout, and **Simulation → Background Events →
-  Temporal Event** to fire the sampler.
+  Temporal Event** to fire the sampler. For Sun and Moon: give the simulator
+  a position (Simulation → Location, or play a GPS FIT file) and check the
+  arc, the rows and the glance.
 - **Still to check on a watch:** press-and-hold → `Complications.exitTo`,
   `SensorHistory` Body Battery/stress, settings in Garmin Connect, and the
   APIs still marked ⚠️ in `EXPLORATION.md` and `designs/DESIGNS.md`.
@@ -82,6 +96,8 @@ records where the project stands so the next session can carry on.
    accent colour once the basics work.
 3. Battery Planner on a watch: confirm the background service really fires
    every 30 min (the log should grow by 48 samples a day) and that the
-   activity annotation finds activities. Then **Daylight** (#3) or
+   activity annotation finds activities. Sun and Moon on a watch: confirm a
+   location is found after a phone sync or a GPS activity.
+4. Then **Daylight** (#3, can reuse `Lib.Solar` for golden hour) or
    **Readiness** (#4); before Readiness, check which complications the SDK
    exposes (the list is in `<sdk>/doc/Toybox/Complications.html`).

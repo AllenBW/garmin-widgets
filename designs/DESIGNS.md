@@ -235,6 +235,24 @@ network.
 **Risks:** the native firmware already shows sunrise/sunset, so the value is
 in the golden/blue hour and the moon. Keep it small.
 
+**Built** as `apps/sunmoon/` (a `widget`, app name "Sun and Moon" because the
+store rejects `&` in names):
+- `Lib.Solar` (new, glance-safe): the NOAA equations for declination and the
+  equation of time, `crossings()` for the times the sun reaches any altitude
+  (two passes, within a minute of the NOAA calculator), `elevation()`, and
+  `day()` for sunrise/sunset (−0.833°), golden hour (+6° to −4°) and blue
+  hour (−4° to −6°), morning and evening.
+- `SunLocation`: weather observation point, else the activity's location,
+  else the watch's last GPS fix (`Position.getInfo()`, needs the Positioning
+  permission but switches nothing on), else the position this app saved.
+- Glance: SUN / "Sunset 17:41" / "golden hour in 6h 48m" (or "golden hour,
+  ends in 23m"); theme gold. App: the sun on a dotted half-ellipse between
+  the sunrise and sunset times (a dim dot under the horizon at night), then
+  rows for the next golden hour, the next blue hour, and the moon with its
+  phase glyph. Polar days say "No sunset today"; no location ever known says
+  "No location yet".
+- Moonrise/moonset (the stretch goal) is not done.
+
 ---
 
 ## Shared building blocks
@@ -249,7 +267,11 @@ in the golden/blue hour and the moon. Keep it small.
     time sits on a 24 h dial, from the complications with a Weather fallback.
     Solar elevation and golden/blue hour come with Daylight.
   - `Moon` (done): phase, illumination, and a phase glyph.
-  - `Moon` (todo, with Sun & Moon): phase
+  - `Solar` (done, glance-safe): NOAA sun position and altitude crossings:
+    sunrise/sunset, golden and blue hour. Daylight (#3) should use it too,
+    at the cost of one compiler warning per build (see CLAUDE.md).
+  - `GlanceFmt` (done, glance-safe): the formatters a glance needs
+    (duration, countdown, clock, short date). Repeats two of `Fmt`'s.
 - **One jungle per app** in `apps/<name>/`, linked to the barrel with
   `base.barrelPath = ../../lib/monkey.jungle`. The starter face became
   `apps/field/`.

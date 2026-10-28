@@ -18,12 +18,12 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   pixels lit, shift the layout each minute, and check `requiresBurnInProtection`.
   Use `Lib.Aod` for this rather than re-implementing it.
 - Shared code goes in the `lib/` barrel as an annotated sub-module, and apps
-  link only the annotations they use (see `apps/field/monkey.jungle`). `Lib`
-  is foreground-only: code that runs in a glance or a background service
-  must carry `(:glance)` / `(:background)`, and those annotations on barrel
-  code would be compiled into the watch faces too, where the compiler warns.
-  Glance and background code keeps its own small helpers in the app (see
-  `apps/battery/source/BatteryText.mc`).
+  link only the annotations they use (see `apps/field/monkey.jungle`). Code
+  that runs in a glance must carry `(:glance)`, and a watch face that links a
+  `(:glance)` module gets a compiler warning, so `Lib` is split: `Aod`,
+  `Arcs`, `Fmt`, `Sun`, `Moon` are foreground-only (faces link these);
+  `Solar` and `GlanceFmt` are glance-safe (glance apps link these, faces
+  must not). Background services use no `Lib` at all.
 - Build with `scripts/build.sh <app>`; run `scripts/sim.sh <app>` to see it in
   the simulator; `scripts/test.sh <app> [device]` runs the unit tests in
   `apps/<app>/tests/` (annotated `(:test)`, excluded from normal builds). Add a
@@ -36,8 +36,8 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 
 - `EXPLORATION.md`: what the platform lets us do, with sources
 - `designs/`: design specs and mockups (`DESIGNS.md`, `mockups.py` → `svg/`)
-- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`)
+- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`, `Solar`, `GlanceFmt`)
 - `apps/<name>/`: one Connect IQ project per app (`apps/field/` is the Field
   watch face, design #1; `apps/battery/` the Battery Planner glance + app,
-  design #2)
+  design #2; `apps/sunmoon/` the Sun and Moon glance + app, design #5)
 - `scripts/`: build, simulator and test helpers

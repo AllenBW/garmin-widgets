@@ -22,7 +22,7 @@ class BatteryGlance extends WatchUi.GlanceView {
 
     function onLayout(dc as Dc) as Void {
         _bigFont = Graphics.FONT_MEDIUM;
-        // Lib.Fmt.vectorFont is not available in glance scope (see BatteryText)
+        // Lib.Fmt.vectorFont is foreground-only (see CLAUDE.md), so ask for the font here
         if (Graphics has :getVectorFont) {
             try {
                 var font = Graphics.getVectorFont({:face => "RobotoCondensedBold", :size => (dc.getHeight() * 0.34).toNumber()});

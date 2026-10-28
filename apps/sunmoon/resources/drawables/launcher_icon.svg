@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Sun & Moon launcher icon (64 px): black disc, an amber sun on the horizon -->
+  <g transform="scale(1)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <path d="M18,38 A14,14 0 0 1 46,38 Z" fill="#FFB020"/>
+    <rect x="12" y="40" width="40" height="4" rx="2" fill="#8A8A8A"/>
+    <path d="M32,13 L32,19 M19,19 L23,23 M45,19 L41,23" stroke="#FFB020" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

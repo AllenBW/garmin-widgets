@@ -133,9 +133,9 @@ function testModelHelpers(logger as Logger) as Boolean {
     Test.assertEqualMessage(BatteryModel.median([7.0] as Array<Float>), 7.0, "single");
     var spark = BatteryModel.sparkline([1, 90, 0, 2, 80, 0, 3, 70, 0, 4, 60, 0] as Array<Number>, 2);
     Test.assertMessage(spark.size() == 2 && spark[0] == 90 && spark[1] == 60, "sparkline keeps first and last: " + spark);
-    Test.assertMessage(BatteryText.shortDate(new Time.Moment(1706205240)).length() > 5, "short date has day, number and month");
-    Test.assertEqualMessage(BatteryText.duration(148.0), "6d 4h", "duration");
-    Test.assertEqualMessage(BatteryText.duration(0.5), "30m", "minutes");
+    Test.assertMessage(Lib.GlanceFmt.shortDate(new Time.Moment(1706205240)).length() > 5, "short date has day, number and month");
+    Test.assertEqualMessage(Lib.GlanceFmt.duration(148.0), "6d 4h", "duration");
+    Test.assertEqualMessage(Lib.GlanceFmt.duration(0.5), "30m", "minutes");
     return true;
 }
 
