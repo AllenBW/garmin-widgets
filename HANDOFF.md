@@ -120,8 +120,15 @@ records where the project stands so the next session can carry on.
   `Sensor.getInfo()` every 5 min; `Position.getInfo()` and
   `Notifications.showNotification` run in a face; documented fields can be
   absent at runtime (`pushes`, `isNightModeEnabled`), so guard with `has`.
-  `Audio.Capture` exists (watch apps and glances), so a sound level meter
-  is feasible as a widget; the simulator records from the Mac microphone.
+  `Audio.Capture` exists, so a sound level meter is feasible as a
+  watch-app with a glance; the simulator records from the Mac microphone.
+  Reviewed on 2026-10-29 against the Programmer's Guide, Garmin's web
+  docs and about forty forum threads (section 10.7 lists the gaps).
+  Two findings for the apps: **Field has no `Positioning` permission**,
+  and the forum says the weather observation position is null without
+  it, so its sun dial may be empty on a watch (add the permission, it is
+  allowed for faces); and declaring `Sensor` (Sun Compass) reportedly
+  costs about 1.5 %/h of battery while the app is open.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -170,10 +177,15 @@ records where the project stands so the next session can carry on.
    that the sensor stops when the app closes (battery). Possible follow-ups
    the owner has not asked for yet: the moon's bearing, and the golden
    hour alert and sound level meter ideas from the same conversation.
-7. **Sound level meter** (the owner likes it, 2026-10-29): a widget (glance
-   + app), not a face. `Audio.Capture` with 16-bit LPCM mono at 8 kHz,
-   RMS per window to dBFS, a settings offset for approximate dB SPL. First
-   measure in the simulator: the unit and limit of `:windowSize`, whether
-   the WAV window carries a header, how many samples `decodeNumber` can
-   unpack per callback under the watchdog, and keep `FILTER_NREC` off.
-   The simulator will ask for macOS microphone access the first time.
+7. **Sound level meter** (the owner likes it, 2026-10-29): a **watch-app
+   with a glance**, not a widget and not a face (the permissions table and
+   the simulator allow `AudioInput` for device apps and audio providers
+   only; the compiler would accept a widget manifest but the runtime may
+   not). `Audio.Capture` with 16-bit LPCM mono at 8 kHz, RMS per window
+   to dBFS, a settings offset for approximate dB SPL. `:windowSize` is in
+   bytes; skip a 44-byte WAV header if one appears at the start of a
+   window; keep `FILTER_NREC` off (the simulator ignores filters anyway).
+   First measure in the simulator: the window limit and how many samples
+   `decodeNumber` can unpack per callback under the watchdog. The
+   simulator will ask for macOS microphone access the first time. No
+   developer has reported capture on a real watch yet.
