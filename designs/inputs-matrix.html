@@ -1,0 +1,222 @@
+<title>Watch Input Matrix</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Roboto:wght@400;500&family=Roboto+Mono:wght@400&display=swap">
+<style>
+/* Layout: one wide status table, grouped by subject, with a filter bar on top. Garmin's own
+   Roboto Condensed for labels (the fēnix 8 draws its UI in it), Roboto for text, Roboto Mono for API names. */
+:root {
+  --bg: #f5f3ee; --fg: #1d1b16; --muted: #6b6558; --line: #dcd6c9; --panel: #fffdf9; --panel-alt: #f0ece3;
+  --accent: #a86908; --accent-ink: #ffffff;
+  --ok: #1f7a4d; --ok-bg: #ddf2e6; --doc: #2d5d9b; --doc-bg: #e0eaf7; --no: #b0382a; --no-bg: #f8e0db;
+  --q: #9a6200; --q-bg: #fbeccb; --na: #8a8577; --na-bg: #ecE8df;
+  --display: "Roboto Condensed", "Arial Narrow", sans-serif; --body: Roboto, "Helvetica Neue", Arial, sans-serif; --mono: "Roboto Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121211; --fg: #ecebe6; --muted: #a39d8f; --line: #2c2b27; --panel: #1b1a18; --panel-alt: #22211e;
+  --accent: #ffb020; --accent-ink: #1a1200;
+  --ok: #46d18a; --ok-bg: #143322; --doc: #86b6ea; --doc-bg: #16273a; --no: #ff7a5c; --no-bg: #3b1912;
+  --q: #ffc44d; --q-bg: #3a2a08; --na: #78736a; --na-bg: #232320; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121211; --fg: #ecebe6; --muted: #a39d8f; --line: #2c2b27; --panel: #1b1a18; --panel-alt: #22211e;
+  --accent: #ffb020; --accent-ink: #1a1200;
+  --ok: #46d18a; --ok-bg: #143322; --doc: #86b6ea; --doc-bg: #16273a; --no: #ff7a5c; --no-bg: #3b1912;
+  --q: #ffc44d; --q-bg: #3a2a08; --na: #78736a; --na-bg: #232320; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.wrap { max-width: 1240px; margin: 0 auto; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 30px; margin: 0 0 4px; letter-spacing: .01em; text-wrap: balance; }
+.sub { color: var(--muted); max-width: 70ch; margin: 0 0 16px; }
+.sub b { color: var(--fg); font-weight: 500; }
+.bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.filters button { font-family: var(--display); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.filters button:focus-visible, input:focus-visible, .check input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#q { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--fg); min-width: 200px; }
+.tally { font-family: var(--display); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin-left: auto; font-variant-numeric: tabular-nums; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0 0 14px; color: var(--muted); font-size: 13px; align-items: center; }
+.legend span.l { display: inline-flex; align-items: center; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-family: var(--display); font-size: 12.5px; letter-spacing: .04em; text-transform: uppercase;
+  padding: 2px 8px 2px 6px; border-radius: 4px; white-space: nowrap; border: 1px solid transparent; }
+.chip i { font-style: normal; font-weight: 700; width: 11px; text-align: center; }
+.chip.ok { color: var(--ok); background: var(--ok-bg); } .chip.doc { color: var(--doc); background: var(--doc-bg); }
+.chip.no, .chip.nodoc, .chip.abs { color: var(--no); background: var(--no-bg); } .chip.nodoc { background: transparent; border-color: var(--no-bg); }
+.chip.q { color: var(--q); background: var(--q-bg); } .chip.na { color: var(--na); background: var(--na-bg); }
+.scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 1080px; font-size: 13.5px; }
+thead th { position: sticky; top: 0; background: var(--panel-alt); font-family: var(--display); font-weight: 700; font-size: 12.5px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted); text-align: left; padding: 10px 10px; border-bottom: 1px solid var(--line); z-index: 1; }
+tbody td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr:last-child td { border-bottom: 0; }
+tr.group td { background: var(--panel-alt); font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); padding: 9px 10px; }
+td.n { color: var(--muted); font-variant-numeric: tabular-nums; width: 28px; }
+td.name { font-weight: 500; min-width: 190px; }
+td.api { font-family: var(--mono); font-size: 12px; color: var(--muted); min-width: 170px; max-width: 230px; word-break: break-word; }
+td.st { white-space: nowrap; }
+td.note, td.how { color: var(--muted); min-width: 200px; max-width: 320px; }
+td.how { color: var(--fg); }
+td.check { text-align: center; width: 40px; }
+td.check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+tr.done td.name::after { content: " ✓"; color: var(--ok); }
+tr[hidden] { display: none; }
+.foot { color: var(--muted); font-size: 13px; margin-top: 12px; max-width: 80ch; }
+@media (max-width: 640px) { h1 { font-size: 24px; } .tally { margin-left: 0; } }
+@media (prefers-reduced-motion: no-preference) { .filters button { transition: background .15s; } }
+</style>
+<div class="wrap">
+  <h1>Watch Input Matrix</h1>
+  <p class="sub">Every sensor and input a Connect IQ app can reach on the fēnix 8 Pro, by app type. <b>Runs</b> means a probe exercised it in the SDK 9.3.0 simulator on 29 Oct 2026; <b>docs</b> means the SDK docs allow it and nothing has tried it; <b>refused</b> means the compiler or the runtime said no. Nothing has been run on a watch yet. Tick a row once you have seen it on the wrist; ticks stay in this browser only.</p>
+  <div class="bar">
+    <div class="filters" role="group" aria-label="Filter rows">
+      <button type="button" data-f="all" aria-pressed="true">All</button>
+      <button type="button" data-f="face" aria-pressed="false">Face can read</button>
+      <button type="button" data-f="open" aria-pressed="false">Open questions</button>
+      <button type="button" data-f="refused" aria-pressed="false">Refused</button>
+      <button type="button" data-f="done" aria-pressed="false">Seen on watch</button>
+    </div>
+    <input id="q" type="search" placeholder="Search inputs, APIs, notes" aria-label="Search">
+    <div class="tally" id="tally"></div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>#</th><th>Input</th><th>API</th><th>Watch face</th><th>Face background</th><th>Widget / app</th><th>Evidence</th><th>Check on the watch</th><th>Seen</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <p class="foot">Face background is the watch face's own background service (permission Background, 64 KB, one run every 5 minutes at most). Widget / app covers glances, widgets and device apps. Source: EXPLORATION.md section 10 in the garmin-widgets repo.</p>
+</div>
+<script>
+(function () {
+  var ST = {
+    ok:    { g: "✓", t: "runs",       d: "exercised in the simulator" },
+    doc:   { g: "✓", t: "docs",       d: "allowed by the SDK docs, not tried" },
+    q:     { g: "?", t: "open",       d: "runs, but the simulator gave nothing, or unverified" },
+    no:    { g: "✗", t: "refused",    d: "fatal at runtime or rejected by the compiler" },
+    abs:   { g: "✗", t: "absent",     d: "documented, missing on this device" },
+    nodoc: { g: "✗", t: "no context", d: "the docs list no such app type" },
+    na:    { g: "–", t: "n/a",        d: "" }
+  };
+  // [group, name, api, face, background, app, evidence, how to check]
+  var ROWS = [
+    ["Time and device"],
+    ["Clock, time zone, DST", "System.getClockTime, Time.Gregorian", "ok", "doc", "doc", "Every face in the repo uses it.", "Any face."],
+    ["Battery %, days left, charging", "System.getSystemStats", "ok", "doc", "doc", "Simulator: 50 %, 5 days, not charging; solarIntensity null.", "Battery Planner glance; set it on the charger."],
+    ["Phone connected, phone OS, Bluetooth / Wi-Fi / LTE state", "DeviceSettings.phoneConnected, connectionInfo", "ok", "doc", "doc", "Simulator: phone true, three connection keys with a state each.", "Field signals row: flip airplane mode on the phone."],
+    ["Notification count, alarm count, do not disturb", "DeviceSettings", "ok", "doc", "doc", "Simulator: 0, 0, false. Count only, never the notifications themselves.", "Field: turn on do not disturb."],
+    ["Night mode and enhanced readability flags", "DeviceSettings.isNightModeEnabled", "abs", "abs", "abs", "Documented, but reading it is a fatal Symbol Not Found on this device file. Guard with has.", "Try once on the wrist behind a has guard."],
+    ["Display mode, burn-in flag, screen size, touch", "System.getDisplayMode, DeviceSettings", "ok", "doc", "doc", "Simulator: high power, requiresBurnInProtection true, touch true.", "Lib.Aod reads it; watch the face dim after 10 s."],
+    ["Settings, storage, on-device editor", "Application.Properties, Storage", "ok", "ok", "ok", "Field, Battery Planner and Daylight use them.", "Change a Field slot in Garmin Connect."],
+    ["Body"],
+    ["Steps, calories, distance, floors, active minutes, move bar", "ActivityMonitor.getInfo", "ok", "ok", "doc", "Simulator: 0 / 5000 steps, move bar 5; the background probe read steps too.", "Field slots against the Steps widget."],
+    ["Stress score, recovery hours, respiration rate", "ActivityMonitor.getInfo", "ok", "doc", "doc", "Simulator: 30, 5 h, 10 breaths/min.", "Readiness against the Stress and Recovery widgets."],
+    ["Wheelchair pushes", "ActivityMonitor.Info.pushes", "abs", "abs", "abs", "Fatal Symbol Not Found; the WHEELCHAIR_PUSHES complication is missing too.", "Not on this watch."],
+    ["Seven days of daily totals", "ActivityMonitor.getHistory", "ok", "doc", "doc", "Simulator: 7 days, all zero. No permission needed.", "Compare with the week view in Garmin Connect."],
+    ["Heart rate history, 6 h at 1-min samples", "ActivityMonitor.getHeartRateHistory, SensorHistory", "ok", "doc", "doc", "Simulator: 80 bpm. ActivityMonitor's copy needs no permission.", "Field HR slot against the HR widget."],
+    ["Elevation, pressure, temperature history (2-min samples, 6 h)", "SensorHistory", "ok", "ok", "doc", "Simulator: 1372 m, 861 hPa, 21 °C; the background probe read 21 °C.", "Daylight altitude and pressure against the Altimeter widget."],
+    ["Pulse ox history (hourly, 7 days)", "SensorHistory.getOxygenSaturationHistory", "ok", "doc", "doc", "Simulator: 95 %.", "Against the Pulse Ox widget after a night."],
+    ["Body Battery and stress history", "SensorHistory", "ok", "doc", "doc", "Simulator: 88 and 35, although simulator.json does not list them.", "Readiness gauges against the Body Battery widget."],
+    ["Live heart rate, SpO2, pressures", "Activity.getActivityInfo", "q", "q", "doc", "Null in the simulator unless simulated; the Field tests print HR = --.", "Field HR slot on the wrist: does it follow the HR widget?"],
+    ["Live altitude", "Activity.getActivityInfo().altitude", "ok", "ok", "doc", "Simulator: -18 m in the face and in the background.", "Daylight."],
+    ["Profile: resting HR, VO2max, sleep and wake times, HR and power zones", "UserProfile.getProfile", "ok", "doc", "doc", "Simulator: RHR 60, 7-day 40, VO2max 40, sleep 22:00, wake 08:00.", "Readiness RHR tile."],
+    ["Recent activities (sport, start, duration, distance)", "UserProfile.getUserActivityHistory", "ok", "doc", "doc", "Simulator: empty list.", "After a recorded walk."],
+    ["Beat-to-beat intervals (your own HRV)", "Sensor.registerSensorDataListener heartBeatIntervals", "no", "q", "doc", "Sensor is fatal in a face; allowed in the background, but a listener needs a run loop.", "A widget; compare with the HRV status widget."],
+    ["Environment and position"],
+    ["Weather now, 12 hourly, 5 daily, sunrise and sunset", "Weather", "ok", "doc", "doc", "Simulator: 16 °C, UV 2, 12 hourly and 5 daily entries.", "Horizon and the Field footer after a phone sync."],
+    ["Last known position", "Position.getInfo (Positioning)", "q", "q", "doc", "Runs in a face, which the docs do not promise; the simulator gives no fix.", "Sun Compass finds a location another way; compare on the wrist."],
+    ["GPS fixes (events)", "Position.enableLocationEvents", "q", "nodoc", "doc", "Not tried in a face; a background run cannot keep a GPS loop alive.", "Sun Compass with GPS, later."],
+    ["Compass heading", "Sensor.getInfo().heading", "no", "ok", "ok", "Fatal in a face; the background probe returned 0; Sun Compass uses it at 4 Hz.", "Sun Compass; a face can get it every 5 min via its background."],
+    ["Live thermometer, barometer, SpO2 on demand", "Sensor.getInfo", "no", "q", "doc", "Background: null in the simulator, which only fills simulated sensors.", "A widget on the wrist."],
+    ["Accelerometer 100 Hz, gyroscope 100 Hz, magnetometer 50 Hz", "Sensor.registerSensorDataListener", "no", "q", "doc", "Rates from the device file; period up to 4 s per batch.", "A widget: tilt test."],
+    ["Complications, 41 of 43 types", "Complications.getComplications", "ok", "doc", "doc", "All but INVALID and WHEELCHAIR_PUSHES. SOLAR_INPUT is present on a non-solar watch and reads 50 %.", "Readiness and Horizon: sleep score, calendar, training status."],
+    ["Inputs and events"],
+    ["Touch and hold, with coordinates", "WatchFaceDelegate.onPress", "ok", "na", "ok", "Field and Readiness press targets are tested.", "Hold a Readiness tile: the native widget should open."],
+    ["Tap, swipes, five buttons", "InputDelegate, BehaviorDelegate", "nodoc", "na", "doc", "A face gets a tap only inside the on-device config editor.", "Sun Compass app."],
+    ["Wrist raise (wake)", "WatchFace.onExitSleep", "doc", "na", "na", "The only \"the user looked\" signal a face has.", "Watch the face wake."],
+    ["Timer", "Timer.Timer", "doc", "nodoc", "ok", "Faces: only while awake. Sun Compass polls at 4 Hz.", "Sun Compass heading smoothing."],
+    ["Background triggers: every 5 min, sleep time, wake time, 1000 steps, goal, activity done, phone message", "Background.registerFor…", "ok", "na", "ok", "5-minute cadence confirmed; anything sooner is refused.", "Battery Planner log should grow by 48 samples a day."],
+    ["Web requests", "Communications.makeWebRequest", "nodoc", "doc", "doc", "A face only reaches the internet through its background service.", "Not built yet."],
+    ["Phone app messages, BLE central, ANT+", "Communications, BluetoothLowEnergy, Ant", "nodoc", "doc", "doc", "Docs list Background, glance, widget and app contexts.", "Not built yet."],
+    ["Outputs"],
+    ["Vibration, tones, backlight", "Attention", "no", "nodoc", "doc", "Fatal Permission Required in a face, try/catch does not help.", "A widget."],
+    ["Flashlight, white or red", "Attention.setFlashlightMode", "no", "nodoc", "doc", "Same fatal error in a face; the device file lists white and red.", "A widget."],
+    ["Toast", "WatchUi.showToast", "q", "nodoc", "doc", "Runs without error from a face in the simulator; nothing seen.", "Sideload the probe and look for the toast."],
+    ["Post a notification", "Notifications.showNotification", "q", "doc", "doc", "Runs without error from a face in the simulator; display unverified.", "Sideload the probe and look for the banner."],
+    ["Microphone", "Audio.Capture (AudioInput)", "no", "no", "doc", "Manifest rejected for a face; CAPTURE_ERR_BACKGROUNDED in the background; the simulator records from the Mac mic.", "Sound level meter widget."],
+    ["Speaker", "Audio.Output (AudioOutput)", "nodoc", "nodoc", "doc", "Watch apps, glances and audio providers only.", "Later."],
+    ["QR code image", "ScanCode.createQrCodeImage", "doc", "doc", "doc", "Generates an image; the watch has no camera to scan one.", "Later."],
+    ["No API at all"],
+    ["Ambient light sensor, ECG, skin temperature, raw optical HR, notification contents, music state, loaded course, voice assistant", "—", "nodoc", "nodoc", "nodoc", "Nothing in the SDK docs for any app type.", "—"]
+  ];
+
+  var KEY = "garmin-inputs-seen";
+  function load() { try { return JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { return []; } }
+  function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {} }
+  var seen = load();
+
+  function chip(code) {
+    var s = ST[code];
+    return '<span class="chip ' + code + '" title="' + s.d + '"><i>' + s.g + '</i>' + s.t + '</span>';
+  }
+  var legend = document.getElementById("legend");
+  Object.keys(ST).forEach(function (k) {
+    if (k === "na") { return; }
+    legend.insertAdjacentHTML("beforeend", '<span class="l">' + chip(k) + ' ' + ST[k].d + '</span>');
+  });
+
+  var tbody = document.getElementById("rows"), n = 0, total = 0, html = "";
+  ROWS.forEach(function (r) {
+    if (r.length === 1) { html += '<tr class="group"><td colspan="9">' + r[0] + '</td></tr>'; return; }
+    n++; total++;
+    var id = "r" + n, done = seen.indexOf(id) >= 0;
+    html += '<tr id="' + id + '" class="' + (done ? "done" : "") + '" data-face="' + r[2] + '" data-bg="' + r[3] + '" data-app="' + r[4] + '" data-text="' + (r[0] + " " + r[1] + " " + r[5] + " " + r[6]).toLowerCase().replace(/"/g, "") + '">'
+      + '<td class="n">' + n + '</td><td class="name">' + r[0] + '</td><td class="api">' + r[1] + '</td>'
+      + '<td class="st">' + chip(r[2]) + '</td><td class="st">' + chip(r[3]) + '</td><td class="st">' + chip(r[4]) + '</td>'
+      + '<td class="note">' + r[5] + '</td><td class="how">' + r[6] + '</td>'
+      + '<td class="check"><input type="checkbox" id="c' + n + '" aria-label="Seen on the watch" ' + (done ? "checked" : "") + '></td></tr>';
+  });
+  tbody.innerHTML = html;
+
+  var filter = "all", query = "";
+  function isOpen(tr) { return [tr.dataset.face, tr.dataset.bg, tr.dataset.app].indexOf("q") >= 0; }
+  function isRefused(tr) { return [tr.dataset.face, tr.dataset.bg, tr.dataset.app].some(function (c) { return c === "no" || c === "abs"; }); }
+  function apply() {
+    var shown = 0, groups = {};
+    Array.prototype.forEach.call(tbody.querySelectorAll("tr:not(.group)"), function (tr) {
+      var ok = true;
+      if (filter === "face") { ok = ["ok", "doc", "q"].indexOf(tr.dataset.face) >= 0; }
+      else if (filter === "open") { ok = isOpen(tr); }
+      else if (filter === "refused") { ok = isRefused(tr); }
+      else if (filter === "done") { ok = tr.classList.contains("done"); }
+      if (ok && query) { ok = tr.dataset.text.indexOf(query) >= 0; }
+      tr.hidden = !ok;
+      if (ok) { shown++; }
+    });
+    // hide group headers whose rows are all hidden
+    var current = null;
+    Array.prototype.forEach.call(tbody.querySelectorAll("tr"), function (tr) {
+      if (tr.classList.contains("group")) { current = tr; current.hidden = true; return; }
+      if (!tr.hidden && current) { current.hidden = false; }
+    });
+    document.getElementById("tally").textContent = shown + " of " + total + " rows · " + seen.length + " seen on the watch";
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".filters button"), function (b) {
+    b.addEventListener("click", function () {
+      filter = b.dataset.f;
+      Array.prototype.forEach.call(document.querySelectorAll(".filters button"), function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      apply();
+    });
+  });
+  document.getElementById("q").addEventListener("input", function (e) { query = e.target.value.trim().toLowerCase(); apply(); });
+  tbody.addEventListener("change", function (e) {
+    if (e.target.type !== "checkbox") { return; }
+    var tr = e.target.closest("tr"), id = tr.id;
+    if (e.target.checked) { if (seen.indexOf(id) < 0) { seen.push(id); } tr.classList.add("done"); }
+    else { seen = seen.filter(function (x) { return x !== id; }); tr.classList.remove("done"); }
+    save(seen); apply();
+  });
+  apply();
+})();
+</script>

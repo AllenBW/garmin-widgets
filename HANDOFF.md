@@ -8,6 +8,10 @@ records where the project stands so the next session can carry on.
 - **Repository:** https://github.com/AllenBW/garmin-widgets (private)
 - **Design page** with the original mockups and a copy of the first import:
   https://claude.ai/artifact/CQcd2fNRPKsgigd9j7dfKd (private to the owner)
+- **Input matrix** (every sensor and input by app type, with what the
+  simulator proved and how to check each on the watch; ticks are kept in
+  the browser): `designs/inputs-matrix.html`, published privately at
+  https://claude.ai/artifact/PjY39dg6QJTrLa6wHVTcaN
 - **Toolchain on the dev Mac:** SDK 9.3.0 in
   `~/Library/Application Support/Garmin/ConnectIQ/Sdks/`, the VS Code Monkey C
   extension, the `connect-iq-sdk-manager` CLI, and a developer key in

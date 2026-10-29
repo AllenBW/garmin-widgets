@@ -277,7 +277,9 @@ module in the SDK's own docs (`<sdk>/doc/Toybox/`), the fēnix 8 Pro device
 files (`compiler.json`, `simulator.json`), and a throwaway watch face run in
 the simulator that called each tempting API in turn. Where the simulator
 contradicts the docs, the simulator is quoted. None of it has been run on a
-watch.
+watch. The same material as a status matrix with a per-row "check on the
+watch" hint: `designs/inputs-matrix.html`, published privately at
+https://claude.ai/artifact/PjY39dg6QJTrLa6wHVTcaN.
 
 ### 10.1 What a watch face can read
 
