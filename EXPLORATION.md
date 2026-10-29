@@ -133,7 +133,10 @@ Shared features:
 - **"Okay, Garmin" voice commands, the course or route currently loaded, and
   the GPS sampling rate** are all off-limits, even in 9.3 ⚠️.
 - **inReach satellite messaging** is not available to apps.
-- The **flashlight**. No CIQ API is known.
+- The **flashlight** from a watch face. Apps and widgets can drive it
+  (`Attention.setFlashlightMode`, white or red on the fēnix 8 Pro, API
+  3.4.3+), but `Attention` is not available to watch faces (verified in the
+  simulator: calling it is a fatal "Permission Required" error).
 - Notifications cannot be redrawn by us. CIQ notification APIs (SDK 8.1+) can
   *post* richer notifications from a running or background app ✅.
 - **WebSockets and raw TCP/UDP are not available.** `makeWebRequest` is
@@ -247,8 +250,13 @@ The concrete designs we chose are in [`designs/DESIGNS.md`](designs/DESIGNS.md).
 - [x] API level 6.0.3 in the SDK 9.3.0 device files (firmware 2339). Whether
       the watch's installed firmware matches is still to check on hardware.
 - [ ] Whether the on-device customization bug is fixed in current firmware.
-- [ ] The 9.3 theme API, `Audio` module names and permissions, and LTE APIs.
-      Read the SDK API docs.
+- [x] `Audio` (9.3, API 6.0.3): `Audio.Capture` (permission `AudioInput`,
+      16-bit LPCM or Opus, 8 to 44.1 kHz, mono or stereo, data arrives in a
+      callback per window) and `Audio.Output` (permission `AudioOutput`).
+      Watch apps, glances and audio providers only; the manifest is rejected
+      for a watch face. The simulator records from the Mac microphone. See
+      section 10.
+- [ ] The 9.3 theme API and LTE APIs. Read the SDK API docs.
 - [ ] Whether `makeWebRequest` over LTE needs an active LTE/inReach plan.
 - [x] Fonts: the fēnix 8 family ships TrueType fonts, so
       `Graphics.getVectorFont({:face => ..., :size => px})` gives any size
@@ -259,6 +267,142 @@ The concrete designs we chose are in [`designs/DESIGNS.md`](designs/DESIGNS.md).
       NUMBER_MILD 113, NUMBER_MEDIUM 153, NUMBER_HOT 173, NUMBER_THAI_HOT 210.
 - [ ] Bitmap budget at 454 px, if we ever need custom bitmap fonts or large
       images.
+
+---
+
+## 10. Sensors and inputs, by app type (SDK 9.3.0, checked 2026-10-29)
+
+How this was checked: the "App Types and Runtime Contexts" line of every
+module in the SDK's own docs (`<sdk>/doc/Toybox/`), the fēnix 8 Pro device
+files (`compiler.json`, `simulator.json`), and a throwaway watch face run in
+the simulator that called each tempting API in turn. Where the simulator
+contradicts the docs, the simulator is quoted. None of it has been run on a
+watch.
+
+### 10.1 What a watch face can read
+
+| Source | Fields | Notes |
+|---|---|---|
+| **Time** `System.getClockTime`, `Time`, `Gregorian` | hour, min, sec, `timeZoneOffset`, `dst`; `Time.now()`, local and UTC calendar info | Plus `is24Hour`, `firstDayOfWeek` and `systemLanguage` from the device settings |
+| **Daily body stats** `ActivityMonitor.getInfo()` | steps and goal, calories, distance, floors climbed/descended and goal, metres climbed/descended, active minutes today and this week (moderate, vigorous, total) and the weekly goal, move bar level, stress score, time to recovery (hours), respiration rate, `isSleepMode` (deprecated) | Wheelchair `pushes`, `pushDistance`, `pushGoal` are documented but **absent on this device**: reading one is a fatal "Symbol Not Found", so guard with `has` |
+| **Seven-day history** `ActivityMonitor.getHistory()` | one entry per day: steps, floors, calories, active minutes, goals, `startOfDay` | No permission needed |
+| **Heart rate history** `ActivityMonitor.getHeartRateHistory` | samples back to 6 h | No permission; `SensorHistory` has the same with a permission |
+| **Sensor history** `SensorHistory` (permission `SensorHistory`) | heart rate (1-min samples, 6 h), elevation, pressure, temperature (2-min samples, 6 h), pulse ox (hourly, 7 days), Body Battery, stress | Sizes from `simulator.json`; Body Battery and stress are not listed there but the simulator returns all seven (21 °C, SpO2 95, 1372 m, 861 hPa, HR 80, Body Battery 88, stress 35) |
+| **Live values** `Activity.getActivityInfo()` | `currentHeartRate`, `altitude`, `ambientPressure`, `meanSeaLevelPressure`, `rawAmbientPressure`, `currentOxygenSaturation`, `currentLocation` and its accuracy, `currentHeading`, `currentSpeed`, `timerState` (is an activity running), `startTime` | In the simulator a face sees altitude and heading/speed 0 only; HR, pressure and location stay null unless they are simulated (the Field tests print "HR = --" too). Heading and speed come from GPS, so outside an activity they mean nothing |
+| **Last position** `Position.getInfo()` (permission `Positioning`) | position, accuracy, altitude, heading, speed, `when` | **Allowed in a watch face**: monkeyc accepts the permission and the call runs (accuracy 0, no position in the simulator). What a watch returns outside an activity is unverified; `Lib.Location` uses the weather observation point and the activity info instead |
+| **Profile** `UserProfile` (permission `UserProfile`) | resting HR and 7-day average, birth year, gender, height, weight, activity class, VO2max running/cycling, sleep and wake times (durations from midnight) and the upcoming ones as moments, walking/running step length, HR zones per sport, FTP and power zones | `getUserActivityHistory()` iterates recent activities: sport, start, duration, distance |
+| **Weather** `Weather` | current: temperature, feels like, high/low, humidity, dew point, pressure, wind speed and bearing, precipitation chance, cloud cover, UV index, visibility, condition, observation time, location name (deprecated) and position; hourly forecast; daily forecast; `getSunrise`/`getSunset` for any location and date | Needs a phone sync; null until then |
+| **Complications** (permission `ComplicationSubscriber`) | 43 types in the SDK, **41 on this watch**: everything except `INVALID` and `WHEELCHAIR_PUSHES`. Present but not meaningful: `SOLAR_INPUT` (no solar panel; the simulator still says 50 %). Calendar events, notification count, race and pace predictors, VO2max, weekly run and bike distance, intensity minutes, pulse ox, respiration, 1-3 day forecasts, high/low and current temperature, last golf score, sleep score are all there | `getComplications()` iterates what the device has; `subscribeToUpdates` + `registerComplicationChangeCallback` push changes; `exitTo` opens the native widget from press-and-hold |
+| **Device and phone** `System.getDeviceSettings()` | `phoneConnected`, `phoneOperatingSystem`, `connectionInfo` with a state per `:bluetooth`, `:wifi`, `:lte`, `notificationCount`, `alarmCount`, `doNotDisturb`, `isNightModeEnabled`, `isEnhancedReadabilityModeEnabled`, `fontScale`, `activityTrackingOn`, `tonesOn`, `vibrateOn`, units for distance/elevation/height/weight/pace/temperature, screen size and shape, `isTouchScreen`, `inputButtons`, `requiresBurnInProtection`, `firmwareVersion`, `partNumber`, `uniqueIdentifier` | Notification *count* only; never the notifications themselves |
+| **Power and memory** `System.getSystemStats()`, `getDisplayMode()` | battery %, `batteryInDays`, `charging`, `solarIntensity` (null, no solar), used/free/total memory; high or low power display mode | |
+| **Own state** `Application.Properties`, `Storage`, `onBackgroundData` | settings from Garmin Connect or the on-device editor, persisted values, what the background service returned | |
+
+### 10.2 Events a watch face receives
+
+- `onUpdate` every second while awake, once a minute asleep;
+  `onEnterSleep` / `onExitSleep` (a wrist raise, touch or button wakes the
+  face, so `onExitSleep` is the only "the user looked" signal there is);
+  `Timer` only while awake.
+- `WatchFaceDelegate.onPress` (touch and hold, with coordinates); `onTap`
+  only inside the on-device config editor; `onWatchFaceConfigEdited`;
+  `onPowerBudgetExceeded`.
+- `AppBase.onSettingsChanged`, `onDeviceSettingChanged(symbol, value)`,
+  `onNightModeChanged`, `onDisplayModeChanged`,
+  `onEnhancedReadabilityModeChanged`, `onStorageChanged`, `onBackgroundData`.
+- Complication change callbacks after `subscribeToUpdates`.
+- `WatchUi.showToast` runs without error from a face in the simulator;
+  whether anything is drawn is unverified.
+
+### 10.3 The background service (permission `Background`)
+
+A watch face may carry a background service (64 KB, about 30 s per run).
+Triggers: a temporal event (never closer than 5 minutes; the simulator
+refuses a registration sooner than 5 minutes after the last run), the
+configured sleep and wake times, every 1000 steps, a goal reached (steps,
+floors, active minutes), an activity completed, a phone app message, and
+an OAuth response. `Communications.makeWebRequest` works there, which is how
+a face gets anything from the internet.
+
+**`Sensor` works in the background service of a watch face.** monkeyc
+accepts the `Sensor` permission for a watch face as long as `Background`
+is selected too, and `Sensor.getInfo()` runs inside `onTemporalEvent`: in
+the simulator it returned the heading (0) and the altitude, with
+temperature, pressure, heart rate, accelerometer and magnetometer null,
+which is what the simulator gives when nothing is being simulated.
+`Position.getInfo()`, `Activity.getActivityInfo()`, `ActivityMonitor` and
+`SensorHistory` run there too, and the result reaches the face through
+`Background.exit` and `onBackgroundData` five minutes later, every five
+minutes. So a face can show a compass heading or a thermometer reading
+that is up to five minutes old, provided a real watch fills those fields
+for a background process (unverified). `enableSensorEvents` needs a run
+loop and was not tried there.
+
+### 10.4 Not available to a watch face (verified in the simulator)
+
+- **`Sensor`**: accelerometer, gyroscope, magnetometer and compass heading,
+  live temperature, live pressure, pulse ox on demand, paired ANT+/BLE
+  sensors. The manifest refuses the `Sensor` permission for a watch face
+  unless `Background` is also selected, and calling the module in the face
+  is a fatal **"Permission Required: Module 'Toybox.Sensor' not available
+  to 'Watch Face'"**. `Toybox has :Sensor` is true and `try`/`catch` does
+  not catch it: the face simply dies. So no tilt, shake, orientation,
+  heading, or cadence on a face.
+- **`Attention`**: vibration, tones, backlight and the flashlight
+  (`setFlashlightMode`, white or red on this watch). Same fatal error. A
+  face cannot alert.
+- **`Audio`**: the manifest is rejected ("'AudioInput' invalid for app type
+  'watchface'"). Watch apps, glances and audio providers only.
+- **Foreground `Communications`**, `BluetoothLowEnergy`, `Ant`,
+  `ActivityRecording`, `FitContributor`, `PersistedContent`,
+  `PersistedLocations`, `Media`, `ActivityPrompts`, `SensorLogging`: the
+  docs list no watch-face context for any of them.
+- `Notifications.showNotification` **runs without error from a face** in the
+  simulator (the `Notifications` permission is accepted for a watch face).
+  Whether the watch displays it, and whether the store allows it, is
+  unverified. If it works, a face can raise its own alert (golden hour)
+  without `Attention`.
+- **Buttons, swipes and plain taps** never reach a face (see 10.2).
+- **Hardware with no API at all**, for any app type: the ambient light
+  sensor, ECG, skin temperature, raw optical HR (PPG), the contents of phone
+  notifications, music playback state, the loaded course or route, the
+  voice assistant.
+- `onPartialUpdate` is not supported on this AMOLED device (section 5).
+- Documented fields can be missing on a given device: `ActivityMonitor.Info.pushes`
+  and `DeviceSettings.isNightModeEnabled` both died with "Symbol Not Found"
+  here, and `isEnhancedReadabilityModeEnabled` is absent too. Guard anything
+  newer than API 3 with `has`.
+
+### 10.5 What widgets and apps get on top
+
+- `Sensor.getInfo()` at 1 Hz: heading (true north, radians), accel, mag,
+  altitude, pressure, temperature, heart rate, SpO2, and speed, cadence and
+  power from paired sensors.
+- `Sensor.registerSensorDataListener`: accelerometer up to 100 Hz (x, y, z,
+  pitch, roll, power), gyroscope 100 Hz, magnetometer 50 Hz, and
+  **`heartBeatIntervals`** in ms (beat-to-beat, so an app can compute its
+  own HRV even though HRV status is not a complication). Period up to 4 s.
+- `Audio.Capture` (microphone) and `Audio.Output` (speaker).
+- `Position.enableLocationEvents` (multi-band GNSS), `PersistedLocations`
+  (saved waypoints), BLE central, ANT, `Communications`, `Attention`
+  (vibration, tones, backlight, flashlight), FIT recording and developer
+  fields, and real input: five buttons, tap, hold, and four swipes.
+
+### 10.6 Sound level meter: feasible as a widget, not a face
+
+`Audio.Capture.initializeAudioCapture(callbacks, settings)` with
+`CODEC_LPCM`, mono, `FREQ_8_KHZ` and `WINDOW_FILLED_CONTINUE` delivers a
+`ByteArray` of 16-bit samples per window to `onData`; RMS of the samples
+gives dBFS, and a settings offset turns that into an approximate dB SPL
+(the watch is not a calibrated meter). Open points, all to be measured in
+the simulator, which records from the Mac microphone: the unit of
+`windowSize` and its maximum (`ValueOutOfBoundsException`), whether the WAV
+container puts a header in the first window, how many samples
+`decodeNumber` can unpack per callback under the watchdog (decode every
+n-th sample if not), whether to leave the `FILTER_NREC` noise-reduction
+filter off (it would change the level), and what the watch asks the user
+the first time an app uses the microphone. Capture is refused in the
+background (`CAPTURE_ERR_BACKGROUNDED`), so the meter only runs while its
+view is open.
 
 ---
 

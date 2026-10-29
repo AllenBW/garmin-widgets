@@ -108,6 +108,16 @@ records where the project stands so the next session can carry on.
     Metrics are read once a minute awake, every five minutes always-on.
     Always-on: hollow time and "BB 74 · SLEEP 82". Three tests pass on all
     three devices; the simulator supplies values. Not looked at by eye.
+- **Platform check (2026-10-29):** `EXPLORATION.md` section 10 lists every
+  sensor and input by app type, verified against the SDK 9.3.0 docs, the
+  device files and a probe face run in the simulator. Headlines: a watch
+  face cannot touch `Sensor`, `Attention` or `Audio` (fatal "Permission
+  Required", not catchable), but its background service *can* call
+  `Sensor.getInfo()` every 5 min; `Position.getInfo()` and
+  `Notifications.showNotification` run in a face; documented fields can be
+  absent at runtime (`pushes`, `isNightModeEnabled`), so guard with `has`.
+  `Audio.Capture` exists (watch apps and glances), so a sound level meter
+  is feasible as a widget; the simulator records from the Mac microphone.
 - **Still to check in the simulator by eye:** Low Power Mode (the hollow
   digits from `Lib.Aod.drawHollowText` overdraw in black; if anti-aliasing
   leaves grey fringes, switch to a dim solid font), the burn-in checker, and
@@ -156,3 +166,10 @@ records where the project stands so the next session can carry on.
    that the sensor stops when the app closes (battery). Possible follow-ups
    the owner has not asked for yet: the moon's bearing, and the golden
    hour alert and sound level meter ideas from the same conversation.
+7. **Sound level meter** (the owner likes it, 2026-10-29): a widget (glance
+   + app), not a face. `Audio.Capture` with 16-bit LPCM mono at 8 kHz,
+   RMS per window to dBFS, a settings offset for approximate dB SPL. First
+   measure in the simulator: the unit and limit of `:windowSize`, whether
+   the WAV window carries a header, how many samples `decodeNumber` can
+   unpack per callback under the watchdog, and keep `FILTER_NREC` off.
+   The simulator will ask for macOS microphone access the first time.
