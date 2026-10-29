@@ -45,5 +45,6 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   `designs/gen_stars.py`, never edited by hand; `apps/horizon/` the Horizon
   next-twelve-hours face, design #7; `apps/suncompass/` the Sun Compass
   glance + app, design #8; `apps/readiness/` the Readiness body-metrics
-  face, design #4)
+  face, design #4; `apps/pocketqr/` the Pocket QR glance + app, design #9,
+  whose codes come from an array setting in `resources/settings/`)
 - `scripts/`: build, simulator and test helpers

@@ -24,6 +24,7 @@ in the SDK before relying on it.
 | 6 | **Night Sky** | Watch face | The real sky overhead: stars, constellations, Moon, planets | M | Built in `apps/nightsky/` |
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
+| 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
 
 Considered and dropped:
 
@@ -401,6 +402,41 @@ bearing now, at every full hour of the day and at sunrise and sunset, from
 **Not done:** a mockup in `mockups.py`; the moon's bearing; a day picker
 for the path. Magnetic declination is not
 needed: the watch reports a true-north heading.
+
+---
+
+## 9. Pocket QR: your QR codes on the wrist
+
+**Purpose:** the things you keep showing people from your phone, without
+the phone: the guest Wi-Fi, a link, a contact card, a ticket number. Set
+them up once in the Connect IQ app, then open the widget and hold the
+wrist out to be scanned.
+
+**Layout (app)**
+- A white card with a quiet zone fills the middle of the screen, the QR
+  code black on it, as large as fits inside the round display (the card
+  is 0.66 of the diameter, the code 0.58).
+- The code's name above in condensed bold, cut with an ellipsis when it
+  is too long for the chord; below, "2 of 3 · Wi-Fi": the position and
+  what the content is (Wi-Fi, Link, Contact, Email, Phone or Text, from
+  its prefix).
+- Up/down or a swipe moves to the next code; select or the menu button
+  lists them by name and kind. With no codes saved the screen says so and
+  points at the app settings.
+- Glance: POCKET QR, the first code's name, then "3 codes · Wi-Fi, Link,
+  Text".
+
+**Data:** one array setting, `Codes`, edited as an add-a-row list in the
+Connect IQ or Garmin Connect app (`settings.xml`, up to six entries of a
+name and the content, the content up to 300 characters, one example
+entry as the default). `ScanCode.createQrCodeImage` (API 6.0.0) turns
+the content into a bitmap at medium error correction; encoding takes
+about 12 ms and the image is kept until the code changes. A value too
+long to encode throws, and the card says "Too long to encode" instead.
+
+**Not done:** editing a code on the watch (a text picker), a brightness
+boost while a code is showing, and a check on a real phone camera that
+the 0.58-diameter code scans at the watch's pixel density.
 
 ---
 
