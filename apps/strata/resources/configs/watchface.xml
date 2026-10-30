@@ -1,0 +1,66 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- The fēnix 8's own watch face editor (Watch Face > Strata > Customize), which is
+         how a sideloaded face is set up on the watch (StrataView.readEditor):
+         the style is the time, filled or in outline; the accent colour picks the
+         strata (Palette.STRATA_DAY); the data colour is the time's colour; data 1 to 4
+         are the four readings, left to right (Readings.fromComplication: the weather
+         shows the chance of rain, steps show the miles walked). -->
+    <watchface-config>
+        <styles>
+            <style id="0" label="@Strings.StyleFilled" default="true"/>
+            <style id="1" label="@Strings.StyleOutline"/>
+        </styles>
+        <accentColors>
+            <color label="@Strings.ColorSoil" default="true">0x5C4A2E</color>
+            <color label="@Strings.ColorClay">0x7A402E</color>
+            <color label="@Strings.ColorMoss">0x44582E</color>
+            <color label="@Strings.ColorSlate">0x405268</color>
+            <color label="@Strings.ColorSand">0x76705A</color>
+        </accentColors>
+        <dataColors>
+            <color label="@Strings.TimeBone" default="true">0xF2ECE2</color>
+            <color label="@Strings.TimeSandstone">0xD9B98C</color>
+            <color label="@Strings.AccentOchre">0xE0B050</color>
+            <color label="@Strings.AccentLichen">0x6FA8A0</color>
+            <color label="@Strings.AccentEmber">0xC8703E</color>
+        </dataColors>
+        <data>
+            <complication id="1">
+                <type default="true">Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+                <type>Complications.COMPLICATION_TYPE_CURRENT_WEATHER</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_ALTITUDE</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+            </complication>
+            <complication id="2">
+                <type>Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+                <type default="true">Complications.COMPLICATION_TYPE_CURRENT_WEATHER</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_ALTITUDE</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+            </complication>
+            <complication id="3">
+                <type>Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+                <type>Complications.COMPLICATION_TYPE_CURRENT_WEATHER</type>
+                <type default="true">Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type>Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_ALTITUDE</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+            </complication>
+            <complication id="4">
+                <type>Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE</type>
+                <type>Complications.COMPLICATION_TYPE_CURRENT_WEATHER</type>
+                <type>Complications.COMPLICATION_TYPE_HEART_RATE</type>
+                <type default="true">Complications.COMPLICATION_TYPE_STEPS</type>
+                <type>Complications.COMPLICATION_TYPE_BODY_BATTERY</type>
+                <type>Complications.COMPLICATION_TYPE_ALTITUDE</type>
+                <type>Complications.COMPLICATION_TYPE_BATTERY</type>
+            </complication>
+        </data>
+    </watchface-config>
+</resources>
