@@ -26,6 +26,7 @@
             <iq:annotation>solar</iq:annotation>
             <iq:annotation>location</iq:annotation>
             <iq:annotation>sky</iq:annotation>
+            <iq:annotation>daily</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>

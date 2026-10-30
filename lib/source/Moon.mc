@@ -30,22 +30,43 @@ module Lib {
             return (1.0 - Math.cos(2.0 * Math.PI * phase).toFloat()) / 2.0;
         }
 
+        // The phase's name: eight names, one per eighth of the cycle, each
+        // centred on its principal phase (first quarter runs 0.1875..0.3125)
+        function name(phase as Float) as String {
+            var eighth = ((phase + 0.0625) * 8.0).toNumber() % 8;
+            switch (eighth) {
+                case 0: return "New moon";
+                case 1: return "Waxing crescent";
+                case 2: return "First quarter";
+                case 3: return "Waxing gibbous";
+                case 4: return "Full moon";
+                case 5: return "Waning gibbous";
+                case 6: return "Last quarter";
+                case 7: return "Waning crescent";
+            }
+            return "";
+        }
+
         // Draw the moon at (x, y) with radius r: a dim outline, and the lit
         // part filled. Lit on the right while waxing, on the left while
         // waning (northern hemisphere).
         function draw(dc as Dc, x as Number, y as Number, r as Number, phase as Float,
                       litColor as ColorType, outlineColor as ColorType) as Void {
-            dc.setPenWidth(1);
+            var c = Math.cos(2.0 * Math.PI * phase).toFloat();
+            if (c < 0.98) {   // a new moon is the outline only
+                fillLit(dc, x, y, r, phase, c, litColor);
+            }
+            dc.setPenWidth((r >= 30) ? 2 : 1);
             dc.setColor(outlineColor, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(x, y, r);
+        }
 
-            var c = Math.cos(2.0 * Math.PI * phase).toFloat();
-            if (c >= 0.98) {
-                return;   // new moon: outline only
-            }
+        // The lit part: the bright limb, then the terminator back
+        function fillLit(dc as Dc, x as Number, y as Number, r as Number, phase as Float, c as Float,
+                         litColor as ColorType) as Void {
             var waxing = phase < 0.5;
             var side = waxing ? 1.0 : -1.0;
-            var steps = 8;
+            var steps = 24;   // smooth at any size the faces draw it
             var points = [] as Array<Graphics.Point2D>;
             // Outer edge on the lit side, top to bottom
             for (var i = 0; i <= steps; i++) {
