@@ -222,7 +222,7 @@ function testTrackerPlan(logger as Logger) as Boolean {
         t.tick(100, temp);
     }
     Test.assertEqualMessage(t.tick(100, temp), EVENT_PLAN_DONE, "the plan's two rounds are done");
-    Test.assertEqualMessage(t.coach(), "Plan done · START to save", "told how to end");
+    Test.assertEqualMessage(t.coach(), "Done · START to save", "told how to end");
 
     // a free session: the same door and recovery, none of the plan's events
     var free = new SaunaTracker();
@@ -239,12 +239,12 @@ function testTrackerPlan(logger as Logger) as Boolean {
         if (free.tick(120, 40.0) != EVENT_NONE) { freeEvents += 1; }
     }
     Test.assertEqualMessage(freeEvents, 0, "no targets, nags or caps when free");
-    Test.assertEqualMessage(free.coach(), "Free session · out when you like", "free heat line");
+    Test.assertEqualMessage(free.coach(), "Out when you like", "free heat line");
     free.mark();
     for (var s = 0; s < 100; s++) {
         free.tick(100, 40.0);
     }
-    Test.assertEqualMessage(free.coach(), "Cooling down · in again when ready", "free break line");
+    Test.assertEqualMessage(free.coach(), "In again when ready", "free break line");
     Test.assertMessage(free.rounds[0].drop1 != null, "the recovery is still measured");
 
     // the heat cap ends a round early
@@ -260,7 +260,7 @@ function testTrackerPlan(logger as Logger) as Boolean {
         if (e != EVENT_NONE) { cap = e; capAt = s; }
     }
     Test.assertMessage(cap == EVENT_HEAT_CAP && capAt == 100, "cap at 100 s of heat: " + cap + " at " + capAt);
-    Test.assertEqualMessage(c.coach(), "That's 1 min of heat · come out", "cap coaching");
+    Test.assertEqualMessage(c.coach(), "1 min of heat · come out", "cap coaching");
 
     // the heat guard: a buzz the first second at 50 and every minute after, off two degrees below
     var g = new SaunaTracker();
@@ -294,7 +294,7 @@ function testTrackerPlan(logger as Logger) as Boolean {
     Test.assertMessage(!hi.hrHigh(), "not flagged at 59 s");
     Test.assertEqualMessage(hi.tick(160, 40.0), EVENT_HR_HIGH, "a minute over the ceiling");
     Test.assertMessage(hi.hrHigh(), "flagged");
-    Test.assertEqualMessage(hi.coach(), "Heart rate 160 · come out", "told to come out");
+    Test.assertEqualMessage(hi.coach(), "HR 160 · come out", "told to come out");
     var highs = 0;
     for (var s = 0; s < 120; s++) {
         if (hi.tick(155, 40.0) == EVENT_HR_HIGH) { highs += 1; }
@@ -331,7 +331,7 @@ function testTrackerPlan(logger as Logger) as Boolean {
     Test.assertEqualMessage(notRecoveredAt, 61, "judged a minute after the peak");
     Test.assertEqualMessage(rec.breakGoal(), 360, "five minutes added");
     Test.assertMessage(rec.breakExtended(), "extended");
-    Test.assertEqualMessage(rec.coach(), "Not recovered · 125 bpm, cool down longer", "told why");
+    Test.assertEqualMessage(rec.coach(), "HR 125 · cool down longer", "told why");
     rec.mark();
     Test.assertMessage(!rec.breakExtended(), "the next round starts clean");
     var quiet = new SaunaTracker();
@@ -464,6 +464,26 @@ function testRecorder(logger as Logger) as Boolean {
     return true;
 }
 
+// The real start: sensors on, the FIT file, the beat listener and Body Battery
+(:test)
+function testStartRecording(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var screen = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get() as Graphics.BufferedBitmap).getDc();
+    var view = new SaunaView();
+    view.onLayout(screen);
+    view.onShow();
+    logger.debug("shown; starting a recorded guided sauna");
+    view.start(KIND_SAUNA, true, true);
+    logger.debug("started; Body Battery at start " + view.bodyBatteryAtStart());
+    view.onUpdate(screen);
+    view.onTick();
+    view.onUpdate(screen);
+    view.onHide();
+    view.discard();
+    Test.assertMessage(!view.recording(), "discarded");
+    return true;
+}
+
 (:test)
 function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var settings = System.getDeviceSettings();
@@ -562,6 +582,19 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     logger.debug("saved row: " + row);
     Test.assertMessage(row[SaunaHistory.KIND] == KIND_STEAM && row[SaunaHistory.ROUNDS] == 1, "one steam round saved");
     view.onUpdate(screen);
+    // the demo: made-up rounds, history and readings on every screen, nothing kept
+    view.startDemo();
+    Test.assertMessage(view.recording() && view.demo(), "demo running");
+    var d = view.tracker() as SaunaTracker;
+    Test.assertMessage(d.roundCount() == 2 && d.phase == PHASE_BREAK && d.coach().find("Cool down") == 0, "demo state: " + d.coach());
+    Test.assertEqualMessage(SaunaHistory.count(), 6, "demo history");
+    view.onTick();
+    for (var i = 0; i < SCREEN_COUNT; i++) {
+        view.onUpdate(screen);
+        view.nextScreen();
+    }
+    view.discard();
+    Test.assertMessage(!view.recording() && !view.demo() && SaunaHistory.count() == 2, "demo over, real history back");
     // a free sauna: same recording, no targets, and the switch mid-visit
     view.start(KIND_SAUNA, false, false);
     var f = view.tracker() as SaunaTracker;
@@ -569,7 +602,7 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     f.auto = false;
     view.mark();
     view.onUpdate(screen);
-    Test.assertEqualMessage(f.coach(), "Free session · out when you like", "free coaching");
+    Test.assertEqualMessage(f.coach(), "Out when you like", "free coaching");
     view.setGuided(true);
     Test.assertMessage(view.guided() && f.coach().find(" left") != null, "guided from here: " + f.coach());
     view.discard();

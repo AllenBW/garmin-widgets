@@ -404,19 +404,19 @@ class SaunaTracker {
         }
         var h = hr;
         if (hrHigh() && h != null) {
-            return "Heart rate " + h + " · come out";
+            return "HR " + h + " · come out";
         }
         var na = _notRecoveredAt;
         if (na != null && now - na < RECOVERY_SHOWN) {
-            return "Not recovered · " + _notRecoveredHr + " bpm, cool down longer";
+            return "HR " + _notRecoveredHr + " · cool down longer";
         }
         var ra = recoveryAt;
         var rd = recoveryDrop;
         if (ra != null && rd != null && now - ra < RECOVERY_SHOWN) {
-            var s = "Fell " + rd + " in a minute";
+            var s = "Fell " + rd + " in 1 min";
             var b = baselineDrop;
             if (b != null && b > 0) {
-                s += rd >= b ? " · above your " + b : " · usual " + b;
+                s = "Fell " + rd + (rd >= b ? " · above your " + b : " · usual " + b);
             }
             return s;
         }
@@ -432,13 +432,13 @@ class SaunaTracker {
         }
         if (!guided) {
             if (phase == PHASE_SAUNA) {
-                return "Free session · out when you like";
+                return "Out when you like";
             }
-            return ps < DRINK_SHOWN ? "Drink some water" : "Cooling down · in again when ready";
+            return ps < DRINK_SHOWN ? "Drink some water" : "In again when ready";
         }
         if (phase == PHASE_SAUNA) {
             if (plan.heatCap > 0 && saunaSeconds() >= plan.heatCap) {
-                return "That's " + (plan.heatCap / 60) + " min of heat · come out";
+                return (plan.heatCap / 60) + " min of heat · come out";
             }
             if (plan.roundMax > 0 && ps >= plan.roundMax) {
                 return "Over " + (plan.roundMax / 60) + " min · come out";
@@ -461,7 +461,7 @@ class SaunaTracker {
         if (morePlanned()) {
             return "Ready for round " + (roundCount() + 1);
         }
-        return "Plan done · START to save";
+        return "Done · START to save";
     }
 
     // ---- sums ----
@@ -537,6 +537,56 @@ class SaunaTracker {
             }
         }
         return n > 0 ? sum / n : null;
+    }
+
+    // A made-up sauna visit for the demo: two rounds done, four minutes into
+    // the second break, with a recovery, a heart-rate trace and readings
+    function seedDemo() as Void {
+        plan = new SaunaPlan(KIND_SAUNA);
+        now = 3030;
+        phase = PHASE_BREAK;
+        hr = 96;
+        temp = 44.6;
+        maxTemp = 48.4;
+        breath = 14;
+        stress = 48;
+        hrv = 34;
+        baselineDrop = 30;
+        var r1 = new SaunaRound(90);
+        r1.end = 990;
+        r1.maxHr = 132;
+        r1.hrSum = 118 * 900;
+        r1.hrCount = 900;
+        r1.maxTemp = 47.9;
+        r1.peakHr = 128;
+        r1.peakAt = 1000;
+        r1.drop1 = 31;
+        r1.drop2 = 44;
+        var r2 = new SaunaRound(1890);
+        r2.end = 2790;
+        r2.maxHr = 136;
+        r2.hrSum = 121 * 900;
+        r2.hrCount = 900;
+        r2.maxTemp = 48.4;
+        r2.peakHr = 131;
+        r2.peakAt = 2800;
+        r2.drop1 = 29;
+        r2.drop2 = 40;
+        rounds = [r1, r2] as Array<SaunaRound>;
+        _breakStart = 2790;
+        _breakTotal = 900;
+        _lastChange = 2790;
+        recoveryAt = 2860;
+        recoveryDrop = 29;
+        trace = [] as Array<Number?>;
+        for (var i = 0; i < 1050; i++) {
+            if (i < 900) {
+                trace.add(95 + (36 * i) / 900 + ((i / 7) % 3));
+            } else {
+                trace.add(131 - (41 * (i - 900)) / 150);
+            }
+        }
+        traceStart = 1890;
     }
 
     // The visit as a history row (see SaunaHistory); Body Battery -1 when unknown

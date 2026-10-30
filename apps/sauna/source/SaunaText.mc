@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.Math;
 import Toybox.Time;
+import Toybox.Time.Gregorian;
 
 // Words and numbers for the glance and the screens
 (:glance)
@@ -67,6 +68,12 @@ module SaunaText {
         return (bpm >= 0 ? "-" : "+") + bpm.abs().toString();
     }
 
+    // Unix seconds -> "29 Oct": short enough for a table column
+    function date(unix as Number) as String {
+        var info = Gregorian.info(new Time.Moment(unix), Time.FORMAT_MEDIUM);
+        return info.day + " " + info.month;
+    }
+
     // Tenths of a degree C from a history row -> "118°", or "" when none
     function tenths(value as Number) as String {
         return value <= -1000 ? "" : temp(value / 10.0);
@@ -102,5 +109,11 @@ module SaunaText {
     function week(plan as SaunaPlan) as String {
         var w = SaunaHistory.thisWeek(plan.kind);
         return "Week " + kindCount(plan.kind, w[0], plan.weekSessions) + " · " + ((w[1] + 30) / 60) + "/" + plan.weekMinutes + " min";
+    }
+
+    // The glance's version, one short line: "Week 2/4 · 46/60 min"
+    function weekShort(plan as SaunaPlan) as String {
+        var w = SaunaHistory.thisWeek(plan.kind);
+        return "Week " + w[0] + "/" + plan.weekSessions + " · " + ((w[1] + 30) / 60) + "/" + plan.weekMinutes + " min";
     }
 }

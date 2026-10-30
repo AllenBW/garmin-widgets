@@ -25,12 +25,40 @@ module SaunaHistory {
     const BB_START = 8;    // Body Battery when the visit began; -1 when unknown
     const BB_END = 9;      // and when it was saved
 
+    // While the demo runs, these rows stand in for the stored ones
+    var demoRows as Array<Number>? = null;
+
     function all() as Array<Number> {
+        var demo = demoRows;
+        if (demo != null) {
+            return demo;
+        }
         var value = Storage.getValue(KEY);
         if (value instanceof Array && value.size() % STRIDE == 0) {
+            // rows from an older layout would be misread: every row must start with a plausible time
+            for (var at = 0; at < value.size(); at += STRIDE) {
+                var start = value[at];
+                if (!(start instanceof Number) || start < 1000000000) {
+                    return [] as Array<Number>;
+                }
+            }
             return value as Array<Number>;
         }
         return [] as Array<Number>;
+    }
+
+    // Six made-up visits over the last three weeks, oldest first
+    function demoData() as Array<Number> {
+        var now = Time.now().value();
+        var day = 86400;
+        return [
+            now - 15 * day, KIND_SAUNA, 3, 2400, 1560, 136, 30, 475, 72, 58,
+            now - 12 * day, KIND_STEAM, 2, 1320, 840, 121, 19, 419, 70, 62,
+            now - 9 * day, KIND_SAUNA, 2, 1500, 1000, 129, 27, 468, 68, 59,
+            now - 6 * day, KIND_SAUNA, 3, 2520, 1620, 141, 34, 491, 74, 60,
+            now - 3 * day, KIND_STEAM, 2, 1380, 900, 124, 22, 425, 66, 57,
+            now - 1 * day, KIND_SAUNA, 3, 2340, 1500, 138, 31, 482, 71, 58
+        ] as Array<Number>;
     }
 
     function count() as Number {
