@@ -461,7 +461,7 @@ kind of room with coaching for both.
   family, read from the device personality files: 58°, 123°, 270° and
   237° clockwise from twelve, the same on all three devices.
 - Live: a band across the top ("SAUNA · ROUND 2 OF 3" in ember, "STEAM ·
-  ROUND 1 OF 2" in teal, "BREAK · AFTER ROUND 2" in blue, "READY · SAUNA"
+  ROUND 1 OF 2" in blue, "BREAK · AFTER ROUND 2" in steel grey, "READY · SAUNA"
   in grey, "WATCH HOT · 122°" in red), the phase timer in big digits, the
   coach's line under it, "total 38:10 · heat 24:00 · out 14:10" in small
   grey, and the heart rate, breathing and watch temperature along the
@@ -472,12 +472,26 @@ kind of room with coaching for both.
 - Chart: the last finished round's heart rate from the door to two and a
   half minutes after it, in the kind's colour and then blue, with the
   peak, the one- and two-minute falls and the usual fall for that kind.
-- Visits: the last seven, dates coloured by kind with a legend.
+- Visits: the last seven, dates coloured by kind (ember, blue) with a
+  legend.
 - Glance: "SAUNA · STEAM", then "Steam room · 2 rounds · 24 min", then
   "Week: 1 of 3 steams · 24 of 40 min" against that kind's plan.
-- START when idle opens the selector: Sauna, Steam room (each with its
-  plan under it, "15 min × 3 · cool down 15") and Clear visits. START
-  while recording opens Resume / Save / Discard. Taps do nothing.
+- START when idle opens the selector: Guided sauna and Guided steam
+  (each with its plan under it, "15 min × 3 · cool down 15"), Free sauna
+  and Free steam ("in and out as you like"), and Clear visits. A free
+  session records exactly the same data, measures the same recovery and
+  keeps the heat guard, but has no targets, nags or cap; its coach line
+  just says "Free session · out when you like" and "Cooling down · in
+  again when ready". The pause menu switches a visit between guided and
+  free from that moment on, and the FIT session carries a Guided field.
+- Ending a visit: the START cue reads END while recording; START opens
+  Save / Resume / Switch / Discard with Save first, and the coach's last
+  line is "Plan done · START to save". Long presses belong to Garmin
+  (hold START is voice commands, hold BACK is recent apps).
+- Touch: a tap near a cue on the bezel does what that button does, so
+  the corners work as soft buttons on the simulator and the watch alike;
+  taps in the middle of the screen do nothing (wet fingers).
+- Launcher icon: ember heat waves on the left, blue drops on the right.
 
 **Coaching** (the line under the timer, with a buzz at each turn)
 - Arrival: "Drink, shower, then go in", then "Walk in when ready" (or

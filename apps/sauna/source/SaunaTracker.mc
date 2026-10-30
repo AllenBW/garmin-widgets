@@ -105,6 +105,7 @@ class SaunaTracker {
     const DRINK_SHOWN = 45;     // seconds the coach line asks for water at the start of a break
 
     var plan as SaunaPlan = new SaunaPlan(KIND_SAUNA);
+    var guided as Boolean = true;      // false: a free session, in and out as you like, no targets
     var auto as Boolean = true;
     var sensitivity as Float = 1.0;    // scales the plan's door rates: under 1 is more eager
     var hotTemp as Float = 50.0;       // 0 turns the heat guard off
@@ -188,8 +189,8 @@ class SaunaTracker {
             }
         }
 
-        // the plan
-        if (event == EVENT_NONE) {
+        // the plan, in a guided session
+        if (event == EVENT_NONE && guided) {
             var ps = phaseSeconds();
             if (phase == PHASE_SAUNA) {
                 if (!_capHit && plan.heatCap > 0 && saunaSeconds() >= plan.heatCap) {
@@ -348,10 +349,16 @@ class SaunaTracker {
         }
         var ps = phaseSeconds();
         if (phase == PHASE_ARRIVAL) {
-            if (ps < 90) {
+            if (ps < 90 && guided) {
                 return "Drink, shower, then go in";
             }
             return auto ? "Walk in when ready" : "LAP when you go in";
+        }
+        if (!guided) {
+            if (phase == PHASE_SAUNA) {
+                return "Free session · out when you like";
+            }
+            return ps < DRINK_SHOWN ? "Drink some water" : "Cooling down · in again when ready";
         }
         if (phase == PHASE_SAUNA) {
             if (plan.heatCap > 0 && saunaSeconds() >= plan.heatCap) {
@@ -378,7 +385,7 @@ class SaunaTracker {
         if (morePlanned()) {
             return "Ready for round " + (roundCount() + 1);
         }
-        return "Plan done · shower, then save";
+        return "Plan done · START to save";
     }
 
     // ---- sums ----

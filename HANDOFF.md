@@ -126,8 +126,13 @@ records where the project stands so the next session can carry on.
     #10, asked for by the owner on 2026-10-29 after seeing the store's
     "Sauna App"; what they want: cueing on what buttons do, then both a
     sauna and a steam room with the same detail and coaching, and
-    temperatures in Fahrenheit by default). START opens a selector
-    (Sauna / Steam room / Clear visits). `SaunaPlan` holds one kind's
+    temperatures in Fahrenheit by default; then, on 2026-10-29 evening,
+    an icon showing both rooms, an obvious way to end a visit, touch on
+    the cue corners, and guided versus free sessions). START opens a
+    selector (Guided sauna / Guided steam / Free sauna / Free steam /
+    Clear visits); while recording the START cue reads END and opens
+    Save / Resume / Switch to free or guided / Discard. A tap near a
+    cue acts as that button (`SaunaView.cueAt`); other taps do nothing. `SaunaPlan` holds one kind's
     targets, cap, weekly goals and door rates (defaults from the
     published guidance, all settings in groups per kind);
     `SaunaTracker` is pure arithmetic ticked once a second: the door
