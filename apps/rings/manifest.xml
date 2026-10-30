@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="b4d2e8f06a1c4e7f9d3b5a2c8e6f0d1a" type="watchface" name="@Strings.AppName" entry="RingsApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.1.0">
+        <iq:products>
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
+            <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- sunrise and sunset from the watch's own complications; press-and-hold opens the native widgets -->
+            <iq:uses-permission id="ComplicationSubscriber"/>
+            <!-- without this the weather observation position is null on a watch (EXPLORATION.md 10.1) -->
+            <iq:uses-permission id="Positioning"/>
+            <!-- Body Battery for the inner ring -->
+            <iq:uses-permission id="SensorHistory"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>

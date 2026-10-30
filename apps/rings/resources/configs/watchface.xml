@@ -1,0 +1,12 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- The fēnix 8's own watch face editor (Watch Face > Rings > Customize): the
+         style is the colour theme (Themes.SUNSET, BERRY, FOREST), read in
+         RingsView.reloadSettings over the Theme property -->
+    <watchface-config>
+        <styles>
+            <style id="0" label="@Strings.ThemeSunset" default="true"/>
+            <style id="1" label="@Strings.ThemeBerry"/>
+            <style id="2" label="@Strings.ThemeForest"/>
+        </styles>
+    </watchface-config>
+</resources>
