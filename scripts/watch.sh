@@ -24,6 +24,25 @@ for tool in mtp-files mtp-sendfile mtp-getfile mtp-delfile; do
     command -v "$tool" >/dev/null || { echo "$tool not found: brew install libmtp" >&2; exit 1; }
 done
 
+# After a plug-in the watch spends about ten seconds in Garmin's own USB
+# protocol (product id 3) before it switches to MTP (product id 0x51b8), so
+# wait for the switch rather than failing on the first listing.
+wait_for_mtp() {
+    local n=0
+    until ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idProduct" = 20920' || [ "$n" -ge 20 ]; do
+        if ! ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idVendor" = 2334'; then
+            echo "no Garmin watch on USB: plug it in" >&2; exit 1
+        fi
+        [ "$n" -eq 0 ] && echo "waiting for the watch to switch to MTP..."
+        sleep 3; n=$((n + 1))
+    done
+    if [ "$n" -ge 20 ]; then
+        echo "the watch stayed in Garmin USB mode: set USB Mode to MTP (hold UP, Watch Settings, System, Advanced) and replug" >&2
+        exit 1
+    fi
+}
+wait_for_mtp
+
 # Print "id<TAB>folder<TAB>name<TAB>size" for every file in Apps or LOGS.
 listing() {
     mtp-files 2>/dev/null | grep -v "extended association" | python3 -I -c '
