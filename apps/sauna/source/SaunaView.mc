@@ -823,16 +823,8 @@ class SaunaView extends WatchUi.View {
 
     // ---- button cues ----
 
-    // What each button does right now, as a short arc on the bezel beside
-    // the button and a word inside it. The angles (clockwise from twelve)
-    // are where Garmin's own button hints sit on the fenix 8 family, from
-    // the device personality files: START 58, BACK 123, DOWN 237, UP 270.
-    private const CUE_START = 58;
-    private const CUE_BACK = 123;
-    private const CUE_DOWN = 237;
-    private const CUE_UP = 270;
-    private const CUE_SPAN = 11;   // half the arc, in degrees
-
+    // What each button does right now, drawn by Lib.Cues beside the
+    // button at Garmin's own hint angles for the fenix 8 family.
     private const SCREEN_NAMES = ["LIVE", "ROUNDS", "CHART", "VISITS"] as Array<String>;
 
     // The word by the START button: a visit, or the menu that ends one
@@ -851,70 +843,18 @@ class SaunaView extends WatchUi.View {
 
     // Which cue a touch at (x, y) landed on: near the bezel and within
     // thirty degrees of a cue's angle, so the corners act as the buttons
+    // (TAP_* here match Lib.Cues.TAP_*)
     function cueAt(x as Number, y as Number) as Number {
-        var cx = _w / 2;
-        var cy = _h / 2;
-        var r = (_w < _h ? _w : _h) / 2;
-        var dx = (x - cx).toFloat();
-        var dy = (y - cy).toFloat();
-        if (Math.sqrt(dx * dx + dy * dy) < r * 0.55) {
-            return TAP_NONE;
-        }
-        var angle = Math.toDegrees(Math.atan2(dx, -dy)).toFloat();
-        if (angle < 0) {
-            angle += 360.0;
-        }
-        var cues = [CUE_START, CUE_BACK, CUE_UP, CUE_DOWN] as Array<Number>;
-        var taps = [TAP_START, TAP_BACK, TAP_UP, TAP_DOWN] as Array<Number>;
-        var best = TAP_NONE;
-        var bestDiff = 30.0;
-        for (var i = 0; i < cues.size(); i++) {
-            var diff = (angle - cues[i]).abs();
-            if (diff > 180.0) {
-                diff = 360.0 - diff;
-            }
-            if (diff < bestDiff) {
-                bestDiff = diff;
-                best = taps[i];
-            }
-        }
-        return best;
+        return Lib.Cues.at(x, y, _w, _h);
     }
 
     private function drawCues(dc as Dc) as Void {
         var t = _tracker;
         var backColour = t == null ? GRAY : (t.phase == PHASE_SAUNA ? BLUE : kindColour(t.plan.kind));
-        drawCue(dc, CUE_START, startCue(), WHITE, WHITE);
-        drawCue(dc, CUE_BACK, backCue(), backColour, backColour);
-        drawCue(dc, CUE_UP, SCREEN_NAMES[(_screen + SCREEN_COUNT - 1) % SCREEN_COUNT], DIM, GRAY);
-        drawCue(dc, CUE_DOWN, SCREEN_NAMES[(_screen + 1) % SCREEN_COUNT], DIM, GRAY);
-    }
-
-    private function drawCue(dc as Dc, angle as Number, label as String, arcColour as Number, textColour as Number) as Void {
-        var w = dc.getWidth();
-        var h = dc.getHeight();
-        var cx = w / 2;
-        var cy = h / 2;
-        var r = (w < h ? w : h) / 2;
-        // drawArc counts degrees anticlockwise from three o'clock
-        var from = 90 - angle - CUE_SPAN;
-        dc.setColor(arcColour, Graphics.COLOR_TRANSPARENT);
-        dc.setPenWidth((h * 0.014).toNumber() + 2);
-        dc.drawArc(cx, cy, r - 3, Graphics.ARC_COUNTER_CLOCKWISE, from, from + 2 * CUE_SPAN);
-        dc.setPenWidth(1);
-        // the word sits just inside the arc; the left ones a little further in, the screen is narrower there
-        var inset = angle > 180 ? 0.09 : 0.07;
-        var radius = r - (h * inset).toNumber();
-        var rad = Math.toRadians(angle);
-        var x = cx + (radius * Math.sin(rad)).toNumber();
-        var y = cy - (radius * Math.cos(rad)).toNumber();
-        // on a black patch, so the word stays readable where content reaches the edge
-        var size = dc.getTextDimensions(label, _labelFont);
-        var pad = (h * 0.012).toNumber() + 2;
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.fillRoundedRectangle(x - size[0] / 2 - pad, y - size[1] / 2 - 1, size[0] + 2 * pad, size[1] + 2, pad);
-        dc.setColor(textColour, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x, y, _labelFont, label, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        Lib.Cues.draw(dc, Lib.Cues.START, startCue(), _labelFont, WHITE, WHITE);
+        Lib.Cues.draw(dc, Lib.Cues.BACK, backCue(), _labelFont, backColour, backColour);
+        Lib.Cues.draw(dc, Lib.Cues.UP, SCREEN_NAMES[(_screen + SCREEN_COUNT - 1) % SCREEN_COUNT], _labelFont, DIM, GRAY);
+        Lib.Cues.draw(dc, Lib.Cues.DOWN, SCREEN_NAMES[(_screen + 1) % SCREEN_COUNT], _labelFont, DIM, GRAY);
     }
 }
 
