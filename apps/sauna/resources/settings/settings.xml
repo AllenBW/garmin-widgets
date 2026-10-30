@@ -33,6 +33,27 @@
         </setting>
     </group>
 
+    <group id="coach" title="@Strings.GroupCoach" description="@Strings.GroupCoachPrompt">
+        <setting propertyKey="@Properties.CoachHrHigh" title="@Strings.CoachHrHighTitle" prompt="@Strings.CoachHrHighPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.HrCeiling" title="@Strings.HrCeilingTitle" prompt="@Strings.HrCeilingPrompt">
+            <settingConfig type="numeric" min="0" max="220"/>
+        </setting>
+        <setting propertyKey="@Properties.CoachRecovery" title="@Strings.CoachRecoveryTitle" prompt="@Strings.CoachRecoveryPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.RecoveryHr" title="@Strings.RecoveryHrTitle">
+            <settingConfig type="numeric" min="80" max="160"/>
+        </setting>
+        <setting propertyKey="@Properties.CoachStand" title="@Strings.CoachStandTitle" prompt="@Strings.CoachStandPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.LogHrv" title="@Strings.LogHrvTitle" prompt="@Strings.LogHrvPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+
     <group id="sauna" title="@Strings.GroupSauna" description="@Strings.GroupSaunaPrompt">
         <setting propertyKey="@Properties.SaunaRound" title="@Strings.RoundTitle">
             <settingConfig type="numeric" min="0" max="60"/>

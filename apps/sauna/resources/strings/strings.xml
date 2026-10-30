@@ -24,6 +24,20 @@
     <string id="TypeMeditation">Meditation (no training load)</string>
     <string id="TypeGeneric">Other activity</string>
 
+    <string id="GroupCoach">Heart-rate coaching</string>
+    <string id="GroupCoachPrompt">Rules from the occupational heat-strain criteria, each with its own switch. Not medical advice: on beta blockers or with a heart condition, ask a doctor and turn them off.</string>
+    <string id="CoachHrHighTitle">Come out when the heart rate stays high</string>
+    <string id="CoachHrHighPrompt">After a full minute over the ceiling the watch buzzes and says so, once a minute.</string>
+    <string id="HrCeilingTitle">Heart-rate ceiling (bpm, 0 = 180 minus your age)</string>
+    <string id="HrCeilingPrompt">Your age comes from your Garmin profile. Without one, the top of your zone 4 is used.</string>
+    <string id="CoachRecoveryTitle">Longer cool-down if the heart has not settled</string>
+    <string id="CoachRecoveryPrompt">A minute after leaving, a rate still over the limit adds five minutes to the cool-down.</string>
+    <string id="RecoveryHrTitle">Settled means under (bpm)</string>
+    <string id="CoachStandTitle">"Stand up slowly" when a round ends</string>
+    <string id="CoachStandPrompt">Blood pressure sags after heat; this is the fainting moment.</string>
+    <string id="LogHrvTitle">Log heart-rate variability (experimental)</string>
+    <string id="LogHrvPrompt">RMSSD over each minute, from the wrist's beat timing, into the activity file. Sweat makes it noisy.</string>
+
     <string id="GroupSauna">Sauna plan</string>
     <string id="GroupSaunaPrompt">Dry heat, 170 to 200 °F. The guidance: rounds of 15 to 20 minutes, cool down at least as long as the round, 30 to 45 minutes of heat in a visit, several visits a week.</string>
     <string id="GroupSteam">Steam room plan</string>
