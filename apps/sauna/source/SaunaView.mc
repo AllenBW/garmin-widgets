@@ -732,10 +732,14 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // The behaviours (onSelect, onBack, ...) are offered first; a behaviour
+    // that returns false is then delivered raw, as onKey for a button or
+    // onTap for a touch. So onSelect declines, onKey acts on the button
+    // and onTap swallows the touch: a wet finger starts nothing.
     function onKey(evt as WatchUi.KeyEvent) as Boolean {
         var key = evt.getKey();
         if (key == WatchUi.KEY_ENTER || key == WatchUi.KEY_START) {
-            startOrMenu();
+            pressStart();
             return true;
         }
         if (key == WatchUi.KEY_LAP) {
@@ -748,7 +752,21 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onSelect() as Boolean {
+        return false;
+    }
+
+    function onTap(evt as WatchUi.ClickEvent) as Boolean {
         return true;
+    }
+
+    // The START button: a visit, or the menu once one is running
+    function pressStart() as Void {
+        if (_view.recording()) {
+            openMenu();
+        } else {
+            _view.start(true);
+            WatchUi.requestUpdate();
+        }
     }
 
     function onMenu() as Boolean {
@@ -762,15 +780,6 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
             return true;
         }
         return false;
-    }
-
-    private function startOrMenu() as Void {
-        if (_view.recording()) {
-            openMenu();
-        } else {
-            _view.start(true);
-            WatchUi.requestUpdate();
-        }
     }
 
     function openMenu() as Void {

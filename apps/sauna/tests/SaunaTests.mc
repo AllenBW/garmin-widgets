@@ -243,6 +243,18 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertEqualMessage(view.startCue(), "START", "idle START cue");
     Test.assertEqualMessage(view.backCue(), "EXIT", "idle BACK cue");
 
+    // the buttons: select must decline so the raw key reaches onKey; BACK exits when idle
+    var delegate = new SaunaDelegate(view);
+    Test.assertMessage(!delegate.onSelect(), "select is not swallowed");
+    Test.assertMessage(!delegate.onBack(), "BACK leaves the app when idle");
+    Test.assertMessage(delegate.onNextPage() && view.screen() == SCREEN_ROUNDS, "DOWN turns the screen");
+    Test.assertMessage(delegate.onPreviousPage() && view.screen() == SCREEN_LIVE, "UP turns it back");
+    // pressing START while recording would push the menu, so the key path is checked up to the start
+    view.start(false);
+    Test.assertMessage(view.recording() && delegate.onBack() && (view.tracker() as SaunaTracker).phase == PHASE_SAUNA, "BACK marks the door while recording");
+    view.discard();
+    Test.assertMessage(!view.recording(), "discarded again");
+
     // a visit without a FIT file: arrival, a round, a break with a recovery
     view.start(false);
     Test.assertMessage(view.recording(), "recording");
