@@ -26,8 +26,13 @@ STATUS=${PIPESTATUS[0]}
 set -e
 [ "$STATUS" -eq 0 ] || exit "$STATUS"
 
-if ! pgrep -f "ConnectIQ.app|simulator" >/dev/null 2>&1; then
+# The simulator is one process shared by every session on this Mac: claim
+# it by ID for the run (scripts/simlock.sh), and give it back afterwards.
+"$ROOT/scripts/simlock.sh" claim 5
+trap '"$ROOT/scripts/simlock.sh" release >/dev/null 2>&1 || true' EXIT
+
+if ! pgrep -f "ConnectIQ.app/Contents/MacOS/[s]imulator" >/dev/null 2>&1; then
     "$SDK/bin/connectiq" &
-    sleep 3
+    sleep 14
 fi
 "$SDK/bin/monkeydo" "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
