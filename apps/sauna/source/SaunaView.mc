@@ -18,6 +18,15 @@ enum {
     SCREEN_COUNT
 }
 
+// Which cue a touch landed on
+enum {
+    TAP_NONE,
+    TAP_START,
+    TAP_BACK,
+    TAP_UP,
+    TAP_DOWN
+}
+
 // The app: four screens turned with UP and DOWN. START picks a sauna or a
 // steam room and begins; later it opens the pause menu. LAP (BACK) marks
 // the door by hand when the thermometer has not noticed. The live screen
@@ -28,9 +37,9 @@ enum {
 class SaunaView extends WatchUi.View {
 
     private const EMBER = 0xFF7A3D;    // sauna
-    private const TEAL = 0x2EC4B6;     // steam room
+    private const STEAM = 0x3FA9F5;    // steam room
     private const AMBER = 0xFFB020;
-    private const BLUE = 0x2F8FD6;     // a break
+    private const BLUE = 0x6C8EA8;     // a break: cool steel
     private const RED = 0xD0021B;
     private const WHITE = 0xF2F2F2;
     private const GRAY = 0x8A8A8A;
@@ -52,6 +61,8 @@ class SaunaView extends WatchUi.View {
     private var _meditation as Boolean = true;
     private var _settingsLoaded as Boolean = false;
 
+    private var _w as Number = 454;
+    private var _h as Number = 454;
     private var _bandFont as FontType = Graphics.FONT_XTINY;
     private var _bigFont as FontType = Graphics.FONT_NUMBER_HOT;
     private var _mediumFont as FontType = Graphics.FONT_MEDIUM;
@@ -64,6 +75,8 @@ class SaunaView extends WatchUi.View {
 
     function onLayout(dc as Dc) as Void {
         var h = dc.getHeight();
+        _w = dc.getWidth();
+        _h = h;
         _bandFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.05).toNumber(), Graphics.FONT_XTINY);
         _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.24).toNumber(), Graphics.FONT_NUMBER_HOT);
         _mediumFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.085).toNumber(), Graphics.FONT_MEDIUM);
@@ -195,13 +208,15 @@ class SaunaView extends WatchUi.View {
         return _tracker;
     }
 
-    // Begin a visit of one kind; `record` false keeps the FIT file out of it (tests)
-    function start(kind as Number, record as Boolean) as Void {
+    // Begin a visit of one kind, guided by its plan or free; `record` false
+    // keeps the FIT file out of it (tests)
+    function start(kind as Number, guided as Boolean, record as Boolean) as Void {
         if (_tracker != null) {
             return;
         }
         var t = new SaunaTracker();
         t.plan = new SaunaPlan(kind);
+        t.guided = guided;
         applySettings(t);
         t.baselineDrop = SaunaHistory.avgDrop(kind);
         _tracker = t;
@@ -210,12 +225,25 @@ class SaunaView extends WatchUi.View {
         _message = null;
         _screen = SCREEN_LIVE;
         if (record) {
-            if (!_recorder.start(_meditation, kind)) {
+            if (!_recorder.start(_meditation, kind, guided)) {
                 say("Not recording a FIT file");
             }
         }
         startTimer();
         buzz([new Attention.VibeProfile(80, 300)] as Array<Attention.VibeProfile>);
+    }
+
+    // Switch between guided and free in the middle of a visit
+    function setGuided(guided as Boolean) as Void {
+        var t = _tracker;
+        if (t != null) {
+            t.guided = guided;
+        }
+    }
+
+    function guided() as Boolean {
+        var t = _tracker;
+        return t != null && t.guided;
     }
 
     // Once a second while recording and not paused
@@ -385,7 +413,7 @@ class SaunaView extends WatchUi.View {
     }
 
     private function kindColour(kind as Number) as Number {
-        return kind == KIND_STEAM ? TEAL : EMBER;
+        return kind == KIND_STEAM ? STEAM : EMBER;
     }
 
     private function drawLive(dc as Dc) as Void {
@@ -421,7 +449,7 @@ class SaunaView extends WatchUi.View {
             bandText = "WATCH HOT" + (temp == null ? "" : " · " + SaunaText.temp(temp));
         } else if (t.phase == PHASE_SAUNA) {
             bandColour = kindColour(t.plan.kind);
-            bandText = SaunaText.kindUpper(t.plan.kind) + " · ROUND " + t.roundCount() + " OF " + t.plan.rounds;
+            bandText = SaunaText.kindUpper(t.plan.kind) + " · ROUND " + t.roundCount() + (t.guided ? " OF " + t.plan.rounds : "");
             textColour = Graphics.COLOR_BLACK;
         } else if (t.phase == PHASE_BREAK) {
             bandColour = BLUE;
@@ -603,7 +631,7 @@ class SaunaView extends WatchUi.View {
         // the legend: the date is coloured by the kind
         dc.setColor(EMBER, Graphics.COLOR_TRANSPARENT);
         dc.drawText((w * 0.40).toNumber(), (h * 0.20).toNumber(), _tinyFont, "sauna", centre);
-        dc.setColor(TEAL, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(STEAM, Graphics.COLOR_TRANSPARENT);
         dc.drawText((w * 0.60).toNumber(), (h * 0.20).toNumber(), _tinyFont, "steam", centre);
         dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.27).toNumber(), _tinyFont, "date      rounds    in heat    max bpm", centre);
@@ -637,9 +665,41 @@ class SaunaView extends WatchUi.View {
 
     private const SCREEN_NAMES = ["LIVE", "ROUNDS", "CHART", "VISITS"] as Array<String>;
 
-    // The word by the START button
+    // The word by the START button: a visit, or the menu that ends one
     function startCue() as String {
-        return _tracker == null ? "START" : "MENU";
+        return _tracker == null ? "START" : "END";
+    }
+
+    // Which cue a touch at (x, y) landed on: near the bezel and within
+    // thirty degrees of a cue's angle, so the corners act as the buttons
+    function cueAt(x as Number, y as Number) as Number {
+        var cx = _w / 2;
+        var cy = _h / 2;
+        var r = (_w < _h ? _w : _h) / 2;
+        var dx = (x - cx).toFloat();
+        var dy = (y - cy).toFloat();
+        if (Math.sqrt(dx * dx + dy * dy) < r * 0.55) {
+            return TAP_NONE;
+        }
+        var angle = Math.toDegrees(Math.atan2(dx, -dy)).toFloat();
+        if (angle < 0) {
+            angle += 360.0;
+        }
+        var cues = [CUE_START, CUE_BACK, CUE_UP, CUE_DOWN] as Array<Number>;
+        var taps = [TAP_START, TAP_BACK, TAP_UP, TAP_DOWN] as Array<Number>;
+        var best = TAP_NONE;
+        var bestDiff = 30.0;
+        for (var i = 0; i < cues.size(); i++) {
+            var diff = (angle - cues[i]).abs();
+            if (diff > 180.0) {
+                diff = 360.0 - diff;
+            }
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                best = taps[i];
+            }
+        }
+        return best;
     }
 
     // The word by the BACK button
@@ -730,7 +790,23 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         return false;
     }
 
+    // A touch near a cue does what that button does; anywhere else, nothing
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        var c = evt.getCoordinates();
+        var tap = _view.cueAt(c[0], c[1]);
+        if (tap == TAP_START) {
+            pressStart();
+        } else if (tap == TAP_BACK) {
+            if (_view.recording()) {
+                _view.mark();
+            } else {
+                System.exit();
+            }
+        } else if (tap == TAP_UP) {
+            onPreviousPage();
+        } else if (tap == TAP_DOWN) {
+            onNextPage();
+        }
         return true;
     }
 
@@ -752,19 +828,27 @@ class SaunaDelegate extends WatchUi.BehaviorDelegate {
         openMenu();
     }
 
-    // The pause menu while recording; otherwise the selector: sauna or steam
+    // The pause menu while recording, Save first since that is how a visit
+    // ends; otherwise the selector: guided or free, sauna or steam
     function openMenu() as Void {
         var menu;
         if (_view.recording()) {
             _view.pause();
             menu = new WatchUi.Menu2({:title => "Paused"});
+            menu.addItem(new WatchUi.MenuItem("Save", "end and keep the visit", :save, null));
             menu.addItem(new WatchUi.MenuItem("Resume", null, :resume, null));
-            menu.addItem(new WatchUi.MenuItem("Save", "keep the visit", :save, null));
+            if (_view.guided()) {
+                menu.addItem(new WatchUi.MenuItem("Switch to free", "no targets, just in and out", :free, null));
+            } else {
+                menu.addItem(new WatchUi.MenuItem("Switch to guided", "follow the plan from here", :guided, null));
+            }
             menu.addItem(new WatchUi.MenuItem("Discard", "throw it away", :discard, null));
         } else {
             menu = new WatchUi.Menu2({:title => "Start"});
-            menu.addItem(new WatchUi.MenuItem("Sauna", planLine(KIND_SAUNA), :sauna, null));
-            menu.addItem(new WatchUi.MenuItem("Steam room", planLine(KIND_STEAM), :steam, null));
+            menu.addItem(new WatchUi.MenuItem("Guided sauna", planLine(KIND_SAUNA), :gsauna, null));
+            menu.addItem(new WatchUi.MenuItem("Guided steam", planLine(KIND_STEAM), :gsteam, null));
+            menu.addItem(new WatchUi.MenuItem("Free sauna", "in and out as you like", :fsauna, null));
+            menu.addItem(new WatchUi.MenuItem("Free steam", "in and out as you like", :fsteam, null));
             menu.addItem(new WatchUi.MenuItem("Clear visits", "forget the history", :clear, null));
         }
         WatchUi.pushView(menu, new SaunaMenuDelegate(_view), WatchUi.SLIDE_UP);
@@ -792,10 +876,20 @@ class SaunaMenuDelegate extends WatchUi.Menu2InputDelegate {
             _view.save();
         } else if (id == :discard) {
             _view.discard();
-        } else if (id == :sauna) {
-            _view.start(KIND_SAUNA, true);
-        } else if (id == :steam) {
-            _view.start(KIND_STEAM, true);
+        } else if (id == :gsauna) {
+            _view.start(KIND_SAUNA, true, true);
+        } else if (id == :gsteam) {
+            _view.start(KIND_STEAM, true, true);
+        } else if (id == :fsauna) {
+            _view.start(KIND_SAUNA, false, true);
+        } else if (id == :fsteam) {
+            _view.start(KIND_STEAM, false, true);
+        } else if (id == :free) {
+            _view.setGuided(false);
+            _view.resume();
+        } else if (id == :guided) {
+            _view.setGuided(true);
+            _view.resume();
         } else if (id == :clear) {
             SaunaHistory.clear();
         } else {

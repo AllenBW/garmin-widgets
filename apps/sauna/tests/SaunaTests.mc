@@ -218,7 +218,30 @@ function testTrackerPlan(logger as Logger) as Boolean {
         t.tick(100, temp);
     }
     Test.assertEqualMessage(t.tick(100, temp), EVENT_PLAN_DONE, "the plan's two rounds are done");
-    Test.assertEqualMessage(t.coach(), "Plan done · shower, then save", "sent to the shower");
+    Test.assertEqualMessage(t.coach(), "Plan done · START to save", "told how to end");
+
+    // a free session: the same door and recovery, none of the plan's events
+    var free = new SaunaTracker();
+    free.guided = false;
+    free.plan.roundTarget = 60;
+    free.plan.roundMax = 90;
+    free.plan.breakTarget = 30;
+    free.plan.heatCap = 100;
+    free.tick(90, 35.0);
+    Test.assertEqualMessage(free.coach(), "Walk in when ready", "free arrival");
+    free.mark();
+    var freeEvents = 0;
+    for (var s = 0; s < 200; s++) {
+        if (free.tick(120, 40.0) != EVENT_NONE) { freeEvents += 1; }
+    }
+    Test.assertEqualMessage(freeEvents, 0, "no targets, nags or caps when free");
+    Test.assertEqualMessage(free.coach(), "Free session · out when you like", "free heat line");
+    free.mark();
+    for (var s = 0; s < 100; s++) {
+        free.tick(100, 40.0);
+    }
+    Test.assertEqualMessage(free.coach(), "Cooling down · in again when ready", "free break line");
+    Test.assertMessage(free.rounds[0].drop1 != null, "the recovery is still measured");
 
     // the heat cap ends a round early
     var c = new SaunaTracker();
@@ -314,7 +337,7 @@ function testRecorder(logger as Logger) as Boolean {
     var t = new SaunaTracker();
     t.plan = new SaunaPlan(KIND_STEAM);
     var rec = new SaunaRecorder();
-    var started = rec.start(true, KIND_STEAM);
+    var started = rec.start(true, KIND_STEAM, true);
     logger.debug("session started: " + started);
     if (!started) {
         logger.debug("the simulator refused a session; skipping");
@@ -377,15 +400,24 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertMessage(delegate.onNextPage() && view.screen() == SCREEN_ROUNDS, "DOWN turns the screen");
     Test.assertMessage(delegate.onPreviousPage() && view.screen() == SCREEN_LIVE, "UP turns it back");
 
-    // a steam visit without a FIT file: arrival, a round, a break with a recovery
-    view.start(KIND_STEAM, false);
-    Test.assertMessage(view.recording(), "recording");
+    // touches: the corners by the cues act as the buttons, the middle does nothing
+    var r = (w < h ? w : h) / 2;
+    Test.assertEqualMessage(view.cueAt(w / 2, h / 2), TAP_NONE, "the centre is not a button");
+    Test.assertEqualMessage(view.cueAt(w / 2 + (r * 0.8).toNumber(), h / 2 - (r * 0.5).toNumber()), TAP_START, "two o'clock is START");
+    Test.assertEqualMessage(view.cueAt(w / 2 + (r * 0.75).toNumber(), h / 2 + (r * 0.5).toNumber()), TAP_BACK, "four o'clock is BACK");
+    Test.assertEqualMessage(view.cueAt(w / 2 - (r * 0.9).toNumber(), h / 2), TAP_UP, "nine o'clock is UP");
+    Test.assertEqualMessage(view.cueAt(w / 2 - (r * 0.7).toNumber(), h / 2 + (r * 0.5).toNumber()), TAP_DOWN, "eight o'clock is DOWN");
+    Test.assertEqualMessage(view.cueAt(w / 2, h - 5), TAP_NONE, "six o'clock is nothing");
+
+    // a guided steam visit without a FIT file: arrival, a round, a break with a recovery
+    view.start(KIND_STEAM, true, false);
+    Test.assertMessage(view.recording() && view.guided(), "recording, guided");
     var t = view.tracker() as SaunaTracker;
     Test.assertEqualMessage(t.plan.kind, KIND_STEAM, "the steam plan");
     Test.assertEqualMessage(t.baselineDrop as Number, 24, "the usual steam drop came from the history");
     t.auto = false;   // the door is marked by hand here; the thermometer logic has its own test
     view.onUpdate(screen);
-    Test.assertEqualMessage(view.startCue(), "MENU", "recording START cue");
+    Test.assertEqualMessage(view.startCue(), "END", "recording START cue");
     Test.assertEqualMessage(view.backCue(), "IN", "BACK goes in");
     Test.assertMessage(delegate.onBack() && t.phase == PHASE_SAUNA, "BACK marks the door while recording");
     Test.assertEqualMessage(view.backCue(), "OUT", "BACK goes out");
@@ -424,9 +456,16 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     logger.debug("saved row: " + row);
     Test.assertMessage(row[SaunaHistory.KIND] == KIND_STEAM && row[SaunaHistory.ROUNDS] == 1, "one steam round saved");
     view.onUpdate(screen);
-    view.start(KIND_SAUNA, false);
-    Test.assertEqualMessage((view.tracker() as SaunaTracker).plan.rounds, 3, "a sauna plan this time");
+    // a free sauna: same recording, no targets, and the switch mid-visit
+    view.start(KIND_SAUNA, false, false);
+    var f = view.tracker() as SaunaTracker;
+    Test.assertMessage(f.plan.rounds == 3 && !f.guided, "a free sauna this time");
+    f.auto = false;
+    view.mark();
     view.onUpdate(screen);
+    Test.assertEqualMessage(f.coach(), "Free session · out when you like", "free coaching");
+    view.setGuided(true);
+    Test.assertMessage(view.guided() && f.coach().find(" left") != null, "guided from here: " + f.coach());
     view.discard();
     Test.assertMessage(!view.recording() && SaunaHistory.count() == 2, "discarded");
     SaunaHistory.clear();
