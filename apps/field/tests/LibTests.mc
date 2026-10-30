@@ -56,6 +56,16 @@ function testMoonPhase(logger as Logger) as Boolean {
     Test.assertMessage(Lib.Moon.illumination(0.0) < 0.001, "new: dark");
     Test.assertMessage((Lib.Moon.illumination(0.5) - 1.0).abs() < 0.001, "full: lit");
     Test.assertMessage((Lib.Moon.illumination(0.25) - 0.5).abs() < 0.001, "quarter: half");
+
+    Test.assertEqualMessage(Lib.Moon.name(0.0), "New moon", "new");
+    Test.assertEqualMessage(Lib.Moon.name(0.97), "New moon", "almost new again");
+    Test.assertEqualMessage(Lib.Moon.name(0.1), "Waxing crescent", "waxing crescent");
+    Test.assertEqualMessage(Lib.Moon.name(0.24), "First quarter", "first quarter");
+    Test.assertEqualMessage(Lib.Moon.name(0.35), "Waxing gibbous", "waxing gibbous");
+    Test.assertEqualMessage(Lib.Moon.name(0.5), "Full moon", "full");
+    Test.assertEqualMessage(Lib.Moon.name(0.65), "Waning gibbous", "waning gibbous");
+    Test.assertEqualMessage(Lib.Moon.name(0.76), "Last quarter", "last quarter");
+    Test.assertEqualMessage(Lib.Moon.name(0.9), "Waning crescent", "waning crescent");
     return true;
 }
 
@@ -120,8 +130,25 @@ function testFmt(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Fmt.clock(0), is24 ? "0:00" : "12:00", "midnight");
     Test.assertEqualMessage(Lib.Fmt.clock(12 * 3600 + 5 * 60), "12:05", "noon");
 
+    Test.assertEqualMessage(Lib.Fmt.clock24(0), "00:00", "24 h midnight");
+    Test.assertEqualMessage(Lib.Fmt.clock24(7 * 3600 + 5 * 60), "07:05", "24 h keeps the leading zero");
+    Test.assertEqualMessage(Lib.Fmt.clock24(17 * 3600 + 41 * 60), "17:41", "24 h evening");
+    Test.assertEqualMessage(Lib.Fmt.clock24(23 * 3600 + 59 * 60 + 59), "23:59", "24 h last minute");
+
+    var miles = System.getDeviceSettings().distanceUnits != System.UNIT_METRIC;
+    Test.assertEqualMessage(Lib.Fmt.distanceUnit(), miles ? "mi" : "km", "distance unit");
+    Test.assertEqualMessage(Lib.Fmt.distanceValue(160934), miles ? "1.0" : "1.6", "a mile");
+    Test.assertEqualMessage(Lib.Fmt.distance(500000), miles ? "3.1 mi" : "5.0 km", "five kilometres");
+
     var metric = System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC;
     Test.assertEqualMessage(Lib.Fmt.temperature(18), metric ? "18°" : "64°", "temperature");
     Test.assertEqualMessage(Lib.Fmt.temperature(-3.4), metric ? "-3°" : "26°", "temperature rounds");
+    Test.assertEqualMessage(Lib.Fmt.fahrenheit(18), "64°F", "always Fahrenheit");
+    Test.assertEqualMessage(Lib.Fmt.compact(8412), "8412", "four digits stay whole");
+    Test.assertEqualMessage(Lib.Fmt.compact(12345), "12.3k", "five digits in thousands");
+    Test.assertEqualMessage(Lib.Fmt.compact(123456), "123k", "six digits in whole thousands");
+    Test.assertEqualMessage(Lib.Fmt.compact(-15000), "-15.0k", "below zero too");
+    Test.assertEqualMessage(Lib.Fmt.fahrenheit(-40), "-40°F", "minus forty is the same in both");
+    Test.assertEqualMessage(Lib.Fmt.fahrenheit(-3.4), "26°F", "Fahrenheit rounds");
     return true;
 }

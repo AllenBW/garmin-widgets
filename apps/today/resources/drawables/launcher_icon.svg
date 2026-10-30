@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Today launcher icon: black disc, the sun on the horizon, the moon above -->
+  <circle cx="32" cy="32" r="31" fill="#000000"/>
+  <path d="M19,40 A13,13 0 0 1 45,40 Z" fill="#FFB020"/>
+  <rect x="12" y="40" width="40" height="4" rx="2" fill="#F2F2F2"/>
+  <circle cx="45" cy="17" r="5" fill="#8A8A8A"/>
+</svg>
