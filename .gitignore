@@ -10,3 +10,4 @@ bin/
 *.pem
 
 .DS_Store
+watch-logs/

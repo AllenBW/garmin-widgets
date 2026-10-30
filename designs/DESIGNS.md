@@ -25,6 +25,7 @@ in the SDK before relying on it.
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 | 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
+| 10 | **Sauna** | Glance + app | Rounds and recovery, the door noticed by the thermometer, a cue by every button | M | Built in `apps/sauna/` |
 
 Considered and dropped:
 
@@ -437,6 +438,75 @@ long to encode throws, and the card says "Too long to encode" instead.
 **Not done:** editing a code on the watch (a text picker), a brightness
 boost while a code is showing, and a check on a real phone camera that
 the 0.58-diameter code scans at the watch's pixel density.
+
+---
+
+## 10. Sauna: rounds, recovery and a watch that says what its buttons do
+
+**Purpose:** a sauna visit tracked round by round without fiddling with
+a wet watch. The watch's own thermometer notices the door, the heart-rate
+recovery after each round is measured properly, every button has its job
+written beside it, and the visit lands in Garmin Connect. The idea comes
+from the store's "Sauna App" (manual LAP, four screens, a paid unlock);
+this one adds the automatic door, the button cues, targets and a heat
+guard, and keeps everything free and on the watch. The owner's wish, in
+their words: cueing on what the buttons will do.
+
+**Layout (app)**
+- Button cues on every screen: a short arc on the bezel beside each
+  button with a word just inside it. START or MENU at two o'clock; EXIT,
+  IN or OUT at four; the names of the previous and next screens at nine
+  and eight. The angles are where Garmin's own button hints sit on this
+  family, read from the device personality files: 58°, 123°, 270° and
+  237° clockwise from twelve, the same on all three devices.
+- Live: a band across the top (ember "SAUNA · ROUND 2 OF 3", blue
+  "BREAK · AFTER ROUND 2", grey "READY", red "WATCH HOT · 52°"), the
+  phase timer in big digits, "of 15:00 · total 38:10" under it, and the
+  heart rate, breathing and watch temperature along the bottom. Idle, the
+  screen says "Press START" over the last visit.
+- Rounds: time in heat and out, then a row per round: length, max heart
+  rate, the one-minute fall.
+- Chart: the last finished round's heart rate from the door to two and a
+  half minutes after it, ember in the heat and blue after, with the peak
+  and the one- and two-minute falls.
+- Visits: the last eight kept on the watch.
+- Glance: SAUNA, "3 rounds · 38 min", then the date, peak heart rate and
+  recovery of the last visit.
+
+**Behaviour**
+- START begins a visit, which opens in "arrival". LAP (BACK) marks the
+  door by hand. The thermometer marks it on its own when the watch warms
+  1.5 °C above its coolest reading of the last minute (in) or cools
+  1.0 °C below its hottest (out), never within 90 s of the last change
+  or three minutes of a button press. Two buzzes going in, one coming out.
+- Recovery: the peak in the half minute after leaving, then the fall one
+  and two minutes after that peak, per round and averaged.
+- Targets: a long buzz at the round target (15 min) and two at the break
+  target (10 min); both are settings, 0 turns them off.
+- Heat guard: at 50 °C on the watch's own thermometer the band turns red
+  and the watch buzzes once a minute. Garmin rates the fēnix 8 to 45 °C.
+- START again opens Resume / Save / Discard (the recording pauses while
+  it is open); the menu button when idle offers Start and Clear visits.
+  Taps do nothing on purpose.
+- Saved as a Meditation activity named Sauna, so Connect adds no training
+  load (a setting switches to a generic activity): one lap per phase, the
+  watch temperature and the phase every second, the recovery on each
+  break lap and the totals on the session, through FitContributor. Thirty
+  visits stay on the watch.
+
+**Data:** `Sensor` for the heart rate and `Sensor.Info.temperature` at
+1 Hz, `SensorHistory` as the temperature fallback every ten seconds,
+`ActivityMonitor`'s respiration rate where it exists, `Fit` and
+`FitContributor` for the file. Settings: automatic rounds, the two rates,
+the two targets, rounds planned, the hot threshold, the activity type.
+
+**Not done, to learn on a watch:** how fast the fēnix 8's thermometer
+really moves at the door (the rates are starting values; the FIT file
+logs the temperature every second so they can be tuned from the first
+real visit), whether `Sensor.Info.temperature` is populated at all in a
+device app, how the optical heart rate copes with sweat, and the look of
+the cues by eye. A caution that belongs in the app's description if it is
+ever published: Garmin rates the watch to 45 °C, sauna air is 80–100 °C.
 
 ---
 

@@ -1,0 +1,20 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Sauna</string>
+    <string id="AutoRoundsTitle">Mark rounds automatically</string>
+    <string id="AutoRoundsPrompt">Use the watch thermometer to notice when you go in and out. LAP always works too.</string>
+    <string id="EnterRateTitle">Going in: warming per minute (°C)</string>
+    <string id="EnterRatePrompt">How much the watch must warm in a minute to count as entering the sauna. Lower is more eager.</string>
+    <string id="LeaveRateTitle">Going out: cooling per minute (°C)</string>
+    <string id="LeaveRatePrompt">How much the watch must cool in a minute to count as leaving.</string>
+    <string id="RoundTargetTitle">Round target (minutes)</string>
+    <string id="RoundTargetPrompt">The watch buzzes when a round reaches this. 0 turns it off.</string>
+    <string id="BreakTargetTitle">Break target (minutes)</string>
+    <string id="BreakTargetPrompt">The watch buzzes when a break reaches this. 0 turns it off.</string>
+    <string id="RoundsGoalTitle">Rounds planned</string>
+    <string id="RoundsGoalPrompt">Shown as "round 2 of 3" on the live screen.</string>
+    <string id="HotWatchTitle">Hot watch warning (°C)</string>
+    <string id="HotWatchPrompt">The band turns red and the watch buzzes every minute while its thermometer reads this or more. Garmin rates the watch to 45 °C.</string>
+    <string id="ActivityTypeTitle">Save visits as</string>
+    <string id="TypeMeditation">Meditation (no training load)</string>
+    <string id="TypeGeneric">Other activity</string>
+</strings>

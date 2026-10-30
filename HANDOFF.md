@@ -122,6 +122,33 @@ records where the project stands so the next session can carry on.
     a value too long to encode throws and the card says so. Three tests
     pass on all three devices at `-l 3`. Loaded in the simulator; not yet
     looked at by eye, and not scanned with a phone camera.
+  - **Sauna** (`apps/sauna/`, a widget: glance + app, design #10, asked
+    for by the owner on 2026-10-29 after seeing the store's "Sauna App";
+    what they want improved is "cueing on what buttons will do what"):
+    `SaunaTracker` is pure arithmetic ticked once a second with the heart
+    rate and the watch temperature: rounds, breaks, the door noticed when
+    the watch warms 1.5 °C above its coolest reading of the last minute
+    or cools 1.0 °C below its hottest (no change within 90 s of the last
+    or 3 min of a button press), the peak in the half minute after
+    leaving and the falls one and two minutes later, round and break
+    targets, a hot-watch warning at 50 °C. `SaunaRecorder` wraps
+    `ActivityRecording` (Meditation, or generic by a setting; a lap per
+    phase; eleven developer fields). `SaunaView` draws four screens and,
+    on every one, a cue by each button: an arc on the bezel at Garmin's
+    own hint angles (58°, 123°, 237°, 270° clockwise from twelve, from
+    the device personality files) with START/MENU, EXIT/IN/OUT and the
+    neighbouring screen names. LAP (BACK) marks the door while recording;
+    taps are ignored. Six tests pass on all three devices; a screen draws
+    in about 35 ms; 42 KB in use. Not seen by eye and not yet on the
+    watch; the rates are guesses until a real visit's FIT file is read.
+- **The watch (2026-10-29):** the owner has a **fēnix 8 47 mm, not Pro**
+  (`fenix847mm`, firmware 23.40). It reaches the Mac over MTP with
+  libmtp once its USB mode is MTP (hold UP → Watch Settings → System →
+  Advanced → USB Mode; in Garmin mode it shows as USB product 0003 and
+  nothing can write to it). `scripts/watch.sh` pushes builds and pulls
+  logs; the `mtp-*` tools need the shell sandbox off. All nine earlier
+  apps were pushed as `GARMIN/Apps/<NAME>.PRG` with empty
+  `LOGS/<NAME>.TXT` files; the owner has not reported what they saw yet.
 - **Platform check (2026-10-29):** `EXPLORATION.md` section 10 lists every
   sensor and input by app type, verified against the SDK 9.3.0 docs, the
   device files and a probe face run in the simulator. Headlines: a watch
@@ -206,3 +233,13 @@ records where the project stands so the next session can carry on.
    watch: check the settings list in the Connect IQ app (array settings
    with a name and a content field) and scan a Wi-Fi code with a phone.
    Ideas not built: editing a code on the watch, a brightness boost.
+9. **Sauna** is built; push it with `scripts/watch.sh push sauna` when the
+   watch is plugged in. First on the watch: do the cues land beside the
+   buttons; is `Sensor.Info.temperature` ever non-null in a device app
+   (the SensorHistory fallback covers it if not); start a visit at home
+   and hold the watch over a cup of hot water to see the thermometer
+   move and the automatic IN fire. After a real sauna, pull the FIT file
+   from Garmin Connect and read the "Watch temp" chart to tune the enter
+   and leave rates (settings). Ideas not built: a breathing-guided cool
+   down, a glance that starts a visit directly, Garmin's own "sauna"
+   sport type if one ever appears in the SDK.

@@ -1,0 +1,9 @@
+project.manifest = manifest.xml
+
+# Unit tests (tests/) are annotated (:test) and only compiled with --unit-test
+base.sourcePath = source;tests
+
+# Shared code: the Lib barrel at the repo root (lib/). Only the annotated
+# sub-modules listed here are compiled into this app; fmt is glance-safe.
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = fmt

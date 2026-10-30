@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <!-- A widget: a row in the glance loop (the last visit) that opens into the full app -->
+    <iq:application id="7d3e9f2a4b6c4d8e9f0a1b2c3d4e5f61" type="widget" name="@Strings.AppName" entry="SaunaApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+        <iq:products>
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
+            <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- live heart rate and the watch's own thermometer, while the app is open -->
+            <iq:uses-permission id="Sensor"/>
+            <!-- the thermometer's last stored reading when the live one is missing -->
+            <iq:uses-permission id="SensorHistory"/>
+            <!-- record the visit as an activity for Garmin Connect -->
+            <iq:uses-permission id="Fit"/>
+            <!-- with the watch temperature, the phase and the recovery as extra fields -->
+            <iq:uses-permission id="FitContributor"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>
