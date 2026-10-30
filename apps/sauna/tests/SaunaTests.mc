@@ -35,8 +35,8 @@ function testText(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaText.kindName(KIND_SAUNA), "Sauna", "sauna name");
     Test.assertEqualMessage(SaunaText.kindName(KIND_STEAM), "Steam room", "steam name");
     Test.assertEqualMessage(SaunaText.kindUpper(KIND_STEAM), "STEAM", "steam band");
-    Test.assertEqualMessage(SaunaText.kindCount(KIND_SAUNA, 2, 4), "2 of 4 saunas", "sauna count");
-    Test.assertEqualMessage(SaunaText.kindCount(KIND_STEAM, 1, 3), "1 of 3 steams", "steam count");
+    Test.assertEqualMessage(SaunaText.kindCount(KIND_SAUNA, 2, 4), "2/4 saunas", "sauna count");
+    Test.assertEqualMessage(SaunaText.kindCount(KIND_STEAM, 1, 3), "1/3 steams", "steam count");
     Test.assertEqualMessage(SaunaText.headline(null), "No visits yet", "empty headline");
     var row = [1730000000, KIND_STEAM, 2, 1450, 1200, 131, 24, 441, -1, -1] as Array<Number>;
     Test.assertEqualMessage(SaunaText.headline(row), "Steam room · 2 rounds · 24 min", "headline");
@@ -422,7 +422,7 @@ function testHistory(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaHistory.thisWeek(KIND_SAUNA)[0], 0, "no sauna this week");
     Test.assertEqualMessage(SaunaHistory.thisWeek(-1)[0], 1, "one visit of any kind");
     var line = SaunaText.week(new SaunaPlan(KIND_STEAM));
-    Test.assertEqualMessage(line, "Week: 1 of 3 steams · 38 of 40 min", "week line: " + line);
+    Test.assertEqualMessage(line, "Week 1/3 steams · 38/40 min", "week line: " + line);
     for (var i = 0; i < SaunaHistory.MAX; i++) {
         SaunaHistory.add([1730200000 + i, KIND_SAUNA, 1, 600, 0, 0, -1, -1000, -1, -1] as Array<Number>);
     }

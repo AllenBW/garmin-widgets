@@ -27,9 +27,9 @@ module SaunaText {
         return kind == KIND_STEAM ? "STEAM" : "SAUNA";
     }
 
-    // "2 of 4 saunas", "1 of 3 steams"
+    // "2/4 saunas", "1/3 steams"
     function kindCount(kind as Number, n as Number, goal as Number) as String {
-        return n + " of " + goal + (kind == KIND_STEAM ? " steams" : " saunas");
+        return n + "/" + goal + (kind == KIND_STEAM ? " steams" : " saunas");
     }
 
     // Seconds -> "12:34", or "1:02:34" past an hour
@@ -98,9 +98,9 @@ module SaunaText {
         return s;
     }
 
-    // This week against the plan: "Week: 2 of 4 saunas · 46 of 60 min"
+    // This week against the plan: "Week 2/4 saunas · 46/60 min"
     function week(plan as SaunaPlan) as String {
         var w = SaunaHistory.thisWeek(plan.kind);
-        return "Week: " + kindCount(plan.kind, w[0], plan.weekSessions) + " · " + ((w[1] + 30) / 60) + " of " + plan.weekMinutes + " min";
+        return "Week " + kindCount(plan.kind, w[0], plan.weekSessions) + " · " + ((w[1] + 30) / 60) + "/" + plan.weekMinutes + " min";
     }
 }
