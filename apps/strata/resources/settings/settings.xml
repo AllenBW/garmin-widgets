@@ -1,0 +1,95 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <setting propertyKey="@Properties.Slot1" title="@Strings.Slot1Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ReadingTemperature</listEntry>
+            <listEntry value="1">@Strings.ReadingRain</listEntry>
+            <listEntry value="2">@Strings.ReadingHeart</listEntry>
+            <listEntry value="3">@Strings.ReadingDistance</listEntry>
+            <listEntry value="4">@Strings.ReadingBodyBattery</listEntry>
+            <listEntry value="5">@Strings.ReadingElevation</listEntry>
+            <listEntry value="6">@Strings.ReadingHumidity</listEntry>
+            <listEntry value="7">@Strings.ReadingWind</listEntry>
+            <listEntry value="8">@Strings.ReadingBattery</listEntry>
+            <listEntry value="9">@Strings.ReadingSteps</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot2" title="@Strings.Slot2Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ReadingTemperature</listEntry>
+            <listEntry value="1">@Strings.ReadingRain</listEntry>
+            <listEntry value="2">@Strings.ReadingHeart</listEntry>
+            <listEntry value="3">@Strings.ReadingDistance</listEntry>
+            <listEntry value="4">@Strings.ReadingBodyBattery</listEntry>
+            <listEntry value="5">@Strings.ReadingElevation</listEntry>
+            <listEntry value="6">@Strings.ReadingHumidity</listEntry>
+            <listEntry value="7">@Strings.ReadingWind</listEntry>
+            <listEntry value="8">@Strings.ReadingBattery</listEntry>
+            <listEntry value="9">@Strings.ReadingSteps</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot3" title="@Strings.Slot3Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ReadingTemperature</listEntry>
+            <listEntry value="1">@Strings.ReadingRain</listEntry>
+            <listEntry value="2">@Strings.ReadingHeart</listEntry>
+            <listEntry value="3">@Strings.ReadingDistance</listEntry>
+            <listEntry value="4">@Strings.ReadingBodyBattery</listEntry>
+            <listEntry value="5">@Strings.ReadingElevation</listEntry>
+            <listEntry value="6">@Strings.ReadingHumidity</listEntry>
+            <listEntry value="7">@Strings.ReadingWind</listEntry>
+            <listEntry value="8">@Strings.ReadingBattery</listEntry>
+            <listEntry value="9">@Strings.ReadingSteps</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Slot4" title="@Strings.Slot4Title">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ReadingTemperature</listEntry>
+            <listEntry value="1">@Strings.ReadingRain</listEntry>
+            <listEntry value="2">@Strings.ReadingHeart</listEntry>
+            <listEntry value="3">@Strings.ReadingDistance</listEntry>
+            <listEntry value="4">@Strings.ReadingBodyBattery</listEntry>
+            <listEntry value="5">@Strings.ReadingElevation</listEntry>
+            <listEntry value="6">@Strings.ReadingHumidity</listEntry>
+            <listEntry value="7">@Strings.ReadingWind</listEntry>
+            <listEntry value="8">@Strings.ReadingBattery</listEntry>
+            <listEntry value="9">@Strings.ReadingSteps</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Strata" title="@Strings.StrataTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.StrataSoil</listEntry>
+            <listEntry value="1">@Strings.StrataClay</listEntry>
+            <listEntry value="2">@Strings.StrataMoss</listEntry>
+            <listEntry value="3">@Strings.StrataSlate</listEntry>
+            <listEntry value="4">@Strings.StrataSand</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Accent" title="@Strings.AccentTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.AccentTemperature</listEntry>
+            <listEntry value="1">@Strings.AccentTone</listEntry>
+            <listEntry value="2">@Strings.AccentOchre</listEntry>
+            <listEntry value="3">@Strings.AccentLichen</listEntry>
+            <listEntry value="4">@Strings.AccentEmber</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.TimeColor" title="@Strings.TimeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.TimeBone</listEntry>
+            <listEntry value="1">@Strings.TimeAccent</listEntry>
+            <listEntry value="2">@Strings.TimeSandstone</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.TimeStyle" title="@Strings.TimeStyleTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.TimeFilled</listEntry>
+            <listEntry value="1">@Strings.TimeOutline</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.DayNight" title="@Strings.DayNightTitle">
+        <settingConfig type="boolean" />
+    </setting>
+    <setting propertyKey="@Properties.Stones" title="@Strings.StonesTitle">
+        <settingConfig type="boolean" />
+    </setting>
+</settings>
