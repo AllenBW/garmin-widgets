@@ -25,16 +25,19 @@ class SaunaGlance extends WatchUi.GlanceView {
         SaunaSettings.applyUnit();
         var row = SaunaHistory.last();
         var kind = row == null ? KIND_SAUNA : row[SaunaHistory.KIND];
+        var w = dc.getWidth();
         var h = dc.getHeight();
         var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
 
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+        // the top line sits where the round screen is narrowest: start it a little in
         dc.setColor(EMBER, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.15).toNumber(), Graphics.FONT_GLANCE, "SAUNA · STEAM", left);
+        dc.drawText((w * 0.06).toNumber(), (h * 0.17).toNumber(), Graphics.FONT_GLANCE, "SAUNA · STEAM", left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), _bigFont, SaunaText.headline(row), left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, SaunaText.week(SaunaSettings.plan(kind)), left);
+        var week = Graphics.fitTextToArea(SaunaText.week(SaunaSettings.plan(kind)), Graphics.FONT_GLANCE, w, h, true);
+        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, week, left);
     }
 }
