@@ -507,6 +507,26 @@ kind of room with coaching for both.
 - A minute after each round's peak: "Fell 34 in a minute · usual 29",
   against this kind's earlier visits (a short buzz).
 - "Watch hot, take it off" beats everything while the heat guard is on.
+- Heart-rate rules, each with its own switch in a "Heart-rate coaching"
+  settings group, taken from the occupational heat-strain criteria
+  (ACGIH, used by NIOSH and OSHA) because no clinical body publishes a
+  sauna limit: "Heart rate 158 · come out" after a full minute over the
+  ceiling, once a minute while it lasts (the ceiling setting, or 180
+  minus the age in the Garmin profile, or the top of zone 4; off without
+  any); "Not recovered · 125 bpm, cool down longer" when, a minute after
+  leaving, the rate is still over 110, which adds five minutes to that
+  break; and "Stand up slowly" for the first twenty seconds of every
+  break, because blood pressure sags after heat. The rules run in guided
+  and free sessions alike. The group's description says plainly that it
+  is not medical advice and to switch the rules off on beta blockers.
+- Logged, not coached on: the breathing rate and Garmin's stress score
+  every second, Body Battery at the start and the end of the visit (in
+  the file, the history row and the Rounds screen), and, as an
+  experiment with its own switch, heart-rate variability as RMSSD over
+  each minute from the wrist's beat-to-beat intervals (shown on the
+  Chart screen when known). Core temperature and blood pressure, the two
+  numbers that matter most for safety, are not measurable on the wrist
+  and the app does not pretend otherwise.
 - The plans, all settings, grouped by kind on the phone: sauna rounds of
   15 min, nag at 20, cool down 15, 3 rounds, 45 min of heat, 4 visits
   and 60 min a week; steam rounds of 12, nag at 15, cool down 12, 2
@@ -535,11 +555,14 @@ kind of room with coaching for both.
   the kind on the session, through FitContributor. Thirty visits stay on
   the watch, each with its kind.
 
-**Data:** `Sensor` for the heart rate and `Sensor.Info.temperature` at
-1 Hz, `SensorHistory` as the temperature fallback every ten seconds,
-`ActivityMonitor`'s respiration rate where it exists, `Fit` and
-`FitContributor` for the file. Settings in three groups: the watch (unit,
-automatic door, door sensitivity, hot warning, activity type), the sauna
+**Data:** `Sensor` for the heart rate, `Sensor.Info.temperature` at 1 Hz
+and the beat-to-beat intervals through `registerSensorDataListener`,
+`SensorHistory` for the temperature fallback and Body Battery,
+`ActivityMonitor`'s respiration rate and stress score, `UserProfile` for
+the birth year, `Fit` and `FitContributor` for the file (eighteen
+developer fields, each created on its own so a refusal drops only that
+one). Settings in four groups: the watch (unit, automatic door, door
+sensitivity, hot warning, activity type), heart-rate coaching, the sauna
 plan, the steam-room plan.
 
 **Not done, to learn on a watch:** how the fēnix 8's thermometer really

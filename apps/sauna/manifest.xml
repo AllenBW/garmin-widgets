@@ -18,6 +18,8 @@
             <iq:uses-permission id="Fit"/>
             <!-- with the watch temperature, the phase and the recovery as extra fields -->
             <iq:uses-permission id="FitContributor"/>
+            <!-- the birth year, for a heart-rate ceiling of 180 minus age -->
+            <iq:uses-permission id="UserProfile"/>
         </iq:permissions>
         <iq:languages>
             <iq:language>eng</iq:language>

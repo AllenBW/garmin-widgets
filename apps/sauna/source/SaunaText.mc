@@ -92,6 +92,9 @@ module SaunaText {
         if (row[SaunaHistory.DROP] >= 0) {
             s += " · " + drop(row[SaunaHistory.DROP]) + " in 1 min";
         }
+        if (row[SaunaHistory.BB_START] >= 0 && row[SaunaHistory.BB_END] >= 0) {
+            s += " · Body Battery " + row[SaunaHistory.BB_START] + "→" + row[SaunaHistory.BB_END];
+        }
         return s;
     }
 

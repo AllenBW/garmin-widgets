@@ -11,7 +11,7 @@ import Toybox.Time.Gregorian;
 module SaunaHistory {
     const KEY = "visits";
     const MAX = 30;
-    const STRIDE = 8;
+    const STRIDE = 10;
 
     // Columns of a row
     const START = 0;       // unix seconds the visit began
@@ -22,6 +22,8 @@ module SaunaHistory {
     const MAX_HR = 5;      // beats per minute in the heat; 0 when none was read
     const DROP = 6;        // average fall a minute after each round's peak; -1 when none
     const MAX_TEMP = 7;    // the watch's hottest reading in tenths of a degree C; -1000 when none
+    const BB_START = 8;    // Body Battery when the visit began; -1 when unknown
+    const BB_END = 9;      // and when it was saved
 
     function all() as Array<Number> {
         var value = Storage.getValue(KEY);

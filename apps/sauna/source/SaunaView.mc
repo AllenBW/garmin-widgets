@@ -60,6 +60,10 @@ class SaunaView extends WatchUi.View {
     private var _messageTicks as Number = 0;
     private var _meditation as Boolean = true;
     private var _settingsLoaded as Boolean = false;
+    private var _hrvWindow as HrvWindow = new HrvWindow();
+    private var _hrvListening as Boolean = false;
+    private var _logHrv as Boolean = true;
+    private var _bbStart as Number? = null;     // Body Battery when the visit began
 
     private var _w as Number = 454;
     private var _h as Number = 454;
@@ -94,14 +98,71 @@ class SaunaView extends WatchUi.View {
         }
         if (_tracker != null && !_paused) {
             startTimer();
+            listenForBeats();
         }
     }
 
     function onHide() as Void {
         stopTimer();
+        stopListening();
         if (Toybox has :Sensor) {
             Sensor.enableSensorEvents(null);
         }
+    }
+
+    // Beat-to-beat intervals from the wrist, once a second, for the HRV log
+    private function listenForBeats() as Void {
+        if (_hrvListening || !_logHrv || !(Toybox has :Sensor) || !(Sensor has :registerSensorDataListener)) {
+            return;
+        }
+        try {
+            Sensor.registerSensorDataListener(method(:onBeats), {:period => 1, :heartBeatIntervals => {:enabled => true}});
+            _hrvListening = true;
+        } catch (e) {
+            _hrvListening = false;
+        }
+    }
+
+    private function stopListening() as Void {
+        if (_hrvListening && (Toybox has :Sensor)) {
+            try {
+                Sensor.unregisterSensorDataListener();
+            } catch (e) {
+            }
+        }
+        _hrvListening = false;
+    }
+
+    function onBeats(data as Sensor.SensorData) as Void {
+        var hr = data.heartRateData;
+        if (hr != null) {
+            var intervals = hr.heartBeatIntervals;
+            if (intervals != null) {
+                _hrvWindow.add(intervals);
+            }
+        }
+    }
+
+    // Body Battery's latest value from the watch's history; null without one
+    private function bodyBattery() as Number? {
+        if (!(Toybox has :SensorHistory) || !(SensorHistory has :getBodyBatteryHistory)) {
+            return null;
+        }
+        try {
+            var it = SensorHistory.getBodyBatteryHistory({:period => 1, :order => SensorHistory.ORDER_NEWEST_FIRST});
+            var sample = it.next();
+            if (sample != null) {
+                var v = sample.data;
+                if (v instanceof Number) {
+                    return v;
+                }
+                if (v instanceof Float) {
+                    return v.toNumber();
+                }
+            }
+        } catch (e) {
+        }
+        return null;
     }
 
     private function startTimer() as Void {
@@ -125,6 +186,7 @@ class SaunaView extends WatchUi.View {
         _settingsLoaded = true;
         SaunaSettings.applyUnit();
         _meditation = SaunaSettings.meditation();
+        _logHrv = SaunaSettings.logHrv();
         var t = _tracker;
         if (t != null) {
             applySettings(t);
@@ -136,6 +198,11 @@ class SaunaView extends WatchUi.View {
         t.sensitivity = SaunaSettings.sensitivity();
         t.hotTemp = SaunaSettings.hotTemp();
         t.plan = SaunaSettings.plan(t.plan.kind);
+        t.coachHrHigh = SaunaSettings.coachHrHigh();
+        t.hrCeiling = SaunaSettings.ceiling();
+        t.coachRecovery = SaunaSettings.coachRecovery();
+        t.recoveryHr = SaunaSettings.recoveryHr();
+        t.coachStand = SaunaSettings.coachStand();
     }
 
     // ---- readings ----
@@ -183,6 +250,8 @@ class SaunaView extends WatchUi.View {
         }
     }
 
+    private var _stress as Number? = null;
+
     private function pollBreathing() as Void {
         if (!(Toybox has :ActivityMonitor)) {
             return;
@@ -191,6 +260,10 @@ class SaunaView extends WatchUi.View {
         if (info has :respirationRate) {
             var r = info.respirationRate;
             _breath = (r != null && r > 0) ? r : null;
+        }
+        if (info has :stressScore) {
+            var s = info.stressScore;
+            _stress = (s != null && s >= 0) ? s : null;
         }
     }
 
@@ -224,13 +297,20 @@ class SaunaView extends WatchUi.View {
         _startUnix = Time.now().value();
         _message = null;
         _screen = SCREEN_LIVE;
+        _bbStart = record ? bodyBattery() : null;
+        _hrvWindow = new HrvWindow();
         if (record) {
             if (!_recorder.start(_meditation, kind, guided)) {
                 say("Not recording a FIT file");
             }
+            listenForBeats();
         }
         startTimer();
         buzz([new Attention.VibeProfile(80, 300)] as Array<Attention.VibeProfile>);
+    }
+
+    function bodyBatteryAtStart() as Number? {
+        return _bbStart;
     }
 
     // Switch between guided and free in the middle of a visit
@@ -254,8 +334,12 @@ class SaunaView extends WatchUi.View {
         }
         pollTemperature();
         pollBreathing();
-        var event = t.tick(_hr, _temp);
-        _recorder.record(t.temp, t.phase);
+        var event = t.tickAll(_hr, _temp, _breath, _stress);
+        if (t.now % 60 == 0 && _hrvListening) {
+            t.hrv = _hrvWindow.value();
+            _hrvWindow.reset();
+        }
+        _recorder.record(t.temp, t.phase, t.breath, t.stress, t.now % 60 == 0 ? t.hrv : null);
         if (event == EVENT_ENTER) {
             _recorder.lap(t.previous());
             buzz(pattern([250, 150, 250]));
@@ -278,6 +362,10 @@ class SaunaView extends WatchUi.View {
             buzz(pattern([120]));
         } else if (event == EVENT_HOT) {
             buzz(pattern([150, 100, 150, 100, 150]));
+        } else if (event == EVENT_HR_HIGH) {
+            buzz(pattern([300, 150, 300, 150, 300]));
+        } else if (event == EVENT_NOT_RECOVERED) {
+            buzz(pattern([400, 200, 400]));
         }
         if (_message != null) {
             _messageTicks -= 1;
@@ -340,9 +428,10 @@ class SaunaView extends WatchUi.View {
         if (t == null) {
             return;
         }
-        var saved = _recorder.save(t);
+        var bbEnd = _recorder.active() ? bodyBattery() : null;
+        var saved = _recorder.save(t, _bbStart, bbEnd);
         if (t.roundCount() > 0 || t.now >= 60) {
-            SaunaHistory.add(t.historyRow(_startUnix));
+            SaunaHistory.add(t.historyRow(_startUnix, _bbStart, bbEnd));
         }
         finish(saved ? "Saved to Garmin Connect" : "Saved on the watch");
     }
@@ -357,6 +446,7 @@ class SaunaView extends WatchUi.View {
 
     private function finish(message as String) as Void {
         stopTimer();
+        stopListening();
         _tracker = null;
         _paused = false;
         _screen = SCREEN_LIVE;
@@ -530,9 +620,14 @@ class SaunaView extends WatchUi.View {
             y += step;
         }
         var mt = t.maxTemp;
-        if (mt != null) {
+        var foot = mt == null ? "" : "watch up to " + SaunaText.temp(mt);
+        var bb = _bbStart;
+        if (bb != null) {
+            foot += (foot.length() > 0 ? " · " : "") + "Body Battery " + bb + " at start";
+        }
+        if (foot.length() > 0) {
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.86).toNumber(), _tinyFont, "watch up to " + SaunaText.temp(mt), centre);
+            dc.drawText(cx, (h * 0.86).toNumber(), _tinyFont, foot, centre);
         }
     }
 
@@ -562,6 +657,10 @@ class SaunaView extends WatchUi.View {
         var base = t.baselineDrop;
         if (base != null && base > 0) {
             line += " · usual " + base;
+        }
+        var hrv = t.hrv;
+        if (hrv != null) {
+            line += " · HRV " + hrv + " ms";
         }
         dc.drawText(cx, (h * 0.29).toNumber(), _smallFont, line, centre);
         if (!traceIsThis || trace.size() < 2) {

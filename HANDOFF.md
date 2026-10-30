@@ -132,7 +132,13 @@ records where the project stands so the next session can carry on.
     selector (Guided sauna / Guided steam / Free sauna / Free steam /
     Clear visits); while recording the START cue reads END and opens
     Save / Resume / Switch to free or guided / Discard. A tap near a
-    cue acts as that button (`SaunaView.cueAt`); other taps do nothing. `SaunaPlan` holds one kind's
+    cue acts as that button (`SaunaView.cueAt`); other taps do nothing.
+    Later the same evening, heart-rate coaching with a switch per rule
+    (ceiling of 180 minus age for a minute, "not recovered" over 110 a
+    minute after leaving extends the break, "stand up slowly"), and the
+    other readings logged: breathing and stress per second, Body Battery
+    at start and end, HRV (RMSSD per minute, `SaunaHrv.mc`) as an
+    experiment. The simulator's profile gives a ceiling of 134 bpm. `SaunaPlan` holds one kind's
     targets, cap, weekly goals and door rates (defaults from the
     published guidance, all settings in groups per kind);
     `SaunaTracker` is pure arithmetic ticked once a second: the door

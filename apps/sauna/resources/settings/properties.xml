@@ -7,6 +7,13 @@
     <property id="HotWatch" type="number">50</property>
     <property id="ActivityType" type="number">0</property>
 
+    <property id="CoachHrHigh" type="boolean">true</property>
+    <property id="HrCeiling" type="number">0</property>
+    <property id="CoachRecovery" type="boolean">true</property>
+    <property id="RecoveryHr" type="number">110</property>
+    <property id="CoachStand" type="boolean">true</property>
+    <property id="LogHrv" type="boolean">true</property>
+
     <property id="SaunaRound" type="number">15</property>
     <property id="SaunaMax" type="number">20</property>
     <property id="SaunaBreak" type="number">15</property>

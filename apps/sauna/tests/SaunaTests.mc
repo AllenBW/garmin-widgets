@@ -38,7 +38,7 @@ function testText(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaText.kindCount(KIND_SAUNA, 2, 4), "2 of 4 saunas", "sauna count");
     Test.assertEqualMessage(SaunaText.kindCount(KIND_STEAM, 1, 3), "1 of 3 steams", "steam count");
     Test.assertEqualMessage(SaunaText.headline(null), "No visits yet", "empty headline");
-    var row = [1730000000, KIND_STEAM, 2, 1450, 1200, 131, 24, 441] as Array<Number>;
+    var row = [1730000000, KIND_STEAM, 2, 1450, 1200, 131, 24, 441, -1, -1] as Array<Number>;
     Test.assertEqualMessage(SaunaText.headline(row), "Steam room · 2 rounds · 24 min", "headline");
     var detail = SaunaText.detail(row);
     logger.debug(detail);
@@ -122,7 +122,7 @@ function testTrackerAuto(logger as Logger) as Boolean {
     // the second heating runs five minutes from 33: 33 + 300 x 0.05
     var mt = t.maxTemp as Float;
     Test.assertMessage((mt - 48.0).abs() < 0.2, "watch peaked at 48: " + mt);
-    var row = t.historyRow(1730000000);
+    var row = t.historyRow(1730000000, null, null);
     Test.assertEqualMessage(row.size(), SaunaHistory.STRIDE, "a history row");
     Test.assertEqualMessage(row[SaunaHistory.KIND], KIND_SAUNA, "row kind");
     Test.assertEqualMessage(row[SaunaHistory.ROUNDS], 2, "row rounds");
@@ -188,8 +188,12 @@ function testTrackerPlan(logger as Logger) as Boolean {
     // the break must be at least as long as the round, not just the plan's minute
     Test.assertEqualMessage(t.breakGoal(), 240, "break goal follows the round");
     Test.assertEqualMessage(t.tick(100, temp), EVENT_NONE, "break ticking");
-    Test.assertEqualMessage(t.coach(), "Drink some water", "water first");
-    for (var s = 0; s < 44; s++) {
+    Test.assertEqualMessage(t.coach(), "Stand up slowly", "stand up slowly first");
+    for (var s = 0; s < 19; s++) {
+        Test.assertEqualMessage(t.tick(100, temp), EVENT_NONE, "break ticking");
+    }
+    Test.assertEqualMessage(t.coach(), "Drink some water", "then water");
+    for (var s = 0; s < 25; s++) {
         Test.assertEqualMessage(t.tick(100, temp), EVENT_NONE, "break ticking");
     }
     Test.assertEqualMessage(t.coach(), "Cool down 3:15 more", "then the cool-down countdown");
@@ -277,6 +281,83 @@ function testTrackerPlan(logger as Logger) as Boolean {
     off.hotTemp = 0.0;
     Test.assertEqualMessage(off.tick(120, 60.0), EVENT_NONE, "guard off");
 
+    // the heart-rate ceiling: a minute over it in the heat, then once a minute
+    var hi = new SaunaTracker();
+    hi.hrCeiling = 150;
+    hi.plan.roundTarget = 0;
+    hi.plan.roundMax = 0;
+    hi.plan.heatCap = 0;
+    hi.mark();
+    for (var s = 0; s < 59; s++) {
+        Test.assertEqualMessage(hi.tick(160, 40.0), EVENT_NONE, "not yet a minute over");
+    }
+    Test.assertMessage(!hi.hrHigh(), "not flagged at 59 s");
+    Test.assertEqualMessage(hi.tick(160, 40.0), EVENT_HR_HIGH, "a minute over the ceiling");
+    Test.assertMessage(hi.hrHigh(), "flagged");
+    Test.assertEqualMessage(hi.coach(), "Heart rate 160 · come out", "told to come out");
+    var highs = 0;
+    for (var s = 0; s < 120; s++) {
+        if (hi.tick(155, 40.0) == EVENT_HR_HIGH) { highs += 1; }
+    }
+    Test.assertEqualMessage(highs, 2, "once a minute while it lasts");
+    hi.tick(140, 40.0);
+    Test.assertMessage(!hi.hrHigh(), "clears as soon as the rate dips under");
+    hi.coachHrHigh = false;
+    for (var s = 0; s < 120; s++) {
+        Test.assertEqualMessage(hi.tick(170, 40.0), EVENT_NONE, "switched off");
+    }
+
+    // the recovery rule: a minute after leaving the rate is still high, so the break grows
+    var rec = new SaunaTracker();
+    rec.plan.roundTarget = 0;
+    rec.plan.roundMax = 0;
+    rec.plan.heatCap = 0;
+    rec.plan.breakTarget = 60;
+    rec.recoveryHr = 110;
+    rec.mark();
+    for (var s = 0; s < 30; s++) {
+        rec.tick(140, 40.0);
+    }
+    rec.mark();
+    Test.assertEqualMessage(rec.breakGoal(), 60, "a minute's break for a half-minute round");
+    Test.assertEqualMessage(rec.coach(), "Stand up slowly", "first words on leaving");
+    var notRecoveredAt = 0;
+    for (var s = 1; s <= 70; s++) {
+        var e = rec.tick(125, 40.0);
+        if (e == EVENT_NOT_RECOVERED) { notRecoveredAt = s; }
+        else if (e == EVENT_BREAK_TARGET && s == 60) { }   // the plan's minute, as expected
+        else if (e != EVENT_NONE) { Test.assertMessage(false, "unexpected " + e + " at " + s); }
+    }
+    Test.assertEqualMessage(notRecoveredAt, 61, "judged a minute after the peak");
+    Test.assertEqualMessage(rec.breakGoal(), 360, "five minutes added");
+    Test.assertMessage(rec.breakExtended(), "extended");
+    Test.assertEqualMessage(rec.coach(), "Not recovered · 125 bpm, cool down longer", "told why");
+    rec.mark();
+    Test.assertMessage(!rec.breakExtended(), "the next round starts clean");
+    var quiet = new SaunaTracker();
+    quiet.coachRecovery = false;
+    quiet.coachStand = false;
+    quiet.plan.roundTarget = 0;
+    quiet.plan.roundMax = 0;
+    quiet.plan.heatCap = 0;
+    quiet.mark();
+    quiet.tick(140, 40.0);
+    quiet.mark();
+    Test.assertEqualMessage(quiet.coach(), "Drink some water", "no stand-up line when off");
+    var plain = EVENT_NONE;
+    for (var s = 1; s <= 70; s++) {
+        var e = quiet.tick(125, 40.0);
+        if (e != EVENT_NONE) { plain = e; }
+    }
+    Test.assertMessage(plain == EVENT_RECOVERY && !quiet.breakExtended(), "just the plain recovery report when off");
+
+    // the readings ride along
+    quiet.tickAll(100, 40.0, 14, 37);
+    Test.assertMessage(quiet.breath == 14 && quiet.stress == 37, "breathing and stress kept");
+    var row = quiet.historyRow(1, 62, 51);
+    Test.assertMessage(row.size() == SaunaHistory.STRIDE && row[SaunaHistory.BB_START] == 62 && row[SaunaHistory.BB_END] == 51, "Body Battery in the row");
+    Test.assertEqualMessage(quiet.historyRow(1, null, null)[SaunaHistory.BB_END], -1, "unknown Body Battery");
+
     // auto off: a sauna's worth of warming (staying under the hot warning) does nothing
     var u = new SaunaTracker();
     u.auto = false;
@@ -288,7 +369,28 @@ function testTrackerPlan(logger as Logger) as Boolean {
     }
     Test.assertMessage(!any && u.phase == PHASE_ARRIVAL, "nothing automatic when off");
     Test.assertEqualMessage(u.coach(), "LAP when you go in", "told to use LAP");
-    Test.assertEqualMessage(u.historyRow(5)[SaunaHistory.DROP], -1, "no drop recorded");
+    Test.assertEqualMessage(u.historyRow(5, null, null)[SaunaHistory.DROP], -1, "no drop recorded");
+    return true;
+}
+
+(:test)
+function testHrv(logger as Logger) as Boolean {
+    // successive differences 20, -30, 20 ... over twelve beats
+    var beats = [800, 820, 790, 810, 790, 810, 790, 810, 790, 810, 790, 810] as Array<Number>;
+    var v = SaunaHrv.rmssd(beats) as Number;
+    logger.debug("rmssd " + v);
+    Test.assertMessage(v >= 21 && v <= 23, "about 22 ms: " + v);
+    Test.assertMessage(SaunaHrv.rmssd([800, 820, 790] as Array<Number>) == null, "too few beats");
+    var w = new HrvWindow();
+    w.add([800, 820] as Array<Number>);
+    w.add([3000, 790, 810] as Array<Number>);   // an artefact breaks the chain
+    Test.assertEqualMessage(w.beats(), 2, "two differences, the artefact and its neighbour dropped");
+    w.add(beats);
+    Test.assertMessage(w.value() != null, "enough now");
+    w.reset();
+    Test.assertMessage(w.value() == null && w.beats() == 0, "a fresh minute");
+    w.add([800] as Array<Number>);
+    Test.assertEqualMessage(w.beats(), 1, "the chain carried across the reset");
     return true;
 }
 
@@ -298,8 +400,10 @@ function testHistory(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaHistory.count(), 0, "empty");
     Test.assertMessage(SaunaHistory.last() == null && SaunaHistory.visit(0) == null, "nothing to show");
     var now = Time.now().value();
-    SaunaHistory.add([now - 20 * 86400, KIND_SAUNA, 2, 1500, 900, 130, 25, 440] as Array<Number>);
-    SaunaHistory.add([now - 60, KIND_STEAM, 3, 2290, 1200, 142, 31, 481] as Array<Number>);
+    SaunaHistory.add([now - 20 * 86400, KIND_SAUNA, 2, 1500, 900, 130, 25, 440, 70, 60] as Array<Number>);
+    SaunaHistory.add([now - 60, KIND_STEAM, 3, 2290, 1200, 142, 31, 481, 62, 51] as Array<Number>);
+    var detail = SaunaText.detail(SaunaHistory.last());
+    Test.assertMessage(detail.find("Body Battery 62→51") != null, "Body Battery in the detail: " + detail);
     Test.assertEqualMessage(SaunaHistory.count(), 2, "two visits");
     var last = SaunaHistory.last() as Array<Number>;
     Test.assertEqualMessage(last[SaunaHistory.KIND], KIND_STEAM, "newest first");
@@ -320,7 +424,7 @@ function testHistory(logger as Logger) as Boolean {
     var line = SaunaText.week(new SaunaPlan(KIND_STEAM));
     Test.assertEqualMessage(line, "Week: 1 of 3 steams · 38 of 40 min", "week line: " + line);
     for (var i = 0; i < SaunaHistory.MAX; i++) {
-        SaunaHistory.add([1730200000 + i, KIND_SAUNA, 1, 600, 0, 0, -1, -1000] as Array<Number>);
+        SaunaHistory.add([1730200000 + i, KIND_SAUNA, 1, 600, 0, 0, -1, -1000, -1, -1] as Array<Number>);
     }
     Test.assertEqualMessage(SaunaHistory.count(), SaunaHistory.MAX, "capped");
     var oldest = SaunaHistory.visit(SaunaHistory.MAX - 1) as Array<Number>;
@@ -345,8 +449,8 @@ function testRecorder(logger as Logger) as Boolean {
     }
     Test.assertMessage(rec.recording(), "recording");
     for (var s = 0; s < 5; s++) {
-        t.tick(100, 40.0 + s);
-        rec.record(t.temp, t.phase);
+        t.tickAll(100, 40.0 + s, 14, 40);
+        rec.record(t.temp, t.phase, t.breath, t.stress, s == 0 ? 35 : null);
     }
     t.mark();
     rec.lap(null);
@@ -356,7 +460,7 @@ function testRecorder(logger as Logger) as Boolean {
     Test.assertMessage(rec.recording(), "resumed");
     rec.discard();
     Test.assertMessage(!rec.active(), "gone");
-    Test.assertMessage(!rec.save(t), "nothing to save after a discard");
+    Test.assertMessage(!rec.save(t, 62, 51), "nothing to save after a discard");
     return true;
 }
 
@@ -372,7 +476,7 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var glance = new SaunaGlance();
     glance.onLayout(glanceDc);
     glance.onUpdate(glanceDc);
-    SaunaHistory.add([Time.now().value() - 3600, KIND_STEAM, 2, 1450, 1200, 131, 24, 441] as Array<Number>);
+    SaunaHistory.add([Time.now().value() - 3600, KIND_STEAM, 2, 1450, 1200, 131, 24, 441, 62, 51] as Array<Number>);
     glance.onUpdate(glanceDc);
     Test.assertMessage(SaunaText.fahrenheit, "the glance applied the default unit, Fahrenheit");
 
@@ -415,6 +519,8 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var t = view.tracker() as SaunaTracker;
     Test.assertEqualMessage(t.plan.kind, KIND_STEAM, "the steam plan");
     Test.assertEqualMessage(t.baselineDrop as Number, 24, "the usual steam drop came from the history");
+    logger.debug("heart-rate ceiling from the simulator's profile: " + t.hrCeiling + " bpm; coaching switches " + t.coachHrHigh + " " + t.coachRecovery + " " + t.coachStand);
+    Test.assertMessage(t.coachHrHigh && t.coachRecovery && t.coachStand && t.recoveryHr == 110, "the coaching defaults are on");
     t.auto = false;   // the door is marked by hand here; the thermometer logic has its own test
     view.onUpdate(screen);
     Test.assertEqualMessage(view.startCue(), "END", "recording START cue");

@@ -1,6 +1,9 @@
 import Toybox.Application.Properties;
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Time;
+import Toybox.Time.Gregorian;
+import Toybox.UserProfile;
 
 // The settings from the phone (resources/settings), each with its default
 // when a value is missing or odd. Shared by the glance and the app.
@@ -63,6 +66,56 @@ module SaunaSettings {
     function hotTemp() as Float {
         var v = number("HotWatch", 50);
         return (v == 0 ? 0 : clamp(v, 40, 80)).toFloat();
+    }
+
+    // The heart-rate coaching rules, each with its own switch (applied by the view)
+    function coachHrHigh() as Boolean {
+        return bool("CoachHrHigh", true);
+    }
+
+    function coachRecovery() as Boolean {
+        return bool("CoachRecovery", true);
+    }
+
+    function recoveryHr() as Number {
+        return clamp(number("RecoveryHr", 110), 80, 160);
+    }
+
+    function coachStand() as Boolean {
+        return bool("CoachStand", true);
+    }
+
+    function logHrv() as Boolean {
+        return bool("LogHrv", true);
+    }
+
+    // The heart-rate ceiling: the setting, or 180 minus the profile's age, or
+    // the top of Garmin's zone 4 for this user, or off when none is known
+    function ceiling() as Number {
+        var v = number("HrCeiling", 0);
+        if (v > 0) {
+            return clamp(v, 100, 220);
+        }
+        if (!(Toybox has :UserProfile)) {
+            return 0;
+        }
+        try {
+            var profile = UserProfile.getProfile();
+            var born = profile.birthYear;
+            if (born != null && born > 1900) {
+                var year = Gregorian.info(Time.now(), Time.FORMAT_SHORT).year;
+                var age = year - born;
+                if (age >= 10 && age <= 100) {
+                    return 180 - age;
+                }
+            }
+            var zones = UserProfile.getHeartRateZones(UserProfile.HR_ZONE_SPORT_GENERIC);
+            if (zones.size() >= 5 && zones[4] > 100) {
+                return zones[4];
+            }
+        } catch (e) {
+        }
+        return 0;
     }
 
     // The plan for one kind, from its group of settings (minutes on the phone, seconds here)

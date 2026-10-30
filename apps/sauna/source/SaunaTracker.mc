@@ -15,7 +15,9 @@ enum {
     EVENT_BREAK_TARGET,   // cooled down long enough: ready for the next round
     EVENT_PLAN_DONE,      // cooled down after the last planned round
     EVENT_RECOVERY,       // the one-minute fall just became known
-    EVENT_HOT             // the watch itself is at or over the warning temperature
+    EVENT_HOT,            // the watch itself is at or over the warning temperature
+    EVENT_HR_HIGH,        // the heart rate has been over the ceiling for a minute
+    EVENT_NOT_RECOVERED   // a minute after leaving the heart rate is still high: the break grows
 }
 
 enum {
@@ -103,6 +105,9 @@ class SaunaTracker {
     const TRACE_MAX = 40 * 60;  // heart-rate samples kept for the chart
     const RECOVERY_SHOWN = 30;  // seconds the coach line reports a fresh recovery
     const DRINK_SHOWN = 45;     // seconds the coach line asks for water at the start of a break
+    const STAND_SHOWN = 20;     // seconds "stand up slowly" shows first
+    const HR_HIGH_AFTER = 60;   // seconds over the ceiling before the rule speaks
+    const BREAK_EXTENSION = 300; // seconds added to the break when the heart has not settled
 
     var plan as SaunaPlan = new SaunaPlan(KIND_SAUNA);
     var guided as Boolean = true;      // false: a free session, in and out as you like, no targets
@@ -110,6 +115,20 @@ class SaunaTracker {
     var sensitivity as Float = 1.0;    // scales the plan's door rates: under 1 is more eager
     var hotTemp as Float = 50.0;       // 0 turns the heat guard off
     var baselineDrop as Number? = null;   // this kind's usual one-minute fall from earlier visits
+
+    // Heart-rate coaching, each rule with its own switch (the occupational
+    // heat-strain criteria: a sustained rate over 180 minus age, a rate
+    // still over 110 a minute after the peak)
+    var coachHrHigh as Boolean = true;
+    var hrCeiling as Number = 0;       // bpm; 0 is off (the settings fill in 180 minus age)
+    var coachRecovery as Boolean = true;
+    var recoveryHr as Number = 110;    // a minute after leaving the heart should be under this
+    var coachStand as Boolean = true;
+
+    // The other readings, for the file and the screens
+    var breath as Number? = null;
+    var stress as Number? = null;
+    var hrv as Number? = null;         // RMSSD in ms over the last minute
 
     var now as Number = 0;             // seconds since the visit began
     var phase as Number = PHASE_ARRIVAL;
@@ -131,6 +150,12 @@ class SaunaTracker {
     private var _breakTotal as Number = 0;
     private var _capHit as Boolean = false;
     private var _recoveryNew as Boolean = false;
+    private var _hrHighFor as Number = 0;          // consecutive seconds over the ceiling
+    private var _lastHrHigh as Number = -100000;
+    private var _notRecoveredNew as Boolean = false;
+    private var _notRecoveredAt as Number? = null;
+    private var _notRecoveredHr as Number = 0;
+    private var _breakExtra as Number = 0;         // added to this break's goal by the recovery rule
 
     function initialize() {
         _temps = new [WINDOW + 1] as Array<Float?>;
@@ -138,8 +163,18 @@ class SaunaTracker {
 
     // One second on, with the readings of that second (null when missing)
     function tick(hr as Number?, temp as Float?) as Number {
+        return tickAll(hr, temp, null, null);
+    }
+
+    function tickAll(hr as Number?, temp as Float?, breath as Number?, stress as Number?) as Number {
         now += 1;
         self.hr = hr;
+        if (breath != null) {
+            self.breath = breath;
+        }
+        if (stress != null) {
+            self.stress = stress;
+        }
         if (temp != null) {
             self.temp = temp;
             var mt = maxTemp;
@@ -189,6 +224,17 @@ class SaunaTracker {
             }
         }
 
+        // the heart-rate ceiling, in the heat, guided or free
+        if (coachHrHigh && hrCeiling > 0 && phase == PHASE_SAUNA && hr != null && hr >= hrCeiling) {
+            _hrHighFor += 1;
+            if (event == EVENT_NONE && _hrHighFor >= HR_HIGH_AFTER && now - _lastHrHigh >= 60) {
+                _lastHrHigh = now;
+                event = EVENT_HR_HIGH;
+            }
+        } else {
+            _hrHighFor = 0;
+        }
+
         // the plan, in a guided session
         if (event == EVENT_NONE && guided) {
             var ps = phaseSeconds();
@@ -211,8 +257,9 @@ class SaunaTracker {
         if (_recoveryNew) {
             _recoveryNew = false;
             if (event == EVENT_NONE) {
-                event = EVENT_RECOVERY;
+                event = _notRecoveredNew ? EVENT_NOT_RECOVERED : EVENT_RECOVERY;
             }
+            _notRecoveredNew = false;
         }
 
         // the heat guard
@@ -280,9 +327,16 @@ class SaunaTracker {
         }
         phase = PHASE_SAUNA;
         _lastChange = now;
+        _breakExtra = 0;
+        _hrHighFor = 0;
         rounds.add(new SaunaRound(now));
         trace = [] as Array<Number?>;
         traceStart = now;
+    }
+
+    // The heart rate has been over the ceiling for a minute
+    function hrHigh() as Boolean {
+        return _hrHighFor >= HR_HIGH_AFTER;
     }
 
     function leave() as Void {
@@ -314,6 +368,12 @@ class SaunaTracker {
             recoveryAt = now;
             recoveryDrop = round.drop1;
             _recoveryNew = true;
+            if (coachRecovery && hr > recoveryHr) {
+                _notRecoveredNew = true;
+                _notRecoveredAt = now;
+                _notRecoveredHr = hr;
+                _breakExtra = BREAK_EXTENSION;
+            }
         } else if (now == at + 120) {
             round.drop2 = round.peakHr - hr;
         }
@@ -321,11 +381,16 @@ class SaunaTracker {
 
     // ---- the plan ----
 
-    // The break must be at least the plan's, and never shorter than the round before it
+    // The break must be at least the plan's, never shorter than the round
+    // before it, and longer still when the heart had not settled
     function breakGoal() as Number {
         var last = lastDone();
         var len = last == null ? 0 : last.seconds(now);
-        return plan.breakTarget > len ? plan.breakTarget : len;
+        return (plan.breakTarget > len ? plan.breakTarget : len) + _breakExtra;
+    }
+
+    function breakExtended() as Boolean {
+        return _breakExtra > 0;
     }
 
     function morePlanned() as Boolean {
@@ -336,6 +401,14 @@ class SaunaTracker {
     function coach() as String {
         if (hot) {
             return "Watch hot, take it off";
+        }
+        var h = hr;
+        if (hrHigh() && h != null) {
+            return "Heart rate " + h + " · come out";
+        }
+        var na = _notRecoveredAt;
+        if (na != null && now - na < RECOVERY_SHOWN) {
+            return "Not recovered · " + _notRecoveredHr + " bpm, cool down longer";
         }
         var ra = recoveryAt;
         var rd = recoveryDrop;
@@ -353,6 +426,9 @@ class SaunaTracker {
                 return "Drink, shower, then go in";
             }
             return auto ? "Walk in when ready" : "LAP when you go in";
+        }
+        if (phase == PHASE_BREAK && coachStand && ps < STAND_SHOWN) {
+            return "Stand up slowly";
         }
         if (!guided) {
             if (phase == PHASE_SAUNA) {
@@ -463,12 +539,14 @@ class SaunaTracker {
         return n > 0 ? sum / n : null;
     }
 
-    // The visit as a history row (see SaunaHistory)
-    function historyRow(startUnix as Number) as Array<Number> {
+    // The visit as a history row (see SaunaHistory); Body Battery -1 when unknown
+    function historyRow(startUnix as Number, bbStart as Number?, bbEnd as Number?) as Array<Number> {
         var drop = avgDrop1();
         var mt = maxTemp;
         return [startUnix, plan.kind, roundCount(), saunaSeconds(), breakSeconds(), maxHr(),
                 drop == null ? -1 : drop,
-                mt == null ? -1000 : (mt * 10.0 + 0.5).toNumber()] as Array<Number>;
+                mt == null ? -1000 : (mt * 10.0 + 0.5).toNumber(),
+                bbStart == null ? -1 : bbStart,
+                bbEnd == null ? -1 : bbEnd] as Array<Number>;
     }
 }
