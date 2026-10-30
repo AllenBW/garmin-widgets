@@ -40,7 +40,7 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 
 - `EXPLORATION.md`: what the platform lets us do, with sources
 - `designs/`: design specs and mockups (`DESIGNS.md`, `mockups.py` → `svg/`)
-- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`, `Solar`, `Location`, `Sky`)
+- `lib/`: the `Lib` Monkey Barrel shared by all apps (`Aod`, `Arcs`, `Fmt`, `Sun`, `Moon`, `Solar`, `Location`, `Sky`, `Cues`)
 - `apps/<name>/`: one Connect IQ project per app (`apps/field/` is the Field
   watch face, design #1; `apps/battery/` the Battery Planner glance + app,
   design #2; `apps/daylight/` the Daylight sun-dial face, design #3;
@@ -54,7 +54,11 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   `apps/sauna/` the Sauna and Steam glance + app, design #10, whose
   tracker and coach are pure arithmetic fed by the tests, whose plans
   per kind live in `resources/settings/`, and whose button cues sit at
-  Garmin's own hint angles)
+  Garmin's own hint angles; `apps/sound/` the Sound Level glance + app,
+  design #14, a watch-app because the microphone (`AudioInput`) is
+  refused to widgets, whose meter maths and danger range are pure
+  arithmetic in `SoundMeter.mc` fed by the tests, and whose cues come
+  from `Lib.Cues` like the sauna's)
 - `scripts/watch.sh`: sideload to the fēnix 8 on the desk over MTP
   (libmtp) and pull its logs; the `mtp-*` commands need USB access, so
   run them outside the shell sandbox

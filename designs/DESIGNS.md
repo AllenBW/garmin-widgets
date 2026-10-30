@@ -26,6 +26,7 @@ in the SDK before relying on it.
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 | 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
 | 10 | **Sauna and Steam** | Glance + app | Sauna or steam room, round by round, coached against the guidance, a cue by every button | M | Built in `apps/sauna/` |
+| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button (11 to 13 are the other session's faces) | S–M | Built in `apps/sound/` |
 
 Considered and dropped:
 
@@ -594,6 +595,88 @@ pacer during breaks.
 
 ---
 
+## 14. Sound Level: the room in decibels, and how long it is safe
+
+**Purpose:** a sound level meter on the wrist, now that SDK 9.3 opens
+the microphone to device apps. Is this bar too loud, is the workshop
+dangerous without ear defenders, how long can the kids stay at the
+concert. The owner liked the idea on 2026-10-29 and asked on 2026-10-30
+for "a range showing whether it's too loud or dangerous for people".
+The watch microphone is not A-weighted and not a calibrated meter, so
+the number is approximate: the app says so, and a calibration offset
+lines it up with a phone meter.
+
+**Layout (app)**
+- Button cues on every screen, drawn by `Lib.Cues` at Garmin's own hint
+  angles (shared with Sauna and Steam): MENU at two o'clock, EXIT at
+  four, the other page's name at nine and eight. While calibrating: RESET,
+  DONE, +1 and −1.
+- Live: a grey band "SOUND LEVEL" (or "DEMO"), the level in big digits
+  coloured by its band (green under 70, amber to 85, orange to 100, red
+  past it), the band's name with the verdict in front once it matters
+  ("Conversation", "Busy traffic", "Too loud · hearing risk", "Dangerous
+  · loud venue", "Pain · leave now"), a bar from 30 to 130 dB filled in
+  the bands' colours up to the level with the 70, 85, 100 and 120 lines
+  marked, "Safe all day" / "Safe for 15 min" / "Under 30 s" / "Leave
+  now", then "peak 94 · avg 71" and "dose 12% · 4 min while open" in
+  small grey. "Listening" until the first window; the number dims and
+  says "No sound data" when windows stop; a message when the microphone
+  cannot be opened.
+- Trend: the last two minutes, one point a second, coloured by band,
+  with the 70, 85 and 100 lines across the chart.
+- Calibrate (from the menu): the live number again with "offset 90 dB"
+  under it; UP and DOWN move the offset a decibel, START resets it to 90,
+  BACK keeps it. Written straight to the Calibration property, so the
+  phone shows the same value.
+- Menu: Demo (a made-up two minutes that walks every band, and a live
+  level that keeps walking them), Calibrate, Clear session.
+- Glance: "SOUND LEVEL", "72 dB · Busy traffic", "4 min ago · while the
+  app was open"; "Open to measure" before the first reading.
+
+**The danger range** (sources at the end): NIOSH's recommended exposure
+limit is 85 dBA for 8 hours a day with a 3 dB exchange rate, so every
+3 dB more halves the time: 88 dB 4 h, 91 dB 2 h, 94 dB 1 h, 97 dB
+30 min, 100 dB 15 min, 103 dB 7.5 min, 110 dB 1.5 min, 115 dB under
+30 s. Levels under 80 dB do not count towards the dose. WHO calls 70 dB
+averaged over 24 h safe; about 120 dB is the threshold of pain. The
+bands: quiet under 40, calm to 55, conversation to 70, busy traffic to
+85, hearing risk to 100, loud venue to 120, pain past it. The dose is
+NIOSH's daily dose, accumulated only while the app is open and the
+microphone runs, and the screen says "while open".
+
+**Maths** (`SoundMeter`, pure, fed by the tests): a window is 16-bit
+little-endian LPCM; the RMS of every fourth sample gives dBFS as
+20·log10(rms/32768) (a full-scale sine is −3 dBFS); the offset turns
+that into dB. The shown level settles over a second; the peak is the
+loudest window; the average is by energy (10·log10 of the mean of
+10^(L/10)), not by decibel; the buzz fires when the smoothed level rises
+past 85 (short) or 100 (long), with 2 dB of hysteresis and at most once
+every 15 s per line. A WAV header at the start of a window is skipped.
+
+**Platform:** a watch-app with a glance (the microphone is allowed for
+device apps and audio providers only). `Audio.Capture` with
+`CONTAINER_WAV`, `CODEC_LPCM`, mono, 8 kHz (16 kHz if the device refuses
+8), 4096-byte windows, `WINDOW_FILLED_CONTINUE`, no filters so the
+levels stay honest. Capture is foreground only; it stops in `onHide` and
+starts again in `onShow`. Nothing is kept but the last reading for the
+glance. Settings: the calibration offset (50 to 130, default 90) and the
+buzz.
+
+**Not done, to learn on a watch:** whether the fēnix 8 delivers windows
+to a third-party app at all (no public report yet), the offset that
+matches a phone meter, how the wrist and a sleeve change the reading, and
+battery while the microphone runs. Not built: A-weighting, octave bands,
+a log of readings.
+
+**Sources:** NIOSH, *Criteria for a Recommended Standard: Occupational
+Noise Exposure* (1998), 85 dBA REL, 3 dB exchange rate, dose formula;
+WHO, *Guidelines for Community Noise* (1999), 70 dB LAeq 24 h; CDC/NIOSH
+*Noise and Hearing Loss* pages for the 120 dB pain and the everyday
+examples; Connect IQ SDK 9.3.0 `Audio` module docs and the Core Topics
+"Audio" page.
+
+---
+
 ## Shared building blocks
 
 - **`lib/` barrel** (`Lib`, a Monkey C library shared by every app; each
@@ -612,6 +695,9 @@ pacer during breaks.
   - `Location` (done, glance-safe): the last known position from the
     weather sync, the activity, the last GPS fix or the app's own storage.
   - `Fmt` is glance-safe too (countdown, clockAt, shortDate added).
+  - `Cues` (done): the button cues at Garmin's hint angles for the fēnix 8
+    family (an arc and a word on a black patch) and which cue a touch
+    landed on. Sauna and Steam and Sound Level use it.
   - `Sky` (done): sidereal time, altitude/azimuth from right ascension and
     declination, and the Sun, Moon, Venus, Mars, Jupiter and Saturn
     (Schlyter's method). Night Sky uses it. (Sun Compass uses `Solar`

@@ -36,11 +36,19 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
   door, the heart-rate recovery is measured after each round, every
   button has its job written beside it, each kind has its own plan and
   weekly goals, and the visit is saved to Garmin Connect (design #10).
+- [`apps/sound/`](apps/sound/) is **Sound Level**, a glance and app that
+  turns the watch microphone into an approximate sound level meter: the
+  level in big digits coloured by its band, the NIOSH danger range (85 dB
+  for 8 hours, half the time for every 3 dB more) as "safe for" and a
+  dose that accumulates while the app is open, a two-minute trend, a
+  calibration screen for matching a phone meter, and every button's job
+  written beside it (design #14).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
-  position, golden and blue hour), `Location` (the last known position) and `Sky`
-  (sidereal time, the Sun, Moon and planets in the sky).
+  position, golden and blue hour), `Location` (the last known position), `Sky`
+  (sidereal time, the Sun, Moon and planets in the sky) and `Cues` (the
+  button cues at Garmin's hint angles, and which cue a touch landed on).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
 > fēnix 8 Pro (`fenix8pro47mm`), the fēnix 8 47/51 mm (`fenix847mm`) and the
@@ -73,7 +81,12 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > strict level and its six tests pass (the text and units, a synthetic
 > visit through the thermometer door detection and the recovery maths,
 > the plan's coaching and the heat guard, the history and weekly counts,
-> a FIT session, drawing every screen and the cues). All nine earlier
+> a FIT session, drawing every screen and the cues). Sound Level builds
+> cleanly at the strict level and its seven tests pass (the level maths
+> against synthetic sine windows, the NIOSH table and the dose, the
+> session's smoothing, peak, energy average and buzz lines, the demo,
+> the decode budget, the shared cues, drawing every screen); the
+> microphone itself is only exercised in the live app. All ten earlier
 > apps have been copied to a
 > fēnix 8 47 mm with `scripts/watch.sh`; none has been checked by eye on
 > it yet.
@@ -91,7 +104,8 @@ apps/suncompass/ Sun Compass glance + app, same layout
 apps/readiness/  Readiness watch face, same layout
 apps/pocketqr/   Pocket QR glance + app, same layout (resources/settings/ holds the array setting)
 apps/sauna/      Sauna and Steam glance + app, same layout (resources/settings/ holds the plans)
-lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
+apps/sound/      Sound Level glance + app, same layout (the microphone, AudioInput)
+lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon,Solar,Location,Sky,Cues}.mc
 designs/         DESIGNS.md, mockups.py, svg/
 scripts/         build.sh, sim.sh, test.sh, watch.sh, sdk-env.sh
 ```
@@ -159,6 +173,7 @@ scripts/build.sh suncompass && scripts/sim.sh suncompass   # and for Sun Compass
 scripts/build.sh readiness && scripts/sim.sh readiness     # and for Readiness
 scripts/build.sh pocketqr && scripts/sim.sh pocketqr       # and for Pocket QR
 scripts/build.sh sauna && scripts/sim.sh sauna             # and for Sauna
+scripts/build.sh sound && scripts/sim.sh sound             # and for Sound Level (the simulator uses the Mac microphone)
 ```
 
 `build.sh` and `test.sh` drop one expected monkeyc warning: a watch face

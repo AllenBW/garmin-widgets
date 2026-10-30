@@ -169,6 +169,37 @@ records where the project stands so the next session can carry on.
     own hint angles (58, 123, 237, 270 clockwise from twelve). Six tests
     pass on all three devices. Not seen by eye and not yet on the watch;
     the door rates are guesses until a real visit's FIT file is read.
+  - **Sound Level** (`apps/sound/`, a watch-app with a glance, design
+    #14, picked by the owner on 2026-10-30: "I like the sound level
+    meter. Let's do that... give me a range showing whether it's too
+    loud or dangerous for people"). `Audio.Capture` (WAV, LPCM, mono,
+    8 kHz, 4096-byte windows, `WINDOW_FILLED_CONTINUE`, no filters)
+    runs while the app is on screen; `SoundMeter` turns each window's
+    RMS into dBFS and adds the calibration offset (setting, default 90;
+    the Calibrate screen's UP/DOWN write it back with
+    `Properties.setValue`, so the phone shows the same number; decided
+    over a separate Storage copy to keep one source of truth).
+    `SoundSession` smooths over a second, keeps the peak, an energy
+    average, the NIOSH dose (85 dB for 8 h, 3 dB exchange, nothing
+    under 80) and a two-minute trend, and fires the 85 and 100 dB
+    buzzes with 2 dB of hysteresis and a 15 s hold. Screens: LIVE (big
+    number coloured by band, the verdict, a 30-130 bar with 70/85/100/120
+    marked, "Safe for 15 min", peak, average, "dose 7% · 3 min while
+    open"), TREND, Calibrate from the menu; Demo walks every band. The
+    cues come from the new `Lib.Cues` (pulled out of the sauna view
+    verbatim; the sauna's eight tests still pass on all three devices,
+    `testCues` in the sound tests covers it). Seven tests pass on all
+    three devices. **In the simulator the Mac microphone works:** the
+    live screen read 30 to 48 dB in a quiet room with no permission
+    prompt, so the capture path is proven there; the watch is not. Decode
+    budget measured in the simulator: 2048 `decodeNumber` calls in 6 ms,
+    512 in 1 ms, so every fourth sample is decoded (`STRIDE` 4, within
+    0.01 dB of the full set on a sine); the watch is slower, so if the
+    watchdog trips on a window, raise the stride first. A unit test must
+    not open the microphone: `initializeAudioCapture` never returns
+    inside a test run and the run hangs, so the draw test stops short of
+    `endDemo`. Known quirk: the first key press after the simulator
+    window is activated is sometimes dropped when driving it by script.
 - **The watch (2026-10-29):** the owner has a **fēnix 8 47 mm, not Pro**
   (`fenix847mm`, firmware 23.40). It reaches the Mac over MTP with
   libmtp once its USB mode is MTP (hold UP → Watch Settings → System →
@@ -283,3 +314,14 @@ records where the project stands so the next session can carry on.
    LAP). Ideas not built: a breathing pacer during breaks, cold-plunge
    phases (cold-water crash reports on the fēnix 8), a glance that
    starts a visit directly.
+10. **Sound Level** is built and queued (`watch-queue/fenix847mm/` holds
+   all eleven apps; `scripts/watch.sh flush` with the sandbox off when
+   the watch is on the cable). First on the watch: does `onData` ever
+   fire (the screen says "Listening · no sound yet" until it does, and
+   "No sound data" if it stops), what a quiet room and normal speech
+   read against a phone meter (then set the offset on the Calibrate
+   screen), whether a window ever trips the watchdog (raise `STRIDE`),
+   whether the buzz at 85 fires when you clap by the watch, and battery
+   over ten minutes with the microphone running. Then the glance after
+   leaving the app. Ideas not built: A-weighting, a log of readings
+   with places, octave bands.
