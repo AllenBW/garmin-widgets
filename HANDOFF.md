@@ -177,6 +177,15 @@ records where the project stands so the next session can carry on.
   logs; the `mtp-*` tools need the shell sandbox off. All nine earlier
   apps were pushed as `GARMIN/Apps/<NAME>.PRG` with empty
   `LOGS/<NAME>.TXT` files; the owner has not reported what they saw yet.
+- **Install queue (2026-10-30):** `scripts/watch.sh queue <other worktree>`
+  builds every app in this checkout plus any app another worktree has
+  that this one lacks into `watch-queue/<device>/` (gitignored), this
+  checkout's versions winning; `scripts/watch.sh flush` copies the lot
+  onto the watch the next time it is on the cable and empties the queue.
+  Queued now for `fenix847mm`: the ten apps here and Rings, Strata and
+  Today from the `bunyip` worktree (`AllenBW/bunyip`, another session's
+  work). The simulator is shared across sessions: `scripts/simlock.sh`
+  claims it by ID; the other session knows the convention.
 - **Platform check (2026-10-29):** `EXPLORATION.md` section 10 lists every
   sensor and input by app type, verified against the SDK 9.3.0 docs, the
   device files and a probe face run in the simulator. Headlines: a watch
