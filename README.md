@@ -36,6 +36,23 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
   door, the heart-rate recovery is measured after each round, every
   button has its job written beside it, each kind has its own plan and
   weekly goals, and the visit is saved to Garmin Connect (design #10).
+- [`apps/today/`](apps/today/) is **Today**, a watch face that shows the
+  owner's own list and nothing else: the next sunrise or sunset, the time
+  in 24-hour form, the date, the moon and its phase, heart rate, outside
+  temperature, miles walked today, and the number of alarms set
+  (design #11).
+- [`apps/strata/`](apps/strata/) is **Strata**, the same list set into
+  a field of soil layers ported from the owner's laser-cut planter: the
+  layers part round each reading like water round a stone, the time is
+  cut out of them in clean numerals, every fourth layer takes the
+  temperature's colour in a mineral tone, a stone turns up per quarter
+  mile, and the moon sits at the foot with its phase written in it;
+  settings choose the strata, accent and time colours, a filled or
+  outlined time, and what each of the four readings shows (design #12).
+- [`apps/rings/`](apps/rings/) is **Rings**, three goal rings open to the
+  right (steps, floors in segments, Body Battery) with their numbers
+  written along the curves and the same list down the right side, in
+  three colour sets, after a store face the owner picked (design #13).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
@@ -73,10 +90,18 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > strict level and its six tests pass (the text and units, a synthetic
 > visit through the thermometer door detection and the recovery maths,
 > the plan's coaching and the heat guard, the history and weekly counts,
-> a FIT session, drawing every screen and the cues). All nine earlier
-> apps have been copied to a
-> fēnix 8 47 mm with `scripts/watch.sh`; none has been checked by eye on
-> it yet.
+> a FIT session, drawing every screen and the cues). Today builds cleanly
+> at the strict level for all three devices and its two tests pass
+> (drawing both modes and the press targets, the sources). Strata builds
+> cleanly for all three and its six tests pass (the generated layers,
+> pieces and stones, the temperature palette, the colour settings, every
+> reading kind, the heart-rate trace, drawing both modes, every setting
+> and the press targets). Rings builds cleanly for all three and its
+> three tests pass (the goal fractions and readings, drawing every ring
+> state, every colour set and both modes, the ring geometry and press
+> targets, the themes). All nine apps
+> before Pocket QR have been copied to a fēnix 8 47 mm with
+> `scripts/watch.sh`; none has been checked by eye on it yet.
 
 ## Layout
 
