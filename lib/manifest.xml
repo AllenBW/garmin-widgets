@@ -5,7 +5,8 @@
         "Shared building blocks"). Apps link it with
             base.barrelPath = ../../lib/monkey.jungle
             base.Lib.annotations = aod;arcs;fmt;sun;moon
-        (fmt, solar and location are also glance-safe: see CLAUDE.md)
+        (fmt, solar and location are also glance-safe: see CLAUDE.md;
+        cues draws the button cues at Garmin's hint angles)
         and declare <iq:depends name="Lib" version="0.1.0"/> in their manifest.
     -->
     <iq:barrel id="01cb49eb9f324410940f13009c6aee5b" module="Lib" version="0.1.0" minApiLevel="5.0.0">
@@ -26,6 +27,7 @@
             <iq:annotation>solar</iq:annotation>
             <iq:annotation>location</iq:annotation>
             <iq:annotation>sky</iq:annotation>
+            <iq:annotation>cues</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>
