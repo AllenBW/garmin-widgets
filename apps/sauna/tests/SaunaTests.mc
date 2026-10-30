@@ -2,9 +2,10 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Test;
+import Toybox.Time;
 
-// Run No Evil tests for Sauna: scripts/test.sh sauna [device]. The tracker
-// is fed synthetic visits second by second; nothing needs the sensors.
+// Run No Evil tests for Sauna & Steam: scripts/test.sh sauna [device]. The
+// tracker is fed synthetic visits second by second; nothing needs the sensors.
 
 (:test)
 function testText(logger as Logger) as Boolean {
@@ -18,24 +19,49 @@ function testText(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaText.drop(null), "--", "no drop");
     Test.assertEqualMessage(SaunaText.drop(28), "-28", "a fall");
     Test.assertEqualMessage(SaunaText.drop(-4), "+4", "a rise");
+
+    // Fahrenheit unless told otherwise
+    SaunaText.fahrenheit = true;
+    Test.assertEqualMessage(SaunaText.temp(50.0), "122°", "50 C is 122 F");
+    Test.assertEqualMessage(SaunaText.temp(48.1), "119°", "rounded");
+    Test.assertEqualMessage(SaunaText.unit(), "°F", "unit");
+    Test.assertEqualMessage(SaunaText.tenths(481), "119°", "tenths in F");
+    SaunaText.fahrenheit = false;
+    Test.assertEqualMessage(SaunaText.temp(50.0), "50°", "Celsius when asked");
+    Test.assertEqualMessage(SaunaText.unit(), "°C", "unit C");
+    SaunaText.fahrenheit = true;
+    Test.assertMessage(SaunaText.tenths(-1000).equals(""), "no reading");
+
+    Test.assertEqualMessage(SaunaText.kindName(KIND_SAUNA), "Sauna", "sauna name");
+    Test.assertEqualMessage(SaunaText.kindName(KIND_STEAM), "Steam room", "steam name");
+    Test.assertEqualMessage(SaunaText.kindUpper(KIND_STEAM), "STEAM", "steam band");
+    Test.assertEqualMessage(SaunaText.kindCount(KIND_SAUNA, 2, 4), "2 of 4 saunas", "sauna count");
+    Test.assertEqualMessage(SaunaText.kindCount(KIND_STEAM, 1, 3), "1 of 3 steams", "steam count");
     Test.assertEqualMessage(SaunaText.headline(null), "No visits yet", "empty headline");
-    var row = [1730000000, 3, 2290, 1200, 142, 31, 481] as Array<Number>;
-    Test.assertEqualMessage(SaunaText.headline(row), "3 rounds · 38 min", "headline");
+    var row = [1730000000, KIND_STEAM, 2, 1450, 1200, 131, 24, 441] as Array<Number>;
+    Test.assertEqualMessage(SaunaText.headline(row), "Steam room · 2 rounds · 24 min", "headline");
     var detail = SaunaText.detail(row);
     logger.debug(detail);
-    Test.assertMessage(detail.find(" · max 142 bpm · -31 in 1 min") != null, "detail: " + detail);
-    Test.assertMessage(SaunaText.tenths(481).length() > 0 && SaunaText.tenths(-1000).equals(""), "tenths");
+    Test.assertMessage(detail.find(" · max 131 bpm · -24 in 1 min") != null, "detail: " + detail);
+
+    // the plans carry the guidance
+    var sauna = new SaunaPlan(KIND_SAUNA);
+    var steam = new SaunaPlan(KIND_STEAM);
+    Test.assertMessage(sauna.roundTarget == 900 && sauna.rounds == 3 && sauna.heatCap == 2700, "sauna plan");
+    Test.assertMessage(steam.roundTarget == 720 && steam.rounds == 2 && steam.heatCap == 1800, "steam plan");
+    Test.assertMessage(steam.enterRate < sauna.enterRate, "steam needs less warming to count");
     return true;
 }
 
-// A synthetic visit: arrive cool, warm 0.05 degrees a second in the heat,
+// A synthetic sauna: arrive cool, warm 0.05 degrees a second in the heat,
 // cool 0.04 a second outside; the heart rate climbs in the heat, peaks a
 // few seconds after leaving, then falls a beat a second.
 (:test)
 function testTrackerAuto(logger as Logger) as Boolean {
     var t = new SaunaTracker();
-    var events = [] as Array<Number>;
+    var doors = [] as Array<Number>;
     var at = [] as Array<Number>;
+    var recoveries = [] as Array<Number>;
     var temp = 33.0;
     var hr = 70;
     // 0-59 arrival; 60-299 heating (sauna); 300-599 cooling (break); 600-899 heating; 900-1199 cooling
@@ -52,22 +78,26 @@ function testTrackerAuto(logger as Logger) as Boolean {
             else if (hr > 80) { hr -= 1; }
         }
         var e = t.tick(hr, temp);
-        if (e != EVENT_NONE) {
-            events.add(e);
+        if (e == EVENT_ENTER || e == EVENT_LEAVE) {
+            doors.add(e);
             at.add(s);
+        } else if (e == EVENT_RECOVERY) {
+            recoveries.add(s);
+        } else if (e != EVENT_NONE) {
+            Test.assertMessage(false, "unexpected event " + e + " at " + s);
         }
     }
-    logger.debug("events " + events + " at " + at);
+    logger.debug("doors " + doors + " at " + at + ", recoveries at " + recoveries);
     // A degree and a half above the coolest reading of the last minute: 30 s of heating, 60 + 30
-    Test.assertEqualMessage(events.size(), 4, "in, out, in, out and nothing else (the breaks are shorter than the target)");
-    Test.assertEqualMessage(events[0], EVENT_ENTER, "first: in");
+    Test.assertEqualMessage(doors.size(), 4, "in, out, in, out");
+    Test.assertEqualMessage(doors[0], EVENT_ENTER, "first: in");
     Test.assertMessage((at[0] - 90).abs() <= 1, "noticed 30 s after the door: " + at[0]);
     // A degree below the hottest reading: 25 s of cooling, 300 + 25
-    Test.assertEqualMessage(events[1], EVENT_LEAVE, "then out");
+    Test.assertEqualMessage(doors[1], EVENT_LEAVE, "then out");
     Test.assertMessage((at[1] - 325).abs() <= 1, "noticed 25 s after leaving: " + at[1]);
-    Test.assertEqualMessage(events[2], EVENT_ENTER, "in again");
+    Test.assertEqualMessage(doors[2], EVENT_ENTER, "in again");
     Test.assertMessage((at[2] - 630).abs() <= 1, "second round noticed: " + at[2]);
-    Test.assertEqualMessage(events[3], EVENT_LEAVE, "out again");
+    Test.assertEqualMessage(doors[3], EVENT_LEAVE, "out again");
     Test.assertMessage((at[3] - 925).abs() <= 1, "second round over: " + at[3]);
 
     Test.assertEqualMessage(t.roundCount(), 2, "two rounds");
@@ -83,6 +113,7 @@ function testTrackerAuto(logger as Logger) as Boolean {
     logger.debug("round 1 peak " + r1.peakHr + " at " + peakAt + " drops " + d1 + " / " + d2);
     Test.assertMessage(d1 == r1.peakHr - 80, "a minute later the rate had settled at 80: " + d1);
     Test.assertMessage(d2 == d1, "and two minutes later still: " + d2);
+    Test.assertMessage(recoveries.size() == 2 && recoveries[0] == peakAt + 60, "the recovery event a minute after the peak: " + recoveries);
     Test.assertEqualMessage(t.saunaSeconds(), (at[1] - at[0]) + (at[3] - at[2]), "time in heat");
     Test.assertEqualMessage(t.breakSeconds(), (at[2] - at[1]) + (1200 - at[3]), "time out");
     Test.assertEqualMessage(t.maxHr(), 140, "visit max");
@@ -93,18 +124,33 @@ function testTrackerAuto(logger as Logger) as Boolean {
     Test.assertMessage((mt - 48.0).abs() < 0.2, "watch peaked at 48: " + mt);
     var row = t.historyRow(1730000000);
     Test.assertEqualMessage(row.size(), SaunaHistory.STRIDE, "a history row");
+    Test.assertEqualMessage(row[SaunaHistory.KIND], KIND_SAUNA, "row kind");
     Test.assertEqualMessage(row[SaunaHistory.ROUNDS], 2, "row rounds");
     Test.assertEqualMessage(row[SaunaHistory.MAX_TEMP], 480, "row temperature in tenths");
     Test.assertMessage(t.trace.size() > 0 && t.traceStart == at[2], "the chart holds the last round");
     Test.assertMessage(t.lastDone() == t.rounds[1] && t.previous() == t.rounds[0], "last and previous");
+
+    // the same visit in a steam room, with its lower rates, notices the door sooner
+    var u = new SaunaTracker();
+    u.plan = new SaunaPlan(KIND_STEAM);
+    temp = 33.0;
+    var first = 0;
+    for (var s = 1; s <= 200 && first == 0; s++) {
+        if (s >= 60) { temp += 0.05; }
+        if (u.tick(90, temp) == EVENT_ENTER) { first = s; }
+    }
+    Test.assertMessage((first - 76).abs() <= 1, "steam: in after 16 s of warming (0.8 degrees): " + first);
     return true;
 }
 
 (:test)
-function testTrackerManual(logger as Logger) as Boolean {
+function testTrackerPlan(logger as Logger) as Boolean {
     var t = new SaunaTracker();
-    t.roundTarget = 120;
-    t.breakTarget = 60;
+    t.plan.roundTarget = 120;
+    t.plan.roundMax = 180;
+    t.plan.breakTarget = 60;
+    t.plan.rounds = 2;
+    t.plan.heatCap = 0;
     t.hotTemp = 50.0;
     // no readings at all: nothing happens on its own
     for (var s = 0; s < 200; s++) {
@@ -112,6 +158,7 @@ function testTrackerManual(logger as Logger) as Boolean {
     }
     Test.assertEqualMessage(t.phase, PHASE_ARRIVAL, "still arriving");
     Test.assertEqualMessage(t.phaseSeconds(), 200, "arrival clock");
+    Test.assertEqualMessage(t.coach(), "Walk in when ready", "arrival coaching after the first minute and a half");
     Test.assertEqualMessage(t.mark(), EVENT_ENTER, "LAP goes in");
     Test.assertEqualMessage(t.phase, PHASE_SAUNA, "in");
     // a steep cooling right after a manual mark is ignored for MANUAL_HOLD seconds
@@ -123,29 +170,89 @@ function testTrackerManual(logger as Logger) as Boolean {
         if (e != EVENT_NONE) { got = e; }
     }
     Test.assertEqualMessage(got, EVENT_NONE, "no automatic change during the hold, no target yet");
+    Test.assertEqualMessage(t.coach(), "0:01 left", "counting down to the round target");
     Test.assertEqualMessage(t.tick(120, temp), EVENT_ROUND_TARGET, "the round target at exactly two minutes");
+    Test.assertEqualMessage(t.coach(), "Time to cool down", "told to come out");
+    for (var s = 0; s < 59; s++) {
+        Test.assertEqualMessage(t.tick(120, temp), EVENT_NONE, "nothing until the longest round");
+    }
+    Test.assertEqualMessage(t.tick(120, temp), EVENT_ROUND_OVER, "nagged at three minutes");
+    Test.assertEqualMessage(t.coach(), "Over 3 min · come out", "and told so");
+    for (var s = 0; s < 59; s++) {
+        Test.assertEqualMessage(t.tick(120, temp), EVENT_NONE, "then quiet for a minute");
+    }
+    Test.assertEqualMessage(t.tick(120, temp), EVENT_ROUND_OVER, "nagged again a minute later");
     Test.assertEqualMessage(t.mark(), EVENT_LEAVE, "LAP goes out");
     Test.assertEqualMessage(t.roundCount(), 1, "one round");
-    Test.assertEqualMessage(t.rounds[0].seconds(t.now), 120, "two minutes long");
-    for (var s = 0; s < 59; s++) {
+    Test.assertEqualMessage(t.rounds[0].seconds(t.now), 240, "four minutes long");
+    // the break must be at least as long as the round, not just the plan's minute
+    Test.assertEqualMessage(t.breakGoal(), 240, "break goal follows the round");
+    Test.assertEqualMessage(t.tick(100, temp), EVENT_NONE, "break ticking");
+    Test.assertEqualMessage(t.coach(), "Drink some water", "water first");
+    for (var s = 0; s < 44; s++) {
         Test.assertEqualMessage(t.tick(100, temp), EVENT_NONE, "break ticking");
     }
-    Test.assertEqualMessage(t.tick(100, temp), EVENT_BREAK_TARGET, "the break target at a minute");
+    Test.assertEqualMessage(t.coach(), "Cool down 3:15 more", "then the cool-down countdown");
+    var recoveredAt = 0;
+    for (var s = 0; s < 194; s++) {
+        var e = t.tick(100, temp);
+        if (e == EVENT_RECOVERY) {
+            recoveredAt = t.phaseSeconds();
+        } else {
+            Test.assertEqualMessage(e, EVENT_NONE, "still cooling");
+        }
+    }
+    Test.assertEqualMessage(recoveredAt, 61, "the fall was reported a minute after the peak");
+    Test.assertEqualMessage(t.rounds[0].drop1 as Number, 0, "no fall with a flat heart rate");
+    Test.assertEqualMessage(t.tick(100, temp), EVENT_BREAK_TARGET, "ready after four minutes");
+    Test.assertEqualMessage(t.coach(), "Ready for round 2", "invited back in");
     Test.assertEqualMessage(t.mark(), EVENT_ENTER, "LAP goes in again");
-    Test.assertEqualMessage(t.breakSeconds(), 60, "one minute out");
+    Test.assertEqualMessage(t.breakSeconds(), 240, "four minutes out");
+    for (var s = 0; s < 10; s++) {
+        t.tick(120, temp);
+    }
+    Test.assertEqualMessage(t.mark(), EVENT_LEAVE, "a short second round");
+    // a ten-second round: the break goal is the plan's minute
+    Test.assertEqualMessage(t.breakGoal(), 60, "break goal back to the plan's");
+    for (var s = 0; s < 59; s++) {
+        t.tick(100, temp);
+    }
+    Test.assertEqualMessage(t.tick(100, temp), EVENT_PLAN_DONE, "the plan's two rounds are done");
+    Test.assertEqualMessage(t.coach(), "Plan done · shower, then save", "sent to the shower");
+
+    // the heat cap ends a round early
+    var c = new SaunaTracker();
+    c.plan.heatCap = 100;
+    c.plan.roundTarget = 0;
+    c.plan.roundMax = 0;
+    c.mark();
+    var cap = EVENT_NONE;
+    var capAt = 0;
+    for (var s = 1; s <= 120; s++) {
+        var e = c.tick(110, 40.0);
+        if (e != EVENT_NONE) { cap = e; capAt = s; }
+    }
+    Test.assertMessage(cap == EVENT_HEAT_CAP && capAt == 100, "cap at 100 s of heat: " + cap + " at " + capAt);
+    Test.assertEqualMessage(c.coach(), "That's 1 min of heat · come out", "cap coaching");
 
     // the heat guard: a buzz the first second at 50 and every minute after, off two degrees below
-    Test.assertEqualMessage(t.tick(120, 50.0), EVENT_HOT, "hot");
-    Test.assertMessage(t.hot, "flagged");
+    var g = new SaunaTracker();
+    g.hotTemp = 50.0;
+    Test.assertEqualMessage(g.tick(120, 50.0), EVENT_HOT, "hot");
+    Test.assertMessage(g.hot, "flagged");
+    Test.assertEqualMessage(g.coach(), "Watch hot, take it off", "hot coaching beats everything");
     var hots = 0;
     for (var s = 0; s < 120; s++) {
-        if (t.tick(120, 51.0) == EVENT_HOT) { hots += 1; }
+        if (g.tick(120, 51.0) == EVENT_HOT) { hots += 1; }
     }
     Test.assertEqualMessage(hots, 2, "once a minute");
-    t.tick(120, 49.0);
-    Test.assertMessage(t.hot, "still flagged just under");
-    t.tick(120, 47.9);
-    Test.assertMessage(!t.hot, "clear two degrees under");
+    g.tick(120, 49.0);
+    Test.assertMessage(g.hot, "still flagged just under");
+    g.tick(120, 47.9);
+    Test.assertMessage(!g.hot, "clear two degrees under");
+    var off = new SaunaTracker();
+    off.hotTemp = 0.0;
+    Test.assertEqualMessage(off.tick(120, 60.0), EVENT_NONE, "guard off");
 
     // auto off: a sauna's worth of warming (staying under the hot warning) does nothing
     var u = new SaunaTracker();
@@ -157,6 +264,7 @@ function testTrackerManual(logger as Logger) as Boolean {
         if (u.tick(90, temp) != EVENT_NONE) { any = true; }
     }
     Test.assertMessage(!any && u.phase == PHASE_ARRIVAL, "nothing automatic when off");
+    Test.assertEqualMessage(u.coach(), "LAP when you go in", "told to use LAP");
     Test.assertEqualMessage(u.historyRow(5)[SaunaHistory.DROP], -1, "no drop recorded");
     return true;
 }
@@ -166,20 +274,37 @@ function testHistory(logger as Logger) as Boolean {
     SaunaHistory.clear();
     Test.assertEqualMessage(SaunaHistory.count(), 0, "empty");
     Test.assertMessage(SaunaHistory.last() == null && SaunaHistory.visit(0) == null, "nothing to show");
-    SaunaHistory.add([1730000000, 2, 1500, 900, 130, 25, 440] as Array<Number>);
-    SaunaHistory.add([1730100000, 3, 2290, 1200, 142, 31, 481] as Array<Number>);
+    var now = Time.now().value();
+    SaunaHistory.add([now - 20 * 86400, KIND_SAUNA, 2, 1500, 900, 130, 25, 440] as Array<Number>);
+    SaunaHistory.add([now - 60, KIND_STEAM, 3, 2290, 1200, 142, 31, 481] as Array<Number>);
     Test.assertEqualMessage(SaunaHistory.count(), 2, "two visits");
     var last = SaunaHistory.last() as Array<Number>;
-    Test.assertEqualMessage(last[SaunaHistory.START], 1730100000, "newest first");
+    Test.assertEqualMessage(last[SaunaHistory.KIND], KIND_STEAM, "newest first");
     var older = SaunaHistory.visit(1) as Array<Number>;
     Test.assertEqualMessage(older[SaunaHistory.ROUNDS], 2, "then the older one");
     Test.assertMessage(SaunaHistory.visit(2) == null, "past the end");
+    var sauna = SaunaHistory.lastOf(KIND_SAUNA) as Array<Number>;
+    Test.assertEqualMessage(sauna[SaunaHistory.ROUNDS], 2, "last sauna");
+    Test.assertEqualMessage(SaunaHistory.avgDrop(KIND_STEAM) as Number, 31, "steam's usual drop");
+    Test.assertEqualMessage(SaunaHistory.avgDrop(KIND_SAUNA) as Number, 25, "sauna's usual drop");
+    // this week: the steam visit a minute ago counts, the sauna three weeks ago does not
+    var start = SaunaHistory.weekStart();
+    Test.assertMessage(start <= now && now - start < 7 * 86400, "the week began within the last seven days");
+    var week = SaunaHistory.thisWeek(KIND_STEAM);
+    Test.assertMessage(week[0] == 1 && week[1] == 2290, "one steam this week: " + week);
+    Test.assertEqualMessage(SaunaHistory.thisWeek(KIND_SAUNA)[0], 0, "no sauna this week");
+    Test.assertEqualMessage(SaunaHistory.thisWeek(-1)[0], 1, "one visit of any kind");
+    var line = SaunaText.week(new SaunaPlan(KIND_STEAM));
+    Test.assertEqualMessage(line, "Week: 1 of 3 steams · 38 of 40 min", "week line: " + line);
     for (var i = 0; i < SaunaHistory.MAX; i++) {
-        SaunaHistory.add([1730200000 + i, 1, 600, 0, 0, -1, -1000] as Array<Number>);
+        SaunaHistory.add([1730200000 + i, KIND_SAUNA, 1, 600, 0, 0, -1, -1000] as Array<Number>);
     }
     Test.assertEqualMessage(SaunaHistory.count(), SaunaHistory.MAX, "capped");
     var oldest = SaunaHistory.visit(SaunaHistory.MAX - 1) as Array<Number>;
     Test.assertEqualMessage(oldest[SaunaHistory.START], 1730200000, "the first two fell off");
+    // rows from the seven-column days are ignored rather than misread
+    Toybox.Application.Storage.setValue(SaunaHistory.KEY, [1, 2, 3, 4, 5, 6, 7] as Array<Toybox.Application.Storage.ValueType>);
+    Test.assertEqualMessage(SaunaHistory.count(), 0, "old layout ignored");
     SaunaHistory.clear();
     return true;
 }
@@ -187,8 +312,9 @@ function testHistory(logger as Logger) as Boolean {
 (:test)
 function testRecorder(logger as Logger) as Boolean {
     var t = new SaunaTracker();
+    t.plan = new SaunaPlan(KIND_STEAM);
     var rec = new SaunaRecorder();
-    var started = rec.start(true);
+    var started = rec.start(true, KIND_STEAM);
     logger.debug("session started: " + started);
     if (!started) {
         logger.debug("the simulator refused a session; skipping");
@@ -223,8 +349,9 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var glance = new SaunaGlance();
     glance.onLayout(glanceDc);
     glance.onUpdate(glanceDc);
-    SaunaHistory.add([1730100000, 3, 2290, 1200, 142, 31, 481] as Array<Number>);
+    SaunaHistory.add([Time.now().value() - 3600, KIND_STEAM, 2, 1450, 1200, 131, 24, 441] as Array<Number>);
     glance.onUpdate(glanceDc);
+    Test.assertMessage(SaunaText.fahrenheit, "the glance applied the default unit, Fahrenheit");
 
     var view = new SaunaView();
     view.onLayout(screen);
@@ -249,22 +376,18 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertMessage(!delegate.onBack(), "BACK leaves the app when idle");
     Test.assertMessage(delegate.onNextPage() && view.screen() == SCREEN_ROUNDS, "DOWN turns the screen");
     Test.assertMessage(delegate.onPreviousPage() && view.screen() == SCREEN_LIVE, "UP turns it back");
-    // pressing START while recording would push the menu, so the key path is checked up to the start
-    view.start(false);
-    Test.assertMessage(view.recording() && delegate.onBack() && (view.tracker() as SaunaTracker).phase == PHASE_SAUNA, "BACK marks the door while recording");
-    view.discard();
-    Test.assertMessage(!view.recording(), "discarded again");
 
-    // a visit without a FIT file: arrival, a round, a break with a recovery
-    view.start(false);
+    // a steam visit without a FIT file: arrival, a round, a break with a recovery
+    view.start(KIND_STEAM, false);
     Test.assertMessage(view.recording(), "recording");
     var t = view.tracker() as SaunaTracker;
+    Test.assertEqualMessage(t.plan.kind, KIND_STEAM, "the steam plan");
+    Test.assertEqualMessage(t.baselineDrop as Number, 24, "the usual steam drop came from the history");
     t.auto = false;   // the door is marked by hand here; the thermometer logic has its own test
     view.onUpdate(screen);
     Test.assertEqualMessage(view.startCue(), "MENU", "recording START cue");
     Test.assertEqualMessage(view.backCue(), "IN", "BACK goes in");
-    view.mark();
-    Test.assertEqualMessage(t.phase, PHASE_SAUNA, "in");
+    Test.assertMessage(delegate.onBack() && t.phase == PHASE_SAUNA, "BACK marks the door while recording");
     Test.assertEqualMessage(view.backCue(), "OUT", "BACK goes out");
     var temp = 36.0;
     for (var s = 0; s < 400; s++) {
@@ -299,9 +422,11 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertEqualMessage(SaunaHistory.count(), 2, "the visit joined the history");
     var row = SaunaHistory.last() as Array<Number>;
     logger.debug("saved row: " + row);
-    Test.assertEqualMessage(row[SaunaHistory.ROUNDS], 1, "one round saved");
+    Test.assertMessage(row[SaunaHistory.KIND] == KIND_STEAM && row[SaunaHistory.ROUNDS] == 1, "one steam round saved");
     view.onUpdate(screen);
-    view.start(false);
+    view.start(KIND_SAUNA, false);
+    Test.assertEqualMessage((view.tracker() as SaunaTracker).plan.rounds, 3, "a sauna plan this time");
+    view.onUpdate(screen);
     view.discard();
     Test.assertMessage(!view.recording() && SaunaHistory.count() == 2, "discarded");
     SaunaHistory.clear();

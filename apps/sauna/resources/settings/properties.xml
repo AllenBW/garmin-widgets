@@ -1,11 +1,25 @@
 <properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-    <!-- Edited on the phone (Connect IQ app) or in the simulator (Edit Application.Properties data) -->
+    <!-- Edited on the phone (Connect IQ app) or in the simulator (Edit Application.Properties data).
+         Minutes here become seconds in SaunaPlan. -->
+    <property id="TempUnit" type="number">0</property>
     <property id="AutoRounds" type="boolean">true</property>
-    <property id="EnterRate" type="float">1.5</property>
-    <property id="LeaveRate" type="float">1.0</property>
-    <property id="RoundTarget" type="number">15</property>
-    <property id="BreakTarget" type="number">10</property>
-    <property id="RoundsGoal" type="number">3</property>
+    <property id="DoorSensitivity" type="number">10</property>
     <property id="HotWatch" type="number">50</property>
     <property id="ActivityType" type="number">0</property>
+
+    <property id="SaunaRound" type="number">15</property>
+    <property id="SaunaMax" type="number">20</property>
+    <property id="SaunaBreak" type="number">15</property>
+    <property id="SaunaRounds" type="number">3</property>
+    <property id="SaunaCap" type="number">45</property>
+    <property id="SaunaWeekSessions" type="number">4</property>
+    <property id="SaunaWeekMinutes" type="number">60</property>
+
+    <property id="SteamRound" type="number">12</property>
+    <property id="SteamMax" type="number">15</property>
+    <property id="SteamBreak" type="number">12</property>
+    <property id="SteamRounds" type="number">2</property>
+    <property id="SteamCap" type="number">30</property>
+    <property id="SteamWeekSessions" type="number">3</property>
+    <property id="SteamWeekMinutes" type="number">40</property>
 </properties>

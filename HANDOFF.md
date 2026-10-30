@@ -122,25 +122,27 @@ records where the project stands so the next session can carry on.
     a value too long to encode throws and the card says so. Three tests
     pass on all three devices at `-l 3`. Loaded in the simulator; not yet
     looked at by eye, and not scanned with a phone camera.
-  - **Sauna** (`apps/sauna/`, a widget: glance + app, design #10, asked
-    for by the owner on 2026-10-29 after seeing the store's "Sauna App";
-    what they want improved is "cueing on what buttons will do what"):
-    `SaunaTracker` is pure arithmetic ticked once a second with the heart
-    rate and the watch temperature: rounds, breaks, the door noticed when
-    the watch warms 1.5 °C above its coolest reading of the last minute
-    or cools 1.0 °C below its hottest (no change within 90 s of the last
-    or 3 min of a button press), the peak in the half minute after
-    leaving and the falls one and two minutes later, round and break
-    targets, a hot-watch warning at 50 °C. `SaunaRecorder` wraps
-    `ActivityRecording` (Meditation, or generic by a setting; a lap per
-    phase; eleven developer fields). `SaunaView` draws four screens and,
-    on every one, a cue by each button: an arc on the bezel at Garmin's
-    own hint angles (58°, 123°, 237°, 270° clockwise from twelve, from
-    the device personality files) with START/MENU, EXIT/IN/OUT and the
-    neighbouring screen names. LAP (BACK) marks the door while recording;
-    taps are ignored. Six tests pass on all three devices; a screen draws
-    in about 35 ms; 42 KB in use. Not seen by eye and not yet on the
-    watch; the rates are guesses until a real visit's FIT file is read.
+  - **Sauna and Steam** (`apps/sauna/`, a widget: glance + app, design
+    #10, asked for by the owner on 2026-10-29 after seeing the store's
+    "Sauna App"; what they want: cueing on what buttons do, then both a
+    sauna and a steam room with the same detail and coaching, and
+    temperatures in Fahrenheit by default). START opens a selector
+    (Sauna / Steam room / Clear visits). `SaunaPlan` holds one kind's
+    targets, cap, weekly goals and door rates (defaults from the
+    published guidance, all settings in groups per kind);
+    `SaunaTracker` is pure arithmetic ticked once a second: the door
+    from the thermometer (rise above the minute's low, fall below its
+    high, scaled by a sensitivity setting), the peak and the one- and
+    two-minute falls after each round, the plan's events (round target,
+    past the longest round, heat cap, cool-down done, plan done,
+    recovery known) and `coach()`, the line under the timer.
+    `SaunaHistory` rows carry the kind; `thisWeek(kind)` feeds the glance
+    and the idle screen. `SaunaSettings` reads the phone settings and
+    sets `SaunaText.fahrenheit`. `SaunaRecorder` names the activity by
+    kind and adds a Kind session field. Cues on every screen at Garmin's
+    own hint angles (58, 123, 237, 270 clockwise from twelve). Six tests
+    pass on all three devices. Not seen by eye and not yet on the watch;
+    the door rates are guesses until a real visit's FIT file is read.
 - **The watch (2026-10-29):** the owner has a **fēnix 8 47 mm, not Pro**
   (`fenix847mm`, firmware 23.40). It reaches the Mac over MTP with
   libmtp once its USB mode is MTP (hold UP → Watch Settings → System →
@@ -233,13 +235,16 @@ records where the project stands so the next session can carry on.
    watch: check the settings list in the Connect IQ app (array settings
    with a name and a content field) and scan a Wi-Fi code with a phone.
    Ideas not built: editing a code on the watch, a brightness boost.
-9. **Sauna** is built; push it with `scripts/watch.sh push sauna` when the
-   watch is plugged in. First on the watch: do the cues land beside the
-   buttons; is `Sensor.Info.temperature` ever non-null in a device app
-   (the SensorHistory fallback covers it if not); start a visit at home
-   and hold the watch over a cup of hot water to see the thermometer
-   move and the automatic IN fire. After a real sauna, pull the FIT file
-   from Garmin Connect and read the "Watch temp" chart to tune the enter
-   and leave rates (settings). Ideas not built: a breathing-guided cool
-   down, a glance that starts a visit directly, Garmin's own "sauna"
-   sport type if one ever appears in the SDK.
+9. **Sauna and Steam** is built; push it with `scripts/watch.sh push
+   sauna` when the watch is plugged in. First on the watch: do the cues
+   land beside the buttons; does the selector read well; is
+   `Sensor.Info.temperature` ever non-null in a device app (the
+   SensorHistory fallback covers it if not); start a sauna at home and
+   hold the watch over a cup of hot water to see the thermometer move
+   and the automatic IN fire; check the three settings groups show in
+   the Connect IQ app and that the unit setting flips the readings. After
+   a real visit of each kind, pull the FIT file from Garmin Connect and
+   read the "Watch temp" chart to tune the door rates (steam may need
+   LAP). Ideas not built: a breathing pacer during breaks, cold-plunge
+   phases (cold-water crash reports on the fēnix 8), a glance that
+   starts a visit directly.

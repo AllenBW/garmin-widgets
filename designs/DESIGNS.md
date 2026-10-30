@@ -25,7 +25,7 @@ in the SDK before relying on it.
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 | 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
-| 10 | **Sauna** | Glance + app | Rounds and recovery, the door noticed by the thermometer, a cue by every button | M | Built in `apps/sauna/` |
+| 10 | **Sauna and Steam** | Glance + app | Sauna or steam room, round by round, coached against the guidance, a cue by every button | M | Built in `apps/sauna/` |
 
 Considered and dropped:
 
@@ -441,16 +441,17 @@ the 0.58-diameter code scans at the watch's pixel density.
 
 ---
 
-## 10. Sauna: rounds, recovery and a watch that says what its buttons do
+## 10. Sauna and Steam: rounds, recovery, coaching, and a watch that says what its buttons do
 
-**Purpose:** a sauna visit tracked round by round without fiddling with
-a wet watch. The watch's own thermometer notices the door, the heart-rate
-recovery after each round is measured properly, every button has its job
-written beside it, and the visit lands in Garmin Connect. The idea comes
-from the store's "Sauna App" (manual LAP, four screens, a paid unlock);
-this one adds the automatic door, the button cues, targets and a heat
-guard, and keeps everything free and on the watch. The owner's wish, in
-their words: cueing on what the buttons will do.
+**Purpose:** a sauna or steam-room visit tracked round by round without
+fiddling with a wet watch, and coached against the published guidance.
+START picks the kind. Each kind has its own plan (targets, rounds, a heat
+cap, weekly goals, door sensitivity), its own history and weekly count,
+and the same screens and the same depth of coaching. Temperatures show in
+Fahrenheit unless the setting says otherwise. The idea comes from the
+store's "Sauna App" (manual LAP, four screens, a paid unlock); the
+owner's own ask was cueing on what the buttons will do, then a second
+kind of room with coaching for both.
 
 **Layout (app)**
 - Button cues on every screen: a short arc on the bezel beside each
@@ -459,54 +460,84 @@ their words: cueing on what the buttons will do.
   and eight. The angles are where Garmin's own button hints sit on this
   family, read from the device personality files: 58°, 123°, 270° and
   237° clockwise from twelve, the same on all three devices.
-- Live: a band across the top (ember "SAUNA · ROUND 2 OF 3", blue
-  "BREAK · AFTER ROUND 2", grey "READY", red "WATCH HOT · 52°"), the
-  phase timer in big digits, "of 15:00 · total 38:10" under it, and the
-  heart rate, breathing and watch temperature along the bottom. Idle, the
-  screen says "Press START" over the last visit.
+- Live: a band across the top ("SAUNA · ROUND 2 OF 3" in ember, "STEAM ·
+  ROUND 1 OF 2" in teal, "BREAK · AFTER ROUND 2" in blue, "READY · SAUNA"
+  in grey, "WATCH HOT · 122°" in red), the phase timer in big digits, the
+  coach's line under it, "total 38:10 · heat 24:00 · out 14:10" in small
+  grey, and the heart rate, breathing and watch temperature along the
+  bottom with the unit on the label. Idle, "Press START" over the last
+  visit and this week's count.
 - Rounds: time in heat and out, then a row per round: length, max heart
-  rate, the one-minute fall.
+  rate, the one-minute fall; the watch's hottest reading at the foot.
 - Chart: the last finished round's heart rate from the door to two and a
-  half minutes after it, ember in the heat and blue after, with the peak
-  and the one- and two-minute falls.
-- Visits: the last eight kept on the watch.
-- Glance: SAUNA, "3 rounds · 38 min", then the date, peak heart rate and
-  recovery of the last visit.
+  half minutes after it, in the kind's colour and then blue, with the
+  peak, the one- and two-minute falls and the usual fall for that kind.
+- Visits: the last seven, dates coloured by kind with a legend.
+- Glance: "SAUNA · STEAM", then "Steam room · 2 rounds · 24 min", then
+  "Week: 1 of 3 steams · 24 of 40 min" against that kind's plan.
+- START when idle opens the selector: Sauna, Steam room (each with its
+  plan under it, "15 min × 3 · cool down 15") and Clear visits. START
+  while recording opens Resume / Save / Discard. Taps do nothing.
+
+**Coaching** (the line under the timer, with a buzz at each turn)
+- Arrival: "Drink, shower, then go in", then "Walk in when ready" (or
+  "LAP when you go in" with the automatic door off).
+- In the heat: a countdown "4:30 left"; "Time to cool down" at the round
+  target (one long buzz); "Over 20 min · come out" once a minute past the
+  longest round (two long); "That's 45 min of heat · come out" when the
+  rounds add up to the visit's cap (three).
+- Out: "Drink some water" for the first 45 s; "Cool down 7:30 more" until
+  the break is at least the plan's and never shorter than the round
+  before it; then "Ready for round 3" (double buzz) or, after the last
+  planned round or the cap, "Plan done · shower, then save" (triple).
+- A minute after each round's peak: "Fell 34 in a minute · usual 29",
+  against this kind's earlier visits (a short buzz).
+- "Watch hot, take it off" beats everything while the heat guard is on.
+- The plans, all settings, grouped by kind on the phone: sauna rounds of
+  15 min, nag at 20, cool down 15, 3 rounds, 45 min of heat, 4 visits
+  and 60 min a week; steam rounds of 12, nag at 15, cool down 12, 2
+  rounds, 30 min of heat, 3 visits and 40 min a week, and door rates
+  about half the sauna's because a steam room is only a few degrees
+  above skin. The sources: the Finnish cohort studies (4 to 7 sessions a
+  week, over 19 min each, lower cardiac mortality, observational), the
+  ACSM-cited guidance (rounds of 15 to 20 min dry, 10 to 15 in steam,
+  about 30 min of heat in a visit, water before and after, no alcohol),
+  and Finnish practice (cool down at least as long as the round, never
+  skip the last one).
 
 **Behaviour**
-- START begins a visit, which opens in "arrival". LAP (BACK) marks the
-  door by hand. The thermometer marks it on its own when the watch warms
-  1.5 °C above its coolest reading of the last minute (in) or cools
-  1.0 °C below its hottest (out), never within 90 s of the last change
-  or three minutes of a button press. Two buzzes going in, one coming out.
+- LAP (BACK) marks the door by hand. The thermometer marks it on its own
+  when the watch warms the kind's enter rate above its coolest reading of
+  the last minute, or cools the leave rate below its hottest, never
+  within 90 s of the last change or three minutes of a button press;
+  the sensitivity setting scales both rates. Two buzzes in, one out.
 - Recovery: the peak in the half minute after leaving, then the fall one
   and two minutes after that peak, per round and averaged.
-- Targets: a long buzz at the round target (15 min) and two at the break
-  target (10 min); both are settings, 0 turns them off.
-- Heat guard: at 50 °C on the watch's own thermometer the band turns red
-  and the watch buzzes once a minute. Garmin rates the fēnix 8 to 45 °C.
-- START again opens Resume / Save / Discard (the recording pauses while
-  it is open); the menu button when idle offers Start and Clear visits.
-  Taps do nothing on purpose.
-- Saved as a Meditation activity named Sauna, so Connect adds no training
-  load (a setting switches to a generic activity): one lap per phase, the
-  watch temperature and the phase every second, the recovery on each
-  break lap and the totals on the session, through FitContributor. Thirty
-  visits stay on the watch.
+- Heat guard: a list setting, 113 / 122 / 131 °F (45 / 50 / 55 °C) or
+  off; the band turns red and the watch buzzes once a minute.
+- Saved as a Meditation activity (a setting switches to a generic one)
+  named Sauna or Steam room: a lap per phase, the watch temperature and
+  the phase every second, the recovery on each break lap, the totals and
+  the kind on the session, through FitContributor. Thirty visits stay on
+  the watch, each with its kind.
 
 **Data:** `Sensor` for the heart rate and `Sensor.Info.temperature` at
 1 Hz, `SensorHistory` as the temperature fallback every ten seconds,
 `ActivityMonitor`'s respiration rate where it exists, `Fit` and
-`FitContributor` for the file. Settings: automatic rounds, the two rates,
-the two targets, rounds planned, the hot threshold, the activity type.
+`FitContributor` for the file. Settings in three groups: the watch (unit,
+automatic door, door sensitivity, hot warning, activity type), the sauna
+plan, the steam-room plan.
 
-**Not done, to learn on a watch:** how fast the fēnix 8's thermometer
-really moves at the door (the rates are starting values; the FIT file
-logs the temperature every second so they can be tuned from the first
-real visit), whether `Sensor.Info.temperature` is populated at all in a
-device app, how the optical heart rate copes with sweat, and the look of
-the cues by eye. A caution that belongs in the app's description if it is
-ever published: Garmin rates the watch to 45 °C, sauna air is 80–100 °C.
+**Not done, to learn on a watch:** how the fēnix 8's thermometer really
+moves in each room (the FIT file logs it every second so the rates can
+be tuned; a steam room may need LAP), whether `Sensor.Info.temperature`
+is populated at all in a device app, how the optical heart rate copes
+with sweat, the cues and the unit by eye, and whether the Connect IQ app
+shows the three settings groups. Steam is the harder room for the
+hardware: 110 to 120 °F at full humidity sits at the watch's 113 °F
+rating, and steam gets past seals over time. Not built: cold-plunge
+phases (fēnix 8 owners report crashes in water under 8 °C), a breathing
+pacer during breaks.
 
 ---
 

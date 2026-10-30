@@ -47,9 +47,10 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   glance + app, design #8; `apps/readiness/` the Readiness body-metrics
   face, design #4; `apps/pocketqr/` the Pocket QR glance + app, design #9,
   whose codes come from an array setting in `resources/settings/`;
-  `apps/sauna/` the Sauna glance + app, design #10, whose tracker is pure
-  arithmetic fed by the tests and whose button cues sit at Garmin's own
-  hint angles)
+  `apps/sauna/` the Sauna and Steam glance + app, design #10, whose
+  tracker and coach are pure arithmetic fed by the tests, whose plans
+  per kind live in `resources/settings/`, and whose button cues sit at
+  Garmin's own hint angles)
 - `scripts/watch.sh`: sideload to the fēnix 8 on the desk over MTP
   (libmtp) and pull its logs; the `mtp-*` commands need USB access, so
   run them outside the shell sandbox

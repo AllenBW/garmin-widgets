@@ -1,20 +1,41 @@
 <strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-    <string id="AppName">Sauna</string>
+    <string id="AppName">Sauna and Steam</string>
+
+    <string id="GroupWatch">The watch</string>
+    <string id="GroupWatchPrompt">Units, the automatic door and the heat guard. The watch is rated to 113 °F (45 °C); saunas and steam rooms are hotter, so you wear it at your own risk.</string>
+    <string id="TempUnitTitle">Temperatures in</string>
+    <string id="UnitF">Fahrenheit</string>
+    <string id="UnitC">Celsius</string>
+    <string id="UnitWatch">The watch's setting</string>
     <string id="AutoRoundsTitle">Mark rounds automatically</string>
-    <string id="AutoRoundsPrompt">Use the watch thermometer to notice when you go in and out. LAP always works too.</string>
-    <string id="EnterRateTitle">Going in: warming per minute (°C)</string>
-    <string id="EnterRatePrompt">How much the watch must warm in a minute to count as entering the sauna. Lower is more eager.</string>
-    <string id="LeaveRateTitle">Going out: cooling per minute (°C)</string>
-    <string id="LeaveRatePrompt">How much the watch must cool in a minute to count as leaving.</string>
-    <string id="RoundTargetTitle">Round target (minutes)</string>
-    <string id="RoundTargetPrompt">The watch buzzes when a round reaches this. 0 turns it off.</string>
-    <string id="BreakTargetTitle">Break target (minutes)</string>
-    <string id="BreakTargetPrompt">The watch buzzes when a break reaches this. 0 turns it off.</string>
-    <string id="RoundsGoalTitle">Rounds planned</string>
-    <string id="RoundsGoalPrompt">Shown as "round 2 of 3" on the live screen.</string>
-    <string id="HotWatchTitle">Hot watch warning (°C)</string>
-    <string id="HotWatchPrompt">The band turns red and the watch buzzes every minute while its thermometer reads this or more. Garmin rates the watch to 45 °C.</string>
+    <string id="AutoRoundsPrompt">The watch thermometer notices when you go in and out. LAP always works too.</string>
+    <string id="DoorTitle">Door sensitivity</string>
+    <string id="DoorPrompt">How much the watch must warm or cool before a round starts or ends on its own.</string>
+    <string id="DoorNormal">Normal</string>
+    <string id="DoorEager">Eager: small changes count</string>
+    <string id="DoorRelaxed">Relaxed: needs a bigger change</string>
+    <string id="HotWatchTitle">Hot watch warning</string>
+    <string id="HotWatchPrompt">The band turns red and the watch buzzes every minute while its own thermometer reads this or more.</string>
+    <string id="Hot45">113 °F / 45 °C (Garmin's rating)</string>
+    <string id="Hot50">122 °F / 50 °C</string>
+    <string id="Hot55">131 °F / 55 °C</string>
+    <string id="HotOff">Off</string>
     <string id="ActivityTypeTitle">Save visits as</string>
     <string id="TypeMeditation">Meditation (no training load)</string>
     <string id="TypeGeneric">Other activity</string>
+
+    <string id="GroupSauna">Sauna plan</string>
+    <string id="GroupSaunaPrompt">Dry heat, 170 to 200 °F. The guidance: rounds of 15 to 20 minutes, cool down at least as long as the round, 30 to 45 minutes of heat in a visit, several visits a week.</string>
+    <string id="GroupSteam">Steam room plan</string>
+    <string id="GroupSteamPrompt">Wet heat, 110 to 120 °F. The guidance: rounds of 10 to 15 minutes, cool down at least as long as the round, under 30 minutes of heat in a visit.</string>
+    <string id="RoundTitle">Round target (minutes)</string>
+    <string id="MaxTitle">Longest round (minutes)</string>
+    <string id="MaxPrompt">The watch nags once a minute past this. 0 turns it off.</string>
+    <string id="BreakTitle">Cool-down target (minutes)</string>
+    <string id="BreakPrompt">The break is never counted as done before the round before it was long. 0 turns the target off.</string>
+    <string id="RoundsTitle">Rounds planned</string>
+    <string id="CapTitle">Heat per visit (minutes)</string>
+    <string id="CapPrompt">The watch asks you to come out once the rounds add up to this. 0 turns it off.</string>
+    <string id="WeekSessionsTitle">Visits a week</string>
+    <string id="WeekMinutesTitle">Minutes of heat a week</string>
 </strings>
