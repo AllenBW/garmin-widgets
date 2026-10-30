@@ -31,6 +31,10 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   Check the Garmin API docs that ship with the SDK (`<sdk>/doc/Toybox/`)
   before using an API; don't rely on memory.
 - Never commit developer keys (`*.der`, `*.pem`) or `bin/` output.
+- The simulator is one process shared by every session and worktree on
+  this Mac. Claim it by ID with `scripts/simlock.sh claim` (or `wait`)
+  before loading anything into it, release it when done, and never load
+  an app while another ID holds it. `test.sh` and `sim.sh` do this.
 
 ## Layout
 

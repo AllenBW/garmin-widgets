@@ -17,8 +17,12 @@ source "$ROOT/scripts/sdk-env.sh"
 PRG="$ROOT/apps/$APP/bin/$APP.prg"
 [ -f "$PRG" ] || "$ROOT/scripts/build.sh" "$APP" "$DEVICE"
 
-if ! pgrep -f "ConnectIQ.app|simulator" >/dev/null 2>&1; then
+# The simulator is one process shared by every session on this Mac: claim
+# it by ID (scripts/simlock.sh) and keep the claim while the app is up.
+"$ROOT/scripts/simlock.sh" claim 20
+
+if ! pgrep -f "ConnectIQ.app/Contents/MacOS/[s]imulator" >/dev/null 2>&1; then
     "$SDK/bin/connectiq" &
-    sleep 3
+    sleep 14
 fi
 "$SDK/bin/monkeydo" "$PRG" "$DEVICE"

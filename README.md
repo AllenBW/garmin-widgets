@@ -165,6 +165,23 @@ scripts/build.sh sauna && scripts/sim.sh sauna             # and for Sauna
 that links a glance-safe `Lib` module (`Fmt`, `Solar`, `Location`) is told
 the `(:glance)` annotation is ignored, which is fine (see `CLAUDE.md`).
 
+The simulator is **one process per Mac** (a second one exits at once),
+and whoever loads an app into it replaces what anyone else was looking
+at. Several sessions or worktrees working at the same time must therefore
+take turns, by ID:
+
+```sh
+scripts/simlock.sh status          # who holds the simulator
+scripts/simlock.sh claim 10        # take it for ten minutes (fails if another ID holds it)
+scripts/simlock.sh wait 10         # or wait for it, then take it
+scripts/simlock.sh release         # give it back
+```
+
+The ID defaults to the checkout's folder name, so worktrees differ;
+`CIQ_SIM_ID` overrides it. `test.sh` claims and releases around a run,
+`sim.sh` claims and keeps the claim while the app is on screen, and a
+claim expires by itself so a dead session cannot hold the simulator.
+
 Unit tests live in `apps/<app>/tests/`, are annotated `(:test)` and are left
 out of normal builds. `monkeydo … -t` prints one line per test and a RESULTS
 table, then exits. If it prints nothing at all, the simulator has a stale
