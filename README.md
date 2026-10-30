@@ -212,11 +212,19 @@ macOS; `scripts/watch.sh` talks to it with libmtp (`brew install libmtp`,
 and quit Garmin Express or OpenMTP, which would hold the connection):
 
 ```sh
+scripts/watch.sh queue [other-checkout ...]  # build every app here (and extra ones in other worktrees) into watch-queue/
+scripts/watch.sh flush                     # copy the whole queue onto the watch, then empty it
 scripts/watch.sh push field [fenix847mm]   # build and copy FIELD.PRG and its log file onto the watch
 scripts/watch.sh ls                        # what is in GARMIN/Apps and GARMIN/Apps/LOGS
 scripts/watch.sh logs                      # download the logs into watch-logs/ (gitignored)
 scripts/watch.sh rm FIELD.PRG              # delete one file
 ```
+
+`queue` needs no watch: it builds everything now, this checkout's apps
+first and then any app another worktree has that this one lacks (an app
+present in both is taken from here). `flush` is the one command to run
+the next time the watch is on the cable; it waits for MTP, replaces each
+app's earlier copy by name, and empties the queue.
 
 The watch installs a `.prg` when the USB session ends, so unplug after a
 push, then pick the face under *Watch Face* or the app from the apps

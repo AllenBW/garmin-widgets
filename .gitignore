@@ -11,3 +11,4 @@ bin/
 
 .DS_Store
 watch-logs/
+watch-queue/
