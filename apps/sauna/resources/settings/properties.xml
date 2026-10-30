@@ -1,0 +1,11 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Edited on the phone (Connect IQ app) or in the simulator (Edit Application.Properties data) -->
+    <property id="AutoRounds" type="boolean">true</property>
+    <property id="EnterRate" type="float">1.5</property>
+    <property id="LeaveRate" type="float">1.0</property>
+    <property id="RoundTarget" type="number">15</property>
+    <property id="BreakTarget" type="number">10</property>
+    <property id="RoundsGoal" type="number">3</property>
+    <property id="HotWatch" type="number">50</property>
+    <property id="ActivityType" type="number">0</property>
+</properties>

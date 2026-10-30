@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="60" height="60">
+  <!-- Sauna launcher icon: black disc, three rising heat waves in ember over an amber bench line -->
+  <g transform="scale(1.015625)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <path d="M20 42 C14 36 26 32 20 26 C14 20 26 16 20 10" stroke="#FF7A3D" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M32 44 C26 38 38 34 32 28 C26 22 38 18 32 12" stroke="#FF7A3D" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M44 42 C38 36 50 32 44 26 C38 20 50 16 44 10" stroke="#FF7A3D" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect x="12" y="50" width="40" height="4" rx="2" fill="#FFB020"/>
+  </g>
+</svg>

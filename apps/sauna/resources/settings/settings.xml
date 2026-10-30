@@ -1,0 +1,29 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <setting propertyKey="@Properties.AutoRounds" title="@Strings.AutoRoundsTitle" prompt="@Strings.AutoRoundsPrompt">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.EnterRate" title="@Strings.EnterRateTitle" prompt="@Strings.EnterRatePrompt">
+        <settingConfig type="numeric" min="0.2" max="10"/>
+    </setting>
+    <setting propertyKey="@Properties.LeaveRate" title="@Strings.LeaveRateTitle" prompt="@Strings.LeaveRatePrompt">
+        <settingConfig type="numeric" min="0.2" max="10"/>
+    </setting>
+    <setting propertyKey="@Properties.RoundTarget" title="@Strings.RoundTargetTitle" prompt="@Strings.RoundTargetPrompt">
+        <settingConfig type="numeric" min="0" max="60"/>
+    </setting>
+    <setting propertyKey="@Properties.BreakTarget" title="@Strings.BreakTargetTitle" prompt="@Strings.BreakTargetPrompt">
+        <settingConfig type="numeric" min="0" max="60"/>
+    </setting>
+    <setting propertyKey="@Properties.RoundsGoal" title="@Strings.RoundsGoalTitle" prompt="@Strings.RoundsGoalPrompt">
+        <settingConfig type="numeric" min="1" max="12"/>
+    </setting>
+    <setting propertyKey="@Properties.HotWatch" title="@Strings.HotWatchTitle" prompt="@Strings.HotWatchPrompt">
+        <settingConfig type="numeric" min="40" max="80"/>
+    </setting>
+    <setting propertyKey="@Properties.ActivityType" title="@Strings.ActivityTypeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.TypeMeditation</listEntry>
+            <listEntry value="1">@Strings.TypeGeneric</listEntry>
+        </settingConfig>
+    </setting>
+</settings>

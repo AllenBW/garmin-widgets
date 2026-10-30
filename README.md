@@ -30,6 +30,11 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`apps/pocketqr/`](apps/pocketqr/) is **Pocket QR**, a glance and app
   that shows up to six QR codes set up in the Connect IQ app, full screen
   for scanning (design #9).
+- [`apps/sauna/`](apps/sauna/) is **Sauna**, a glance and app that tracks
+  a sauna visit round by round: the watch thermometer notices the door,
+  the heart-rate recovery is measured after each round, every button has
+  its job written beside it, and the visit is saved to Garmin Connect
+  (design #10).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
@@ -63,7 +68,13 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > drawing every state in both modes and the press targets). Pocket QR
 > builds cleanly at the strict type-check level and its three tests pass
 > (parsing the array setting, encoding a code, drawing the glance and the
-> app and paging through codes). None of these has been run on a watch.
+> app and paging through codes). Sauna builds cleanly at the strict level
+> and its six tests pass (the text, a synthetic visit through the
+> thermometer door detection and the recovery maths, manual marks and
+> targets and the heat guard, the history, a FIT session, drawing every
+> screen and the cues). All nine earlier apps have been copied to a
+> fēnix 8 47 mm with `scripts/watch.sh`; none has been checked by eye on
+> it yet.
 
 ## Layout
 
@@ -77,9 +88,10 @@ apps/horizon/    Horizon watch face, same layout
 apps/suncompass/ Sun Compass glance + app, same layout
 apps/readiness/  Readiness watch face, same layout
 apps/pocketqr/   Pocket QR glance + app, same layout (resources/settings/ holds the array setting)
+apps/sauna/      Sauna glance + app, same layout
 lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
-scripts/         build.sh, sim.sh, test.sh, sdk-env.sh
+scripts/         build.sh, sim.sh, test.sh, watch.sh, sdk-env.sh
 ```
 
 Each app is its own Connect IQ project (open `apps/field/` as the VS Code
@@ -144,6 +156,7 @@ scripts/build.sh horizon && scripts/sim.sh horizon   # and for Horizon
 scripts/build.sh suncompass && scripts/sim.sh suncompass   # and for Sun Compass
 scripts/build.sh readiness && scripts/sim.sh readiness     # and for Readiness
 scripts/build.sh pocketqr && scripts/sim.sh pocketqr       # and for Pocket QR
+scripts/build.sh sauna && scripts/sim.sh sauna             # and for Sauna
 ```
 
 `build.sh` and `test.sh` drop one expected monkeyc warning: a watch face
@@ -174,6 +187,22 @@ limit, and the burn-in checker under Settings to verify the 10 % rule.
 
 ## Sideload to the watch
 
-Connect the watch over USB. It shows up as an MTP device: use OpenMTP on macOS,
-or `jmtpfs`/your file manager on Linux. Copy `apps/field/bin/field.prg` into
-`GARMIN/APPS/`, eject, then pick the face under *Watch Face* on the watch.
+Connect the watch over USB with its USB mode set to MTP (hold UP → Watch
+Settings → System → Advanced → USB Mode). It does not mount as a drive on
+macOS; `scripts/watch.sh` talks to it with libmtp (`brew install libmtp`,
+and quit Garmin Express or OpenMTP, which would hold the connection):
+
+```sh
+scripts/watch.sh push field [fenix847mm]   # build and copy FIELD.PRG and its log file onto the watch
+scripts/watch.sh ls                        # what is in GARMIN/Apps and GARMIN/Apps/LOGS
+scripts/watch.sh logs                      # download the logs into watch-logs/ (gitignored)
+scripts/watch.sh rm FIELD.PRG              # delete one file
+```
+
+The watch installs a `.prg` when the USB session ends, so unplug after a
+push, then pick the face under *Watch Face* or the app from the apps
+list. `System.println` output lands in `GARMIN/Apps/LOGS/<NAME>.TXT`
+(push creates it) and a crash writes `CIQ_LOG.YML` beside it. The default
+device is `fenix847mm`, the watch on the desk; `CIQ_WATCH_DEVICE`
+overrides it. OpenMTP (`brew install --cask openmtp`) is the drag-and-drop
+fallback.
