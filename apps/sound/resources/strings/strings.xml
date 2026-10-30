@@ -1,0 +1,10 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Sound Level</string>
+
+    <string id="GroupMeter">The meter</string>
+    <string id="GroupMeterPrompt">Approximate decibels from the watch microphone, which is not A-weighted and not a calibrated meter. The danger range follows NIOSH: 85 dB for 8 hours a day, half the time for every 3 dB more.</string>
+    <string id="CalibrationTitle">Calibration offset (dB)</string>
+    <string id="CalibrationPrompt">Added to the microphone's own scale. Hold the watch beside a phone sound meter and match the numbers; UP and DOWN on the Calibrate screen do the same.</string>
+    <string id="BuzzTitle">Buzz at 85 and 100 dB</string>
+    <string id="BuzzPrompt">A short buzz when the level rises past the hearing-risk line, a longer one past the loud-venue line, at most once every 15 seconds.</string>
+</strings>

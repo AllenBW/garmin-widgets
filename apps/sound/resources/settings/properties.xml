@@ -1,0 +1,7 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Edited on the phone (Connect IQ app), on the watch (the Calibrate
+         screen writes Calibration back), or in the simulator (Edit
+         Application.Properties data). -->
+    <property id="Calibration" type="number">90</property>
+    <property id="Buzz" type="boolean">true</property>
+</properties>

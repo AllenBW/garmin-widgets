@@ -1,0 +1,10 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <group id="meter" title="@Strings.GroupMeter" description="@Strings.GroupMeterPrompt">
+        <setting propertyKey="@Properties.Calibration" title="@Strings.CalibrationTitle" prompt="@Strings.CalibrationPrompt">
+            <settingConfig type="numeric" min="50" max="130"/>
+        </setting>
+        <setting propertyKey="@Properties.Buzz" title="@Strings.BuzzTitle" prompt="@Strings.BuzzPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+    </group>
+</settings>
