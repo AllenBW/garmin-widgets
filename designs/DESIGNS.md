@@ -492,6 +492,22 @@ kind of room with coaching for both.
   the corners work as soft buttons on the simulator and the watch alike;
   taps in the middle of the screen do nothing (wet fingers).
 - Launcher icon: ember heat waves on the left, blue drops on the right.
+- Demo, from the Start menu: a made-up sauna visit (two rounds done, four
+  minutes into the second break, a recovery, a heart-rate trace, live
+  readings) over six made-up visits in the history, so every screen can
+  be looked at without a sauna. Nothing is recorded or stored; End demo
+  in the pause menu clears it.
+- Sized for a hot room: a title band on every page in the page's colour
+  (ember or blue in the heat, steel grey on a break, dark grey for
+  Rounds, Recovery and Visits), page dots at the foot, the readings at
+  an eighth of the screen height, the coach line and table rows at a
+  sixteenth. Tables and the chart stay inside the area the cue words do
+  not reach, and each cue word sits on a black patch so it stays
+  readable wherever content meets the edge.
+- The app is a watch-app with a glance, not a widget: widgets may not
+  record activities (`ActivityRecording.createSession` is for watch
+  apps, glances and background only), and a visit started in a widget
+  died at once.
 
 **Coaching** (the line under the timer, with a buzz at each turn)
 - Arrival: "Drink, shower, then go in", then "Walk in when ready" (or

@@ -138,7 +138,22 @@ records where the project stands so the next session can carry on.
     minute after leaving extends the break, "stand up slowly"), and the
     other readings logged: breathing and stress per second, Body Battery
     at start and end, HRV (RMSSD per minute, `SaunaHrv.mc`) as an
-    experiment. The simulator's profile gives a ceiling of 134 bpm. `SaunaPlan` holds one kind's
+    experiment. The simulator's profile gives a ceiling of 134 bpm.
+    Later still: the manifest type is **watch-app** (widgets may not
+    record activities: the first real start died at once), a Demo entry
+    in the Start menu (`SaunaView.startDemo`, `SaunaTracker.seedDemo`,
+    `SaunaHistory.demoRows`), bigger text with a title band and page
+    dots on every screen, the glance's week line on one line, tables
+    and the chart inside the cue-free area, cue words on black patches.
+    Seen by eye in the simulator: the glance, the idle screen and all
+    four demo pages. Driving the simulator: the session's swift script
+    posts key events (Return = START, arrows = UP/DOWN, Escape = BACK)
+    and `screencapture -l <window id>` grabs the window, both with the
+    shell sandbox off; see the toolchain memory note. The simulator is
+    one process shared with any other Claude session on the Mac, and on
+    2026-10-29 a sibling session kept loading its watch face over this
+    app, which looked like crashes and exits until the memory note
+    explained it. `SaunaPlan` holds one kind's
     targets, cap, weekly goals and door rates (defaults from the
     published guidance, all settings in groups per kind);
     `SaunaTracker` is pure arithmetic ticked once a second: the door
