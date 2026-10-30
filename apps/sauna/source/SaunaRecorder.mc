@@ -22,6 +22,7 @@ class SaunaRecorder {
     private var _maxTemp as FitContributor.Field? = null;
     private var _maxHr as FitContributor.Field? = null;
     private var _avgDrop as FitContributor.Field? = null;
+    private var _kind as FitContributor.Field? = null;
 
     function initialize() {
     }
@@ -36,13 +37,13 @@ class SaunaRecorder {
     }
 
     // Create and start the session; false when the device refuses
-    function start(meditation as Boolean) as Boolean {
+    function start(meditation as Boolean, kind as Number) as Boolean {
         if (!(Toybox has :ActivityRecording)) {
             return false;
         }
         try {
             var session = ActivityRecording.createSession({
-                :name => "Sauna",
+                :name => SaunaText.kindName(kind),
                 :sport => meditation ? Activity.SPORT_MEDITATION : Activity.SPORT_GENERIC,
                 :subSport => Activity.SUB_SPORT_GENERIC
             });
@@ -60,6 +61,8 @@ class SaunaRecorder {
             _maxTemp = session.createField("Max watch temp", 8, FitContributor.DATA_TYPE_FLOAT, {:mesgType => sess, :units => "C"});
             _maxHr = session.createField("Max HR in sauna", 9, FitContributor.DATA_TYPE_UINT8, {:mesgType => sess, :units => "bpm"});
             _avgDrop = session.createField("Avg HR fall 1 min", 10, FitContributor.DATA_TYPE_SINT16, {:mesgType => sess, :units => "bpm"});
+            _kind = session.createField("Kind", 11, FitContributor.DATA_TYPE_UINT8, {:mesgType => sess, :units => ""});
+            setData(_kind, kind);
             _session = session;
             return session.start();
         } catch (e) {
@@ -137,6 +140,7 @@ class SaunaRecorder {
         setData(_maxHr, tracker.maxHr());
         var drop = tracker.avgDrop1();
         setData(_avgDrop, drop == null ? 0 : drop);
+        setData(_kind, tracker.plan.kind);
         var ok = false;
         try {
             if (s.isRecording()) {

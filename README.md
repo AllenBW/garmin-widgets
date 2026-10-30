@@ -30,11 +30,12 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 - [`apps/pocketqr/`](apps/pocketqr/) is **Pocket QR**, a glance and app
   that shows up to six QR codes set up in the Connect IQ app, full screen
   for scanning (design #9).
-- [`apps/sauna/`](apps/sauna/) is **Sauna**, a glance and app that tracks
-  a sauna visit round by round: the watch thermometer notices the door,
-  the heart-rate recovery is measured after each round, every button has
-  its job written beside it, and the visit is saved to Garmin Connect
-  (design #10).
+- [`apps/sauna/`](apps/sauna/) is **Sauna and Steam**, a glance and app
+  that tracks a sauna or steam-room visit round by round and coaches it
+  against the published guidance: the watch thermometer notices the
+  door, the heart-rate recovery is measured after each round, every
+  button has its job written beside it, each kind has its own plan and
+  weekly goals, and the visit is saved to Garmin Connect (design #10).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:
@@ -68,11 +69,12 @@ AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
 > drawing every state in both modes and the press targets). Pocket QR
 > builds cleanly at the strict type-check level and its three tests pass
 > (parsing the array setting, encoding a code, drawing the glance and the
-> app and paging through codes). Sauna builds cleanly at the strict level
-> and its six tests pass (the text, a synthetic visit through the
-> thermometer door detection and the recovery maths, manual marks and
-> targets and the heat guard, the history, a FIT session, drawing every
-> screen and the cues). All nine earlier apps have been copied to a
+> app and paging through codes). Sauna and Steam builds cleanly at the
+> strict level and its six tests pass (the text and units, a synthetic
+> visit through the thermometer door detection and the recovery maths,
+> the plan's coaching and the heat guard, the history and weekly counts,
+> a FIT session, drawing every screen and the cues). All nine earlier
+> apps have been copied to a
 > fēnix 8 47 mm with `scripts/watch.sh`; none has been checked by eye on
 > it yet.
 
@@ -88,7 +90,7 @@ apps/horizon/    Horizon watch face, same layout
 apps/suncompass/ Sun Compass glance + app, same layout
 apps/readiness/  Readiness watch face, same layout
 apps/pocketqr/   Pocket QR glance + app, same layout (resources/settings/ holds the array setting)
-apps/sauna/      Sauna glance + app, same layout
+apps/sauna/      Sauna and Steam glance + app, same layout (resources/settings/ holds the plans)
 lib/             Lib barrel: manifest.xml, monkey.jungle, source/{Aod,Arcs,Fmt,Sun,Moon}.mc
 designs/         DESIGNS.md, mockups.py, svg/
 scripts/         build.sh, sim.sh, test.sh, watch.sh, sdk-env.sh

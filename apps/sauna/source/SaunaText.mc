@@ -1,9 +1,36 @@
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.Time;
 
 // Words and numbers for the glance and the screens
 (:glance)
 module SaunaText {
+
+    // Temperatures are shown in Fahrenheit unless the setting says Celsius
+    var fahrenheit as Boolean = true;
+
+    // Degrees C from the watch -> "118°" in the chosen unit
+    function temp(celsius as Numeric) as String {
+        var v = fahrenheit ? celsius * 9.0 / 5.0 + 32.0 : celsius;
+        return Math.round(v).toNumber().toString() + "°";
+    }
+
+    function unit() as String {
+        return fahrenheit ? "°F" : "°C";
+    }
+
+    function kindName(kind as Number) as String {
+        return kind == KIND_STEAM ? "Steam room" : "Sauna";
+    }
+
+    function kindUpper(kind as Number) as String {
+        return kind == KIND_STEAM ? "STEAM" : "SAUNA";
+    }
+
+    // "2 of 4 saunas", "1 of 3 steams"
+    function kindCount(kind as Number, n as Number, goal as Number) as String {
+        return n + " of " + goal + (kind == KIND_STEAM ? " steams" : " saunas");
+    }
 
     // Seconds -> "12:34", or "1:02:34" past an hour
     function clock(seconds as Number) as String {
@@ -40,20 +67,20 @@ module SaunaText {
         return (bpm >= 0 ? "-" : "+") + bpm.abs().toString();
     }
 
-    // Tenths of a degree from a history row -> "48°", or "" when none
+    // Tenths of a degree C from a history row -> "118°", or "" when none
     function tenths(value as Number) as String {
-        return value <= -1000 ? "" : Lib.Fmt.temperature(value / 10.0);
+        return value <= -1000 ? "" : temp(value / 10.0);
     }
 
-    // The glance headline from a history row: "3 rounds · 38 min"
+    // The glance headline from a history row: "Sauna · 3 rounds · 38 min"
     function headline(row as Array<Number>?) as String {
         if (row == null) {
             return "No visits yet";
         }
-        return rounds(row[SaunaHistory.ROUNDS]) + " · " + minutes(row[SaunaHistory.SAUNA_SEC]);
+        return kindName(row[SaunaHistory.KIND]) + " · " + rounds(row[SaunaHistory.ROUNDS]) + " · " + minutes(row[SaunaHistory.SAUNA_SEC]);
     }
 
-    // The glance detail: "Tue 28 Oct · max 142 bpm · -31 in 1 min"
+    // A visit's detail: "Tue 28 Oct · max 142 bpm · -31 in 1 min"
     function detail(row as Array<Number>?) as String {
         if (row == null) {
             return "START records a visit";
@@ -66,5 +93,11 @@ module SaunaText {
             s += " · " + drop(row[SaunaHistory.DROP]) + " in 1 min";
         }
         return s;
+    }
+
+    // This week against the plan: "Week: 2 of 4 saunas · 46 of 60 min"
+    function week(plan as SaunaPlan) as String {
+        var w = SaunaHistory.thisWeek(plan.kind);
+        return "Week: " + kindCount(plan.kind, w[0], plan.weekSessions) + " · " + ((w[1] + 30) / 60) + " of " + plan.weekMinutes + " min";
     }
 }
