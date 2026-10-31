@@ -33,10 +33,17 @@ done
 # protocol (product id 3) before it switches to MTP (product id 0x51b8), so
 # wait for the switch rather than failing on the first listing.
 wait_for_mtp() {
-    local n=0
+    local n=0 gone=0
     until ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idProduct" = 20920' || [ "$n" -ge 20 ]; do
-        if ! ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idVendor" = 2334'; then
-            echo "no Garmin watch on USB: plug it in" >&2; exit 1
+        # the watch drops off the bus for a few seconds while it switches
+        # modes, so only give up when it has been gone for a while
+        if ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idVendor" = 2334'; then
+            gone=0
+        else
+            gone=$((gone + 1))
+            if [ "$gone" -ge 5 ]; then
+                echo "no Garmin watch on USB: plug it in" >&2; exit 1
+            fi
         fi
         [ "$n" -eq 0 ] && echo "waiting for the watch to switch to MTP..."
         sleep 3; n=$((n + 1))
