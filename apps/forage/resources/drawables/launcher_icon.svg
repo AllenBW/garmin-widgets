@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="65" height="65">
+  <!-- Forage launcher icon (65 px): three comb cells, capped, honey and empty, and a bee -->
+  <g transform="scale(1.01562)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <polygon points="30.0,26.0 25.0,34.7 15.0,34.7 10.0,26.0 15.0,17.3 25.0,17.3" fill="#FFC94A"/>
+    <polygon points="46.5,35.5 41.5,44.2 31.5,44.2 26.5,35.5 31.5,26.8 41.5,26.8" fill="#B8730F"/>
+    <polygon points="45.5,16.5 41.0,24.3 32.0,24.3 27.5,16.5 32.0,8.7 41.0,8.7" fill="none" stroke="#5A5A5A" stroke-width="2"/>
+    <polygon points="26.5,26.0 23.2,31.6 16.8,31.6 13.5,26.0 16.7,20.4 23.2,20.4" fill="none" stroke="#FFE3A0" stroke-width="1.2"/>
+    <ellipse cx="44" cy="44" rx="4.5" ry="3" fill="#F2ECE2" opacity="0.8" transform="rotate(-30 46 48)"/>
+    <ellipse cx="50" cy="44" rx="4.5" ry="3" fill="#F2ECE2" opacity="0.8" transform="rotate(30 48 48)"/>
+    <ellipse cx="47" cy="49" rx="6" ry="4" fill="#FFC94A"/>
+    <rect x="45" y="45" width="1.6" height="8" fill="#000000"/><rect x="48.5" y="45.3" width="1.5" height="7.4" fill="#000000"/>
+  </g>
+</svg>

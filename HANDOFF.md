@@ -112,16 +112,6 @@ records where the project stands so the next session can carry on.
     Metrics are read once a minute awake, every five minutes always-on.
     Always-on: hollow time and "BB 74 · SLEEP 82". Three tests pass on all
     three devices; the simulator supplies values. Not looked at by eye.
-  - **Pocket QR** (`apps/pocketqr/`, a widget: glance + app, design #9,
-    picked by the owner on 2026-10-29): up to six QR codes from one
-    array setting edited as a list in the Connect IQ app (name + content,
-    one example entry by default); the app shows one code at a time on a
-    white card with its name and "2 of 3 · Wi-Fi", up/down or swipe to
-    page, select or menu for a list; the glance names the first code and
-    counts the rest. `ScanCode.createQrCodeImage` encodes in about 12 ms;
-    a value too long to encode throws and the card says so. Three tests
-    pass on all three devices at `-l 3`. Loaded in the simulator; not yet
-    looked at by eye, and not scanned with a phone camera.
   - **Sauna and Steam** (`apps/sauna/`, a widget: glance + app, design
     #10, asked for by the owner on 2026-10-29 after seeing the store's
     "Sauna App"; what they want: cueing on what buttons do, then both a
@@ -329,13 +319,9 @@ records where the project stands so the next session can carry on.
    `decodeNumber` can unpack per callback under the watchdog. The
    simulator will ask for macOS microphone access the first time. No
    developer has reported capture on a real watch yet.
-8. **Pocket QR** is built. In the simulator: File → Edit Persistent
-   Storage → Edit Application.Properties data to add codes and check the
-   list, the menu and the empty state; point a phone camera at the
-   simulator window to see whether the code scans at that size. On a
-   watch: check the settings list in the Connect IQ app (array settings
-   with a name and a content field) and scan a Wi-Fi code with a phone.
-   Ideas not built: editing a code on the watch, a brightness boost.
+8. **Pocket QR** was dropped on 2026-10-31: the owner did not like it.
+   Its code is in git history (before the commit that removed
+   `apps/pocketqr/`).
 9. **Sauna and Steam** is built; push it with `scripts/watch.sh push
    sauna` when the watch is plugged in. First on the watch: do the cues
    land beside the buttons; does the selector read well; is
@@ -402,3 +388,16 @@ records where the project stands so the next session can carry on.
    over ten minutes with the microphone running. Then the glance after
    leaving the app. Ideas not built: A-weighting, a log of readings
    with places, octave bands.
+11. **Forage** (`apps/forage/`, a watch face, design #15, the owner asked
+   for it on 2026-10-31): for a beekeeper. The verdict for now ("BEES
+   FLYING 61°F", "TOO COLD TO FLY", "RAIN, BEES HOME", "TOO WINDY 22
+   MPH", "NIGHT, BEES HOME", "CLEANSING FLIGHTS"), the next run of good
+   hours to open the hive, the next twelve hours as zig-zag comb cells
+   (capped: open; honey: flying; empty: home; a drop: rain; the current
+   hour from the current conditions, since the forecast starts at the
+   next hour), and the nectar year along the bottom bezel with the
+   season's name. The rules and the year are in `ForageModel.mc` and are
+   the owner's to tune. Temperature and wind follow the watch's units;
+   the time is always 24-hour. Press and hold below the time opens the
+   weather widget. Four tests pass on all three devices at `-l 3`; seen
+   in the simulator. Not yet on the watch.

@@ -49,8 +49,7 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   `designs/gen_stars.py`, never edited by hand; `apps/horizon/` the Horizon
   next-twelve-hours face, design #7; `apps/suncompass/` the Sun Compass
   glance + app, design #8; `apps/readiness/` the Readiness body-metrics
-  face, design #4; `apps/pocketqr/` the Pocket QR glance + app, design #9,
-  whose codes come from an array setting in `resources/settings/`;
+  face, design #4;
   `apps/sauna/` the Sauna and Steam glance + app, design #10, whose
   tracker and coach are pure arithmetic fed by the tests, whose plans
   per kind live in `resources/settings/`, and whose button cues sit at
@@ -58,7 +57,9 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   design #14, a watch-app because the microphone (`AudioInput`) is
   refused to widgets, whose meter maths and danger range are pure
   arithmetic in `SoundMeter.mc` fed by the tests, and whose cues come
-  from `Lib.Cues` like the sauna's)
+  from `Lib.Cues` like the sauna's; `apps/forage/` the Forage beekeeper's
+  face, design #15, whose bee rules and nectar year are pure arithmetic
+  in `ForageModel.mc` fed by the tests)
 - `scripts/watch.sh`: sideload to the fēnix 8 on the desk over MTP
   (libmtp) and pull its logs; the `mtp-*` commands need USB access, so
   run them outside the shell sandbox

@@ -24,9 +24,10 @@ in the SDK before relying on it.
 | 6 | **Night Sky** | Watch face | The real sky overhead: stars, constellations, Moon, planets | M | Built in `apps/nightsky/` |
 | 7 | **Horizon** | Watch face | The bezel is the next 12 hours: rain, sunset, next event | M | Built in `apps/horizon/` |
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
-| 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
+| 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Dropped 2026-10-31: the owner did not like it; removed from `apps/` |
 | 10 | **Sauna and Steam** | Glance + app | Sauna or steam room, round by round, coached against the guidance, a cue by every button | M | Built in `apps/sauna/` |
 | 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button (11 to 13 are the other session's faces) | S–M | Rebuilt after crashing the watch: one continuous capture per opening, as the one app known to work on a fēnix 8 does (2026-10-31) |
+| 15 | **Forage** | Watch face | For the beekeeper: whether the bees are flying now, the next good hours to open the hive, the next twelve hours as a strip of comb, and the nectar year along the bezel | S–M | Built in `apps/forage/` |
 
 Considered and dropped:
 
@@ -407,38 +408,11 @@ needed: the watch reports a true-north heading.
 
 ---
 
-## 9. Pocket QR: your QR codes on the wrist
+## 9. Pocket QR: dropped
 
-**Purpose:** the things you keep showing people from your phone, without
-the phone: the guest Wi-Fi, a link, a contact card, a ticket number. Set
-them up once in the Connect IQ app, then open the widget and hold the
-wrist out to be scanned.
-
-**Layout (app)**
-- A white card with a quiet zone fills the middle of the screen, the QR
-  code black on it, as large as fits inside the round display (the card
-  is 0.66 of the diameter, the code 0.58).
-- The code's name above in condensed bold, cut with an ellipsis when it
-  is too long for the chord; below, "2 of 3 · Wi-Fi": the position and
-  what the content is (Wi-Fi, Link, Contact, Email, Phone or Text, from
-  its prefix).
-- Up/down or a swipe moves to the next code; select or the menu button
-  lists them by name and kind. With no codes saved the screen says so and
-  points at the app settings.
-- Glance: POCKET QR, the first code's name, then "3 codes · Wi-Fi, Link,
-  Text".
-
-**Data:** one array setting, `Codes`, edited as an add-a-row list in the
-Connect IQ or Garmin Connect app (`settings.xml`, up to six entries of a
-name and the content, the content up to 300 characters, one example
-entry as the default). `ScanCode.createQrCodeImage` (API 6.0.0) turns
-the content into a bitmap at medium error correction; encoding takes
-about 12 ms and the image is kept until the code changes. A value too
-long to encode throws, and the card says "Too long to encode" instead.
-
-**Not done:** editing a code on the watch (a text picker), a brightness
-boost while a code is showing, and a check on a real phone camera that
-the 0.58-diameter code scans at the watch's pixel density.
+Up to six QR codes set up in the Connect IQ app, shown full screen for
+scanning. Built, then dropped on 2026-10-31 because the owner did not
+like it; the code is in git history.
 
 ---
 
@@ -701,6 +675,89 @@ WHO, *Guidelines for Community Noise* (1999), 70 dB LAeq 24 h; CDC/NIOSH
 *Noise and Hearing Loss* pages for the 120 dB pain and the everyday
 examples; Connect IQ SDK 9.3.0 `Audio` module docs and the Core Topics
 "Audio" page.
+
+---
+
+## 15. Forage: are the bees flying, and when can the hive be opened
+
+**Purpose:** a face for a beekeeper. One glance answers the two questions
+the weather app makes you work out yourself: are the bees out right now,
+and when today is a good time to open the hive. It is built from the
+owner's own day (the Loudoun bees), not from what the platform allows,
+and it keeps the Today basics: 24-hour time and the date.
+
+**Layout (active)**, top to bottom
+- The date, "SAT OCT 31", in grey.
+- The time, very large, always 24-hour, in warm white (`#F2ECE2`).
+- **The verdict:** a small bee and one phrase in honey amber, then the
+  outside temperature in the watch's unit: "BEES FLYING 61°F". The other verdicts
+  are grey: "TOO COLD TO FLY 48°F", "RAIN, BEES HOME", "TOO WINDY 22 MPH",
+  "NIGHT, BEES HOME", and "NO WEATHER YET" until the phone syncs. On a
+  sunny winter day of 50 to 54 °F it says "CLEANSING FLIGHTS".
+- **The hive window:** "open the hive 11:00-14:00", the first run of good
+  hours in the forecast; "open the hive now, until 14:00" inside one;
+  "no hive weather in 12 h" when there is none.
+- **The comb:** the next twelve hours as a strip of twelve hexagonal cells
+  that zig-zag like real comb, with the hour in each and the current hour
+  outlined in cream:
+  - capped (pale wax, with a cap rim): a good hour to open the hive
+  - honey (deep amber): the bees are flying
+  - an empty cell: the bees stay home (cold, windy or dark)
+  - an empty cell with a blue drop: rain
+- **The beekeeper's year** along the bottom bezel, January at the left:
+  a grey track with the nectar flows on it (the spring main flow in wax,
+  clover and the fall flow in honey) and a cream dot for today. Above it,
+  the season's name: "MAPLE AND WILLOW", "FRUIT BLOOM", "MAIN FLOW",
+  "CLOVER", "SUMMER DEARTH", "FALL FLOW", "WINTER PREP", "WINTER CLUSTER".
+
+**Always-on:** the hollow time and the verdict, dim amber, shifted each
+minute by `Lib.Aod`. No comb, no arc.
+
+**The rules** (rules of thumb, to be tuned by the owner; one pure function
+per hour, so the tests feed it a synthetic day):
+
+| Verdict | Rule |
+|---|---|
+| Flying | the sun is up, at least 55 °F (13 °C), rain under 40 %, wind under 20 mph (9 m/s) |
+| Cleansing flights | the sun is up, 50 to 54 °F, cloud under 50 %, no rain |
+| Good to open (capped) | flying, and 10:00 to 16:00, at least 65 °F (18 °C), rain under 20 %, wind under 10 mph (4.5 m/s), cloud under 70 % or a clear or partly cloudy condition |
+| Rain | rain 40 % or more, or a rain, shower or storm condition |
+
+**The year** (Northern Virginia, approximate, by day of the year; the
+owner should correct it from their own hives): maple and willow
+15 Feb to 31 Mar, fruit bloom and dandelion April, main flow (black
+locust, tulip poplar) 1 May to 15 Jun, clover and sumac 16 Jun to 15 Jul,
+summer dearth 16 Jul to 31 Aug, fall flow (goldenrod, aster) 1 Sep to
+20 Oct, winter prep 21 Oct to 30 Nov, winter cluster 1 Dec to 14 Feb.
+
+**Interaction:** press and hold on the comb or the verdict opens the
+weather widget.
+
+**Data**
+
+| Value | Source |
+|---|---|
+| Each hour of the comb | `Weather.getHourlyForecast()`: `temperature` (°C), `precipitationChance`, `windSpeed` (m/s), `cloudCover` (API 5.1), `condition`, `forecastTime`; 12 to 13 hours on the watch |
+| The verdict now | `Weather.getCurrentConditions()`, the same fields |
+| Sun up | `Lib.Sun` (the face declares `Positioning`, as Today does, so the weather position is not null) |
+| Time, date, season | `System.getClockTime`, `Gregorian.info`, `Lib.Fmt.clock24` |
+
+The forecast is read once a minute and the comb's colours cached; drawing
+is twelve polygons and a few strings, far inside the watchdog.
+
+**Mockups:** `designs/svg/face-forage-active.svg`, `face-forage-aod.svg`
+(`forage_active` and `forage_aod` in `mockups.py`).
+
+**Built** as `apps/forage/`: `ForageModel` (the rules per hour, the
+outlook and hive window, the year), `ForageView` (both modes),
+`ForageDelegate` (press and hold). The forecast on the watch starts at
+the next hour, so the current hour's cell comes from the current
+conditions. Temperature and wind follow the watch's units. Drawing
+uses about 28 KB.
+
+**Not done:** checked on the watch. Open questions for the owner: the
+thresholds above, the nectar calendar, and whether a varroa check or
+feeding reminder belongs on the season line.
 
 ---
 

@@ -296,6 +296,98 @@ def sun_app():
     screen('app-sun', '\n'.join(b))
 
 
+# ---------------------------------------------------------------------------
+# Face 15: Forage (are the bees flying, and when can the hive be opened)
+# ---------------------------------------------------------------------------
+
+CREAM = '#F2ECE2'
+HONEY = '#B8730F'     # uncapped honey: the bees are flying that hour
+WAX = '#FFC94A'       # capped cell: a good hour to open the hive
+WAX_RIM = '#FFE3A0'
+CELL = '#3A3A3A'      # empty cell: the bees stay home
+
+
+def hexagon(cx, cy, r, fill='none', stroke='none', width=0):
+    pts = ' '.join(f'{cx + r * math.cos(math.radians(a)):.1f},{cy + r * math.sin(math.radians(a)):.1f}'
+                   for a in range(0, 360, 60))
+    return f'<polygon points="{pts}" fill="{fill}" stroke="{stroke}" stroke-width="{width}"/>'
+
+
+def bee(x, y, s, color=WAX):
+    """A bee from above: striped body, two pale wings."""
+    return (f'<ellipse cx="{x - s * 0.18:.1f}" cy="{y - s * 0.32:.1f}" rx="{s * 0.26:.1f}" ry="{s * 0.16:.1f}" '
+            f'fill="{CREAM}" opacity="0.75" transform="rotate(-25 {x:.1f} {y:.1f})"/>'
+            f'<ellipse cx="{x + s * 0.18:.1f}" cy="{y - s * 0.32:.1f}" rx="{s * 0.26:.1f}" ry="{s * 0.16:.1f}" '
+            f'fill="{CREAM}" opacity="0.75" transform="rotate(25 {x:.1f} {y:.1f})"/>'
+            f'<ellipse cx="{x:.1f}" cy="{y:.1f}" rx="{s * 0.42:.1f}" ry="{s * 0.28:.1f}" fill="{color}"/>'
+            f'<rect x="{x - s * 0.08:.1f}" y="{y - s * 0.28:.1f}" width="{s * 0.09:.1f}" height="{s * 0.56:.1f}" fill="{BG}"/>'
+            f'<rect x="{x + s * 0.14:.1f}" y="{y - s * 0.26:.1f}" width="{s * 0.08:.1f}" height="{s * 0.52:.1f}" fill="{BG}"/>')
+
+
+def comb(cx, cy, r, hours):
+    """The next twelve hours as a strip of comb, zig-zagging like real cells."""
+    pitch = 1.5 * r
+    x0 = cx - pitch * (len(hours) - 1) / 2
+    dy = math.sqrt(3) / 4 * r
+    b = []
+    for i, (hour, kind) in enumerate(hours):
+        x, y = x0 + i * pitch, cy + (-dy if i % 2 == 0 else dy)
+        inner = r - 2
+        if kind == 'open':
+            b.append(hexagon(x, y, inner, WAX))
+            b.append(hexagon(x, y, inner - 4, 'none', WAX_RIM, 1.2))
+            label = BG
+        elif kind == 'fly':
+            b.append(hexagon(x, y, inner, HONEY))
+            label = BG
+        else:
+            b.append(hexagon(x, y, inner, 'none', CELL, 2))
+            label = DIM
+        if kind == 'rain':
+            b.append(droplet(x, y - 2, 15, CYAN))
+        else:
+            b.append(text(x, y + 1, f'{hour:02d}', 13, label, 700))
+        if i == 0:
+            b.append(hexagon(x, y, r + 1, 'none', CREAM, 2))
+    return b
+
+
+def season_arc(day_of_year):
+    """The beekeeper's year along the bottom bezel, January at the left."""
+    r, left, right = 216, 226, 134
+    def deg(d):
+        return left - (left - right) * d / 365
+    flows = [(90, 167, WAX), (167, 196, HONEY), (244, 293, HONEY)]   # main flow, clover, fall flow
+    b = [arc(r, right, left, TRACK, 5, 'butt')]
+    for start, end, col in flows:
+        b.append(arc(r, deg(end), deg(start), col, 5, 'butt'))
+    x, y = polar(r, deg(day_of_year))
+    b.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="6" fill="{CREAM}" stroke="{BG}" stroke-width="2"/>')
+    return b
+
+
+def forage_active():
+    hours = [(10, 'fly'), (11, 'open'), (12, 'open'), (13, 'open'), (14, 'rain'), (15, 'rain'),
+             (16, 'fly'), (17, 'fly'), (18, 'home'), (19, 'home'), (20, 'home'), (21, 'home')]
+    b = [text(C, 80, 'SAT OCT 31', 24, GRAY, 500, extra='letter-spacing="1.5"')]
+    b.append(text(C, 152, '10:20', 128, CREAM, 700))
+    b.append(bee(126, 224, 26))
+    b.append(text(146, 225, 'BEES FLYING', 28, WAX, 700, anchor='start'))
+    b.append(text(312, 225, '61°F', 28, CREAM, 500, anchor='start'))
+    b.append(text(C, 262, 'open the hive <tspan fill="' + CREAM + '" font-weight="700">11:00–14:00</tspan>', 22, GRAY))
+    b += comb(C, 322, 20, hours)
+    b.append(text(C, 386, 'WINTER PREP', 18, GRAY, 500, extra='letter-spacing="1.5"'))
+    b += season_arc(304)
+    screen('face-forage-active', '\n'.join(b), 'Forage: bees flying now, a hive window at 11-14, rain at 14-16')
+
+
+def forage_aod():
+    dx, dy = 4, -3   # the minute's shift
+    b = [outline_text(C + dx, 170 + dy, '10:20', 128, GRAY, 1.6)]
+    b.append(text(C + dx, 246 + dy, 'BEES FLYING · 61°F', 24, '#7A5A20', 600))
+    screen('face-forage-aod', '\n'.join(b), 'Forage always-on: hollow time and the verdict, dim')
+
+
 if __name__ == '__main__':
     field_active()
     field_aod()
@@ -308,4 +400,6 @@ if __name__ == '__main__':
     battery_app()
     glance_loop('glance-sun', 'SUN', 'Sunset 17:41', 'golden hour in 6h 48m', accent=AMBER)
     sun_app()
+    forage_active()
+    forage_aod()
     print('wrote', len(os.listdir(OUT)), 'SVGs to', OUT)
