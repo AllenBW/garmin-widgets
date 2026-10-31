@@ -34,11 +34,9 @@ class SoundView extends WatchUi.View {
     private const DIM = 0x4A4A4A;
     private const BAND = 0x2A2A2A;
 
-    private const WINDOW_BYTES = 12288;  // one shot: 4096 bytes of start-up junk, then about a third of a second at 11 kHz
-    private const SKIP_BYTES = 4096;     // what the fēnix 8 hands over first after every initialisation, whatever the room
+    private const SKIP_BYTES = 4096;     // what the fēnix 8 hands over first in every window, whatever the room
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
-    private const STALE_AFTER = 3;       // seconds without a window before the number dims
-    private const NO_DATA_AFTER = 2;     // seconds without a window before the microphone is restarted
+    private const STALE_AFTER = 5;       // seconds without a window before the number dims
     private const SAVE_EVERY = 10;       // seconds between writes of the last reading for the glance
     private const SCALE_LO = 30;         // the bar and the chart run from here
     private const SCALE_HI = 130;        // to here
@@ -51,17 +49,11 @@ class SoundView extends WatchUi.View {
     private var _calibrating as Boolean = false;
     private var _demo as Boolean = false;
     private var _demoTicks as Number = 0;
-    private var _listening as Boolean = false;
-    private var _captureError as String? = null;   // for good: no microphone, no format
-    private var _lastError as String? = null;      // the last failed start; retried
-    private var _restarts as Number = 0;           // starts in a row that gave no sound
-    private var _failures as Number = 0;           // starts in a row that threw
-    private const GIVE_UP = 5;                     // silent or failed starts before the microphone is left alone
-    private var _sinceStart as Number = 0;         // seconds since the microphone was started
+    private var _mic as SoundMic;
+    private var _captureError as String? = null;   // for good: no microphone at all
     private var _seen as Number = 0;               // windows received since the app opened
-    private var _stopping as Boolean = false;      // a stop is in progress: its flushed window is not a reading
-    private var _fresh as Boolean = true;          // the microphone is cold: discard its first moments
-    private var _hertz as Number = 8000;
+    private var _lastWindowAt as Number = 0;       // System.getTimer() at the last window
+    private var _sinceStart as Number = 0;         // seconds since the app came on screen
     private var _sinceData as Number = 0;
     private var _sinceSave as Number = 0;
     private var _buzz as Boolean = true;
@@ -78,6 +70,13 @@ class SoundView extends WatchUi.View {
 
     function initialize() {
         View.initialize();
+        _mic = new SoundMic(new MicPort(), method(:onWindow));
+        // the watch hands over one window about every two seconds, each
+        // already clear of its junk, so each one is the level as it is
+        _session.warmup = 0.0;
+        _session.warmupLeft = 0.0;
+        _session.seed = 0.1;
+        _session.smooth = 0.1;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -97,14 +96,20 @@ class SoundView extends WatchUi.View {
             reloadSettings();
         }
         startTimer();
+        _sinceStart = 0;
         if (!_demo) {
-            listen();
+            if (!(Toybox has :Audio) || !(Audio has :Capture)) {
+                _captureError = "No microphone on this watch";
+            } else {
+                _mic.show();
+            }
         }
     }
 
+    // Off screen (the menu counts): the microphone stops; the timer keeps
+    // running while the app is open so a stop in progress is seen through
     function onHide() as Void {
-        stopTimer();
-        hush();
+        _mic.hide();
     }
 
     private function startTimer() as Void {
@@ -151,150 +156,16 @@ class SoundView extends WatchUi.View {
         return 90;
     }
 
-    // The lowest rate the watch will capture 16-bit mono at: the fēnix 8
-    // refuses 8 kHz and answers a 16 kHz request with 11.025 kHz
-    private function pickFormat() as Audio.AudioFormat? {
-        var rates = [Audio.FREQ_8_KHZ, Audio.FREQ_11_025_KHZ, Audio.FREQ_16_KHZ, Audio.FREQ_22_05_KHZ, Audio.FREQ_44_1_KHZ] as Array<Number>;
-        for (var i = 0; i < rates.size(); i++) {
-            var format = {
-                :containerFormat => Audio.CONTAINER_WAV,
-                :codec => Audio.CODEC_LPCM,
-                :frequency => rates[i],
-                :channels => Audio.CHANNEL_MONO
-            } as Audio.AudioFormat;
-            if (Capture.isFormatSupported(format)) {
-                return format;
-            }
-        }
-        return null;
-    }
-
-    // The microphone, one window at a time: the watch fills a window,
-    // stops, hands it to onData, and onComplete starts the next. The
-    // fēnix 8 (firmware 23.40) does not deliver windows while capturing
-    // continuously: the first log from the watch showed three windows
-    // after a start, then nothing, and data only on stop. A start that
-    // fails, or that delivers nothing, is retried from the tick; the
-    // session discards the first moments after every fresh start.
-    private function listen() as Void {
-        if (_listening || _captureError != null) {
-            return;
-        }
-        if (!(Toybox has :Audio) || !(Audio has :Capture)) {
-            _captureError = "No microphone on this watch";
-            return;
-        }
-        _sinceStart = 0;
-        _sinceData = 0;
-        if (open("start " + (_restarts + 1))) {
-            _listening = true;
-            if (_fresh) {
-                _session.restarted();
-            }
-        }
-    }
-
-    // Initialise capture for one window and start it; true when it runs.
-    // Called for every window on a watch that refuses a plain start()
-    // after a one-shot stop, so it logs only the first few times.
-    private function open(reason as String) as Boolean {
-        try {
-            var format = pickFormat();
-            if (format == null) {
-                _captureError = "Microphone format not supported";
-                return false;
-            }
-            var settings = Capture.initializeAudioCapture(self, {
-                :format => format,
-                :windowSize => WINDOW_BYTES,
-                :windowFilledBehavior => Capture.WINDOW_FILLED_STOP,
-                :filters => [] as Array<Capture.Filter>
-            });
-            var used = settings[:format];
-            if (used != null) {
-                _hertz = hertz(used[:frequency] as Number);
-            }
-            _stopping = false;
-            Capture.start();
-            _lastError = null;
-            _failures = 0;
-            if (_seen <= 6) {
-                System.println("sound: " + reason + ": " + _hertz + " Hz, window " + settings[:windowSize] + " B one shot, state " + Capture.getState());
-            }
-            return true;
-        } catch (e instanceof Capture.InitializationFailedException) {
-            _lastError = "Microphone unavailable (" + e.getError() + ")";
-            System.println("sound: " + reason + ": " + _lastError);
-            failed();
-        } catch (e instanceof Lang.Exception) {
-            var m = e.getErrorMessage();
-            _lastError = "Microphone error" + (m == null ? "" : " (" + m + ")");
-            System.println("sound: " + reason + ": " + _lastError);
-            failed();
-        }
-        return false;
-    }
-
-    private function failed() as Void {
-        _failures++;
-        if (_failures >= GIVE_UP) {
-            giveUp(_lastError == null ? "Microphone error" : _lastError as String);
-        }
-    }
-
-    private function hush() as Void {
-        if (_listening) {
-            _stopping = true;
-            try {
-                if (Capture.getState() == Capture.CAPTURE_CAPTURING) {
-                    Capture.stop();
-                }
-            } catch (e) {
-            }
-            _listening = false;
-        }
-    }
-
-    // No window for a while though the microphone is on: start it again
-    private function restart() as Void {
-        var state = -1;
-        try {
-            state = Capture.getState();
-        } catch (e) {
-        }
-        System.println("sound: no window for " + _sinceData + " s, state " + state + ", restarting (" + (_restarts + 1) + ")");
-        hush();
-        _restarts++;
-        _fresh = true;
-        if (_restarts >= GIVE_UP) {
-            giveUp("The microphone sent no sound");
-            return;
-        }
-        listen();
-    }
-
-    // Stop asking the microphone for anything until the app is opened again
-    private function giveUp(why as String) as Void {
-        hush();
-        _captureError = why;
-        System.println("sound: giving up: " + why);
-        WatchUi.requestUpdate();
-    }
-
-    private function hertz(frequency as Number) as Number {
-        var table = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100] as Array<Number>;
-        return (frequency >= 0 && frequency < table.size()) ? table[frequency] : 8000;
-    }
-
-    // Capture callbacks (Audio.Capture.Callbacks)
-    function onData(audioData as ByteArray) as Void {
-        if (_demo || _stopping) {
+    // One window from the microphone (SoundMic calls this from its
+    // onData, so nothing here may touch the microphone)
+    function onWindow(audioData as ByteArray, hertz as Number) as Void {
+        if (_demo) {
             return;
         }
         var header = SoundMeter.headerOffset(audioData);
-        // the first bytes after every initialisation are not the room:
-        // on the watch they read about -13 dBFS whatever the room, and
-        // what follows reads like the room, so they are left out
+        // the first bytes of every window are not the room: on the watch
+        // they read about -13 dBFS whatever the room, and what follows
+        // reads like the room, so they are left out
         var offset = header + SKIP_BYTES;
         if (offset >= audioData.size()) {
             offset = header;
@@ -304,36 +175,21 @@ class SoundView extends WatchUi.View {
             return;
         }
         var level = SoundMeter.dbfs(SoundMeter.rms(audioData, offset, STRIDE));
-        var gap = _sinceData;
+        // the window stands for the time since the last one, for the dose
+        var now = System.getTimer();
+        var heard = samples.toFloat() / (hertz > 0 ? hertz : 11025);
+        var stands = _seen == 0 ? heard : (now - _lastWindowAt) / 1000.0;
+        if (stands < heard) { stands = heard; }
+        if (stands > 3.0) { stands = 3.0; }
+        _lastWindowAt = now;
         _sinceData = 0;
-        _restarts = 0;
-        _fresh = false;
         _seen++;
         if (_seen <= 6 || _seen % 1000 == 0) {
             var skipped = offset > header ? SoundMeter.dbfs(SoundMeter.rmsOf(audioData, header, offset, STRIDE)) : 0.0;
-            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + header + ", first " + (offset - header) + " B " + skipped.format("%.1f") + " dBFS, rest " + level.format("%.1f") + " dBFS, " + gap + " s since the last");
+            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + header + ", first " + (offset - header) + " B " + skipped.format("%.1f") + " dBFS, rest " + level.format("%.1f") + " dBFS");
         }
-        var event = _session.addWindow(level, samples.toFloat() / _hertz);
-        react(event);
+        react(_session.addWindow(level, stands.toFloat()));
         WatchUi.requestUpdate();
-    }
-
-    // An error ends the capture; the tick starts it again. Backgrounded
-    // means the watch did not count the app as on screen yet.
-    function onError(error as Capture.Error) as Void {
-        _listening = false;
-        _fresh = true;
-        _lastError = error == Capture.CAPTURE_ERR_BACKGROUNDED ? "Microphone not ready" : "Microphone error " + error;
-        System.println("sound: " + _lastError);
-        WatchUi.requestUpdate();
-    }
-
-    // The window has filled and capture stopped on its own. The next
-    // window is started by the one-second tick, never from here: opening
-    // the microphone several times a second is what took the whole watch
-    // down on 2026-10-31, so the meter reads once a second instead.
-    function onComplete() as Void {
-        _listening = false;
     }
 
     // Once a second: the chart, the staleness, the demo's own sound, the glance's reading
@@ -348,14 +204,8 @@ class SoundView extends WatchUi.View {
         } else {
             _sinceData++;
             _sinceStart++;
-            if (_captureError == null) {
-                if (!_listening) {
-                    listen();
-                } else if (_sinceData > NO_DATA_AFTER) {
-                    restart();
-                }
-            }
         }
+        _mic.tick();
         _session.tick();
         _sinceSave++;
         if (_sinceSave >= SAVE_EVERY) {
@@ -400,14 +250,14 @@ class SoundView extends WatchUi.View {
     }
 
     function shutdown() as Void {
-        hush();
+        _mic.exit();
         stopTimer();
         remember();
     }
 
     // The demo: the microphone off, a made-up two minutes behind, and a level that walks the bands
     function startDemo() as Void {
-        hush();
+        _mic.hide();
         _demo = true;
         _demoTicks = 0;
         _session.seedDemo();
@@ -419,7 +269,10 @@ class SoundView extends WatchUi.View {
     function endDemo() as Void {
         _demo = false;
         _session.reset();
-        listen();
+        _session.warmupLeft = 0.0;
+        if (_captureError == null) {
+            _mic.show();
+        }
     }
 
     function demo() as Boolean {
@@ -427,7 +280,11 @@ class SoundView extends WatchUi.View {
     }
 
     function listening() as Boolean {
-        return _listening;
+        return _mic.phase == MIC_RUNNING;
+    }
+
+    function mic() as SoundMic {
+        return _mic;
     }
 
     function session() as SoundSession {
@@ -540,12 +397,12 @@ class SoundView extends WatchUi.View {
 
     // Is the number worth believing right now
     private function stale() as Boolean {
-        return !_demo && (_sinceData > STALE_AFTER || !_listening);
+        return !_demo && (_sinceData > STALE_AFTER || _mic.phase == MIC_DONE);
     }
 
     // What is going on with the microphone, for under "Listening" or a dim number
     private function waitingText() as String {
-        return SoundMeter.waiting(_sinceStart, _restarts, _lastError);
+        return SoundMeter.waiting(_sinceStart, _mic.silent, null);
     }
 
     private function drawLive(dc as Dc) as Void {
@@ -555,7 +412,7 @@ class SoundView extends WatchUi.View {
         var centre = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         drawBand(dc, _demo ? "DEMO" : "SOUND LEVEL", ACCENT);
         var level = _session.level;
-        var error = _captureError;
+        var error = _captureError != null ? _captureError : _mic.error;
         if (error != null && !_demo) {
             dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.45).toNumber(), _lineFont, fit(dc, error, _lineFont, (w * 0.8).toNumber()), centre);
