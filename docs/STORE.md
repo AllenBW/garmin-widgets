@@ -35,6 +35,18 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31, in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31, in review |
 
+Screenshots: the store takes at most five. Sauna and Steam has the demo
+mode's screens (a round in the heat, the break, the rounds table, the
+recovery chart, the visits), Rings its three colour sets, Strata Soil, Moss
+and Clay. They were taken from throwaway copies of each app built in the
+scratchpad (never committed): Sauna started straight into its demo at a
+given screen, with no glance so the simulator opens the app, and the
+faces with a setting's default changed and the watch-face editor's style
+ignored (the simulator always reports the first style). Each copy needs
+its own .prg name, since the simulator keeps settings by file name. The
+store pages kept showing the first screenshot for a while after the edit
+was saved.
+
 Every upload so far showed "Status: Verified" with "Signature check
 failed." beside it; Garmin's forum reports the same message on first
 uploads with SDK 9.x, and the upload went through.
