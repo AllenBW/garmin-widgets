@@ -55,6 +55,8 @@ class SoundView extends WatchUi.View {
     private var _captureError as String? = null;   // for good: no microphone, no format
     private var _lastError as String? = null;      // the last failed start; retried
     private var _restarts as Number = 0;           // starts in a row that gave no sound
+    private var _failures as Number = 0;           // starts in a row that threw
+    private const GIVE_UP = 5;                     // silent or failed starts before the microphone is left alone
     private var _sinceStart as Number = 0;         // seconds since the microphone was started
     private var _seen as Number = 0;               // windows received since the app opened
     private var _stopping as Boolean = false;      // a stop is in progress: its flushed window is not a reading
@@ -215,6 +217,7 @@ class SoundView extends WatchUi.View {
             _stopping = false;
             Capture.start();
             _lastError = null;
+            _failures = 0;
             if (_seen <= 6) {
                 System.println("sound: " + reason + ": " + _hertz + " Hz, window " + settings[:windowSize] + " B one shot, state " + Capture.getState());
             }
@@ -222,12 +225,21 @@ class SoundView extends WatchUi.View {
         } catch (e instanceof Capture.InitializationFailedException) {
             _lastError = "Microphone unavailable (" + e.getError() + ")";
             System.println("sound: " + reason + ": " + _lastError);
+            failed();
         } catch (e instanceof Lang.Exception) {
             var m = e.getErrorMessage();
             _lastError = "Microphone error" + (m == null ? "" : " (" + m + ")");
             System.println("sound: " + reason + ": " + _lastError);
+            failed();
         }
         return false;
+    }
+
+    private function failed() as Void {
+        _failures++;
+        if (_failures >= GIVE_UP) {
+            giveUp(_lastError == null ? "Microphone error" : _lastError as String);
+        }
     }
 
     private function hush() as Void {
@@ -254,7 +266,19 @@ class SoundView extends WatchUi.View {
         hush();
         _restarts++;
         _fresh = true;
+        if (_restarts >= GIVE_UP) {
+            giveUp("The microphone sent no sound");
+            return;
+        }
         listen();
+    }
+
+    // Stop asking the microphone for anything until the app is opened again
+    private function giveUp(why as String) as Void {
+        hush();
+        _captureError = why;
+        System.println("sound: giving up: " + why);
+        WatchUi.requestUpdate();
     }
 
     private function hertz(frequency as Number) as Number {
@@ -304,28 +328,12 @@ class SoundView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    // The window has filled and capture stopped on its own: start the
-    // next one at once, with a plain start() where the watch allows it
-    // and a fresh initialisation where it does not (the fēnix 8 threw
-    // on the plain start, 2026-10-31). After a stop of ours, nothing:
-    // the tick decides.
+    // The window has filled and capture stopped on its own. The next
+    // window is started by the one-second tick, never from here: opening
+    // the microphone several times a second is what took the whole watch
+    // down on 2026-10-31, so the meter reads once a second instead.
     function onComplete() as Void {
-        if (_stopping || _demo || !_listening) {
-            _listening = false;
-            return;
-        }
-        try {
-            Capture.start();
-            return;
-        } catch (e instanceof Lang.Exception) {
-            if (_seen <= 6) {
-                var m = e.getErrorMessage();
-                System.println("sound: start after a window: " + (m == null ? "?" : m) + ", state " + Capture.getState() + "; initialising again");
-            }
-        }
-        if (!open("next window")) {
-            _listening = false;   // the tick tries again in a second, without a warm-up
-        }
+        _listening = false;
     }
 
     // Once a second: the chart, the staleness, the demo's own sound, the glance's reading
