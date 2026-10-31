@@ -43,12 +43,51 @@ module SoundMeter {
 
     const NAMES = ["Quiet", "Calm", "Conversation", "Busy traffic", "Hearing risk", "Loud venue", "Pain"] as Array<String>;
 
-    // Where the samples start in a window: after a WAV header if one opens it
+    // Where the samples start in a window: after a WAV header if one
+    // opens it. A header is "RIFF", a size, "WAVE", then chunks of an id,
+    // a size and that many bytes; the samples follow the "data" chunk's
+    // id and size, 44 bytes in when a plain "fmt " is the only chunk
+    // before it. Anything else before "data" (a "LIST" chunk, say) is
+    // skipped too, because read as samples it is a loud spike. A header
+    // whose "data" chunk is out of reach is taken as the plain 44 bytes.
     function headerOffset(bytes as ByteArray) as Number {
-        if (bytes.size() >= HEADER && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46) {
-            return HEADER;
+        var size = bytes.size();
+        if (size < 12 || !tagAt(bytes, 0, 0x52, 0x49, 0x46, 0x46) || !tagAt(bytes, 8, 0x57, 0x41, 0x56, 0x45)) {
+            return 0;
         }
-        return 0;
+        var at = 12;
+        while (at + 8 <= size) {
+            if (tagAt(bytes, at, 0x64, 0x61, 0x74, 0x61)) {
+                return at + 8;
+            }
+            var len = bytes.decodeNumber(Lang.NUMBER_FORMAT_UINT32, {:offset => at + 4, :endianness => Lang.ENDIAN_LITTLE}) as Long;
+            if (len > size) {
+                break;
+            }
+            var n = len.toNumber();
+            at += 8 + n + (n % 2);
+        }
+        return size >= HEADER ? HEADER : 0;
+    }
+
+    function tagAt(bytes as ByteArray, at as Number, a as Number, b as Number, c as Number, d as Number) as Boolean {
+        return bytes[at] == a && bytes[at + 1] == b && bytes[at + 2] == c && bytes[at + 3] == d;
+    }
+
+    // What the screen says under "Listening" while no level can be shown:
+    // `seconds` since the microphone was last started, `restarts` the
+    // starts in a row that gave no sound, `error` what the last one said
+    function waiting(seconds as Number, restarts as Number, error as String?) as String {
+        if (error != null) {
+            return error + " · retrying";
+        }
+        if (restarts >= 3) {
+            return "no sound from the microphone · BACK, then open again";
+        }
+        if (restarts > 0) {
+            return "restarting the microphone";
+        }
+        return seconds < 2 ? "starting the microphone" : "waiting for sound";
     }
 
     // RMS of the 16-bit little-endian samples from `offset`, taking every
@@ -170,9 +209,17 @@ module SoundMeter {
 // One sitting with the meter: the smoothed level, the peak, the energy
 // average and the NIOSH dose, plus the last two minutes for the chart.
 // Ticked once a second by the view; fed a window at a time.
+//
+// The microphone's first moments are not the room: a start transient,
+// the gain settling. So the first WARMUP seconds after every start are
+// thrown away, and when there is no level yet the next SEED seconds are
+// averaged before one is shown, so the number opens on what the level
+// is rather than on a spike that then falls.
 class SoundSession {
 
     const SMOOTH = 1.0;       // seconds the shown level settles over
+    const WARMUP = 0.5;       // seconds discarded after the microphone starts
+    const SEED = 1.0;         // seconds averaged before the first level shows
     const HOLD = 15;          // seconds between buzzes for one line
     const HYSTERESIS = 2.0;   // dB the level must fall before a line can fire again
 
@@ -182,7 +229,10 @@ class SoundSession {
     var peak as Float? = null;
     var seconds as Float = 0.0;   // audio measured
     var dosePercent as Float = 0.0;
+    var warmupLeft as Float = WARMUP;   // seconds still to discard
 
+    private var _seedEnergy as Float = 0.0;
+    private var _seedSeconds as Float = 0.0;
     private var _energy as Float = 0.0;
     private var _windows as Number = 0;
     private var _trend as Array<Float?> = new [SoundMeter.TREND_POINTS] as Array<Float?>;
@@ -203,6 +253,9 @@ class SoundSession {
         peak = null;
         seconds = 0.0;
         dosePercent = 0.0;
+        warmupLeft = WARMUP;
+        _seedEnergy = 0.0;
+        _seedSeconds = 0.0;
         _energy = 0.0;
         _windows = 0;
         _trend = new [SoundMeter.TREND_POINTS] as Array<Float?>;
@@ -214,17 +267,38 @@ class SoundSession {
         _above100 = false;
     }
 
-    // One window of sound: its dBFS and its length in seconds
+    // The microphone has (re)started: its first moments are discarded
+    function restarted() as Void {
+        warmupLeft = WARMUP;
+    }
+
+    // One window of sound: its dBFS and its length in seconds. Returns
+    // the event the window caused, EVENT_NONE while warming up or seeding.
     function addWindow(dbfs as Float, windowSeconds as Float) as Number {
+        if (warmupLeft > 0.0) {
+            warmupLeft -= windowSeconds;
+            return EVENT_NONE;
+        }
         var db = dbfs + offset;
         raw = db;
         var p = peak;
         if (p == null || db > p) {
             peak = db;
         }
+        _energy += SoundMeter.energy(db);
+        _windows++;
+        seconds += windowSeconds;
+        dosePercent += SoundMeter.dose(db, windowSeconds);
         var l = level;
         if (l == null) {
-            level = db;
+            _seedEnergy += SoundMeter.energy(db) * windowSeconds;
+            _seedSeconds += windowSeconds;
+            if (_seedSeconds < SEED) {
+                return EVENT_NONE;
+            }
+            level = SoundMeter.fromEnergy(_seedEnergy / _seedSeconds);
+            _seedEnergy = 0.0;
+            _seedSeconds = 0.0;
         } else {
             var a = windowSeconds / SMOOTH;
             if (a > 1.0) {
@@ -232,10 +306,6 @@ class SoundSession {
             }
             level = l + (db - l) * a;
         }
-        _energy += SoundMeter.energy(db);
-        _windows++;
-        seconds += windowSeconds;
-        dosePercent += SoundMeter.dose(db, windowSeconds);
         return crossings();
     }
 
@@ -298,6 +368,7 @@ class SoundSession {
     // concert with a peak, then the walk home
     function seedDemo() as Void {
         reset();
+        warmupLeft = 0.0;   // made-up sound has no start transient
         for (var t = 0; t < SoundMeter.TREND_POINTS; t++) {
             var db = demoLevel(t);
             addWindow(db - offset, 1.0);

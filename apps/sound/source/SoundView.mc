@@ -37,6 +37,7 @@ class SoundView extends WatchUi.View {
     private const WINDOW_BYTES = 4096;
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
     private const STALE_AFTER = 3;       // seconds without a window before the number dims
+    private const NO_DATA_AFTER = 2;     // seconds without a window before the microphone is restarted
     private const SAVE_EVERY = 10;       // seconds between writes of the last reading for the glance
     private const SCALE_LO = 30;         // the bar and the chart run from here
     private const SCALE_HI = 130;        // to here
@@ -50,7 +51,11 @@ class SoundView extends WatchUi.View {
     private var _demo as Boolean = false;
     private var _demoTicks as Number = 0;
     private var _listening as Boolean = false;
-    private var _captureError as String? = null;
+    private var _captureError as String? = null;   // for good: no microphone, no format
+    private var _lastError as String? = null;      // the last failed start; retried
+    private var _restarts as Number = 0;           // starts in a row that gave no sound
+    private var _sinceStart as Number = 0;         // seconds since the microphone was started
+    private var _seen as Number = 0;               // windows received since the app opened
     private var _hertz as Number = 8000;
     private var _sinceData as Number = 0;
     private var _sinceSave as Number = 0;
@@ -140,15 +145,19 @@ class SoundView extends WatchUi.View {
     }
 
     // The microphone: 16-bit mono at 8 kHz, or 16 kHz if the device will
-    // not do 8; windows of 4096 bytes, delivered to onData until stopped
+    // not do 8; windows of 4096 bytes, delivered to onData until stopped.
+    // A start that fails, or that delivers nothing, is retried from the
+    // tick; the session discards the first moments after every start.
     private function listen() as Void {
-        if (_listening) {
+        if (_listening || _captureError != null) {
             return;
         }
         if (!(Toybox has :Audio) || !(Audio has :Capture)) {
             _captureError = "No microphone on this watch";
             return;
         }
+        _sinceStart = 0;
+        _sinceData = 0;
         var format = {
             :containerFormat => Audio.CONTAINER_WAV,
             :codec => Audio.CODEC_LPCM,
@@ -177,14 +186,16 @@ class SoundView extends WatchUi.View {
             }
             Capture.start();
             _listening = true;
-            _captureError = null;
-            _sinceData = 0;
+            _lastError = null;
+            _session.restarted();
+            System.println("sound: listening at " + _hertz + " Hz, window " + settings[:windowSize] + " B, start " + (_restarts + 1));
         } catch (e instanceof Capture.InitializationFailedException) {
-            _captureError = "Microphone unavailable (" + e.getError() + ")";
+            _lastError = "Microphone unavailable (" + e.getError() + ")";
+            System.println("sound: " + _lastError);
         } catch (e instanceof Lang.Exception) {
-            _captureError = "Microphone error";
             var m = e.getErrorMessage();
-            System.println("capture: " + (m == null ? "?" : m));
+            _lastError = "Microphone error" + (m == null ? "" : " (" + m + ")");
+            System.println("sound: " + _lastError);
         }
     }
 
@@ -198,6 +209,14 @@ class SoundView extends WatchUi.View {
             }
             _listening = false;
         }
+    }
+
+    // No window for a while though the microphone is on: start it again
+    private function restart() as Void {
+        System.println("sound: no window for " + _sinceData + " s, restarting (" + (_restarts + 1) + ")");
+        hush();
+        _restarts++;
+        listen();
     }
 
     private function hertz(frequency as Number) as Number {
@@ -216,24 +235,31 @@ class SoundView extends WatchUi.View {
             return;
         }
         var level = SoundMeter.dbfs(SoundMeter.rms(audioData, offset, STRIDE));
-        var event = _session.addWindow(level, samples.toFloat() / _hertz);
         _sinceData = 0;
+        _restarts = 0;
+        _seen++;
+        if (_seen <= 3 || _seen % 1000 == 0) {
+            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS");
+        }
+        var event = _session.addWindow(level, samples.toFloat() / _hertz);
         react(event);
         WatchUi.requestUpdate();
     }
 
+    // An error ends the capture; the tick starts it again. Backgrounded
+    // means the watch did not count the app as on screen yet.
     function onError(error as Capture.Error) as Void {
         _listening = false;
-        if (error == Capture.CAPTURE_ERR_BACKGROUNDED) {
-            _captureError = "Open the app to measure";
-        } else {
-            _captureError = "Microphone error " + error;
-        }
+        _lastError = error == Capture.CAPTURE_ERR_BACKGROUNDED ? "Microphone not ready" : "Microphone error " + error;
+        System.println("sound: " + _lastError);
         WatchUi.requestUpdate();
     }
 
+    // A stop has finished; one from before a fresh start changes nothing
     function onComplete() as Void {
-        _listening = false;
+        if (Capture.getState() != Capture.CAPTURE_CAPTURING) {
+            _listening = false;
+        }
     }
 
     // Once a second: the chart, the staleness, the demo's own sound, the glance's reading
@@ -247,8 +273,13 @@ class SoundView extends WatchUi.View {
             _sinceData = 0;
         } else {
             _sinceData++;
-            if (!_listening && _captureError == null) {
-                listen();
+            _sinceStart++;
+            if (_captureError == null) {
+                if (!_listening) {
+                    listen();
+                } else if (_sinceData > NO_DATA_AFTER) {
+                    restart();
+                }
             }
         }
         _session.tick();
@@ -438,6 +469,11 @@ class SoundView extends WatchUi.View {
         return !_demo && (_sinceData > STALE_AFTER || !_listening);
     }
 
+    // What is going on with the microphone, for under "Listening" or a dim number
+    private function waitingText() as String {
+        return SoundMeter.waiting(_sinceStart, _restarts, _lastError);
+    }
+
     private function drawLive(dc as Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
@@ -456,7 +492,7 @@ class SoundView extends WatchUi.View {
         if (level == null) {
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.42).toNumber(), _valueFont, "Listening", centre);
-            dc.drawText(cx, (h * 0.56).toNumber(), _labelFont, "no sound yet", centre);
+            dc.drawText(cx, (h * 0.56).toNumber(), _labelFont, fit(dc, waitingText(), _labelFont, (w * 0.8).toNumber()), centre);
             drawScale(dc, null);
             return;
         }
@@ -465,7 +501,7 @@ class SoundView extends WatchUi.View {
         dc.setColor(tone, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.40).toNumber(), _bigFont, SoundMeter.whole(level).toString(), centre);
         dc.setColor(dim ? GRAY : tone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.565).toNumber(), _lineFont, fit(dc, dim ? "No sound data" : SoundMeter.describe(level), _lineFont, (w * 0.8).toNumber()), centre);
+        dc.drawText(cx, (h * 0.565).toNumber(), _lineFont, fit(dc, dim ? waitingText() : SoundMeter.describe(level), _lineFont, (w * 0.8).toNumber()), centre);
         drawScale(dc, level);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.775).toNumber(), _lineFont, SoundMeter.safeFor(level), centre);
@@ -610,6 +646,7 @@ class SoundView extends WatchUi.View {
         if (level == null) {
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.40).toNumber(), _valueFont, "Listening", centre);
+            dc.drawText(cx, (h * 0.49).toNumber(), _labelFont, fit(dc, waitingText(), _labelFont, (w * 0.8).toNumber()), centre);
         } else {
             dc.setColor(stale() ? DIM : colour(level), Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.40).toNumber(), _bigFont, SoundMeter.whole(level).toString(), centre);
