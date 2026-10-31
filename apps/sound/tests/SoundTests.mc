@@ -452,10 +452,12 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
 }
 
 // ---- The microphone driver against a fake microphone ----------------
-// The fake records every call and the tick it came in, and flags each
-// thing that crashed the watch: initialising inside a callback, over a
-// running capture, or in the same or next tick after a window ended or
-// a stop was asked for.
+// The fake records every call and the tick it came in, delivers a window
+// every tick while capturing (as continuous capture does), sends a
+// stop's last callbacks one tick late, and flags each thing that crashed
+// the watch or that the review warned of: touching the microphone inside
+// a callback, initialising over a running capture, before a stop's
+// callbacks have come, or within two ticks of a stop or an end.
 
 class FakeFailure extends Lang.Exception {
     function initialize() {
@@ -474,6 +476,7 @@ class FakePort extends MicPort {
     var lastEnd as Number = -100;
     var stopWorks as Boolean = true;
     var initFails as Boolean = false;
+    var flushDue as Boolean = false;   // a stop's flush and onComplete still to come
     var inCallback as Boolean = false;
     var violations as Array<String> = [] as Array<String>;
 
@@ -486,7 +489,7 @@ class FakePort extends MicPort {
     }
 
     function supported(format as Audio.AudioFormat) as Boolean {
-        return format[:frequency] == Audio.FREQ_11_025_KHZ;
+        return format[:frequency] == Audio.FREQ_8_KHZ;
     }
 
     function touch(what as String) as Void {
@@ -501,14 +504,14 @@ class FakePort extends MicPort {
         if (st == Capture.CAPTURE_CAPTURING) {
             violations.add("init over a running capture at tick " + tick);
         }
+        if (flushDue) {
+            violations.add("init before a stop's callbacks came, tick " + tick);
+        }
         if (tick - lastStop < 2) {
-            violations.add("init " + (tick - lastStop) + " tick after a stop at tick " + tick);
+            violations.add("init " + (tick - lastStop) + " tick after a stop, tick " + tick);
         }
         if (tick - lastEnd < 2) {
-            violations.add("init " + (tick - lastEnd) + " tick after a window ended at tick " + tick);
-        }
-        if (tick == lastInit) {
-            violations.add("two inits in tick " + tick);
+            violations.add("init " + (tick - lastEnd) + " tick after an end, tick " + tick);
         }
         lastInit = tick;
         inits++;
@@ -531,162 +534,175 @@ class FakePort extends MicPort {
         touch("stop");
         stops++;
         lastStop = tick;
-        if (stopWorks) {
+        if (stopWorks && st == Capture.CAPTURE_CAPTURING) {
             st = Capture.CAPTURE_STOPPED;
+            flushDue = true;
         }
     }
 }
 
 class FakeSink {
     var windows as Number = 0;
+    var throws as Boolean = false;
 
     function initialize() {
     }
 
     function take(bytes as ByteArray, hertz as Number) as Void {
         windows++;
+        if (throws) {
+            throw new FakeFailure();
+        }
     }
 }
 
-// The watch finishing a window: data, then complete, between two ticks
-function fakeWindow(mic as SoundMic, port as FakePort) as Void {
+// Between two ticks: a stop's late flush, or a window while capturing
+function fakeBetween(mic as SoundMic, port as FakePort, deliver as Boolean) as Void {
     port.inCallback = true;
-    mic.onData(new [12288]b);
-    mic.onComplete();
+    if (port.flushDue) {
+        mic.onData(new [2048]b);
+        mic.onComplete();
+        port.flushDue = false;
+        port.lastEnd = port.tick;
+    } else if (deliver && port.st == Capture.CAPTURE_CAPTURING) {
+        mic.onData(new [2048]b);
+    }
     port.inCallback = false;
-    port.st = Capture.CAPTURE_UNINITIALIZED;
-    port.lastEnd = port.tick;
 }
 
 function fakeTicks(mic as SoundMic, port as FakePort, n as Number, deliver as Boolean) as Void {
     for (var i = 0; i < n; i++) {
         port.tick++;
         mic.tick();
-        if (deliver && port.st == Capture.CAPTURE_CAPTURING) {
-            fakeWindow(mic, port);
-        }
+        fakeBetween(mic, port, deliver);
     }
 }
 
+function newMic(port as FakePort, sink as FakeSink) as SoundMic {
+    var mic = new SoundMic(port, sink.method(:take));
+    mic.show();
+    return mic;
+}
+
 (:test)
-function testMicHealthy(logger as Logger) as Boolean {
+function testMicContinuous(logger as Logger) as Boolean {
     var port = new FakePort();
     var sink = new FakeSink();
     var mic = new SoundMic(port, sink.method(:take));
     mic.tick();
     Test.assertEqualMessage(port.calls, 0, "nothing before the app is shown");
     mic.show();
-    fakeTicks(mic, port, 30, true);
-    logger.debug("30 ticks: " + port.inits + " windows, " + sink.windows + " delivered, " + port.violations);
+    fakeTicks(mic, port, 60, true);
+    logger.debug("60 s: " + port.inits + " inits, " + port.stops + " stops, " + sink.windows + " windows");
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertMessage(sink.windows >= 9 && sink.windows <= 15, "about a window every two seconds: " + sink.windows);
-    Test.assertEqualMessage(mic.hertz, 11025, "the rate the watch accepts");
-    Test.assertEqualMessage(port.stops, 0, "a healthy window is never stopped");
-    // the menu: hide while a window runs, show at once
-    fakeTicks(mic, port, 1, false);
-    if (port.st != Capture.CAPTURE_CAPTURING) {
-        fakeTicks(mic, port, 1, false);
-    }
-    Test.assertEqualMessage(port.st, Capture.CAPTURE_CAPTURING, "a window running");
-    mic.hide();
-    Test.assertEqualMessage(port.stops, 1, "hide stops it");
-    var before = sink.windows;
-    port.inCallback = true;
-    mic.onData(new [12288]b);   // flushed by the stop
-    mic.onComplete();
-    port.inCallback = false;
-    Test.assertEqualMessage(sink.windows, before, "a window flushed by our stop is not a reading");
-    mic.show();
-    fakeTicks(mic, port, 10, true);
-    Test.assertMessage(port.violations.size() == 0, "no rule broken across hide and show: " + port.violations);
-    Test.assertMessage(sink.windows > before, "windows come again");
-    // leaving the app
-    fakeTicks(mic, port, 1, false);
+    Test.assertEqualMessage(port.inits, 1, "started once");
+    Test.assertEqualMessage(port.stops, 0, "never stopped while it works");
+    Test.assertMessage(sink.windows >= 58, "a window every tick: " + sink.windows);
+    Test.assertEqualMessage(mic.hertz, 8000, "8 kHz as the tuner uses");
+    // a menu: the data is ignored, the microphone is not touched
     var calls = port.calls;
+    var windows = sink.windows;
+    mic.hide();
+    fakeTicks(mic, port, 20, true);
+    Test.assertEqualMessage(port.calls, calls, "a menu never touches the microphone");
+    Test.assertEqualMessage(sink.windows, windows, "and its data is ignored");
+    mic.show();
+    fakeTicks(mic, port, 5, true);
+    Test.assertMessage(sink.windows > windows, "data again after the menu");
+    Test.assertEqualMessage(port.inits, 1, "still the one start");
+    // leaving the app stops it, once, and nothing follows
     mic.exit();
-    Test.assertMessage(port.st != Capture.CAPTURE_CAPTURING, "exit stops a running window");
+    Test.assertEqualMessage(port.stops, 1, "exit stops it");
+    fakeBetween(mic, port, false);   // its flush comes after exit
     calls = port.calls;
+    windows = sink.windows;
     fakeTicks(mic, port, 10, true);
     Test.assertEqualMessage(port.calls, calls, "nothing after exit");
+    Test.assertEqualMessage(sink.windows, windows, "and no data used");
+    Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
     return true;
 }
 
 (:test)
-function testMicSilent(logger as Logger) as Boolean {
+function testMicStalls(logger as Logger) as Boolean {
+    // the sound stops once: one careful restart, and it works again
     var port = new FakePort();
     var sink = new FakeSink();
-    var mic = new SoundMic(port, sink.method(:take));
-    mic.show();
-    fakeTicks(mic, port, 40, false);
-    logger.debug("silent: " + port.inits + " inits, " + port.stops + " stops, " + mic.error);
+    var mic = newMic(port, sink);
+    fakeTicks(mic, port, 10, true);
+    fakeTicks(mic, port, 6, false);
+    Test.assertEqualMessage(port.stops, 1, "a stall is stopped");
+    fakeTicks(mic, port, 10, true);
+    logger.debug("one stall: " + port.inits + " inits, " + port.stops + " stops, " + port.violations);
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(mic.phase, MIC_DONE, "left alone");
-    Test.assertEqualMessage(port.inits, 3, "three windows, then no more");
-    Test.assertEqualMessage(mic.error as String, "The microphone sent no sound", "and it says why");
+    Test.assertEqualMessage(port.inits, 2, "started once more");
+    Test.assertEqualMessage(mic.phase, MIC_RUNNING, "and running");
+    // it stops again: left alone
+    fakeTicks(mic, port, 8, false);
+    Test.assertEqualMessage(mic.phase, MIC_DONE, "a second stall and it is left alone");
+    Test.assertEqualMessage(mic.error as String, "The microphone stopped sending sound", "and it says why");
+    Test.assertEqualMessage(port.inits, 2, "no third start");
     var calls = port.calls;
-    fakeTicks(mic, port, 20, false);
+    fakeBetween(mic, port, false);
+    fakeTicks(mic, port, 20, true);
     Test.assertEqualMessage(port.calls, calls, "nothing more once left alone");
+    mic.exit();
+    Test.assertEqualMessage(port.calls, calls, "exit has nothing to stop");
+    Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
+    // the capture ends by itself (an error): a careful restart, after a gap
+    port = new FakePort();
+    mic = newMic(port, sink);
+    fakeTicks(mic, port, 5, true);
+    port.inCallback = true;
+    mic.onError(Capture.CAPTURE_ERR_INTERNAL);
+    port.inCallback = false;
+    port.st = Capture.CAPTURE_UNINITIALIZED;
+    port.lastEnd = port.tick;
+    fakeTicks(mic, port, 10, true);
+    Test.assertMessage(port.violations.size() == 0, "no rule broken after an error: " + port.violations);
+    Test.assertEqualMessage(port.inits, 2, "restarted once after the error");
+    Test.assertEqualMessage(port.stops, 0, "nothing to stop, it had ended");
     return true;
 }
 
 (:test)
 function testMicStuck(logger as Logger) as Boolean {
-    // a stop that never takes: never initialise over it
+    // a stop that never takes: never initialise over it; exit tries once more
     var port = new FakePort();
     port.stopWorks = false;
     var sink = new FakeSink();
-    var mic = new SoundMic(port, sink.method(:take));
-    mic.show();
-    fakeTicks(mic, port, 30, false);
+    var mic = newMic(port, sink);
+    fakeTicks(mic, port, 3, true);
+    fakeTicks(mic, port, 20, false);
     logger.debug("stuck: " + port.inits + " inits, " + port.stops + " stops, " + mic.error);
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(port.inits, 1, "one window, and no other while it will not stop");
-    Test.assertEqualMessage(mic.phase, MIC_DONE, "left alone");
-    Test.assertEqualMessage(mic.error as String, "The microphone would not stop", "and it says why");
+    Test.assertEqualMessage(port.inits, 1, "no second start while it will not stop");
+    Test.assertEqualMessage(mic.error as String, "The microphone would not stop", "left alone, and it says why");
+    var stops = port.stops;
+    mic.exit();
+    Test.assertEqualMessage(port.stops, stops + 1, "leaving the app still stops a capture left running");
     return true;
 }
 
 (:test)
-function testMicFailing(logger as Logger) as Boolean {
+function testMicFailures(logger as Logger) as Boolean {
     var port = new FakePort();
     port.initFails = true;
     var sink = new FakeSink();
-    var mic = new SoundMic(port, sink.method(:take));
-    mic.show();
-    fakeTicks(mic, port, 30, true);
+    var mic = newMic(port, sink);
+    fakeTicks(mic, port, 20, true);
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(port.inits, 3, "three tries");
+    Test.assertEqualMessage(port.inits, 1, "one try");
     Test.assertEqualMessage(mic.error as String, "The microphone would not start", "then left alone");
-    // an error callback mid-window counts as a silent window
+    // the window handler throws: caught inside onData, the microphone keeps going
     port = new FakePort();
-    mic = new SoundMic(port, sink.method(:take));
-    mic.show();
-    for (var i = 0; i < 20; i++) {
-        port.tick++;
-        mic.tick();
-        if (port.st == Capture.CAPTURE_CAPTURING) {
-            port.inCallback = true;
-            mic.onError(Capture.CAPTURE_ERR_INTERNAL);
-            port.inCallback = false;
-            port.st = Capture.CAPTURE_UNINITIALIZED;
-            port.lastEnd = port.tick;
-        }
-    }
-    Test.assertMessage(port.violations.size() == 0, "no rule broken on errors: " + port.violations);
-    Test.assertEqualMessage(mic.phase, MIC_DONE, "three errors and it is left alone");
-    return true;
-}
-
-(:test)
-function testMicRests(logger as Logger) as Boolean {
-    var port = new FakePort();
-    var sink = new FakeSink();
-    var mic = new SoundMic(port, sink.method(:take));
-    mic.show();
-    fakeTicks(mic, port, 1000, true);
-    logger.debug("long run: " + port.inits + " windows, " + mic.error);
+    sink = new FakeSink();
+    sink.throws = true;
+    mic = newMic(port, sink);
+    fakeTicks(mic, port, 10, true);
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(port.inits, mic.MAX_WINDOWS, "ten minutes of windows");
-    Test.assertEqualMessage(mic.phase, MIC_DONE, "then it rests");
+    Test.assertMessage(mic.faults >= 8, "errors caught: " + mic.faults);
+    Test.assertEqualMessage(mic.phase, MIC_RUNNING, "still running");
+    Test.assertEqualMessage(port.inits, 1, "and not restarted for it");
     return true;
 }
