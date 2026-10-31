@@ -26,7 +26,10 @@ in the SDK before relying on it.
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 | 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Dropped 2026-10-31: the owner did not like it; removed from `apps/` |
 | 10 | **Sauna and Steam** | Glance + app | Sauna or steam room, round by round, coached against the guidance, a cue by every button | M | Built in `apps/sauna/` |
-| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button (11 to 13 are the other session's faces) | S–M | Rebuilt after crashing the watch: one continuous capture per opening, as the one app known to work on a fēnix 8 does (2026-10-31) |
+| 11 | **Today** | Watch face | The owner's own list and nothing else: next sun event, 24 h time, date, moon, heart rate, outside temperature, miles walked, alarms | S | Built in `apps/today/` |
+| 12 | **Strata** | Watch face | The Today list set into a field of soil layers from the owner's laser-cut planter: each reading in a clearing the layers part round, clean cut-out time, mineral temperature colour, stones for miles | M | Built in `apps/strata/` |
+| 13 | **Rings** | Watch face | Three goal rings open to the right (steps, floors in segments, Body Battery) with their numbers along the curves, the Today numbers down the right side, three colour sets, after a store face the owner picked | S | Built in `apps/rings/` |
+| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button | S–M | Rebuilt after crashing the watch: one continuous capture per opening, as the one app known to work on a fēnix 8 does (2026-10-31) |
 | 15 | **Forage** | Watch face | For the beekeeper: whether the bees are flying now, the next good hours to open the hive, the next twelve hours as a strip of comb, and the nectar year along the bezel | S–M | Built in `apps/forage/` |
 
 Considered and dropped:
@@ -569,6 +572,264 @@ pacer during breaks.
 
 ---
 
+## 11. Today: the owner's list on one face
+
+**Purpose:** the first face built from a list the owner wrote down, not
+from what the platform happens to allow. It shows exactly these things and
+nothing else, with no settings:
+
+- when the next sun event is and whether it is sunrise or sunset; once
+  the sun is up, the time of sunset
+- the time in 24-hour form
+- the date: the day of the week and the day of the month
+- the moon phase
+- the heart rate
+- the outside temperature
+- how far the owner has walked today, in miles
+- any alarms that are set
+
+**Layout (active)**, top to bottom
+- An alarm clock and the number of alarms set, only when there is one.
+  The watch tells apps the *count* of alarms, never their times
+  (`EXPLORATION.md` 10.1), so there is no "06:30".
+- The next sun event: "▲ SUNRISE 07:12" until the sun is up, then
+  "▼ SUNSET 17:41", then tomorrow's sunrise. Amber for sunrise, orange for
+  sunset, the time in white. "NO SUN TIMES YET" when the watch has
+  neither its own sunrise/sunset nor a location.
+- The date, "THU OCT 29", in grey.
+- The time, very large, always "07:05" whatever the 12/24 h setting says.
+- Three columns, a small label over a condensed bold value: **HR** in
+  red, **OUTSIDE** (the weather temperature, always in Fahrenheit: "52°F"), and
+  **MILES** or **KM** (distance walked today to one decimal; the unit is
+  the label so the value stays short).
+- The moon drawn as it is tonight, with the name of its phase beside it
+  ("Waxing gibbous").
+
+**Always-on:** the next sun event, the hollow time and the date, all dim
+and shifted each minute by `Lib.Aod`.
+
+**Interaction:** press and hold on the sun line opens the sunrise or
+sunset widget, on the date the calendar, on a column the heart rate,
+weather or steps widget (there is no distance widget).
+
+**Data**
+
+| Value | Source |
+|---|---|
+| Next sun event | `Lib.Sun`: the sunrise/sunset complications, else `Weather.getSunrise/getSunset` at the weather observation position. The face declares `Positioning`, since without it that position is null on a watch |
+| Time, date | `System.getClockTime`, `Gregorian.info` (`Lib.Fmt.clock24`) |
+| Moon | `Lib.Moon.phase` and `Lib.Moon.name`, synodic arithmetic, no data needed |
+| Heart rate | `Activity.getActivityInfo().currentHeartRate`, else the newest valid `ActivityMonitor.getHeartRateHistory` sample |
+| Outside temperature | `Weather.getCurrentConditions().temperature`, null until the phone syncs, shown in Fahrenheit whatever the watch's unit setting (`Lib.Fmt.fahrenheit`) |
+| Distance today | `ActivityMonitor.getInfo().distance` (cm) through `Lib.Fmt.distanceValue` and `distanceUnit` |
+| Alarms | `System.getDeviceSettings().alarmCount` |
+
+**Built** as `apps/today/`: `TodayView` (the two layouts), `Sources`
+(each value as text), `TodayDelegate` (press and hold). The slow readings
+are taken once a minute; the heart rate is read on every draw. Added to
+`Lib` for it: `Fmt.clock24`, `Fmt.distanceValue` / `distanceUnit`, and
+`Moon.name`. Drawing the face takes about 140 ms awake and under 100 ms
+always-on in the simulator, and the app uses about 20 KB.
+
+**Not done:** a mockup in `mockups.py`.
+
+---
+
+## 12. Strata: the Today list set into the planter's layers
+
+**Purpose:** the same information as Today, but as one picture: the
+"Strata" pattern from the owner's laser-cut wall planter (good-tools,
+`tools/wall-planter`, pattern *Strata, soil layers and pebbles*,
+Variation 7) covers the whole face, and each reading sits in a clearing
+the layers part round, like water round a stone. The time is the largest
+part.
+
+**How it got here:** the first version drew the time with the layers
+themselves (bold, dense pieces of the lines on the digits' strokes) and
+put haloed labels over the field. The owner found it messy: the hatched
+digits, the heart-rate line across the face, the "SUNSET" label, the
+loose readings. The redesign (2026-10-30) was reviewed over four rounds
+by a team of four adversarial reviewers (typography and elegance;
+spacing, balance and feng shui, measured; nature and art direction; a
+skeptic for glanceability), on renders with sample readings from
+`designs/preview_strata.py` and then on the watch in the simulator.
+
+**The field**
+- `designs/gen_strata.py` is a line-for-line port of the planter's
+  generator (the same value noise, hash and random generator, in pixels
+  instead of millimetres) and writes `apps/strata/source/Field.mc`:
+  layers across the disc, each the layer above plus a gap the noise
+  squeezes or opens, every fourth marked as the accent, and pebble slots
+  where the layers open up (never under the time or in a clearing). The
+  watch cannot run the noise itself (a face that tried tripped the
+  watchdog), so the table is generated offline like Night Sky's stars,
+  and `Layers` only scales it to the screen.
+- **Clearings** (`ISLANDS`, each an `Island`): one pool for the sun line
+  over the date (narrow above, wide below, easing out over about twice
+  its height so the layers slope in like a valley), one for the row of
+  readings (flat under the numbers and units, and over them a low floor
+  with a soft mound rising to each cue, so the layers dip only a little
+  between the columns), and a raised-cosine bump hugging the moon. Each
+  is fitted to the measured ink of what it holds, with the widest values
+  (a "MON DEC 28" date, 180 bpm, 12.4 mi) and a 0.012 margin, so the
+  layers come right up to every reading (owner, 2026-10-30: "make the
+  strata go up to all of those different complications a little more").
+  Round each, the layers are levelled part of the way, then parted: every
+  layer keeps to its side and moves away by the clearing's height, less
+  the further off it is, so they gather round the rim and relax away
+  from it without crossing. The readings' clearing reaches down only
+  briefly so it does not push its layers into the moon. Any layer still
+  touching a clearing is cut there, so a layer may come in pieces; the
+  ends left read as layers pinching out against a stone. The script
+  prints how many samples remain in each clearing (0). Tried and
+  dropped: fully levelled clearings (they read as boxed panels), one
+  clearing for the readings and the moon together (a black funnel), and
+  laying stray lines along a clearing's edge instead of cutting them
+  (deep notches between the columns).
+- Always-on gets its own few layers (every eighth), parted only round
+  what it shows, so they run on under the time.
+- The field is drawn into a full-screen bitmap in the graphics pool
+  (3 MB on the fēnix 8, apart from the face's 128 KB) sixteen layers per
+  frame, redrawn only when its colours change; a watch face gets only a
+  few thousand operations per update before the watchdog kills it.
+- monkeyc's type checker overflows its stack on one long array literal,
+  so the samples go in chunks of a thousand (`Field.chunks()`).
+
+**How the information shows**
+- **Time:** RobotoCondensedBold, 0.31 of the width per em, warm white
+  (`#F2ECE2`), cut out of the layers by a 3 px black keyline. (Sizes here
+  are ems, as the preview's Pillow fonts take them; `getVectorFont`
+  sizes a font by its whole height, about 1.17 ems, so the view asks
+  for 1.17 times each.)
+- **Sun:** the next event's time on the centre line in cream, the sun
+  half risen on a horizon to its left with a chevron over it (up for
+  sunrise, down for sunset), no word; a bell to its right while an alarm
+  is set (the watch gives the count only).
+- **Date:** under it, RobotoCondensedRegular 0.086, cream.
+- **Readings:** four slots at 0.186 / 0.391 / 0.596 / 0.801, each set in
+  the phone app to any of ten kinds (`Readings`), a filled cue over each
+  number: outside temperature (thermometer in the temperature's colour),
+  chance of rain (cloud with two drops), heart rate (rosehip heart),
+  distance (dotted trail to a map pin), Body Battery (green bolt),
+  elevation (two peaks), humidity (drop), wind (three gusts, the outer two
+  curled), watch battery (grey battery), steps (footprints; 12,345 shows
+  as 12.3k). Defaults: temperature, rain, heart rate, distance. The
+  number is cream bold (0.060 em), centred under its cue; the unit small
+  and grey, hung off its right. The readings' clearing fits the widest of
+  any kind in every slot. The team checked every cue is distinct (no two
+  alike in shape or colour) and of even weight.
+- **Moon:** at the foot, lit as tonight in a dark stone grey with a pale
+  rim, the phase in mixed case in it ("Waning / Gibbous").
+- **Day and night:** the earth layers are brown by day, graphite by
+  night (day while the next sun event is sunset).
+- **Outside temperature:** the accent layers take its colour at 65 %, in
+  mineral tones: glacial slate below 25 °F, lichen, moss, ochre,
+  terracotta, red clay at 100 °F; graphite-blue at night whatever it is.
+- **Miles walked:** from the first mile, a dark stone turns up in the
+  layers for every quarter mile, scattered.
+
+**Settings** (`resources/settings`, `Palette`). The phone app only edits
+settings for faces installed from the store, and the fēnix 8 shows no
+app settings menu for a face; it has its own watch face editor instead
+(`resources/configs/watchface.xml`, below). The full set here is for the
+phone, the simulator and the tests:
+- **Strata color:** Soil (brown by day, graphite by night; the default),
+  Clay (terracotta), Moss (olive, deep teal at night), Slate (blue-grey,
+  deep blue at night), Sand (pale sandstone). All about as bright, at
+  least ΔE 12 from each other by day and by night.
+- **Every fourth layer:** the outside temperature (the default; at
+  night the strata half way to moonlight), tone on tone (a paler
+  strata), or Ochre, Lichen or Ember (at 80 % by day, 70 % at night, so
+  each holds its own on any strata).
+- **Time color:** Bone (the default), the accent's colour, or Sandstone.
+- **Time style:** Filled (the default) or Outline (3 px, 2 px on the
+  416 px screen; lights about 80 % fewer pixels for the digits). The time
+  colour goes to the fill or the outline.
+- **First to fourth reading:** any of the ten kinds above.
+- **Night colors after sunset** and **a stone for every quarter mile**,
+  both on by default.
+`python3 designs/preview_strata.py out.png day 454 strata=1 accent=4`
+renders any combination.
+
+**On the watch** (Watch Face → Strata → Customize, the fēnix 8's own
+editor, `resources/configs/watchface.xml`, read by
+`StrataView.readEditor` over the properties): the **style** is the time,
+filled or in outline; the **accent colour** picks the strata (Soil, Clay,
+Moss, Slate, Sand); the **data colour** is the time's colour (Bone,
+Sandstone, Ochre, Lichen, Ember); **data 1 to 4** are the four readings,
+each one of temperature, weather (shown as the chance of rain), heart
+rate, steps (shown as the miles walked), Body Battery, altitude or
+battery. The editor only offers Garmin's own complication types, so
+humidity, wind and the step count stay phone-only, and so does every
+fourth layer's colour (it follows the temperature).
+
+**Always-on:** its own layers dim, the time in outline, the sun line and
+the date in grey, the moon's lit limb; shifted each minute by `Lib.Aod`,
+about 6 % of pixels lit.
+
+**Interaction:** press and hold on the sun line, the date or a reading
+opens the matching widget.
+
+**Previews and samples:** `python3 designs/preview_strata.py out.png
+[day|night|aod] [454|416]` (needs Pillow) draws the face from the same
+field and layout with sample readings. `sample.jungle` builds the same
+readings into the face for the simulator, whose own readings are mostly
+empty: `CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh strata
+fenix847mm`.
+
+**Not done:** a settings choice of seed ("New variation" on the planter)
+would need the table for each seed.
+
+---
+
+## 13. Rings: three goal rings and the day's numbers
+
+**Purpose:** the store face the owner pointed at (three screenshots,
+one per colour set), with the Today list in it.
+
+**Layout (fractions of the width)**
+- Three rings 0.062 wide at radii 0.455, 0.375 and 0.295 run up the
+  left side, the outer one close to the bezel, so the rings fill most of
+  the face (the owner asked for bigger than the store face). Their lower
+  ends line up on a vertical 0.07 left of the centre, just left of six
+  o'clock; their upper ends stagger at 38°, 30° and 20°
+  clockwise from twelve, so the outer one reaches furthest. Each fills
+  clockwise from its lower end in its colour over a track of the same
+  hue at about a third of the brightness, with round ends: steps
+  against the step goal outside, floors against the floors goal in the
+  middle (one square-ended segment per floor, a plain ring past 30),
+  Body Battery inside.
+- Each ring's number is written along its own circle past its lower
+  end, in its colour, with `drawRadialText`, after an icon straight
+  below the centre: the miles walked after footprints (a yellow star
+  once the step goal is met), the floors after stairs, the Body Battery
+  after a bolt.
+- The right column, values right-aligned at 0.80 in BionicBold at 0.088
+  of the width with an icon at 0.862: the moon's phase glyph, the heart rate, the date (an alarm clock
+  with the count when alarms are set), the time in 24-hour form in
+  BionicBold at 0.3 of the width in the theme's colour, right edge at
+  0.905, the next sunrise or sunset with a sun-on-the-horizon icon and
+  an arrow, the outside temperature with a thermometer.
+- Setting **Colors**: Sunset (blue, orange, yellow, orange time), Berry
+  (magenta, red, orange, magenta time), Forest (green, sky, blue, sky
+  time), from the three screenshots.
+
+**Always-on:** the rings' fills as 2 px hairlines at a quarter of their
+colour, the hollow time, the date and the sun event in dim grey,
+shifted each minute by `Lib.Aod`.
+
+**Interaction:** press and hold on a ring (hit by its radius and angle)
+opens steps, floors or Body Battery; on a row, the matching widget.
+
+**Data:** `Goals` (`ActivityMonitor.getInfo()` steps, goal, floors,
+goal; the newest `SensorHistory` Body Battery sample) and `Lib.Daily`.
+
+**Not done:** a mockup in `mockups.py`; seconds beside the time (the
+first screenshot has them; not on the owner's list); the moon's phase in
+words (the column has no room left of the inner ring's end).
+
+---
+
 ## 14. Sound Level: the room in decibels, and how long it is safe
 
 **Purpose:** a sound level meter on the wrist, now that SDK 9.3 opens
@@ -782,6 +1043,10 @@ feeding reminder belongs on the season line.
   - `Cues` (done): the button cues at Garmin's hint angles for the fēnix 8
     family (an arc and a word on a black patch) and which cue a touch
     landed on. Sauna and Steam and Sound Level use it.
+  - `Daily` (done): the owner's everyday readings for the Today, Strata
+    and Rings faces: heart rate (live, else the newest logged sample) and
+    its six-hour trace, outside temperature, distance walked, alarms, the
+    date.
   - `Sky` (done): sidereal time, altitude/azimuth from right ascension and
     declination, and the Sun, Moon, Venus, Mars, Jupiter and Saturn
     (Schlyter's method). Night Sky uses it. (Sun Compass uses `Solar`

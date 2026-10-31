@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <iq:application id="47623a086d134a139c0de59081e6b841" type="watchface" name="@Strings.AppName" entry="TodayApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+        <iq:products>
+            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
+            <iq:product id="fenix8pro47mm"/>
+            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
+            <iq:product id="fenix843mm"/>
+            <iq:product id="fenix847mm"/>
+        </iq:products>
+        <iq:permissions>
+            <!-- sunrise and sunset from the watch's own complications; press-and-hold opens the native widgets -->
+            <iq:uses-permission id="ComplicationSubscriber"/>
+            <!-- without this the weather observation position is null on a watch (EXPLORATION.md 10.1),
+                 and the Weather fallback for sunrise/sunset needs a location; nothing is switched on -->
+            <iq:uses-permission id="Positioning"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+        <iq:barrels>
+            <iq:depends name="Lib" version="0.1.0"/>
+        </iq:barrels>
+    </iq:application>
+</iq:manifest>

@@ -13,3 +13,8 @@ bin/
 watch-logs/
 watch-queue/
 dist/
+
+# Python caches and the capture helper compiled from scripts/windows.swift
+__pycache__/
+.claude/skills/watch-face-review/scripts/windows
+.claude/scheduled_tasks.lock

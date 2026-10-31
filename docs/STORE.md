@@ -57,6 +57,22 @@ mid-afternoon), the next twelve hours as a strip of comb, and the
 beekeeper's year along the bottom of the bezel. Uses the hourly forecast
 from your phone.
 
+**Today** (Watch face). One plain list and nothing else: the next sunrise
+or sunset, the time in 24-hour form, the date, the moon and its phase,
+heart rate, the outside temperature, distance walked today and any alarms
+set. No settings.
+
+**Strata** (Watch face). The day's readings set into a field of soil
+layers that part round each one like water round a stone. The time is cut
+cleanly out of the layers, a stone turns up for every quarter mile walked,
+and the moon sits at the foot. Choose the colours and what each of the
+four readings shows (temperature, rain, heart rate, distance, Body
+Battery, elevation, humidity, wind, battery or steps).
+
+**Rings** (Watch face). Three goal rings open to the right (steps, floors
+and Body Battery) with their numbers written along the curves, and the
+day's readings down the right side. Three colour sets.
+
 **Battery Planner** (Widget). Tells you when to charge. It records the
 battery every half hour, learns your drain over the last week and projects
 the day you will need the charger.

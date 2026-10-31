@@ -1,0 +1,7 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Rings</string>
+    <string id="ThemeTitle">Colors</string>
+    <string id="ThemeSunset">Sunset: blue, orange, yellow</string>
+    <string id="ThemeBerry">Berry: magenta, red, orange</string>
+    <string id="ThemeForest">Forest: green, sky, blue</string>
+</strings>
