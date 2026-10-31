@@ -1,7 +1,0 @@
-<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
-    <string id="AppName">Pocket QR</string>
-    <string id="CodesTitle">Codes</string>
-    <string id="CodeNameTitle">Name</string>
-    <string id="CodeValueTitle">Content</string>
-    <string id="CodeValuePrompt">Text, a link, or a Wi-Fi string such as WIFI:T:WPA;S:network;P:password;;</string>
-</strings>
