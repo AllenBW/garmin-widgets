@@ -194,9 +194,14 @@ logs)
     mkdir -p "$OUT"
     wait_for_mtp
     read -r APPS LOGS < <(folder_ids)
-    listing | awk -F'\t' -v l="$LOGS" '$2==l{print $1"\t"$3}' | while IFS=$'\t' read -r id name; do
-        mtp-getfile "$id" "$OUT/$name" >/dev/null 2>&1 && echo "$OUT/$name ($(stat -f %z "$OUT/$name") bytes)" || echo "failed: $name"
+    # the watch can hold two files of one name (see send); keep both, the
+    # second under its id, so neither overwrites the other
+    listing | awk -F'\t' -v l="$LOGS" '$2==l{print $1"\t"$3}' | sort -t$'\t' -k2,2 -k1,1n | while IFS=$'\t' read -r id name; do
+        dest="$OUT/$name"
+        [ -e "$dest.fetched" ] && dest="$OUT/$name.$id"
+        mtp-getfile "$id" "$dest" >/dev/null 2>&1 && { echo "$dest ($(stat -f %z "$dest") bytes)"; touch "$OUT/$name.fetched"; } || echo "failed: $name"
     done
+    rm -f "$OUT"/*.fetched
     ;;
 rm)
     NAME="${2:?usage: scripts/watch.sh rm <NAME.PRG|NAME.TXT>}"
