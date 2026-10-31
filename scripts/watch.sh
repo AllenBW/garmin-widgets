@@ -112,12 +112,18 @@ build_into() {
     echo "queued $name.PRG ($(stat -f %z "$dest/$name.PRG") bytes) from $checkout"
 }
 
-# Send a file to a folder on the watch, replacing an earlier copy by name
+# Send a file to a folder on the watch, replacing an earlier copy by name.
+# A log file the watch holds open cannot be deleted; sending another of
+# the same name would only leave two, so such a file is kept as it is.
 send() {
     local src="$1" folder="$2" name; name="$(basename "$src")"
     show | awk -v n="$name" '$2==n{print $NF}' | while read -r id; do
         mtp-delfile "$id" >/dev/null 2>&1 || true
     done
+    if show | awk -v n="$name" '$2==n' | grep -q .; then
+        echo "kept $name (the watch would not let it go)"
+        return 0
+    fi
     mtp-sendfile "$src" "$folder" 2>&1 | grep -v "extended association" | grep -E "skipping|rror" || true
 }
 
