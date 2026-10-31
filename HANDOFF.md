@@ -5,7 +5,7 @@ records where the project stands so the next session can carry on.
 
 ## Where everything is
 
-- **Repository:** https://github.com/AllenBW/garmin-widgets (private)
+- **Repository:** https://github.com/AllenBW/garmin-widgets (public, MIT)
 - **Design page** with the original mockups and a copy of the first import:
   https://claude.ai/artifact/CQcd2fNRPKsgigd9j7dfKd (private to the owner)
 - **Input matrix** (every sensor and input by app type, with what the

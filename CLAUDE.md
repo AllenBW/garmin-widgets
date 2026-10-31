@@ -63,4 +63,4 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
 - `scripts/watch.sh`: sideload to the fēnix 8 on the desk over MTP
   (libmtp) and pull its logs; the `mtp-*` commands need USB access, so
   run them outside the shell sandbox
-- `scripts/`: build, simulator and test helpers
+- `scripts/`: build, simulator, test and store-package (`package.sh`) helpers; `docs/STORE.md` covers store submission

@@ -1,49 +1,88 @@
 # garmin-widgets
 
-Connect IQ watch faces, widgets and apps for the **Garmin fēnix 8 Pro** (47 mm / 51 mm
-AMOLED and 51 mm MicroLED, all non-solar; one device ID, `fenix8pro47mm`).
+Free, open-source watch faces, widgets and apps for the **Garmin fēnix 8**
+family, written in Monkey C for Connect IQ.
+
+## The apps
+
+| App | Type | What it does |
+|---|---|---|
+| [Field](apps/field/) | Watch face | The everyday face: large time, a daylight ring, three slots you choose, the next sun event |
+| [Daylight](apps/daylight/) | Watch face | A 24-hour sun dial: golden hours, light left, altitude and pressure |
+| [Readiness](apps/readiness/) | Watch face | Body Battery and stress gauges, sleep score, recovery and resting heart rate round the time |
+| [Night Sky](apps/nightsky/) | Watch face | The real sky overhead: stars, constellations, the Moon and the planets |
+| [Horizon](apps/horizon/) | Watch face | The bezel is the next twelve hours: rain chance per hour, dark after sunset, the next event |
+| [Forage](apps/forage/) | Watch face | For beekeepers: whether the bees are flying, when to open the hive, the next twelve hours as comb |
+| [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain |
+| [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline |
+| [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it |
+| [Sauna and Steam](apps/sauna/) | Glance + app | Times a sauna or steam visit round by round, coaches it against the published guidance, saves it to Garmin Connect |
+| [Sound Level](apps/sound/) | Glance + app | **Experimental.** An approximate sound level meter from the watch microphone, with the NIOSH safe-exposure range |
+
+> **Sound Level is experimental.** Earlier builds that started and stopped
+> the microphone repeatedly made a fēnix 8 restart itself (a firmware
+> crash). The current build keeps one continuous capture, as the one
+> other app known to work does, and has run without a crash, but use it
+> at your own risk.
+
+Every design, with mockups, is in [`designs/DESIGNS.md`](designs/DESIGNS.md).
+
+## Supported watches
+
+| Device ID | Watches |
+|---|---|
+| `fenix8pro47mm` | fēnix 8 Pro 47 mm and 51 mm, fēnix 8 Pro MicroLED (454 × 454) |
+| `fenix847mm` | fēnix 8 47 mm and 51 mm AMOLED, tactix 8 and quatix 8 47/51 mm (454 × 454) |
+| `fenix843mm` | fēnix 8 43 mm AMOLED (416 × 416) |
+
+Everything lays out relative to the screen size, so another round
+Connect IQ 5+ watch may only need its device ID added to an app's
+`manifest.xml`. That is untested; pull requests are welcome.
+
+## Get them on your watch
+
+**From the Connect IQ Store.** Store links will be listed here as each app
+is approved. Install from the Connect IQ app on your phone, and updates
+arrive by themselves. (How they are packaged and submitted:
+[`docs/STORE.md`](docs/STORE.md).)
+
+**Build and copy them yourself.** You need the free Connect IQ SDK and a
+free Garmin account (for the device files):
+
+1. Set up the SDK, the device files and a developer key ([Setup](#setup)).
+2. Build the app for your watch, for example
+   `scripts/build.sh forage fenix847mm`. The result is
+   `apps/forage/bin/forage.prg`.
+3. Plug the watch in with its USB mode set to MTP (hold UP → Watch
+   Settings → System → Advanced → USB Mode → MTP).
+   - **Windows:** open the watch in File Explorer, go to
+     *Internal Storage → GARMIN → Apps*, and copy the `.prg` in.
+   - **macOS:** the watch does not mount as a drive. Drag the `.prg` into
+     `GARMIN/Apps` with [OpenMTP](https://openmtp.ganeshrvel.com/), or use
+     `scripts/watch.sh push forage` ([details](#sideload-to-the-watch)).
+4. Unplug. The watch installs the app; pick a face under *Watch Face*,
+   or open an app from the apps list.
+
+A copied app is removed by deleting its `.prg` from `GARMIN/Apps` the same
+way.
+
+## License and credits
+
+MIT, see [`LICENSE`](LICENSE). The Connect IQ SDK and the device files are
+Garmin's and are not included. Night Sky's stars come from the Yale Bright
+Star Catalogue (via
+[Bright-Star-Catalog-JSON](https://github.com/aduboisforge/Bright-Star-Catalog-JSON)).
+Sound Level's way of using the microphone follows the notes of the
+[iTuner](https://github.com/bogdancvisan/garmin-tuner) instrument tuner;
+no code was copied.
+
+## For developers
 
 - [`EXPLORATION.md`](EXPLORATION.md) covers what the watch lets us modify:
   app types, APIs by SDK version, AMOLED rules, the toolchain, distribution,
   hard limits and open questions.
 - [`designs/DESIGNS.md`](designs/DESIGNS.md) has the first designs, ranked (Field, Battery
   Planner, Daylight, Readiness, Sun & Moon), with mockups in `designs/svg/`.
-- [`apps/field/`](apps/field/) is **Field**, the everyday watch face (design #1).
-- [`apps/battery/`](apps/battery/) is **Battery Planner**, a glance and app
-  that projects when to charge from the last week's drain (design #2).
-- [`apps/daylight/`](apps/daylight/) is **Daylight**, a 24 h sun-dial watch
-  face with golden hours, light left, altitude and pressure (design #3).
-- [`apps/sunmoon/`](apps/sunmoon/) is **Sun and Moon**, a glance and app with
-  the next sun event, golden and blue hour and the moon, offline (design #5).
-- [`apps/nightsky/`](apps/nightsky/) is **Night Sky**, a watch face showing
-  the real sky overhead: stars, constellations, the Moon and the planets
-  (design #6).
-- [`apps/horizon/`](apps/horizon/) is **Horizon**, a watch face whose bezel
-  is the next twelve hours: rain chance per hour, dark after sunset, the
-  sun event and the next calendar event (design #7).
-- [`apps/suncompass/`](apps/suncompass/) is **Sun Compass**, a glance and
-  app: a compass rose that turns with the watch, with today's sun path
-  drawn across the sky inside it (design #8).
-- [`apps/readiness/`](apps/readiness/) is **Readiness**, a watch face with
-  Body Battery and stress gauges, sleep score, recovery time, resting heart
-  rate and training status round the time (design #4).
-- [`apps/sauna/`](apps/sauna/) is **Sauna and Steam**, a glance and app
-  that tracks a sauna or steam-room visit round by round and coaches it
-  against the published guidance: the watch thermometer notices the
-  door, the heart-rate recovery is measured after each round, every
-  button has its job written beside it, each kind has its own plan and
-  weekly goals, and the visit is saved to Garmin Connect (design #10).
-- [`apps/sound/`](apps/sound/) is **Sound Level**, a glance and app that
-  turns the watch microphone into an approximate sound level meter: the
-  level in big digits coloured by its band, the NIOSH danger range (85 dB
-  for 8 hours, half the time for every 3 dB more) as "safe for" and a
-  dose that accumulates while the app is open, a two-minute trend, a
-  calibration screen for matching a phone meter, and every button's job
-  written beside it (design #14).
-- [`apps/forage/`](apps/forage/) is **Forage**, a watch face for a
-  beekeeper: whether the bees are flying now, the next good hours to open
-  the hive, the next twelve hours as a strip of comb, and the nectar year
-  along the bottom of the bezel (design #15).
 - [`lib/`](lib/) is the `Lib` Monkey Barrel shared by every app: `Aod`
   (always-on helpers), `Arcs` (ring gauges), `Fmt` (text formatting), `Sun`
   (sunrise and sunset from the watch), `Moon` (phase), `Solar` (sun maths:

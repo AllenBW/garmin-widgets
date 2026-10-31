@@ -683,7 +683,7 @@ examples; Connect IQ SDK 9.3.0 `Audio` module docs and the Core Topics
 **Purpose:** a face for a beekeeper. One glance answers the two questions
 the weather app makes you work out yourself: are the bees out right now,
 and when today is a good time to open the hive. It is built from the
-owner's own day (the Loudoun bees), not from what the platform allows,
+owner's own day (they keep bees), not from what the platform allows,
 and it keeps the Today basics: 24-hour time and the date.
 
 **Layout (active)**, top to bottom
