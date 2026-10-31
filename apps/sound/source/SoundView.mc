@@ -57,6 +57,7 @@ class SoundView extends WatchUi.View {
     private var _sinceStart as Number = 0;         // seconds since the microphone was started
     private var _seen as Number = 0;               // windows received since the app opened
     private var _stopping as Boolean = false;      // a stop is in progress: its flushed window is not a reading
+    private var _fresh as Boolean = true;          // the microphone is cold: discard its first moments
     private var _hertz as Number = 8000;
     private var _sinceData as Number = 0;
     private var _sinceSave as Number = 0;
@@ -182,11 +183,23 @@ class SoundView extends WatchUi.View {
         }
         _sinceStart = 0;
         _sinceData = 0;
+        if (open("start " + (_restarts + 1))) {
+            _listening = true;
+            if (_fresh) {
+                _session.restarted();
+            }
+        }
+    }
+
+    // Initialise capture for one window and start it; true when it runs.
+    // Called for every window on a watch that refuses a plain start()
+    // after a one-shot stop, so it logs only the first few times.
+    private function open(reason as String) as Boolean {
         try {
             var format = pickFormat();
             if (format == null) {
                 _captureError = "Microphone format not supported";
-                return;
+                return false;
             }
             var settings = Capture.initializeAudioCapture(self, {
                 :format => format,
@@ -200,18 +213,20 @@ class SoundView extends WatchUi.View {
             }
             _stopping = false;
             Capture.start();
-            _listening = true;
             _lastError = null;
-            _session.restarted();
-            System.println("sound: listening at " + _hertz + " Hz, window " + settings[:windowSize] + " B one shot, start " + (_restarts + 1) + ", state " + Capture.getState());
+            if (_seen <= 6) {
+                System.println("sound: " + reason + ": " + _hertz + " Hz, window " + settings[:windowSize] + " B one shot, state " + Capture.getState());
+            }
+            return true;
         } catch (e instanceof Capture.InitializationFailedException) {
             _lastError = "Microphone unavailable (" + e.getError() + ")";
-            System.println("sound: " + _lastError);
+            System.println("sound: " + reason + ": " + _lastError);
         } catch (e instanceof Lang.Exception) {
             var m = e.getErrorMessage();
             _lastError = "Microphone error" + (m == null ? "" : " (" + m + ")");
-            System.println("sound: " + _lastError);
+            System.println("sound: " + reason + ": " + _lastError);
         }
+        return false;
     }
 
     private function hush() as Void {
@@ -237,6 +252,7 @@ class SoundView extends WatchUi.View {
         System.println("sound: no window for " + _sinceData + " s, state " + state + ", restarting (" + (_restarts + 1) + ")");
         hush();
         _restarts++;
+        _fresh = true;
         listen();
     }
 
@@ -259,6 +275,7 @@ class SoundView extends WatchUi.View {
         var gap = _sinceData;
         _sinceData = 0;
         _restarts = 0;
+        _fresh = false;
         _seen++;
         if (_seen <= 6 || _seen % 1000 == 0) {
             System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS, " + gap + " s since the last");
@@ -272,13 +289,17 @@ class SoundView extends WatchUi.View {
     // means the watch did not count the app as on screen yet.
     function onError(error as Capture.Error) as Void {
         _listening = false;
+        _fresh = true;
         _lastError = error == Capture.CAPTURE_ERR_BACKGROUNDED ? "Microphone not ready" : "Microphone error " + error;
         System.println("sound: " + _lastError);
         WatchUi.requestUpdate();
     }
 
     // The window has filled and capture stopped on its own: start the
-    // next one at once. After a stop of ours, nothing: the tick decides.
+    // next one at once, with a plain start() where the watch allows it
+    // and a fresh initialisation where it does not (the fēnix 8 threw
+    // on the plain start, 2026-10-31). After a stop of ours, nothing:
+    // the tick decides.
     function onComplete() as Void {
         if (_stopping || _demo || !_listening) {
             _listening = false;
@@ -286,11 +307,15 @@ class SoundView extends WatchUi.View {
         }
         try {
             Capture.start();
+            return;
         } catch (e instanceof Lang.Exception) {
-            _listening = false;
-            var m = e.getErrorMessage();
-            _lastError = "Microphone restart failed" + (m == null ? "" : " (" + m + ")");
-            System.println("sound: " + _lastError + ", state " + Capture.getState());
+            if (_seen <= 6) {
+                var m = e.getErrorMessage();
+                System.println("sound: start after a window: " + (m == null ? "?" : m) + ", state " + Capture.getState() + "; initialising again");
+            }
+        }
+        if (!open("next window")) {
+            _listening = false;   // the tick tries again in a second, without a warm-up
         }
     }
 
