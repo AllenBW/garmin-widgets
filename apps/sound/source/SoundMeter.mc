@@ -246,6 +246,9 @@ class SoundSession {
     var seconds as Float = 0.0;   // audio measured
     var dosePercent as Float = 0.0;
     var warmupLeft as Float = WARMUP;   // seconds still to discard
+    var warmup as Float = WARMUP;       // what a start discards (the view may set it)
+    var seed as Float = SEED;           // seconds averaged before the first level (the view may set it)
+    var smooth as Float = SMOOTH;       // seconds the shown level settles over (the view may set it)
 
     private var _seedEnergy as Float = 0.0;
     private var _seedSeconds as Float = 0.0;
@@ -269,7 +272,7 @@ class SoundSession {
         peak = null;
         seconds = 0.0;
         dosePercent = 0.0;
-        warmupLeft = WARMUP;
+        warmupLeft = warmup;
         _seedEnergy = 0.0;
         _seedSeconds = 0.0;
         _energy = 0.0;
@@ -285,7 +288,7 @@ class SoundSession {
 
     // The microphone has (re)started: its first moments are discarded
     function restarted() as Void {
-        warmupLeft = WARMUP;
+        warmupLeft = warmup;
     }
 
     // One window of sound: its dBFS and its length in seconds. Returns
@@ -309,14 +312,14 @@ class SoundSession {
         if (l == null) {
             _seedEnergy += SoundMeter.energy(db) * windowSeconds;
             _seedSeconds += windowSeconds;
-            if (_seedSeconds < SEED) {
+            if (_seedSeconds < seed) {
                 return EVENT_NONE;
             }
             level = SoundMeter.fromEnergy(_seedEnergy / _seedSeconds);
             _seedEnergy = 0.0;
             _seedSeconds = 0.0;
         } else {
-            var a = windowSeconds / SMOOTH;
+            var a = windowSeconds / smooth;
             if (a > 1.0) {
                 a = 1.0;
             }
