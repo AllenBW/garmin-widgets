@@ -214,9 +214,19 @@ records where the project stands so the next session can carry on.
     shot: `WINDOW_FILLED_STOP` with 8192-byte windows (about a third of
     a second), `onComplete` starts the next, the tick re-initialises
     after two silent seconds, and a window flushed by our own stop is
-    ignored. Unverified on the watch as of this note: whether each
-    one-shot start brings its own transient (the log prints the first
-    six windows with the gap before each, so the next pull tells). Decode
+    ignored. **Second log (2026-10-31):** after a one-shot window the
+    capture is back to CAPTURE_UNINITIALIZED and a plain `start()`
+    throws "Audio capture is not initialized", so every window is a
+    fresh `initializeAudioCapture` + `start()` (the warm-up applies
+    only when the microphone was cold: app open, stall, error). The
+    windows then come one per start with no gap, but each read -15.6
+    dBFS whatever the room, which is the -12.6 dBFS first 4096 bytes of
+    the continuous run spread over twice the bytes: the first 4096
+    bytes after every initialisation are junk, what follows is the
+    room. So windows are 12288 bytes and the first 4096 after the
+    header are skipped, RMS is taken about the mean (a bias is not
+    sound), and the first six windows log the skipped part and the
+    kept part separately so the next pull confirms it. Decode
     budget measured in the simulator: 2048 `decodeNumber` calls in 6 ms,
     512 in 1 ms, so every fourth sample is decoded (`STRIDE` 4, within
     0.01 dB of the full set on a sine); the watch is slower, so if the
@@ -344,11 +354,11 @@ records where the project stands so the next session can carry on.
    2026-10-31. Next on the watch: open it a few times (does a level
    always come within three seconds and keep updating, does it open on
    the room's level or jump), then `scripts/watch.sh logs` and read
-   `watch-logs/SOUND.TXT`: "window N ... s since the last" lines show
-   whether windows now keep coming (expect several a second at 0 s
-   gaps) and whether each one-shot start brings a loud first window (if
-   so, trim the first samples of every window or lengthen the window);
-   "no window ... state" lines say the microphone stalled and in which
+   `watch-logs/SOUND.TXT`: "window N ... first 4096 B x dBFS, rest y
+   dBFS" lines should show x near -13 and y near the room (about -50 in
+   a quiet room); if y is still loud the junk is longer than 4096
+   bytes, so raise `SKIP_BYTES` (and `WINDOW_BYTES` with it); "no
+   window ... state" lines say the microphone stalled and in which
    state. Then what a quiet room and normal speech
    read against a phone meter (then set the offset on the Calibrate
    screen), whether a window ever trips the watchdog (raise `STRIDE`),
