@@ -90,22 +90,38 @@ module SoundMeter {
         return seconds < 2 ? "starting the microphone" : "waiting for sound";
     }
 
-    // RMS of the 16-bit little-endian samples from `offset`, taking every
-    // `stride`-th one: decoding is the dear part, and a quarter of the
-    // samples give the same level within a fraction of a decibel
+    // RMS of the 16-bit little-endian samples from `offset` to `end`
+    // (the whole array when end is 0), taking every `stride`-th one:
+    // decoding is the dear part, and a quarter of the samples give the
+    // same level within a fraction of a decibel. Measured about the
+    // mean, so a bias on the microphone's line is not counted as sound.
     function rms(bytes as ByteArray, offset as Number, stride as Number) as Float {
+        return rmsOf(bytes, offset, 0, stride);
+    }
+
+    function rmsOf(bytes as ByteArray, offset as Number, end as Number, stride as Number) as Float {
         var step = 2 * (stride < 1 ? 1 : stride);
-        var sum = 0.0;
+        var sum = 0.0d;
+        var squares = 0.0d;
         var n = 0;
         var size = bytes.size();
+        if (end > 0 && end < size) {
+            size = end;
+        }
         var options = {:offset => offset, :endianness => Lang.ENDIAN_LITTLE};
         for (var i = offset; i + 1 < size; i += step) {
             options[:offset] = i;
             var v = bytes.decodeNumber(Lang.NUMBER_FORMAT_SINT16, options) as Number;
-            sum += v * v;
+            sum += v;
+            squares += v * v;
             n++;
         }
-        return n == 0 ? 0.0 : Math.sqrt(sum / n).toFloat();
+        if (n == 0) {
+            return 0.0;
+        }
+        var mean = sum / n;
+        var variance = squares / n - mean * mean;
+        return variance <= 0.0d ? 0.0 : Math.sqrt(variance).toFloat();
     }
 
     // Decibels below full scale: a full-scale sine is -3, silence the floor

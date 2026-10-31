@@ -34,7 +34,8 @@ class SoundView extends WatchUi.View {
     private const DIM = 0x4A4A4A;
     private const BAND = 0x2A2A2A;
 
-    private const WINDOW_BYTES = 8192;   // one shot of about a third of a second at 11 kHz
+    private const WINDOW_BYTES = 12288;  // one shot: 4096 bytes of start-up junk, then about a third of a second at 11 kHz
+    private const SKIP_BYTES = 4096;     // what the fēnix 8 hands over first after every initialisation, whatever the room
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
     private const STALE_AFTER = 3;       // seconds without a window before the number dims
     private const NO_DATA_AFTER = 2;     // seconds without a window before the microphone is restarted
@@ -266,7 +267,14 @@ class SoundView extends WatchUi.View {
         if (_demo || _stopping) {
             return;
         }
-        var offset = SoundMeter.headerOffset(audioData);
+        var header = SoundMeter.headerOffset(audioData);
+        // the first bytes after every initialisation are not the room:
+        // on the watch they read about -13 dBFS whatever the room, and
+        // what follows reads like the room, so they are left out
+        var offset = header + SKIP_BYTES;
+        if (offset >= audioData.size()) {
+            offset = header;
+        }
         var samples = (audioData.size() - offset) / 2;
         if (samples < 1) {
             return;
@@ -278,7 +286,8 @@ class SoundView extends WatchUi.View {
         _fresh = false;
         _seen++;
         if (_seen <= 6 || _seen % 1000 == 0) {
-            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS, " + gap + " s since the last");
+            var skipped = offset > header ? SoundMeter.dbfs(SoundMeter.rmsOf(audioData, header, offset, STRIDE)) : 0.0;
+            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + header + ", first " + (offset - header) + " B " + skipped.format("%.1f") + " dBFS, rest " + level.format("%.1f") + " dBFS, " + gap + " s since the last");
         }
         var event = _session.addWindow(level, samples.toFloat() / _hertz);
         react(event);

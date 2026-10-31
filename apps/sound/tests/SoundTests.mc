@@ -112,6 +112,26 @@ function testLevels(logger as Logger) as Boolean {
     logger.debug("stride 1: " + every + " dBFS, stride 4: " + fourth);
     Test.assertMessage((every - fourth).abs() < 0.3, "stride 4 is within 0.3 dB");
     Test.assertEqualMessage(SoundMeter.rms(new [1]b, 0, 1), 0.0, "an odd byte is no sample");
+    // a bias on the line is not sound: a sine riding on 5000 reads as the sine alone
+    var biased = sineWindow(2048, 8192, false);
+    for (var i = 0; i < 2048; i++) {
+        var v = biased.decodeNumber(Lang.NUMBER_FORMAT_SINT16, {:offset => 2 * i, :endianness => Lang.ENDIAN_LITTLE}) as Number;
+        biased.encodeNumber(v + 5000, Lang.NUMBER_FORMAT_SINT16, {:offset => 2 * i, :endianness => Lang.ENDIAN_LITTLE});
+    }
+    var plain = SoundMeter.rms(sineWindow(2048, 8192, false), 0, 1);
+    Test.assertMessage((SoundMeter.rms(biased, 0, 1) - plain).abs() < 30, "bias removed: " + SoundMeter.rms(biased, 0, 1) + " vs " + plain);
+    var flat = new [4096]b;
+    for (var i = 0; i < 2048; i++) {
+        flat.encodeNumber(5000, Lang.NUMBER_FORMAT_SINT16, {:offset => 2 * i, :endianness => Lang.ENDIAN_LITTLE});
+    }
+    Test.assertEqualMessage(SoundMeter.rms(flat, 0, 1), 0.0, "a flat line is silence");
+    // a range: the first half loud, the second quiet
+    var halves = sineAfter(new [0]b, 2048, 16384);
+    for (var i = 1024; i < 2048; i++) {
+        halves.encodeNumber(0, Lang.NUMBER_FORMAT_SINT16, {:offset => 2 * i, :endianness => Lang.ENDIAN_LITTLE});
+    }
+    Test.assertMessage(SoundMeter.rmsOf(halves, 0, 2048, 1) > 11000, "the first half is loud");
+    Test.assertEqualMessage(SoundMeter.rmsOf(halves, 2048, 0, 1), 0.0, "the second half is silent");
     return true;
 }
 
