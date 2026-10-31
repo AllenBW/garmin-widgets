@@ -23,6 +23,22 @@ it to test.
 To update, run
 `scripts/package.sh <app>` again and upload it as a new version.
 
+## Submitted
+
+The developer display name is **AllenBW**. Each listing's cover (500 × 500)
+and screen image (454 × 454, the simulator's display cut round) are in
+`docs/store/`.
+
+| App | Store page | State |
+|---|---|---|
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31, in review |
+| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31, in review |
+| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31, in review |
+
+Every upload so far showed "Status: Verified" with "Signature check
+failed." beside it; Garmin's forum reports the same message on first
+uploads with SDK 9.x, and the upload went through.
+
 ## Listings
 
 Category, then the description. Every app is free, with no ads and no
