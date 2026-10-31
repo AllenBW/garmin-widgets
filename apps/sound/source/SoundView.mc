@@ -34,7 +34,7 @@ class SoundView extends WatchUi.View {
     private const DIM = 0x4A4A4A;
     private const BAND = 0x2A2A2A;
 
-    private const WINDOW_BYTES = 4096;
+    private const WINDOW_BYTES = 8192;   // one shot of about a third of a second at 11 kHz
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
     private const STALE_AFTER = 3;       // seconds without a window before the number dims
     private const NO_DATA_AFTER = 2;     // seconds without a window before the microphone is restarted
@@ -56,6 +56,7 @@ class SoundView extends WatchUi.View {
     private var _restarts as Number = 0;           // starts in a row that gave no sound
     private var _sinceStart as Number = 0;         // seconds since the microphone was started
     private var _seen as Number = 0;               // windows received since the app opened
+    private var _stopping as Boolean = false;      // a stop is in progress: its flushed window is not a reading
     private var _hertz as Number = 8000;
     private var _sinceData as Number = 0;
     private var _sinceSave as Number = 0;
@@ -146,10 +147,31 @@ class SoundView extends WatchUi.View {
         return 90;
     }
 
-    // The microphone: 16-bit mono at 8 kHz, or 16 kHz if the device will
-    // not do 8; windows of 4096 bytes, delivered to onData until stopped.
-    // A start that fails, or that delivers nothing, is retried from the
-    // tick; the session discards the first moments after every start.
+    // The lowest rate the watch will capture 16-bit mono at: the fēnix 8
+    // refuses 8 kHz and answers a 16 kHz request with 11.025 kHz
+    private function pickFormat() as Audio.AudioFormat? {
+        var rates = [Audio.FREQ_8_KHZ, Audio.FREQ_11_025_KHZ, Audio.FREQ_16_KHZ, Audio.FREQ_22_05_KHZ, Audio.FREQ_44_1_KHZ] as Array<Number>;
+        for (var i = 0; i < rates.size(); i++) {
+            var format = {
+                :containerFormat => Audio.CONTAINER_WAV,
+                :codec => Audio.CODEC_LPCM,
+                :frequency => rates[i],
+                :channels => Audio.CHANNEL_MONO
+            } as Audio.AudioFormat;
+            if (Capture.isFormatSupported(format)) {
+                return format;
+            }
+        }
+        return null;
+    }
+
+    // The microphone, one window at a time: the watch fills a window,
+    // stops, hands it to onData, and onComplete starts the next. The
+    // fēnix 8 (firmware 23.40) does not deliver windows while capturing
+    // continuously: the first log from the watch showed three windows
+    // after a start, then nothing, and data only on stop. A start that
+    // fails, or that delivers nothing, is retried from the tick; the
+    // session discards the first moments after every fresh start.
     private function listen() as Void {
         if (_listening || _captureError != null) {
             return;
@@ -160,37 +182,28 @@ class SoundView extends WatchUi.View {
         }
         _sinceStart = 0;
         _sinceData = 0;
-        var format = {
-            :containerFormat => Audio.CONTAINER_WAV,
-            :codec => Audio.CODEC_LPCM,
-            :frequency => Audio.FREQ_8_KHZ,
-            :channels => Audio.CHANNEL_MONO
-        } as Audio.AudioFormat;
-        _hertz = 8000;
-        if (!Capture.isFormatSupported(format)) {
-            format[:frequency] = Audio.FREQ_16_KHZ;
-            _hertz = 16000;
-            if (!Capture.isFormatSupported(format)) {
+        try {
+            var format = pickFormat();
+            if (format == null) {
                 _captureError = "Microphone format not supported";
                 return;
             }
-        }
-        try {
             var settings = Capture.initializeAudioCapture(self, {
                 :format => format,
                 :windowSize => WINDOW_BYTES,
-                :windowFilledBehavior => Capture.WINDOW_FILLED_CONTINUE,
+                :windowFilledBehavior => Capture.WINDOW_FILLED_STOP,
                 :filters => [] as Array<Capture.Filter>
             });
             var used = settings[:format];
             if (used != null) {
                 _hertz = hertz(used[:frequency] as Number);
             }
+            _stopping = false;
             Capture.start();
             _listening = true;
             _lastError = null;
             _session.restarted();
-            System.println("sound: listening at " + _hertz + " Hz, window " + settings[:windowSize] + " B, start " + (_restarts + 1));
+            System.println("sound: listening at " + _hertz + " Hz, window " + settings[:windowSize] + " B one shot, start " + (_restarts + 1) + ", state " + Capture.getState());
         } catch (e instanceof Capture.InitializationFailedException) {
             _lastError = "Microphone unavailable (" + e.getError() + ")";
             System.println("sound: " + _lastError);
@@ -203,6 +216,7 @@ class SoundView extends WatchUi.View {
 
     private function hush() as Void {
         if (_listening) {
+            _stopping = true;
             try {
                 if (Capture.getState() == Capture.CAPTURE_CAPTURING) {
                     Capture.stop();
@@ -215,7 +229,12 @@ class SoundView extends WatchUi.View {
 
     // No window for a while though the microphone is on: start it again
     private function restart() as Void {
-        System.println("sound: no window for " + _sinceData + " s, restarting (" + (_restarts + 1) + ")");
+        var state = -1;
+        try {
+            state = Capture.getState();
+        } catch (e) {
+        }
+        System.println("sound: no window for " + _sinceData + " s, state " + state + ", restarting (" + (_restarts + 1) + ")");
         hush();
         _restarts++;
         listen();
@@ -228,7 +247,7 @@ class SoundView extends WatchUi.View {
 
     // Capture callbacks (Audio.Capture.Callbacks)
     function onData(audioData as ByteArray) as Void {
-        if (_demo) {
+        if (_demo || _stopping) {
             return;
         }
         var offset = SoundMeter.headerOffset(audioData);
@@ -237,11 +256,12 @@ class SoundView extends WatchUi.View {
             return;
         }
         var level = SoundMeter.dbfs(SoundMeter.rms(audioData, offset, STRIDE));
+        var gap = _sinceData;
         _sinceData = 0;
         _restarts = 0;
         _seen++;
-        if (_seen <= 3 || _seen % 1000 == 0) {
-            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS");
+        if (_seen <= 6 || _seen % 1000 == 0) {
+            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS, " + gap + " s since the last");
         }
         var event = _session.addWindow(level, samples.toFloat() / _hertz);
         react(event);
@@ -257,10 +277,20 @@ class SoundView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    // A stop has finished; one from before a fresh start changes nothing
+    // The window has filled and capture stopped on its own: start the
+    // next one at once. After a stop of ours, nothing: the tick decides.
     function onComplete() as Void {
-        if (Capture.getState() != Capture.CAPTURE_CAPTURING) {
+        if (_stopping || _demo || !_listening) {
             _listening = false;
+            return;
+        }
+        try {
+            Capture.start();
+        } catch (e instanceof Lang.Exception) {
+            _listening = false;
+            var m = e.getErrorMessage();
+            _lastError = "Microphone restart failed" + (m == null ? "" : " (" + m + ")");
+            System.println("sound: " + _lastError + ", state " + Capture.getState());
         }
     }
 
