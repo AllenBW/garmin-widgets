@@ -1,0 +1,52 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Strata</string>
+
+    <string id="Slot1Title">First reading</string>
+    <string id="Slot2Title">Second reading</string>
+    <string id="Slot3Title">Third reading</string>
+    <string id="Slot4Title">Fourth reading</string>
+    <string id="ReadingTemperature">Outside temperature</string>
+    <string id="ReadingRain">Chance of rain</string>
+    <string id="ReadingHeart">Heart rate</string>
+    <string id="ReadingDistance">Distance walked</string>
+    <string id="ReadingBodyBattery">Body Battery</string>
+    <string id="ReadingElevation">Elevation</string>
+    <string id="ReadingHumidity">Humidity</string>
+    <string id="ReadingWind">Wind</string>
+    <string id="ReadingBattery">Watch battery</string>
+    <string id="ReadingSteps">Steps</string>
+
+    <string id="StyleFilled">Filled time</string>
+    <string id="StyleOutline">Outline time</string>
+    <string id="ColorSoil">Soil</string>
+    <string id="ColorClay">Clay</string>
+    <string id="ColorMoss">Moss</string>
+    <string id="ColorSlate">Slate</string>
+    <string id="ColorSand">Sand</string>
+
+    <string id="StrataTitle">Strata color</string>
+    <string id="StrataSoil">Soil: brown by day, graphite by night</string>
+    <string id="StrataClay">Clay: terracotta by day, plum by night</string>
+    <string id="StrataMoss">Moss: olive by day, deep teal by night</string>
+    <string id="StrataSlate">Slate: blue-grey</string>
+    <string id="StrataSand">Sand: pale sandstone</string>
+
+    <string id="AccentTitle">Every fourth layer</string>
+    <string id="AccentTemperature">Outside temperature</string>
+    <string id="AccentTone">Tone on tone</string>
+    <string id="AccentOchre">Ochre</string>
+    <string id="AccentLichen">Lichen</string>
+    <string id="AccentEmber">Ember</string>
+
+    <string id="TimeTitle">Time color</string>
+    <string id="TimeBone">Bone</string>
+    <string id="TimeAccent">Same as every fourth layer</string>
+    <string id="TimeSandstone">Sandstone</string>
+
+    <string id="TimeStyleTitle">Time style</string>
+    <string id="TimeFilled">Filled</string>
+    <string id="TimeOutline">Outline (lights fewer pixels)</string>
+
+    <string id="DayNightTitle">Night colors after sunset</string>
+    <string id="StonesTitle">A stone for every quarter mile</string>
+</strings>

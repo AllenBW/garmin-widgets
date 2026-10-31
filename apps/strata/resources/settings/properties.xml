@@ -1,0 +1,20 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- The layers' colour (Palette.STRATA_DAY/STRATA_NIGHT): 0 Soil, 1 Clay, 2 Moss, 3 Slate, 4 Sand -->
+    <property id="Strata" type="number">0</property>
+    <!-- Every fourth layer (Palette.accent): 0 the outside temperature, 1 tone on tone, 2 Ochre, 3 Lichen, 4 Ember -->
+    <property id="Accent" type="number">0</property>
+    <!-- The time (Palette.time): 0 Bone, 1 the accent's colour, 2 Sandstone -->
+    <property id="TimeColor" type="number">0</property>
+    <!-- The time: 0 filled, 1 in outline (fewer pixels lit); the time colour goes to the fill or the outline -->
+    <property id="TimeStyle" type="number">0</property>
+    <!-- Night colours after sunset -->
+    <property id="DayNight" type="boolean">true</property>
+    <!-- A stone in the layers for every quarter mile, from the first mile -->
+    <property id="Stones" type="boolean">true</property>
+    <!-- The four readings under the time, left to right (Readings.Kind): 0 temperature, 1 chance of rain,
+         2 heart rate, 3 distance, 4 Body Battery, 5 elevation, 6 humidity, 7 wind, 8 watch battery, 9 steps -->
+    <property id="Slot1" type="number">0</property>
+    <property id="Slot2" type="number">1</property>
+    <property id="Slot3" type="number">2</property>
+    <property id="Slot4" type="number">3</property>
+</properties>
