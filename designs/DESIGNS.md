@@ -667,9 +667,14 @@ that then falls (the owner's first report from the watch, 2026-10-31).
 
 **Platform:** a watch-app with a glance (the microphone is allowed for
 device apps and audio providers only). `Audio.Capture` with
-`CONTAINER_WAV`, `CODEC_LPCM`, mono, 8 kHz (16 kHz if the device refuses
-8), 4096-byte windows, `WINDOW_FILLED_CONTINUE`, no filters so the
-levels stay honest. Capture is foreground only; it stops in `onHide` and
+`CONTAINER_WAV`, `CODEC_LPCM`, mono, at the lowest rate the watch
+accepts (the fēnix 8 refuses 8 kHz and gives 11.025 kHz), one window
+of 8192 bytes at a time with `WINDOW_FILLED_STOP`, the next started
+from `onComplete`, no filters so the levels stay honest. **Why one shot
+(from the first watch log, 2026-10-31):** with `WINDOW_FILLED_CONTINUE`
+the fēnix 8 on firmware 23.40 handed over three windows after a start
+and then nothing, and a stop flushed data it had been holding; every
+window carries its own 44-byte WAV header. Capture is foreground only; it stops in `onHide` and
 starts again in `onShow`. A start that fails is retried from the
 one-second tick, a running capture that delivers no window for two
 seconds is stopped and started again (the owner's second report from

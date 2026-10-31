@@ -203,9 +203,20 @@ records where the project stands so the next session can carry on.
     tick, a failed start is retried, a late `onComplete` from an old
     stop no longer ends the new capture, and the screen says which of
     these is happening. Starts, errors and the first three windows are
-    logged, so after the next visit `scripts/watch.sh logs` and
-    `watch-logs/SOUND.TXT` say what the watch microphone really did
-    (window size, header offset, dBFS). Decode
+    logged. **The first log from the watch (2026-10-31)** said: the
+    watch captures at 11.025 kHz (8 kHz refused, 16 kHz answered with
+    11.025), every window opens with a 44-byte WAV header, the first
+    window after a start read −12.6 dBFS (a transient) and the next two
+    −50 and −54 dBFS (a quiet room, 36 to 40 dB at offset 90), and with
+    `WINDOW_FILLED_CONTINUE` only those three windows ever came: then
+    nothing until a restart, and restarts mostly gave nothing, while a
+    stop flushed a window it had been holding. So capture is now one
+    shot: `WINDOW_FILLED_STOP` with 8192-byte windows (about a third of
+    a second), `onComplete` starts the next, the tick re-initialises
+    after two silent seconds, and a window flushed by our own stop is
+    ignored. Unverified on the watch as of this note: whether each
+    one-shot start brings its own transient (the log prints the first
+    six windows with the gap before each, so the next pull tells). Decode
     budget measured in the simulator: 2048 `decodeNumber` calls in 6 ms,
     512 in 1 ms, so every fourth sample is decoded (`STRIDE` 4, within
     0.01 dB of the full set on a sine); the watch is slower, so if the
@@ -329,14 +340,16 @@ records where the project stands so the next session can carry on.
    phases (cold-water crash reports on the fēnix 8), a glance that
    starts a visit directly.
 10. **Sound Level** is on the watch (flushed 2026-10-31) and the
-   startup fix is queued (`scripts/watch.sh flush` with the sandbox off
-   when the watch is on the cable). Next on the watch: open it a few
-   times (does a level always come within three seconds, does it open
-   on the room's level or still jump), then `scripts/watch.sh logs` and
-   read `watch-logs/SOUND.TXT`: the "listening at" line gives the window
-   size the watch chose, "window 1" its header offset and dBFS, and any
-   "restarting" lines say the microphone delivered nothing. Then what a
-   quiet room and normal speech
+   one-shot capture went on with `scripts/watch.sh push sound` on
+   2026-10-31. Next on the watch: open it a few times (does a level
+   always come within three seconds and keep updating, does it open on
+   the room's level or jump), then `scripts/watch.sh logs` and read
+   `watch-logs/SOUND.TXT`: "window N ... s since the last" lines show
+   whether windows now keep coming (expect several a second at 0 s
+   gaps) and whether each one-shot start brings a loud first window (if
+   so, trim the first samples of every window or lengthen the window);
+   "no window ... state" lines say the microphone stalled and in which
+   state. Then what a quiet room and normal speech
    read against a phone meter (then set the offset on the Calibrate
    screen), whether a window ever trips the watchdog (raise `STRIDE`),
    whether the buzz at 85 fires when you clap by the watch, and battery
