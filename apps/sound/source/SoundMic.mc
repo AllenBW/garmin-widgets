@@ -6,8 +6,8 @@ import Toybox.System;
 // Where the microphone driver is
 enum {
     MIC_OFF,        // not started yet
-    MIC_IDLE,       // between windows: nothing is capturing
-    MIC_RUNNING,    // one window initialised and started, waiting for it
+    MIC_IDLE,       // waiting to start (or to start once more after a stall)
+    MIC_RUNNING,    // capturing continuously
     MIC_STOPPING,   // we asked it to stop, waiting for it to have stopped
     MIC_DONE        // left alone until the app is opened again
 }
@@ -40,92 +40,92 @@ class MicPort {
     }
 }
 
-// The microphone, made safe for the fēnix 8 (firmware 23.40). Two
-// patterns crashed the whole watch on 2026-10-31 (a firmware "RTL Trap",
-// nothing in CIQ_LOG): initialising capture again from inside its own
-// onComplete callback, and stopping it and initialising it again in the
-// same moment, every few seconds. So this driver keeps strict rules:
+// The microphone, made safe for the fēnix 8 (firmware 23.40).
 //
-// 1. The capture callbacks (onData, onComplete, onError) only note what
-//    happened. Nothing in them touches the microphone.
-// 2. The microphone is touched only from tick(), once a second, and at
-//    most once per tick (plus the stop on hide and on exit).
-// 3. A window is initialised only when nothing is capturing, never over
-//    a capture still running or still stopping.
-// 4. A whole tick passes between the end of a window and the next
-//    initialisation, and two after a stop of ours.
-// 5. Three silent or failed windows in a row, a stop that does not
-//    finish within five seconds, or ten minutes of windows, and the
-//    microphone is left alone until the app is opened again.
+// What the watch taught us (2026-10-31): every build that stopped and
+// started capture again and again rebooted the whole watch (a firmware
+// "RTL Trap", nothing in CIQ_LOG): initialising from inside onComplete,
+// and stopping then initialising in the same moment. The one public app
+// with the microphone working on a real fēnix 8 47 mm (the iTuner
+// instrument tuner, github.com/bogdancvisan/garmin-tuner) starts capture
+// once, keeps it running continuously, ignores the data while its menu
+// is open ("restarting it is slower and riskier"), keeps the work in
+// onData small (the watch enforces a watchdog the simulator does not),
+// and catches errors in onData. This driver does the same:
 //
-// The watch delivers sound one window per initialisation
-// (WINDOW_FILLED_STOP); continuous capture gave three windows and then
-// nothing. So the meter reads one window about every two seconds.
+// 1. Capture is initialised and started once when the app opens, and
+//    stopped once when it closes. Menus, the demo and calibrating only
+//    ignore the data; they never stop the microphone.
+// 2. The capture callbacks only note what happened and hand the window
+//    on; nothing in them touches the microphone, and nothing they call
+//    may throw out of them.
+// 3. The microphone is touched only from tick(), once a second, at most
+//    once per tick, never initialised over a running capture or before
+//    a stop's last callbacks have come (or five seconds have passed).
+// 4. If the sound stops coming, it is restarted once, carefully; if it
+//    stops again, or the restart fails, the microphone is left alone
+//    with a message until the app is opened again.
 class SoundMic {
 
-    const WINDOW_BYTES = 12288;   // about half a second at 11 kHz; the view skips the first 4096
-    const NO_DATA = 3;            // seconds a window may run before it is stopped
+    const WINDOW_BYTES = 2048;    // as the tuner: 1024 samples, an eighth of a second at 8 kHz
+    const NO_DATA = 4;            // seconds without a window before it counts as a stall
     const STOP_LIMIT = 5;         // seconds a stop may take before the microphone is left alone
-    const GIVE_UP = 3;            // silent or failed windows in a row before it is left alone
-    const MAX_WINDOWS = 300;      // windows per opening (about ten minutes), then it rests
+    const RESTARTS = 1;           // careful restarts allowed per opening
 
     var phase as Number = MIC_OFF;
     var error as String? = null;  // why it was left alone
-    var hertz as Number = 11025;
-    var windows as Number = 0;    // windows started since the app opened
-    var silent as Number = 0;     // silent or failed windows in a row
+    var hertz as Number = 8000;
+    var starts as Number = 0;     // initialisations since the app opened
+    var restarts as Number = 0;
+    var windows as Number = 0;    // windows handed on since the app opened
+    var faults as Number = 0;     // errors caught inside onData
 
     private var _port as MicPort;
     private var _onWindow as Method(bytes as ByteArray, hertz as Number) as Void;
     private var _format as Audio.AudioFormat? = null;
     private var _formatChecked as Boolean = false;
     private var _wait as Number = 0;       // ticks since the phase began
-    private var _cool as Number = 1;       // ticks to stay idle before the next window
-    private var _hidden as Boolean = true;
-    private var _got as Boolean = false;   // the running window delivered sound
-    private var _ended as Boolean = false; // onComplete or onError since it started
-    private var _failed as Boolean = false;
+    private var _cool as Number = 1;       // ticks to stay idle before starting
+    private var _paused as Boolean = true; // off screen, menu, demo: data is ignored
+    private var _since as Number = 0;      // ticks since the last window
+    private var _ended as Boolean = false; // onComplete or onError since the last start or stop
 
     function initialize(port as MicPort, onWindow as Method(bytes as ByteArray, hertz as Number) as Void) {
         _port = port;
         _onWindow = onWindow;
     }
 
-    // The app is on screen: windows may start from the next tick
+    // On screen: data is used again; the first start comes on the next tick
     function show() as Void {
-        _hidden = false;
+        _paused = false;
+        _since = 0;
         if (phase == MIC_OFF) {
             enter(MIC_IDLE, 1);
         }
     }
 
-    // Off screen, the menu, or the demo: stop the running window, start no more
+    // A menu, the demo, or calibrating: ignore the data, keep the microphone as it is
     function hide() as Void {
-        _hidden = true;
-        if (phase == MIC_RUNNING) {
-            stopNow();
-        }
+        _paused = true;
     }
 
-    // Leaving the app: stop if anything is capturing, and touch nothing after
+    function paused() as Boolean {
+        return _paused;
+    }
+
+    // Leaving the app: stop whatever is capturing, then touch nothing
     function exit() as Void {
-        _hidden = true;
-        if (phase != MIC_DONE && phase != MIC_OFF) {
-            if (state() == Capture.CAPTURE_CAPTURING) {
-                try {
-                    _port.stop();
-                } catch (e) {
-                }
+        _paused = true;
+        if (phase != MIC_OFF && state() == Capture.CAPTURE_CAPTURING) {
+            try {
+                _port.stop();
+            } catch (e) {
             }
         }
         phase = MIC_DONE;
     }
 
-    function isHidden() as Boolean {
-        return _hidden;
-    }
-
-    // Once a second, from the view's timer: the one place a window starts
+    // Once a second, from the view's timer: the only place the microphone starts
     function tick() as Void {
         _wait++;
         if (phase == MIC_OFF || phase == MIC_DONE) {
@@ -133,55 +133,51 @@ class SoundMic {
         }
         var st = state();
         if (phase == MIC_STOPPING) {
-            if (st != Capture.CAPTURE_CAPTURING) {
+            if (st != Capture.CAPTURE_CAPTURING && (_ended || _wait >= STOP_LIMIT)) {
                 enter(MIC_IDLE, 2);
-            } else if (_wait > STOP_LIMIT) {
+            } else if (_wait >= STOP_LIMIT) {
                 leave("The microphone would not stop");
             }
             return;
         }
         if (phase == MIC_RUNNING) {
-            if (_ended || st != Capture.CAPTURE_CAPTURING) {
-                if (_failed || !_got) {
-                    silent++;
-                }
-                if (silent >= GIVE_UP) {
-                    leave("The microphone sent no sound");
-                } else {
-                    enter(MIC_IDLE, (_failed || !_ended) ? 2 : 1);   // two ticks when its callbacks have not all come
-                }
-            } else if (_wait > NO_DATA) {
-                silent++;
-                stopNow();
-                if (silent >= GIVE_UP) {
-                    leave("The microphone sent no sound");
-                }
+            if (_paused) {
+                _since = 0;   // a menu is not a stall
+                return;
+            }
+            _since++;
+            if (_ended || st != Capture.CAPTURE_CAPTURING || _since > NO_DATA) {
+                stall();
             }
             return;
         }
-        // idle
-        if (_hidden || _wait < _cool) {
+        // idle: start, once the cool-down has passed and nothing is capturing
+        if (_paused || _wait < _cool) {
             return;
         }
         if (st == Capture.CAPTURE_CAPTURING) {
-            stopNow();   // something is capturing that we did not start: never initialise over it
-            return;
-        }
-        if (windows >= MAX_WINDOWS) {
-            leave("Resting after ten minutes · BACK, then open again");
+            leave("The microphone is busy");   // never initialise over a capture
             return;
         }
         begin();
     }
 
-    // Capture callbacks: note what happened, touch nothing
+    // Capture callbacks: note what happened and hand the window on
     function onData(audioData as ByteArray) as Void {
-        if (phase != MIC_RUNNING || _ended) {
-            return;   // flushed by our own stop, or late
+        if (phase != MIC_RUNNING || _paused) {
+            return;
         }
-        _got = true;
-        silent = 0;
-        _onWindow.invoke(audioData, hertz);
+        _since = 0;
+        windows++;
+        try {
+            _onWindow.invoke(audioData, hertz);
+        } catch (e) {
+            faults++;
+            if (faults <= 3) {
+                var m = e.getErrorMessage();
+                System.println("sound: error reading a window: " + (m == null ? "?" : m));
+            }
+        }
     }
 
     function onComplete() as Void {
@@ -190,8 +186,28 @@ class SoundMic {
 
     function onError(error as Capture.Error) as Void {
         _ended = true;
-        _failed = true;
         System.println("sound: capture error " + error);
+    }
+
+    // The sound stopped coming: one careful restart, then leave it alone
+    private function stall() as Void {
+        System.println("sound: no window for " + _since + " s (ended " + _ended + ", state " + state() + ")");
+        if (restarts >= RESTARTS) {
+            leave("The microphone stopped sending sound");
+            return;
+        }
+        restarts++;
+        _since = 0;
+        if (state() == Capture.CAPTURE_CAPTURING) {
+            _ended = false;
+            try {
+                _port.stop();
+            } catch (e) {
+            }
+            enter(MIC_STOPPING, 0);
+        } else {
+            enter(MIC_IDLE, 2);
+        }
     }
 
     private function begin() as Void {
@@ -204,15 +220,14 @@ class SoundMic {
             leave("Microphone format not supported");
             return;
         }
-        _got = false;
+        starts++;
         _ended = false;
-        _failed = false;
-        windows++;
+        _since = 0;
         try {
             var settings = _port.initCapture(self, {
                 :format => format,
                 :windowSize => WINDOW_BYTES,
-                :windowFilledBehavior => Capture.WINDOW_FILLED_STOP,
+                :windowFilledBehavior => Capture.WINDOW_FILLED_CONTINUE,
                 :filters => [] as Array<Capture.Filter>
             });
             var used = settings[:format];
@@ -221,28 +236,12 @@ class SoundMic {
             }
             _port.start();
             enter(MIC_RUNNING, 0);
-            if (windows <= 3) {
-                System.println("sound: window " + windows + " started at " + hertz + " Hz");
-            }
+            System.println("sound: capturing at " + hertz + " Hz, window " + settings[:windowSize] + " B, start " + starts);
         } catch (e) {
-            silent++;
-            System.println("sound: window " + windows + " would not start");
-            if (silent >= GIVE_UP) {
-                leave("The microphone would not start");
-            } else {
-                enter(MIC_IDLE, 2);
-            }
+            var m = e.getErrorMessage();
+            System.println("sound: start " + starts + " failed: " + (m == null ? "?" : m));
+            leave("The microphone would not start");
         }
-    }
-
-    private function stopNow() as Void {
-        if (state() == Capture.CAPTURE_CAPTURING) {
-            try {
-                _port.stop();
-            } catch (e) {
-            }
-        }
-        enter(MIC_STOPPING, 0);
     }
 
     private function leave(why as String) as Void {
@@ -271,8 +270,7 @@ class SoundMic {
         }
     }
 
-    // The lowest rate the watch will capture 16-bit mono at: the fēnix 8
-    // refuses 8 kHz and answers a 16 kHz request with 11.025 kHz
+    // 8 kHz as the tuner uses, else the lowest rate the watch will take
     private function pickFormat() as Audio.AudioFormat? {
         var rates = [Audio.FREQ_8_KHZ, Audio.FREQ_11_025_KHZ, Audio.FREQ_16_KHZ, Audio.FREQ_22_05_KHZ, Audio.FREQ_44_1_KHZ] as Array<Number>;
         for (var i = 0; i < rates.size(); i++) {
@@ -294,6 +292,6 @@ class SoundMic {
 
     private function rate(frequency as Number) as Number {
         var table = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100] as Array<Number>;
-        return (frequency >= 0 && frequency < table.size()) ? table[frequency] : 11025;
+        return (frequency >= 0 && frequency < table.size()) ? table[frequency] : 8000;
     }
 }

@@ -34,10 +34,8 @@ class SoundView extends WatchUi.View {
     private const DIM = 0x4A4A4A;
     private const BAND = 0x2A2A2A;
 
-    private const SKIP_BYTES = 4096;     // what the fēnix 8 hands over first in every window, whatever the room
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
     private const STALE_AFTER = 5;       // seconds without a window before the number dims
-    private const SAVE_EVERY = 10;       // seconds between writes of the last reading for the glance
     private const SCALE_LO = 30;         // the bar and the chart run from here
     private const SCALE_HI = 130;        // to here
 
@@ -52,10 +50,10 @@ class SoundView extends WatchUi.View {
     private var _mic as SoundMic;
     private var _captureError as String? = null;   // for good: no microphone at all
     private var _seen as Number = 0;               // windows received since the app opened
-    private var _lastWindowAt as Number = 0;       // System.getTimer() at the last window
+    private var _lastStarts as Number = 0;         // the microphone's starts when the last window came
+    private var _pending as Number = EVENT_NONE;   // a buzz to give on the next tick, never inside a callback
     private var _sinceStart as Number = 0;         // seconds since the app came on screen
     private var _sinceData as Number = 0;
-    private var _sinceSave as Number = 0;
     private var _buzz as Boolean = true;
     private var _settingsLoaded as Boolean = false;
 
@@ -71,12 +69,6 @@ class SoundView extends WatchUi.View {
     function initialize() {
         View.initialize();
         _mic = new SoundMic(new MicPort(), method(:onWindow));
-        // the watch hands over one window about every two seconds, each
-        // already clear of its junk, so each one is the level as it is
-        _session.warmup = 0.0;
-        _session.warmupLeft = 0.0;
-        _session.seed = 0.1;
-        _session.smooth = 0.1;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -156,39 +148,37 @@ class SoundView extends WatchUi.View {
         return 90;
     }
 
-    // One window from the microphone (SoundMic calls this from its
-    // onData, so nothing here may touch the microphone)
+    // One window from the microphone. SoundMic calls this from its onData
+    // and catches anything it throws; nothing here may touch the
+    // microphone, buzz, or write to storage, and it must stay cheap: the
+    // watch enforces a watchdog per callback that the simulator does not.
+    // The first moments after every start read loud whatever the room
+    // (about -13 dBFS in the first 4096 bytes on the watch), and the
+    // session's half-second warm-up drops them.
     function onWindow(audioData as ByteArray, hertz as Number) as Void {
         if (_demo) {
             return;
         }
-        var header = SoundMeter.headerOffset(audioData);
-        // the first bytes of every window are not the room: on the watch
-        // they read about -13 dBFS whatever the room, and what follows
-        // reads like the room, so they are left out
-        var offset = header + SKIP_BYTES;
-        if (offset >= audioData.size()) {
-            offset = header;
+        var starts = _mic.starts;
+        if (starts != _lastStarts) {
+            _lastStarts = starts;
+            _session.restarted();
         }
+        var offset = SoundMeter.headerOffset(audioData);
         var samples = (audioData.size() - offset) / 2;
         if (samples < 1) {
             return;
         }
         var level = SoundMeter.dbfs(SoundMeter.rms(audioData, offset, STRIDE));
-        // the window stands for the time since the last one, for the dose
-        var now = System.getTimer();
-        var heard = samples.toFloat() / (hertz > 0 ? hertz : 11025);
-        var stands = _seen == 0 ? heard : (now - _lastWindowAt) / 1000.0;
-        if (stands < heard) { stands = heard; }
-        if (stands > 3.0) { stands = 3.0; }
-        _lastWindowAt = now;
         _sinceData = 0;
         _seen++;
-        if (_seen <= 6 || _seen % 1000 == 0) {
-            var skipped = offset > header ? SoundMeter.dbfs(SoundMeter.rmsOf(audioData, header, offset, STRIDE)) : 0.0;
-            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + header + ", first " + (offset - header) + " B " + skipped.format("%.1f") + " dBFS, rest " + level.format("%.1f") + " dBFS");
+        if (_seen <= 6 || _seen % 2000 == 0) {
+            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS");
         }
-        react(_session.addWindow(level, stands.toFloat()));
+        var event = _session.addWindow(level, samples.toFloat() / (hertz > 0 ? hertz : 8000));
+        if (event != EVENT_NONE) {
+            _pending = event;
+        }
         WatchUi.requestUpdate();
     }
 
@@ -207,10 +197,9 @@ class SoundView extends WatchUi.View {
         }
         _mic.tick();
         _session.tick();
-        _sinceSave++;
-        if (_sinceSave >= SAVE_EVERY) {
-            _sinceSave = 0;
-            remember();
+        if (_pending != EVENT_NONE) {
+            react(_pending);
+            _pending = EVENT_NONE;
         }
         WatchUi.requestUpdate();
     }
@@ -266,13 +255,10 @@ class SoundView extends WatchUi.View {
         _calibrating = false;
     }
 
+    // The menu is still on screen here; onShow, when it closes, uses the microphone's data again
     function endDemo() as Void {
         _demo = false;
         _session.reset();
-        _session.warmupLeft = 0.0;
-        if (_captureError == null) {
-            _mic.show();
-        }
     }
 
     function demo() as Boolean {
@@ -402,7 +388,7 @@ class SoundView extends WatchUi.View {
 
     // What is going on with the microphone, for under "Listening" or a dim number
     private function waitingText() as String {
-        return SoundMeter.waiting(_sinceStart, _mic.silent, null);
+        return SoundMeter.waiting(_sinceStart, _mic.restarts, null);
     }
 
     private function drawLive(dc as Dc) as Void {

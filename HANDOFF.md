@@ -349,8 +349,29 @@ records where the project stands so the next session can carry on.
    LAP). Ideas not built: a breathing pacer during breaks, cold-plunge
    phases (cold-water crash reports on the fēnix 8), a glance that
    starts a visit directly.
-10. **Sound Level is parked (2026-10-31): it crashed the whole watch
-   twice.** The third log, with one initialisation per window: of a
+10. **Sound Level, rebuilt on the one known-working pattern
+   (2026-10-31, commit after 72fd275).** After four watch reboots the
+   owner confirmed the cause was this app. The only public app with the
+   microphone working on a real fēnix 8 47 mm is the iTuner instrument
+   tuner (github.com/bogdancvisan/garmin-tuner, docs/MICROPHONE.md,
+   commit 8a011d2 "Fix crashes: keep mic session during menu, cheaper
+   YIN, guard tick"): 8 kHz LPCM, 2048-byte windows,
+   `WINDOW_FILLED_CONTINUE`, initialised once at launch, never stopped
+   for a menu ("restarting it is slower and riskier"), cheap onData
+   (the watch has a per-callback watchdog the simulator lacks), errors
+   caught in onData. `SoundMic` now does exactly that: one start per
+   opening, menus/demo/calibrate only ignore the data, stop once at
+   exit; a stall (4 s without a window) gets one careful restart (stop,
+   wait for the stop's onComplete or 5 s, two idle ticks, then init),
+   a second stall or a failed start leaves the microphone alone with a
+   message. Buzzes fire from the tick, never inside onData; nothing is
+   written to storage while capturing (the glance's reading is saved at
+   exit). An independent review of the earlier version found four gaps
+   (exit after give-up, vibrate in onData, init before a stop's
+   callbacks, endDemo starting under the menu); all are fixed and the
+   fake-microphone tests (`testMic*`) now cover each. Not yet on the
+   watch. Earlier notes: Sound Level was parked after it crashed the
+   whole watch twice. The third log, with one initialisation per window: of a
    dozen starts, one in about five delivered a window within three
    seconds; when one did, the first 4096 bytes read -13 dBFS and the
    rest read the room (-63 and -37 dBFS), so the meter maths is right

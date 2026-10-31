@@ -101,17 +101,19 @@ module SoundMeter {
 
     function rmsOf(bytes as ByteArray, offset as Number, end as Number, stride as Number) as Float {
         var step = 2 * (stride < 1 ? 1 : stride);
-        var sum = 0.0d;
+        var sum = 0;
         var squares = 0.0d;
         var n = 0;
         var size = bytes.size();
         if (end > 0 && end < size) {
             size = end;
         }
-        var options = {:offset => offset, :endianness => Lang.ENDIAN_LITTLE};
+        // bytes by hand, not decodeNumber: far fewer calls per window
         for (var i = offset; i + 1 < size; i += step) {
-            options[:offset] = i;
-            var v = bytes.decodeNumber(Lang.NUMBER_FORMAT_SINT16, options) as Number;
+            var v = bytes[i] | (bytes[i + 1] << 8);
+            if (v > 32767) {
+                v -= 65536;
+            }
             sum += v;
             squares += v * v;
             n++;
@@ -119,7 +121,7 @@ module SoundMeter {
         if (n == 0) {
             return 0.0;
         }
-        var mean = sum / n;
+        var mean = sum.toDouble() / n;
         var variance = squares / n - mean * mean;
         return variance <= 0.0d ? 0.0 : Math.sqrt(variance).toFloat();
     }
