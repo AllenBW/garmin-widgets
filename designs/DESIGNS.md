@@ -609,17 +609,20 @@ lines it up with a phone meter.
 **Layout (app)**
 - Button cues on every screen, drawn by `Lib.Cues` at Garmin's own hint
   angles (shared with Sauna and Steam): MENU at two o'clock, EXIT at
-  four, the other page's name at nine and eight. While calibrating: RESET,
-  DONE, +1 and −1.
+  four, and one page word: TREND beside DOWN on the live page, LIVE
+  beside UP on the trend page, the other side blank (both buttons still
+  wrap). While calibrating: RESET, DONE, +1 and −1.
 - Live: a grey band "SOUND LEVEL" (or "DEMO"), the level in big digits
-  coloured by its band (green under 70, amber to 85, orange to 100, red
-  past it), the band's name with the verdict in front once it matters
-  ("Conversation", "Busy traffic", "Too loud · hearing risk", "Dangerous
-  · loud venue", "Pain · leave now"), a bar from 30 to 130 dB filled in
+  (a quarter of the screen high) coloured by its band (green under 70,
+  amber to 85, orange to 100, red past it), the band's name with the
+  verdict in front once it matters ("Conversation", "Busy traffic", "Too
+  loud · hearing risk", "Dangerous · loud venue", "Pain · leave now"), a
+  thick bar from 30 to 130 dB across two thirds of the screen filled in
   the bands' colours up to the level with the 70, 85, 100 and 120 lines
   marked, "Safe all day" / "Safe for 15 min" / "Under 30 s" / "Leave
-  now", then "peak 94 · avg 71" and "dose 12% · 4 min while open" in
-  small grey. "Listening" with what is going on under it ("starting the
+  now", then "peak 94 · avg 71 · 4 min" and "dose 12% while open" in
+  grey (the owner asked on 2026-10-31 for a smaller number, a bigger bar
+  and bigger text at the foot). "Listening" with what is going on under it ("starting the
   microphone", "waiting for sound", "restarting the microphone", and
   after three silent starts "no sound from the microphone · BACK, then
   open again") until the first level; the number dims and the same

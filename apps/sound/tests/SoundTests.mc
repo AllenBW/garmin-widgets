@@ -352,7 +352,7 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertEqualMessage(view.startCue(), "MENU", "START opens the menu");
     Test.assertEqualMessage(view.backCue(), "EXIT", "BACK leaves");
     Test.assertEqualMessage(view.downCue(), "TREND", "DOWN names the next page");
-    Test.assertEqualMessage(view.upCue(), "TREND", "so does UP, there are two");
+    Test.assertEqualMessage(view.upCue(), "", "UP has no page before the first, so no word");
 
     // the demo: every band through both pages, and the number's colour follows
     view.startDemo();
@@ -380,6 +380,9 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertMessage(!delegate.onSelect(), "select is not swallowed");
     Test.assertMessage(!delegate.onBack(), "BACK leaves the app when not calibrating");
     Test.assertMessage(delegate.onNextPage() && view.screen() == SCREEN_TREND, "DOWN turns the page");
+    Test.assertEqualMessage(view.upCue(), "LIVE", "UP names the page before");
+    Test.assertEqualMessage(view.downCue(), "", "DOWN has no page after the last");
+    view.onUpdate(screen);
     Test.assertMessage(delegate.onPreviousPage() && view.screen() == SCREEN_LIVE, "UP turns it back");
     var r = (w < h ? w : h) / 2;
     Test.assertEqualMessage(view.cueAt(w / 2 - (r * 0.9).toNumber(), h / 2), Lib.Cues.TAP_UP, "nine o'clock is UP");
