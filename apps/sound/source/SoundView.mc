@@ -68,6 +68,7 @@ class SoundView extends WatchUi.View {
     private var _bigFont as FontType = Graphics.FONT_NUMBER_HOT;
     private var _valueFont as FontType = Graphics.FONT_NUMBER_MEDIUM;
     private var _lineFont as FontType = Graphics.FONT_SMALL;
+    private var _statFont as FontType = Graphics.FONT_TINY;
     private var _labelFont as FontType = Graphics.FONT_XTINY;
 
     function initialize() {
@@ -79,9 +80,10 @@ class SoundView extends WatchUi.View {
         _w = dc.getWidth();
         _h = h;
         _bandFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.062).toNumber(), Graphics.FONT_SMALL);
-        _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.3).toNumber(), Graphics.FONT_NUMBER_HOT);
+        _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.25).toNumber(), Graphics.FONT_NUMBER_HOT);
         _valueFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.125).toNumber(), Graphics.FONT_NUMBER_MEDIUM);
-        _lineFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.064).toNumber(), Graphics.FONT_SMALL);
+        _lineFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.072).toNumber(), Graphics.FONT_SMALL);
+        _statFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.056).toNumber(), Graphics.FONT_TINY);
         _labelFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.046).toNumber(), Graphics.FONT_XTINY);
     }
 
@@ -491,33 +493,34 @@ class SoundView extends WatchUi.View {
         }
         if (level == null) {
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.42).toNumber(), _valueFont, "Listening", centre);
-            dc.drawText(cx, (h * 0.56).toNumber(), _labelFont, fit(dc, waitingText(), _labelFont, (w * 0.8).toNumber()), centre);
+            dc.drawText(cx, (h * 0.39).toNumber(), _valueFont, "Listening", centre);
+            dc.drawText(cx, (h * 0.52).toNumber(), _statFont, fit(dc, waitingText(), _statFont, (w * 0.8).toNumber()), centre);
             drawScale(dc, null);
             return;
         }
         var dim = stale();
         var tone = dim ? DIM : colour(level);
         dc.setColor(tone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.40).toNumber(), _bigFont, SoundMeter.whole(level).toString(), centre);
+        dc.drawText(cx, (h * 0.37).toNumber(), _bigFont, SoundMeter.whole(level).toString(), centre);
         dc.setColor(dim ? GRAY : tone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.565).toNumber(), _lineFont, fit(dc, dim ? waitingText() : SoundMeter.describe(level), _lineFont, (w * 0.8).toNumber()), centre);
+        dc.drawText(cx, (h * 0.52).toNumber(), _lineFont, fit(dc, dim ? waitingText() : SoundMeter.describe(level), _lineFont, (w * 0.84).toNumber()), centre);
         drawScale(dc, level);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.775).toNumber(), _lineFont, SoundMeter.safeFor(level), centre);
-        drawStats(dc, (h * 0.845).toNumber(), (h * 0.895).toNumber());
+        dc.drawText(cx, (h * 0.75).toNumber(), _lineFont, SoundMeter.safeFor(level), centre);
+        drawStats(dc, (h * 0.825).toNumber(), (h * 0.885).toNumber());
     }
 
-    // "peak 94 · avg 71" and "dose 12% while open"
+    // "peak 94 · avg 71 · 4 min" and "dose 12% while open"
     private function drawStats(dc as Dc, y1 as Number, y2 as Number) as Void {
         var cx = dc.getWidth() / 2;
         var centre = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var peak = _session.peak;
         var avg = _session.average();
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, y1, _labelFont,
-            "peak " + (peak == null ? "--" : SoundMeter.whole(peak).toString()) + " · avg " + (avg == null ? "--" : SoundMeter.whole(avg).toString()), centre);
-        dc.drawText(cx, y2, _labelFont, "dose " + doseText() + " · " + SoundMeter.spell(_session.seconds.toNumber()) + " while open", centre);
+        dc.drawText(cx, y1, _statFont,
+            "peak " + (peak == null ? "--" : SoundMeter.whole(peak).toString()) + " · avg " + (avg == null ? "--" : SoundMeter.whole(avg).toString())
+            + " · " + SoundMeter.spell(_session.seconds.toNumber()), centre);
+        dc.drawText(cx, y2, _statFont, "dose " + doseText() + " while open", centre);
     }
 
     // The day's dose used so far, to a tenth under one percent
@@ -537,10 +540,10 @@ class SoundView extends WatchUi.View {
     private function drawScale(dc as Dc, level as Float?) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var x0 = (w * 0.2).toNumber();
-        var x1 = (w * 0.8).toNumber();
-        var y = (h * 0.655).toNumber();
-        var thick = (h * 0.028).toNumber();
+        var x0 = (w * 0.17).toNumber();
+        var x1 = (w * 0.83).toNumber();
+        var y = (h * 0.615).toNumber();
+        var thick = (h * 0.045).toNumber();
         var edges = [SCALE_LO, SoundMeter.BUSY, SoundMeter.RISK, SoundMeter.LOUD, SCALE_HI] as Array<Number>;
         var colours = [GREEN, AMBER, ORANGE, RED] as Array<Number>;
         var at = level == null ? SCALE_LO : SoundMeter.whole(level);
@@ -564,7 +567,7 @@ class SoundView extends WatchUi.View {
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
             dc.fillRectangle(x - 1, y - thick / 2, 2, thick);
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, y + thick + (h * 0.03).toNumber(), _labelFont, marks[i].toString(), centre);
+            dc.drawText(x, y + thick / 2 + (h * 0.035).toNumber(), _labelFont, marks[i].toString(), centre);
         }
         if (level != null) {
             dc.setColor(WHITE, WHITE);
@@ -632,7 +635,7 @@ class SoundView extends WatchUi.View {
             }
             dc.setPenWidth(1);
         }
-        drawStats(dc, (h * 0.83).toNumber(), (h * 0.88).toNumber());
+        drawStats(dc, (h * 0.825).toNumber(), (h * 0.885).toNumber());
     }
 
     // The live number again, and the offset under it, for matching a phone meter
@@ -668,12 +671,20 @@ class SoundView extends WatchUi.View {
         return _calibrating ? "DONE" : "EXIT";
     }
 
+    // UP names the page before, DOWN the page after; the first and last
+    // pages leave the other side blank (the buttons still wrap round)
     function upCue() as String {
-        return _calibrating ? "+1" : SCREEN_NAMES[(_screen + SCREEN_COUNT - 1) % SCREEN_COUNT];
+        if (_calibrating) {
+            return "+1";
+        }
+        return _screen > 0 ? SCREEN_NAMES[_screen - 1] : "";
     }
 
     function downCue() as String {
-        return _calibrating ? "-1" : SCREEN_NAMES[(_screen + 1) % SCREEN_COUNT];
+        if (_calibrating) {
+            return "-1";
+        }
+        return _screen < SCREEN_COUNT - 1 ? SCREEN_NAMES[_screen + 1] : "";
     }
 
     function cueAt(x as Number, y as Number) as Number {
@@ -685,8 +696,12 @@ class SoundView extends WatchUi.View {
         var sideArc = _calibrating ? WHITE : DIM;
         Lib.Cues.draw(dc, Lib.Cues.START, startCue(), _labelFont, _calibrating ? ACCENT : WHITE, _calibrating ? ACCENT : WHITE);
         Lib.Cues.draw(dc, Lib.Cues.BACK, backCue(), _labelFont, _calibrating ? GREEN : GRAY, _calibrating ? GREEN : GRAY);
-        Lib.Cues.draw(dc, Lib.Cues.UP, upCue(), _labelFont, sideArc, side);
-        Lib.Cues.draw(dc, Lib.Cues.DOWN, downCue(), _labelFont, sideArc, side);
+        if (!upCue().equals("")) {
+            Lib.Cues.draw(dc, Lib.Cues.UP, upCue(), _labelFont, sideArc, side);
+        }
+        if (!downCue().equals("")) {
+            Lib.Cues.draw(dc, Lib.Cues.DOWN, downCue(), _labelFont, sideArc, side);
+        }
     }
 }
 
