@@ -192,6 +192,20 @@ records where the project stands so the next session can carry on.
     three devices. **In the simulator the Mac microphone works:** the
     live screen read 30 to 48 dB in a quiet room with no permission
     prompt, so the capture path is proven there; the watch is not. Decode
+    **First watch reports (2026-10-31):** sometimes the app opened with
+    the microphone shown as on but never a level, and when a level came
+    it spiked and then fell. Fixed blind (the watch was off the cable):
+    the session discards the first half second after every start and
+    seeds the first level from the next full second's energy average;
+    the WAV header is parsed to the "data" chunk instead of assumed to
+    be 44 bytes (extra chunks read as samples are a spike); a capture
+    with no window for two seconds is stopped and restarted from the
+    tick, a failed start is retried, a late `onComplete` from an old
+    stop no longer ends the new capture, and the screen says which of
+    these is happening. Starts, errors and the first three windows are
+    logged, so after the next visit `scripts/watch.sh logs` and
+    `watch-logs/SOUND.TXT` say what the watch microphone really did
+    (window size, header offset, dBFS). Decode
     budget measured in the simulator: 2048 `decodeNumber` calls in 6 ms,
     512 in 1 ms, so every fourth sample is decoded (`STRIDE` 4, within
     0.01 dB of the full set on a sine); the watch is slower, so if the
@@ -314,11 +328,15 @@ records where the project stands so the next session can carry on.
    LAP). Ideas not built: a breathing pacer during breaks, cold-plunge
    phases (cold-water crash reports on the fēnix 8), a glance that
    starts a visit directly.
-10. **Sound Level** is built and queued (`watch-queue/fenix847mm/` holds
-   all eleven apps; `scripts/watch.sh flush` with the sandbox off when
-   the watch is on the cable). First on the watch: does `onData` ever
-   fire (the screen says "Listening · no sound yet" until it does, and
-   "No sound data" if it stops), what a quiet room and normal speech
+10. **Sound Level** is on the watch (flushed 2026-10-31) and the
+   startup fix is queued (`scripts/watch.sh flush` with the sandbox off
+   when the watch is on the cable). Next on the watch: open it a few
+   times (does a level always come within three seconds, does it open
+   on the room's level or still jump), then `scripts/watch.sh logs` and
+   read `watch-logs/SOUND.TXT`: the "listening at" line gives the window
+   size the watch chose, "window 1" its header offset and dBFS, and any
+   "restarting" lines say the microphone delivered nothing. Then what a
+   quiet room and normal speech
    read against a phone meter (then set the offset on the Calibrate
    screen), whether a window ever trips the watchdog (raise `STRIDE`),
    whether the buzz at 85 fires when you clap by the watch, and battery

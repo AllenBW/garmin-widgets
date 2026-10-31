@@ -619,9 +619,12 @@ lines it up with a phone meter.
   the bands' colours up to the level with the 70, 85, 100 and 120 lines
   marked, "Safe all day" / "Safe for 15 min" / "Under 30 s" / "Leave
   now", then "peak 94 · avg 71" and "dose 12% · 4 min while open" in
-  small grey. "Listening" until the first window; the number dims and
-  says "No sound data" when windows stop; a message when the microphone
-  cannot be opened.
+  small grey. "Listening" with what is going on under it ("starting the
+  microphone", "waiting for sound", "restarting the microphone", and
+  after three silent starts "no sound from the microphone · BACK, then
+  open again") until the first level; the number dims and the same
+  status replaces the verdict when windows stop; a message when there
+  is no microphone or no usable format.
 - Trend: the last two minutes, one point a second, coloured by band,
   with the 70, 85 and 100 lines across the chart.
 - Calibrate (from the menu): the live number again with "offset 90 dB"
@@ -651,15 +654,27 @@ that into dB. The shown level settles over a second; the peak is the
 loudest window; the average is by energy (10·log10 of the mean of
 10^(L/10)), not by decibel; the buzz fires when the smoothed level rises
 past 85 (short) or 100 (long), with 2 dB of hysteresis and at most once
-every 15 s per line. A WAV header at the start of a window is skipped.
+every 15 s per line. A WAV header at the start of a window is parsed
+("RIFF", "WAVE", then chunks to "data"), so a header with extra chunks
+is skipped whole rather than read as a spike. The microphone's first
+half second after every start is thrown away (start transient, gain
+settling), and the first level shown is the energy average of the next
+full second, so the number opens on the room rather than on a spike
+that then falls (the owner's first report from the watch, 2026-10-31).
 
 **Platform:** a watch-app with a glance (the microphone is allowed for
 device apps and audio providers only). `Audio.Capture` with
 `CONTAINER_WAV`, `CODEC_LPCM`, mono, 8 kHz (16 kHz if the device refuses
 8), 4096-byte windows, `WINDOW_FILLED_CONTINUE`, no filters so the
 levels stay honest. Capture is foreground only; it stops in `onHide` and
-starts again in `onShow`. Nothing is kept but the last reading for the
-glance. Settings: the calibration offset (50 to 130, default 90) and the
+starts again in `onShow`. A start that fails is retried from the
+one-second tick, a running capture that delivers no window for two
+seconds is stopped and started again (the owner's second report from
+the watch: the microphone shown as on, no level ever), and a stop's
+late completion callback cannot end a capture started after it. The
+starts and the first windows are logged (println, so `SOUND.TXT` on the
+watch says what the microphone did). Nothing is kept but the last
+reading for the glance. Settings: the calibration offset (50 to 130, default 90) and the
 buzz.
 
 **Not done, to learn on a watch:** whether the fēnix 8 delivers windows

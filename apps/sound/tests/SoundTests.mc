@@ -1,3 +1,4 @@
+import Toybox.Application.Properties;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
@@ -8,17 +9,62 @@ import Toybox.Time;
 // Run No Evil tests for Sound Level: scripts/test.sh sound [device]. The
 // meter is fed synthetic windows; nothing here touches the microphone.
 
-// A window of 16-bit little-endian samples: a sine of the given peak, or silence
+// A window of 16-bit little-endian samples: a sine of the given peak, or
+// silence, behind a plain 44-byte WAV header when asked
 function sineWindow(samples as Number, peak as Number, header as Boolean) as ByteArray {
-    var head = header ? 44 : 0;
-    var bytes = new [head + samples * 2]b;
-    if (header) {
-        bytes[0] = 0x52; bytes[1] = 0x49; bytes[2] = 0x46; bytes[3] = 0x46;   // "RIFF"
+    return sineAfter(header ? wavHeader(-1) : new [0]b, samples, peak);
+}
+
+function sineAfter(head as ByteArray, samples as Number, peak as Number) as ByteArray {
+    var bytes = new [head.size() + samples * 2]b;
+    for (var i = 0; i < head.size(); i++) {
+        bytes[i] = head[i];
     }
     for (var i = 0; i < samples; i++) {
         var v = (peak * Math.sin(i * 0.3)).toNumber();
-        bytes.encodeNumber(v, Lang.NUMBER_FORMAT_SINT16, {:offset => head + 2 * i, :endianness => Lang.ENDIAN_LITTLE});
+        bytes.encodeNumber(v, Lang.NUMBER_FORMAT_SINT16, {:offset => head.size() + 2 * i, :endianness => Lang.ENDIAN_LITTLE});
     }
+    return bytes;
+}
+
+function putTag(bytes as ByteArray, at as Number, tag as String) as Void {
+    var chars = tag.toCharArray();
+    for (var i = 0; i < 4; i++) {
+        bytes[at + i] = chars[i].toNumber();
+    }
+}
+
+function putSize(bytes as ByteArray, at as Number, size as Number) as Void {
+    bytes.encodeNumber(size, Lang.NUMBER_FORMAT_UINT32, {:offset => at, :endianness => Lang.ENDIAN_LITTLE});
+}
+
+// A WAV header: "RIFF", "WAVE", a 16-byte "fmt " chunk, then a "LIST"
+// chunk of `list` bytes when list >= 0, then "data". Plain is 44 bytes.
+function wavHeader(list as Number) as ByteArray {
+    var extra = list < 0 ? 0 : 8 + list + (list % 2);
+    var bytes = new [44 + extra]b;
+    putTag(bytes, 0, "RIFF");
+    putSize(bytes, 4, 36 + extra + 4000);
+    putTag(bytes, 8, "WAVE");
+    putTag(bytes, 12, "fmt ");
+    putSize(bytes, 16, 16);
+    bytes.encodeNumber(1, Lang.NUMBER_FORMAT_UINT16, {:offset => 20, :endianness => Lang.ENDIAN_LITTLE});   // PCM
+    bytes.encodeNumber(1, Lang.NUMBER_FORMAT_UINT16, {:offset => 22, :endianness => Lang.ENDIAN_LITTLE});   // mono
+    putSize(bytes, 24, 8000);
+    putSize(bytes, 28, 16000);
+    bytes.encodeNumber(2, Lang.NUMBER_FORMAT_UINT16, {:offset => 32, :endianness => Lang.ENDIAN_LITTLE});
+    bytes.encodeNumber(16, Lang.NUMBER_FORMAT_UINT16, {:offset => 34, :endianness => Lang.ENDIAN_LITTLE});
+    var at = 36;
+    if (list >= 0) {
+        putTag(bytes, at, "LIST");
+        putSize(bytes, at + 4, list);
+        for (var i = 0; i < list; i++) {
+            bytes[at + 8 + i] = 0x49;   // "I": loud if read as samples
+        }
+        at += extra;
+    }
+    putTag(bytes, at, "data");
+    putSize(bytes, at + 4, 4000);
     return bytes;
 }
 
@@ -44,6 +90,21 @@ function testLevels(logger as Logger) as Boolean {
     Test.assertEqualMessage(SoundMeter.headerOffset(headed), 44, "RIFF header seen");
     Test.assertEqualMessage(SoundMeter.headerOffset(half), 0, "no header");
     Test.assertMessage((SoundMeter.rms(headed, 44, 1) - SoundMeter.rms(half, 0, 1)).abs() < 100, "the samples after the header match");
+    // a header with a LIST chunk before the data: the samples start later,
+    // and reading the chunk as sound would be a spike
+    var listed = sineAfter(wavHeader(26), 2048, 16384);
+    Test.assertEqualMessage(SoundMeter.headerOffset(listed), 78, "data after a 26-byte LIST chunk");
+    Test.assertMessage((SoundMeter.rms(listed, 78, 1) - SoundMeter.rms(half, 0, 1)).abs() < 100, "the samples after it match");
+    var quiet = sineWindow(2048, 1024, false);
+    var quietListed = sineAfter(wavHeader(26), 2048, 1024);
+    Test.assertMessage(SoundMeter.rms(quietListed, 0, 1) > SoundMeter.rms(quiet, 0, 1) + 500, "read from the top, the header drowns a quiet room");
+    var noData = new [60]b;
+    putTag(noData, 0, "RIFF"); putTag(noData, 8, "WAVE"); putTag(noData, 12, "fmt "); putSize(noData, 16, 16);
+    Test.assertEqualMessage(SoundMeter.headerOffset(noData), 44, "no data chunk in reach: the plain 44");
+    var notWave = new [60]b;
+    putTag(notWave, 0, "RIFF");
+    Test.assertEqualMessage(SoundMeter.headerOffset(notWave), 0, "RIFF without WAVE is sound");
+    Test.assertEqualMessage(SoundMeter.headerOffset(new [8]b), 0, "too short to be a header");
 
     // decimation: every fourth sample gives the same level within a fraction of a decibel
     var every = SoundMeter.dbfs(SoundMeter.rms(half, 0, 1));
@@ -112,9 +173,19 @@ function testDangerRange(logger as Logger) as Boolean {
 function testSession(logger as Logger) as Boolean {
     var s = new SoundSession();
     s.offset = 90.0;
-    // a quarter-second window at -30 dBFS is 60 dB; the first one sets the level outright
-    Test.assertEqualMessage(s.addWindow(-30.0, 0.25), EVENT_NONE, "quiet: no event");
-    Test.assertMessage(((s.level as Float) - 60.0).abs() < 0.01, "first window sets the level");
+    // the microphone's first half second is thrown away, spike and all
+    Test.assertEqualMessage(s.addWindow(20.0, 0.25), EVENT_NONE, "a start spike: no event");
+    Test.assertEqualMessage(s.addWindow(0.0, 0.25), EVENT_NONE, "still warming up");
+    Test.assertMessage(s.level == null && s.peak == null && s.seconds == 0.0, "nothing of the warm-up is kept");
+    // then a quarter-second window at -30 dBFS is 60 dB; a second of them seeds the level
+    for (var i = 0; i < 3; i++) {
+        Test.assertEqualMessage(s.addWindow(-30.0, 0.25), EVENT_NONE, "quiet: no event");
+        Test.assertMessage(s.level == null, "no level until a second is in");
+    }
+    s.addWindow(-30.0, 0.25);
+    Test.assertMessage(((s.level as Float) - 60.0).abs() < 0.01, "a second of 60 dB opens at 60: " + s.level);
+    Test.assertMessage(((s.peak as Float) - 60.0).abs() < 0.01, "the peak counts from the warm-up's end");
+    Test.assertMessage((s.seconds - 1.0).abs() < 0.01, "a second measured");
     // a jump to 102 dB settles over a second: a quarter of the way per window
     s.addWindow(12.0, 0.25);
     Test.assertMessage(((s.level as Float) - 70.5).abs() < 0.01, "a quarter of the way: " + s.level);
@@ -162,6 +233,33 @@ function testSession(logger as Logger) as Boolean {
     s.reset();
     Test.assertMessage(s.level == null && s.peak == null && s.trendCount() == 0 && s.dosePercent == 0.0, "reset forgets the sitting");
     Test.assertEqualMessage(s.offset, 90.0, "but keeps the calibration");
+    Test.assertMessage(s.warmupLeft > 0.0, "and warms up again");
+
+    // the seed is an energy average, so a loud moment in the first second shows in it
+    for (var i = 0; i < 2; i++) { s.addWindow(-50.0, 0.25); }
+    s.addWindow(-20.0, 0.25); s.addWindow(-20.0, 0.25); s.addWindow(-20.0, 0.25); s.addWindow(-50.0, 0.25);
+    Test.assertMessage(((s.level as Float) - 68.8).abs() < 0.2, "three 70s and a 40 seed near 69: " + s.level);
+
+    // a restart (the menu, say) discards the next half second but keeps the level
+    s.restarted();
+    s.addWindow(20.0, 0.25);
+    s.addWindow(20.0, 0.25);
+    Test.assertMessage(((s.level as Float) - 68.8).abs() < 0.2, "the restart's spike changes nothing: " + s.level);
+    Test.assertMessage(((s.peak as Float) - 70.0).abs() < 0.01, "nor the peak: " + s.peak);
+    s.addWindow(-20.0, 0.25);
+    Test.assertMessage(((s.level as Float) - 69.1).abs() < 0.2, "then it moves again: " + s.level);
+    return true;
+}
+
+(:test)
+function testWaiting(logger as Logger) as Boolean {
+    Test.assertEqualMessage(SoundMeter.waiting(0, 0, null), "starting the microphone", "just started");
+    Test.assertEqualMessage(SoundMeter.waiting(1, 0, null), "starting the microphone", "a second in");
+    Test.assertEqualMessage(SoundMeter.waiting(2, 0, null), "waiting for sound", "two seconds, nothing yet");
+    Test.assertEqualMessage(SoundMeter.waiting(0, 1, null), "restarting the microphone", "first restart");
+    Test.assertEqualMessage(SoundMeter.waiting(5, 2, null), "restarting the microphone", "second");
+    Test.assertEqualMessage(SoundMeter.waiting(0, 3, null), "no sound from the microphone · BACK, then open again", "give up advice after three");
+    Test.assertEqualMessage(SoundMeter.waiting(0, 0, "Microphone unavailable (3)"), "Microphone unavailable (3) · retrying", "an error says so");
     return true;
 }
 
@@ -241,6 +339,7 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
 
     var view = new SoundView();
     view.onLayout(screen);
+    Properties.setValue("Calibration", 90);   // the simulator keeps the last sitting's offset
     view.reloadSettings();
     Test.assertEqualMessage(view.offset(), 90, "the default calibration");
     // nothing heard yet: both pages
