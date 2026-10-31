@@ -26,7 +26,7 @@ in the SDK before relying on it.
 | 8 | **Sun Compass** | Glance + app | A live compass rose with today's sun path across it | S–M | Built in `apps/suncompass/` |
 | 9 | **Pocket QR** | Glance + app | Up to six QR codes set up on the phone, shown full screen | S | Built in `apps/pocketqr/` |
 | 10 | **Sauna and Steam** | Glance + app | Sauna or steam room, round by round, coached against the guidance, a cue by every button | M | Built in `apps/sauna/` |
-| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button (11 to 13 are the other session's faces) | S–M | Built in `apps/sound/` |
+| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button (11 to 13 are the other session's faces) | S–M | Parked: the fēnix 8 microphone delivers sound unreliably and crashed the watch (2026-10-31) |
 
 Considered and dropped:
 

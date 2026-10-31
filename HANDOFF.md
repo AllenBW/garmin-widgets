@@ -349,7 +349,22 @@ records where the project stands so the next session can carry on.
    LAP). Ideas not built: a breathing pacer during breaks, cold-plunge
    phases (cold-water crash reports on the fēnix 8), a glance that
    starts a visit directly.
-10. **Sound Level** is on the watch (flushed 2026-10-31) and the
+10. **Sound Level is parked (2026-10-31): it crashed the whole watch
+   twice.** The third log, with one initialisation per window: of a
+   dozen starts, one in about five delivered a window within three
+   seconds; when one did, the first 4096 bytes read -13 dBFS and the
+   rest read the room (-63 and -37 dBFS), so the meter maths is right
+   and the junk skip works, but the fēnix 8 microphone API (firmware
+   23.40, Connect IQ 6.0.2) delivers sound unreliably and repeated
+   initialise/stop cycles took the watch down with no entry in
+   CIQ_LOG (a firmware crash, not an app exception). The committed
+   build opens the microphone at most once a second and gives up after
+   five silent or failed starts, but it has not been on the watch and
+   is not in the install queue. The owner removes the installed copy
+   from the Connect IQ phone app (MTP does not expose installed apps).
+   Revisit after a firmware update or a public report of capture
+   working on a fēnix 8. Older notes follow.
+   Sound Level was on the watch (flushed 2026-10-31) and the
    one-shot capture went on with `scripts/watch.sh push sound` on
    2026-10-31. Next on the watch: open it a few times (does a level
    always come within three seconds and keep updating, does it open on
