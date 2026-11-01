@@ -7,13 +7,15 @@ the ones Lib.Config.read expects:
 - Style: the face's styles (here, its typefaces)
 - Accent: any colour in the editor; the eight below on the phone
 - DataColor: Bone, Silver, Sand, Ice, Blush
-- Slot1..SlotN: any complication in the editor; on the phone, the Garmin
+- Reading1..ReadingN: any complication in the editor; on the phone, the Garmin
   readings Lib.Slots has an icon and a word for
 - Bedside: the dim red bedside clock in standby during sleep hours
 
     python3 designs/gen_face_settings.py vessel|inscription|overlap
 
-Regenerate rather than edit the output. resources/strings/strings.xml is
+The readings' properties were Slot1..SlotN until their defaults changed
+(November 2026); new names, so a watch that kept the old values takes
+the new defaults. Regenerate rather than edit the output. resources/strings/strings.xml is
 written whole too; the face's own strings go in FACES below.
 """
 import sys
@@ -43,7 +45,7 @@ FACES = {
         style_what="the time's typeface (Lib.Ink.BIONIC_BOLD, CONDENSED_BOLD, BIONIC_MEDIUM)",
         accent_what="the minutes and their glass",
         data_what="the hours, their glass and the date",
-        slots=[("The hours' glass", "Body Battery"), ("The minutes' glass", "Steps"),
+        slots=[("The hours' glass", "Weather"), ("The minutes' glass", "Heart rate"),
                ("Reading at the foot", "Sunrise and sunset")],
     ),
     "inscription": dict(
@@ -53,8 +55,8 @@ FACES = {
         style_what="the typeface (Lib.Ink.PRIDI, BIONIC_BOLD, CONDENSED_BOLD, BIONIC_MEDIUM; Pridi sets the legend too)",
         accent_what="the minutes and the date",
         data_what="the hours and the legend",
-        slots=[("Left of the rim", "Temperature"), ("Right of the rim", "Watch battery"),
-               ("Bottom left", "Heart rate"), ("Bottom middle", "Steps"), ("Bottom right", "Body Battery")],
+        slots=[("Left of the rim", "Weather"), ("Right of the rim", "Pressure"),
+               ("Bottom left", "Heart rate"), ("Bottom middle", "Steps"), ("Bottom right", "Sunrise and sunset")],
     ),
     "overlap": dict(
         name="Overlap",
@@ -63,7 +65,7 @@ FACES = {
         style_what="the time's typeface (Lib.Ink.BIONIC_BOLD, CONDENSED_BOLD, BIONIC_MEDIUM)",
         accent_what="the minutes and the date",
         data_what="the hours (drawn dim) and the readings",
-        slots=[("First reading", "Heart rate"), ("Second reading", "Steps")],
+        slots=[("First reading", "Sunrise and sunset"), ("Second reading", "Weather")],
     ),
 }
 
@@ -110,7 +112,7 @@ def main(face):
     p += '    <property id="DataColor" type="number">0</property>\n'
     p += "    <!-- The readings as Complications.Type numbers -->\n"
     for i, (title, default) in enumerate(slots):
-        p += f'    <!-- {title} -->\n    <property id="Slot{i + 1}" type="number">{TYPES[default]}</property>\n'
+        p += f'    <!-- {title} -->\n    <property id="Reading{i + 1}" type="number">{TYPES[default]}</property>\n'
     p += "    <!-- Standby turns into a dim red bedside clock during the watch's sleep hours -->\n"
     p += '    <property id="Bedside" type="boolean">true</property>\n</properties>\n'
     (res / "settings").mkdir(parents=True, exist_ok=True)
@@ -126,7 +128,7 @@ def main(face):
     s += lst("Accent", "AccentTitle", [(i, "Accent" + n) for i, (n, _) in enumerate(ACCENTS)])
     s += lst("DataColor", "DataTitle", [(i, "Data" + n) for i, (n, _) in enumerate(DATA)])
     for i, (title, _) in enumerate(slots):
-        s += lst(f"Slot{i + 1}", f"Slot{i + 1}Title", [(t, "Reading" + key(n)) for t, n in READINGS])
+        s += lst(f"Reading{i + 1}", f"Slot{i + 1}Title", [(t, "Reading" + key(n)) for t, n in READINGS])
     s += '    <setting propertyKey="@Properties.Bedside" title="@Strings.BedsideTitle">\n'
     s += '        <settingConfig type="boolean"/>\n    </setting>\n</settings>\n'
     (res / "settings/settings.xml").write_text(s)

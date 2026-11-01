@@ -29,7 +29,7 @@
             <listEntry value="4">@Strings.DataBlush</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.Slot1" title="@Strings.Slot1Title">
+    <setting propertyKey="@Properties.Reading1" title="@Strings.Slot1Title">
         <settingConfig type="list">
             <listEntry value="18">@Strings.ReadingHeartRate</listEntry>
             <listEntry value="2">@Strings.ReadingSteps</listEntry>
@@ -54,7 +54,7 @@
             <listEntry value="12">@Strings.ReadingNextCalendarEvent</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.Slot2" title="@Strings.Slot2Title">
+    <setting propertyKey="@Properties.Reading2" title="@Strings.Slot2Title">
         <settingConfig type="list">
             <listEntry value="18">@Strings.ReadingHeartRate</listEntry>
             <listEntry value="2">@Strings.ReadingSteps</listEntry>
@@ -79,7 +79,7 @@
             <listEntry value="12">@Strings.ReadingNextCalendarEvent</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.Slot3" title="@Strings.Slot3Title">
+    <setting propertyKey="@Properties.Reading3" title="@Strings.Slot3Title">
         <settingConfig type="list">
             <listEntry value="18">@Strings.ReadingHeartRate</listEntry>
             <listEntry value="2">@Strings.ReadingSteps</listEntry>
@@ -104,7 +104,7 @@
             <listEntry value="12">@Strings.ReadingNextCalendarEvent</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.Slot4" title="@Strings.Slot4Title">
+    <setting propertyKey="@Properties.Reading4" title="@Strings.Slot4Title">
         <settingConfig type="list">
             <listEntry value="18">@Strings.ReadingHeartRate</listEntry>
             <listEntry value="2">@Strings.ReadingSteps</listEntry>
@@ -129,7 +129,7 @@
             <listEntry value="12">@Strings.ReadingNextCalendarEvent</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.Slot5" title="@Strings.Slot5Title">
+    <setting propertyKey="@Properties.Reading5" title="@Strings.Slot5Title">
         <settingConfig type="list">
             <listEntry value="18">@Strings.ReadingHeartRate</listEntry>
             <listEntry value="2">@Strings.ReadingSteps</listEntry>

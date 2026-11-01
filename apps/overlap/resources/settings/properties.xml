@@ -8,9 +8,9 @@
     <property id="DataColor" type="number">0</property>
     <!-- The readings as Complications.Type numbers -->
     <!-- First reading -->
-    <property id="Slot1" type="number">18</property>
+    <property id="Reading1" type="number">13</property>
     <!-- Second reading -->
-    <property id="Slot2" type="number">2</property>
+    <property id="Reading2" type="number">8</property>
     <!-- Standby turns into a dim red bedside clock during the watch's sleep hours -->
     <property id="Bedside" type="boolean">true</property>
 </properties>

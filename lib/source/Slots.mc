@@ -5,6 +5,7 @@ import Toybox.Lang;
 import Toybox.Math;
 import Toybox.SensorHistory;
 import Toybox.System;
+import Toybox.Time;
 import Toybox.UserProfile;
 import Toybox.Weather;
 
@@ -20,7 +21,11 @@ module Lib {
     (:slots)
     module Slots {
 
-        typedef Reading as [String, String, Float?, String?, Boolean];
+        typedef Reading as [String, String, Float?, String?, Number];
+
+        const TREND_WINDOW = 3 * 3600;   // seconds of barometer history the trend looks at
+        const TREND = 100.0;             // pascals over the window that make a trend: 1 hPa
+        const CLIMB = 10.0;              // metres: more than this in the window, no trend
 
         enum Kind {
             HEART, STEPS, BATTERY, BODY, STRESS, TEMPERATURE, CALORIES, FLOORS, INTENSITY,
@@ -63,69 +68,70 @@ module Lib {
 
         // What a slot shows now: [value, unit (small, after it, or ""), bulbs
         // lit 0..1 or null for none, the label in place of an icon or null,
-        // true when the sun event is a sunrise]
+        // which way: 1 for a sunrise and a rising barometer, -1 for a sunset
+        // and a falling one, else 0]
         function read(kind as Number, id as Complications.Id) as Reading {
             switch (kind) {
                 case HEART: {
                     var hr = Lib.Daily.heartRateBpm();
-                    return [dashes(hr), "", heartFraction(hr), null, false];
+                    return [dashes(hr), "", heartFraction(hr), null, 0];
                 }
                 case STEPS: {
                     var info = ActivityMonitor.getInfo();
-                    return [dashes(info.steps), "", fraction(info.steps, info.stepGoal), null, false];
+                    return [dashes(info.steps), "", fraction(info.steps, info.stepGoal), null, 0];
                 }
                 case BATTERY: {
                     var level = Lib.Daily.watchBattery();
-                    return [level.toString(), "%", fraction(level, 100), null, false];
+                    return [level.toString(), "%", fraction(level, 100), null, 0];
                 }
                 case BODY: {
                     var body = bodyBattery(id);
-                    return [dashes(body), "", fraction(body, 100), null, false];
+                    return [dashes(body), "", fraction(body, 100), null, 0];
                 }
                 case STRESS: {
                     var stress = ActivityMonitor.getInfo().stressScore;
                     if (stress == null) {
                         stress = number(id);
                     }
-                    return [dashes(stress), "", fraction(stress, 100), null, false];
+                    return [dashes(stress), "", fraction(stress, 100), null, 0];
                 }
                 case TEMPERATURE:
                     return temperature();
                 case CALORIES:
-                    return [dashes(ActivityMonitor.getInfo().calories), "", null, null, false];
+                    return [dashes(ActivityMonitor.getInfo().calories), "", null, null, 0];
                 case FLOORS: {
                     var info = ActivityMonitor.getInfo();
-                    return [dashes(info.floorsClimbed), "", fraction(info.floorsClimbed, info.floorsClimbedGoal), null, false];
+                    return [dashes(info.floorsClimbed), "", fraction(info.floorsClimbed, info.floorsClimbedGoal), null, 0];
                 }
                 case INTENSITY: {
                     var info = ActivityMonitor.getInfo();
                     var week = info.activeMinutesWeek;
                     var total = (week != null) ? week.total : null;
-                    return [dashes(total), "", fraction(total, info.activeMinutesWeekGoal), null, false];
+                    return [dashes(total), "", fraction(total, info.activeMinutesWeekGoal), null, 0];
                 }
                 case ALTITUDE:
                     return altitude();
                 case PULSE_OX: {
                     var spo2 = number(id);
-                    return [dashes(spo2), (spo2 != null) ? "%" : "", fraction(spo2, 100), null, false];
+                    return [dashes(spo2), (spo2 != null) ? "%" : "", fraction(spo2, 100), null, 0];
                 }
                 case BREATH: {
                     var rate = ActivityMonitor.getInfo().respirationRate;
-                    return [dashes((rate != null) ? rate : number(id)), "", null, null, false];
+                    return [dashes((rate != null) ? rate : number(id)), "", null, null, 0];
                 }
                 case SUN:
                     return sun();
                 case NOTIFICATIONS:
-                    return [System.getDeviceSettings().notificationCount.toString(), "", null, null, false];
+                    return [System.getDeviceSettings().notificationCount.toString(), "", null, null, 0];
                 case RECOVERY: {
                     var hours = ActivityMonitor.getInfo().timeToRecovery;
-                    return [dashes(hours), (hours != null) ? "H" : "", null, null, false];
+                    return [dashes(hours), (hours != null) ? "H" : "", null, null, 0];
                 }
                 case PRESSURE:
                     return pressure(id);
                 case SLEEP: {
                     var score = number(id);
-                    return [dashes(score), "", fraction(score, 100), null, false];
+                    return [dashes(score), "", fraction(score, 100), null, 0];
                 }
             }
             if (kind == VO2) {
@@ -156,7 +162,7 @@ module Lib {
                 case INTENSITY:     words = ["ACTIVE MIN", "MIN"]; break;
                 case PULSE_OX:      words = ["SPO2", "SPO2"]; break;
                 case BREATH:        words = ["BRPM", "BRPM"]; break;
-                case SUN:           words = reading[4] ? ["SUNRISE", "SUNRISE"] : ["SUNSET", "SUNSET"]; break;
+                case SUN:           words = (reading[4] > 0) ? ["SUNRISE", "SUNRISE"] : ["SUNSET", "SUNSET"]; break;
                 case NOTIFICATIONS: words = ["ALERTS", "ALERTS"]; break;
                 case RECOVERY:      words = ["RECOVERY", "REST"]; break;
                 case SLEEP:         words = ["SLEEP", "SLEEP"]; break;
@@ -167,6 +173,12 @@ module Lib {
             }
             var label = reading[3];
             return (label != null) ? label : "";
+        }
+
+        // The complication a press and hold on a slot opens: the weather
+        // for the temperature, else the slot's own
+        function opens(kind as Number, id as Complications.Id) as Complications.Id {
+            return (kind == TEMPERATURE) ? new Complications.Id(Complications.COMPLICATION_TYPE_CURRENT_WEATHER) : id;
         }
 
         // value / goal, capped at 1; null when either is missing
@@ -244,7 +256,7 @@ module Lib {
         function other(id as Complications.Id, labelled as Boolean) as Reading {
             var c = complication(id);
             if (c == null) {
-                return ["--", "", null, labelled ? "?" : null, false];
+                return ["--", "", null, labelled ? "?" : null, 0];
             }
             var bar = null;
             var ranges = c.ranges;
@@ -258,7 +270,7 @@ module Lib {
             }
             var unit = c.unit;
             return [text(value), (unit instanceof String && unit.length() <= 3) ? unit : "", bar,
-                    labelled ? ((name != null) ? name : "?") : null, false];
+                    labelled ? ((name != null) ? name : "?") : null, 0];
         }
 
         // How far the heart rate sits from resting towards the maximum
@@ -290,10 +302,10 @@ module Lib {
             var conditions = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
             var now = (conditions != null) ? conditions.temperature : null;
             if (now == null) {
-                return ["--", "", null, null, false];
+                return ["--", "", null, null, 0];
             }
             var today = conditions as Weather.CurrentConditions;
-            return [Lib.Fmt.temperatureValue(now) + "°", "", between(now, today.lowTemperature, today.highTemperature), null, false];
+            return [Lib.Fmt.temperatureValue(now) + "°", "", between(now, today.lowTemperature, today.highTemperature), null, 0];
         }
 
         // The next sunrise or sunset; the bar is how much of the day (or the
@@ -302,7 +314,7 @@ module Lib {
             var times = Lib.Sun.today();
             var next = Lib.Sun.next(times);
             if (next == null) {
-                return ["--:--", "", null, null, false];
+                return ["--:--", "", null, null, 0];
             }
             var clock = System.getClockTime();
             var now = clock.hour * 3600 + clock.min * 60;
@@ -318,7 +330,7 @@ module Lib {
                     bar = fraction(gone, length);
                 }
             }
-            return [Lib.Fmt.clock(next[1]), "", bar, null, next[0]];
+            return [Lib.Fmt.clock(next[1]), "", bar, null, next[0] ? 1 : -1];
         }
 
         // Altitude in feet or metres as the watch is set
@@ -331,9 +343,9 @@ module Lib {
             }
             var feet = System.getDeviceSettings().elevationUnits == System.UNIT_STATUTE;
             if (metres == null) {
-                return ["--", "", null, null, false];
+                return ["--", "", null, null, 0];
             }
-            return [Math.round(feet ? metres * 3.28084 : metres).toNumber().toString(), feet ? "FT" : "M", null, null, false];
+            return [Math.round(feet ? metres * 3.28084 : metres).toNumber().toString(), feet ? "FT" : "M", null, null, 0];
         }
 
         // Sea-level pressure in inHg on a watch set to statute units, else hPa;
@@ -352,10 +364,62 @@ module Lib {
             if (pa == null) {
                 return other(id, false);
             }
+            var trend = pressureTrend();
             if (System.getDeviceSettings().elevationUnits == System.UNIT_STATUTE) {   // the same setting as altitude
-                return [(pa / 3386.39).format("%.2f"), "INHG", null, null, false];
+                return [(pa / 3386.39).format("%.2f"), "INHG", null, null, trend];
             }
-            return [Math.round(pa / 100.0).toNumber().toString(), "HPA", null, null, false];
+            return [Math.round(pa / 100.0).toNumber().toString(), "HPA", null, null, trend];
+        }
+
+        // The barometer over the last three hours, newest sample against
+        // oldest: 1 rising, -1 falling, 0 steady (or not known). Climbing or
+        // descending moves the pressure too (about 12 Pa a metre), so the
+        // trend is left out when the altitude changed in the window.
+        function pressureTrend() as Number {
+            if (!(Toybox has :SensorHistory) || !(Toybox.SensorHistory has :getPressureHistory)) {
+                return 0;
+            }
+            var window = new Time.Duration(TREND_WINDOW);
+            var change = ends(SensorHistory.getPressureHistory({:period => window, :order => SensorHistory.ORDER_NEWEST_FIRST}),
+                              SensorHistory.getPressureHistory({:period => window, :order => SensorHistory.ORDER_OLDEST_FIRST}));
+            var climb = null;
+            if (change != null && (Toybox.SensorHistory has :getElevationHistory)) {
+                climb = ends(SensorHistory.getElevationHistory({:period => window, :order => SensorHistory.ORDER_NEWEST_FIRST}),
+                             SensorHistory.getElevationHistory({:period => window, :order => SensorHistory.ORDER_OLDEST_FIRST}));
+            }
+            return trend(change, climb);
+        }
+
+        // The trend from the pressure's change (Pa) and the altitude's (m)
+        // over the window
+        function trend(change as Float?, climb as Float?) as Number {
+            if (change == null || (climb != null && climb.abs() > CLIMB)) {
+                return 0;
+            }
+            return (change >= TREND) ? 1 : ((change <= -TREND) ? -1 : 0);
+        }
+
+        // Newest minus oldest sample, reading only from each end, or null
+        function ends(newestFirst as SensorHistory.SensorHistoryIterator,
+                      oldestFirst as SensorHistory.SensorHistoryIterator) as Float? {
+            var newest = first(newestFirst);
+            var oldest = first(oldestFirst);
+            return (newest != null && oldest != null) ? newest - oldest : null;
+        }
+
+        // The first sample with data, giving up after a few empty ones
+        function first(iterator as SensorHistory.SensorHistoryIterator) as Float? {
+            for (var i = 0; i < 5; i++) {
+                var sample = iterator.next();
+                if (sample == null) {
+                    return null;
+                }
+                var data = sample.data;
+                if (data != null) {
+                    return (data as Numeric).toFloat();
+                }
+            }
+            return null;
         }
     }
 }
