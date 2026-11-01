@@ -27,6 +27,7 @@ class DaylightView extends WatchUi.WatchFace {
 
     private const PRESSURE_WINDOW = 3 * 3600;   // seconds
     private const PRESSURE_TREND = 100.0;       // pascals over the window: 1 hPa
+    private const CLIMB = 10.0;                 // metres: more than this in the window, no trend
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -35,6 +36,8 @@ class DaylightView extends WatchUi.WatchFace {
     // Today's sun as seconds since local midnight (null: unknown or never)
     private var _dayStart as Number = 0;
     private var _located as Boolean = false;
+    private var _sunKey as String = "";            // the day and place the sun times are for
+    private var _polarDay as Boolean = false;      // located, and the sun never sets today
     private var _rise as Number? = null;
     private var _set as Number? = null;
     private var _goldenMorningStart as Number? = null;
@@ -50,6 +53,7 @@ class DaylightView extends WatchUi.WatchFace {
     private var _smallFont as FontType = Graphics.FONT_XTINY;
     private var _timesFont as FontType = Graphics.FONT_XTINY;
     private var _labelFont as FontType = Graphics.FONT_XTINY;
+    private var _ticks as Array<Number> = [] as Array<Number>;   // x1, y1, x2, y2 per hour, from onLayout
 
     function initialize() {
         WatchFace.initialize();
@@ -61,6 +65,17 @@ class DaylightView extends WatchUi.WatchFace {
         _smallFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.046).toNumber(), Graphics.FONT_XTINY);
         _timesFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.053).toNumber(), Graphics.FONT_XTINY);
         _labelFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.044).toNumber(), Graphics.FONT_XTINY);
+        // The hour ticks never move: their ends are worked out once
+        var w = dc.getWidth();
+        var cx = w / 2;
+        var cy = h / 2;
+        _ticks = [] as Array<Number>;
+        for (var hour = 0; hour < 24; hour++) {
+            var deg = Lib.Sun.dialDegrees(hour * 3600);
+            var inner = Lib.Arcs.point(cx, cy, w * ((hour % 6 == 0) ? 0.458 : 0.471), deg);
+            var outer = Lib.Arcs.point(cx, cy, w * 0.493, deg);
+            _ticks.addAll([inner[0].toNumber(), inner[1].toNumber(), outer[0].toNumber(), outer[1].toNumber()]);
+        }
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -84,28 +99,43 @@ class DaylightView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _minute = -1;   // fresh altitude and pressure on the wrist turn
         WatchUi.requestUpdate();
     }
 
     // ----------------------------------------------------------------- data
 
-    // The sun maths once a minute, from the last known location; the watch's
-    // own sunrise/sunset when there has never been one.
+    // Altitude and pressure once a minute; the sun maths once a day (and
+    // again when the place changes), from the last known location, or the
+    // watch's own sunrise/sunset when there has never been one.
     function refresh() as Void {
         var clock = System.getClockTime();
-        if (clock.min == _minute) {
+        var now = Time.now().value();
+        if (now / 60 == _minute) {
             return;
         }
-        _minute = clock.min;
-        var now = Time.now().value();
+        _minute = now / 60;
         _dayStart = now - (clock.hour * 3600 + clock.min * 60 + clock.sec);
+        refreshSun();
+        refreshEnvironment();
+    }
 
+    private function refreshSun() as Void {
         var where = Lib.Location.get();
+        var key = _dayStart.toString() + ((where != null) ? where[0].format("%.2f") + where[1].format("%.2f") : "");
+        if (key.equals(_sunKey)) {
+            return;
+        }
+        _sunKey = key;
         _located = (where != null);
+        _polarDay = false;
         if (where != null) {
             var today = Lib.Solar.day(where[0], where[1], _dayStart);
             _rise = sinceMidnight(today.rise);
             _set = sinceMidnight(today.set);
+            if (_rise == null && _set == null) {
+                _polarDay = Lib.Solar.elevation(where[0], where[1], _dayStart + 43200) > Lib.Solar.RISE_SET;
+            }
             _goldenMorningStart = sinceMidnight(today.goldenMorningStart);
             _goldenMorningEnd = sinceMidnight(today.goldenMorningEnd);
             _goldenEveningStart = sinceMidnight(today.goldenEveningStart);
@@ -122,7 +152,6 @@ class DaylightView extends WatchUi.WatchFace {
             var rise = _rise;
             _tomorrowRise = (rise != null) ? _dayStart + 86400 + rise : null;
         }
-        refreshEnvironment();
     }
 
     private function sinceMidnight(unix as Number?) as Number? {
@@ -148,39 +177,54 @@ class DaylightView extends WatchUi.WatchFace {
         _trend = pressureTrend();
     }
 
-    // The barometer over the last few hours: newest against oldest sample
+    // The barometer over the last few hours: newest against oldest sample.
+    // Climbing or descending moves the pressure too (about 12 Pa a metre),
+    // so the trend is left out when the altitude changed in the window.
     private function pressureTrend() as Number {
         if (!(Toybox has :SensorHistory) || !(Toybox.SensorHistory has :getPressureHistory)) {
             return 0;
         }
-        var iterator = SensorHistory.getPressureHistory({
-            :period => new Time.Duration(PRESSURE_WINDOW),
-            :order => SensorHistory.ORDER_NEWEST_FIRST
-        });
-        var newest = null;
-        var oldest = null;
-        var sample = iterator.next();
-        while (sample != null) {
-            var data = sample.data;
-            if (data != null) {
-                if (newest == null) {
-                    newest = data;
-                }
-                oldest = data;
-            }
-            sample = iterator.next();
-        }
-        if (newest == null || oldest == null) {
+        var pressure = ends(SensorHistory.getPressureHistory({:period => new Time.Duration(PRESSURE_WINDOW), :order => SensorHistory.ORDER_NEWEST_FIRST}),
+                            SensorHistory.getPressureHistory({:period => new Time.Duration(PRESSURE_WINDOW), :order => SensorHistory.ORDER_OLDEST_FIRST}));
+        if (pressure == null) {
             return 0;
         }
-        var delta = newest - oldest;
-        if (delta >= PRESSURE_TREND) {
+        if (Toybox.SensorHistory has :getElevationHistory) {
+            var climb = ends(SensorHistory.getElevationHistory({:period => new Time.Duration(PRESSURE_WINDOW), :order => SensorHistory.ORDER_NEWEST_FIRST}),
+                             SensorHistory.getElevationHistory({:period => new Time.Duration(PRESSURE_WINDOW), :order => SensorHistory.ORDER_OLDEST_FIRST}));
+            if (climb != null && climb.abs() > CLIMB) {
+                return 0;
+            }
+        }
+        if (pressure >= PRESSURE_TREND) {
             return 1;
         }
-        if (delta <= -PRESSURE_TREND) {
+        if (pressure <= -PRESSURE_TREND) {
             return -1;
         }
         return 0;
+    }
+
+    // Newest minus oldest sample, reading only from each end, or null
+    private function ends(newestFirst as SensorHistory.SensorHistoryIterator, oldestFirst as SensorHistory.SensorHistoryIterator) as Float? {
+        var newest = first(newestFirst);
+        var oldest = first(oldestFirst);
+        return (newest != null && oldest != null) ? newest - oldest : null;
+    }
+
+    // The first sample with data, giving up after a few empty ones
+    private function first(iterator as SensorHistory.SensorHistoryIterator) as Float? {
+        for (var i = 0; i < 5; i++) {
+            var sample = iterator.next();
+            if (sample == null) {
+                return null;
+            }
+            var data = sample.data;
+            if (data != null) {
+                return (data as Numeric).toFloat();
+            }
+        }
+        return null;
     }
 
     // --------------------------------------------------------------- active
@@ -195,7 +239,7 @@ class DaylightView extends WatchUi.WatchFace {
         var ringW = (w * 0.057).toNumber();
 
         // Night, then the day band, then the golden hours on top
-        dc.setColor(NIGHT, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_polarDay ? AMBER : NIGHT, Graphics.COLOR_TRANSPARENT);
         Lib.Arcs.drawClockwise(dc, cx, cy, ringR, 0, 360, ringW);
         drawSpan(dc, cx, cy, ringR, ringW, _rise, _set, AMBER);
         drawSpan(dc, cx, cy, ringR, ringW, _goldenMorningStart, _goldenMorningEnd, ORANGE);
@@ -203,13 +247,10 @@ class DaylightView extends WatchUi.WatchFace {
 
         // Hour ticks outside the ring, 0 / 6 / 12 / 18 labelled inside it
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        for (var hour = 0; hour < 24; hour++) {
-            var deg = Lib.Sun.dialDegrees(hour * 3600);
-            var major = (hour % 6 == 0);
-            var inner = Lib.Arcs.point(cx, cy, w * (major ? 0.458 : 0.471), deg);
-            var outer = Lib.Arcs.point(cx, cy, w * 0.493, deg);
-            dc.setPenWidth(major ? 3 : 2);
-            dc.drawLine(inner[0], inner[1], outer[0], outer[1]);
+        for (var hour = 0; hour < 24 && 4 * hour + 3 < _ticks.size(); hour++) {
+            var t = 4 * hour;
+            dc.setPenWidth((hour % 6 == 0) ? 3 : 2);
+            dc.drawLine(_ticks[t], _ticks[t + 1], _ticks[t + 2], _ticks[t + 3]);
         }
         dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
         var labels = ["0", "6", "12", "18"];
@@ -236,7 +277,7 @@ class DaylightView extends WatchUi.WatchFace {
         // Centre stack
         dc.setColor(AMBER, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.37).toNumber(), _smallFont,
-            DaylightText.light(nowSecs, _rise, _set, _tomorrowRise, _dayStart, _located), center);
+            DaylightText.light(nowSecs, _rise, _set, _tomorrowRise, _dayStart, _located, _polarDay), center);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.489).toNumber(), Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), center);
         drawSunTimes(dc, cx, (h * 0.612).toNumber(), w, _timesFont, GRAY, AMBER, ORANGE);
@@ -344,8 +385,13 @@ class DaylightView extends WatchUi.WatchFace {
         // Hollow time
         Lib.Aod.drawHollowText(dc, cx, (h * 0.498).toNumber() + off[1], Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), GRAY, center);
 
-        // Next sun event
+        // Next sun event; after sunset, tomorrow's sunrise
         var next = Lib.Sun.next([_rise, _set]);
+        var tomorrow = _tomorrowRise;
+        var set = _set;
+        if (next != null && next[0] && set != null && nowSecs >= set && tomorrow != null) {
+            next = [true, tomorrow - _dayStart - 86400];
+        }
         if (next != null) {
             var tri = (w * 0.02).toNumber();
             var gap = (w * 0.015).toNumber();

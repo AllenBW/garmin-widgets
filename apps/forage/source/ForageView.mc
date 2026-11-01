@@ -26,12 +26,18 @@ class ForageView extends WatchUi.WatchFace {
     private const WAX_RIM = 0xFFE3A0;
     private const CYAN = 0x3EC6E0;
     private const WING = 0xB9B4AC;
+    private const STALE = 3 * 3600;     // seconds: current conditions older than this are ignored
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
     private var _minute as Number = -1;
     private var _outlook as ForageOutlook = new ForageOutlook();
     private var _now as Number = BEES_UNKNOWN;
+    private var _verdict as String = "";
+    private var _sunKey as String = "";            // the day and place the sun times below are for
+    private var _rise as Number? = null;           // seconds after today's midnight
+    private var _set as Number? = null;
+    private var _tomorrowRise as Number? = null;
     private var _temp as String = "";
     private var _windText as String = "";
     private var _date as String = "";
@@ -92,12 +98,12 @@ class ForageView extends WatchUi.WatchFace {
     // Once a minute: the weather now and the forecast into the outlook
     function refresh() as Void {
         var clock = System.getClockTime();
-        if (clock.min == _minute) {
+        var now = Time.now();
+        if (now.value() / 60 == _minute) {
             return;
         }
-        _minute = clock.min;
+        _minute = now.value() / 60;
         var nowSecs = clock.hour * 3600 + clock.min * 60;
-        var now = Time.now();
         var dayStart = now.value() - (nowSecs + clock.sec);
 
         var info = Gregorian.info(now, Time.FORMAT_MEDIUM);
@@ -105,30 +111,14 @@ class ForageView extends WatchUi.WatchFace {
         var short = Gregorian.info(now, Time.FORMAT_SHORT);
         _dayOfYear = ForageModel.dayOfYear(short.month as Number, short.day);
 
-        // Sunrise and sunset: the sun maths from the last known location,
-        // else the watch's own figures
-        var rise = null;
-        var set = null;
-        var tomorrowRise = null;
-        var where = Lib.Location.get();
-        if (where != null) {
-            var today = Lib.Solar.day(where[0], where[1], dayStart);
-            var tomorrow = Lib.Solar.day(where[0], where[1], dayStart + 86400);
-            var r = today.rise;
-            var s = today.set;
-            var tr = tomorrow.rise;
-            rise = (r != null) ? r - dayStart : null;
-            set = (s != null) ? s - dayStart : null;
-            tomorrowRise = (tr != null) ? tr - dayStart : null;
-        } else {
-            var times = Lib.Sun.today();
-            rise = times[0];
-            set = times[1];
-            tomorrowRise = (rise != null) ? rise + 86400 : null;
-        }
+        sunTimes(dayStart);
+        var rise = _rise;
+        var set = _set;
+        var tomorrowRise = _tomorrowRise;
 
         var hours = [] as Array<ForageHour>;
-        _now = BEES_UNKNOWN;
+        var current = null;
+        var snowing = false;
         _temp = "";
         _windText = "";
         if (Toybox has :Weather) {
@@ -139,18 +129,19 @@ class ForageView extends WatchUi.WatchFace {
                         var f = forecast[i];
                         var when = f.forecastTime;
                         if (when != null) {
-                            hours.add(new ForageHour(when.value() - dayStart, f.temperature, f.precipitationChance,
+                            hours.add(new ForageHour(Lib.Fmt.wallSeconds(when.value(), dayStart), f.temperature, f.precipitationChance,
                                 f.windSpeed, (f has :cloudCover) ? f.cloudCover : null, f.condition));
                         }
                     }
                 }
             }
+            // The conditions now, unless the phone has been away for hours
             var cc = Weather.getCurrentConditions();
-            if (cc != null) {
-                var current = new ForageHour(nowSecs, cc.temperature, cc.precipitationChance, cc.windSpeed,
+            var seen = (cc != null) ? cc.observationTime : null;
+            if (cc != null && (seen == null || now.value() - seen.value() < STALE)) {
+                current = new ForageHour(nowSecs, cc.temperature, cc.precipitationChance, cc.windSpeed,
                     (cc has :cloudCover) ? cc.cloudCover : null, cc.condition);
-                _now = ForageModel.kind(current, ForageModel.isDay(nowSecs, rise, set, tomorrowRise), clock.hour);
-                hours.add(current);   // the current hour, when the forecast starts at the next one
+                snowing = ForageModel.snow(cc.condition);
                 var celsius = cc.temperature;
                 if (celsius != null) {
                     _temp = Lib.Fmt.temperature(celsius) + (metricTemp() ? "C" : "F");
@@ -163,7 +154,33 @@ class ForageView extends WatchUi.WatchFace {
                 }
             }
         }
-        _outlook = ForageModel.build(nowSecs, hours, rise, set, tomorrowRise);
+        _outlook = ForageModel.build(nowSecs, current, hours, rise, set, tomorrowRise,
+            ForageModel.winter(short.month as Number));
+        _now = _outlook.now;
+        _verdict = (_now == BEES_RAIN && snowing) ? "SNOW, BEES HOME" : ForageModel.verdict(_now);
+    }
+
+    // Sunrise, sunset and tomorrow's sunrise as seconds after today's
+    // midnight, worked out once a day (and again when the place changes):
+    // the sun maths from the last known location, else the watch's own figures
+    private function sunTimes(dayStart as Number) as Void {
+        var where = Lib.Location.get();
+        var key = dayStart.toString() + ((where != null) ? where[0].format("%.2f") + where[1].format("%.2f") : "");
+        if (key.equals(_sunKey)) {
+            return;
+        }
+        _sunKey = key;
+        if (where == null) {
+            var times = Lib.Sun.today();
+            _rise = times[0];
+            _set = times[1];
+            _tomorrowRise = (_rise != null) ? _rise + 86400 : null;
+            return;
+        }
+        var t = Lib.Solar.riseSet(where[0], where[1], dayStart);
+        _rise = t[0];
+        _set = t[1];
+        _tomorrowRise = t[2];
     }
 
     private function metricTemp() as Boolean {
@@ -202,7 +219,7 @@ class ForageView extends WatchUi.WatchFace {
 
     // A bee, the verdict, then the temperature (or the wind when that is the reason), centred
     private function drawVerdict(dc as Dc, cx as Number, y as Number, w as Number) as Void {
-        var words = ForageModel.verdict(_now);
+        var words = _verdict;
         var flying = _now == BEES_FLY || _now == BEES_OPEN || _now == BEES_CLEANSE;
         var extra = (_now == BEES_WIND) ? _windText : _temp;
         var bee = (w * 0.058).toNumber();
@@ -342,7 +359,7 @@ class ForageView extends WatchUi.WatchFace {
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         Lib.Aod.drawHollowText(dc, cx, (h * 0.375).toNumber() + off[1], _timeFont,
             ForageModel.clock24(clock.hour * 3600 + clock.min * 60), GRAY, center);
-        var line = ForageModel.verdict(_now);
+        var line = _verdict;
         if (_temp.length() > 0) {
             line += " · " + _temp;
         }

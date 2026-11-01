@@ -60,11 +60,13 @@ module Lib {
             return [degrees[0].toFloat(), degrees[1].toFloat()];
         }
 
-        // Save a position when it differs from the saved one (storage writes are slow)
+        // Save a position when it has moved about 5 km from the saved one:
+        // storage writes are slow flash writes, and sun times move only
+        // seconds over that distance, so a drive does not write every minute
         function remember(where as [Float, Float]) as Void {
             var lat = Storage.getValue(LAT_KEY);
             var lon = Storage.getValue(LON_KEY);
-            if (lat instanceof Float && lon instanceof Float && (lat - where[0]).abs() < 0.01 && (lon - where[1]).abs() < 0.01) {
+            if (lat instanceof Float && lon instanceof Float && (lat - where[0]).abs() < 0.05 && (lon - where[1]).abs() < 0.05) {
                 return;
             }
             Storage.setValue(LAT_KEY, where[0]);

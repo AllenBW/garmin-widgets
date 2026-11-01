@@ -173,13 +173,15 @@ function testDangerRange(logger as Logger) as Boolean {
     Test.assertEqualMessage(SoundMeter.describe(125.0), "Pain · leave now", "pain");
 
     // the safe-for line
-    Test.assertEqualMessage(SoundMeter.safeFor(60.0), "Safe all day", "quiet is safe all day");
-    Test.assertEqualMessage(SoundMeter.safeFor(80.0), "Safe all day", "80 dB allows over a day");
-    Test.assertEqualMessage(SoundMeter.safeFor(85.0), "Safe for 8 h", "85");
-    Test.assertEqualMessage(SoundMeter.safeFor(97.0), "Safe for 30 min", "97");
-    Test.assertEqualMessage(SoundMeter.safeFor(103.0), "Safe for 8 min", "103 rounds to 8 min");
-    Test.assertEqualMessage(SoundMeter.safeFor(115.0), "Under 30 s", "115");
-    Test.assertEqualMessage(SoundMeter.safeFor(121.0), "Leave now", "pain");
+    Test.assertEqualMessage(SoundMeter.limit(60.0, false), "No daily limit", "quiet has no limit");
+    Test.assertEqualMessage(SoundMeter.limit(80.0, false), "No daily limit", "80 dB allows over a day");
+    Test.assertEqualMessage(SoundMeter.limit(85.0, false), "NIOSH limit 8 h", "85");
+    Test.assertEqualMessage(SoundMeter.limit(97.0, false), "NIOSH limit 30 min", "97");
+    Test.assertEqualMessage(SoundMeter.limit(103.0, false), "NIOSH limit 8 min", "103 rounds to 8 min");
+    Test.assertEqualMessage(SoundMeter.limit(115.0, false), "Under 30 s", "115");
+    Test.assertEqualMessage(SoundMeter.limit(121.0, false), "Leave now", "pain");
+    Test.assertEqualMessage(SoundMeter.limit(89.0, true), "NIOSH limit under 3 h 10", "over range: the limit is at most this");
+    Test.assertEqualMessage(SoundMeter.limit(75.0, true), "Limit unknown · too loud", "over range under 80: no false comfort");
     Test.assertEqualMessage(SoundMeter.spell(5400), "1 h 30", "an hour and a half");
     Test.assertEqualMessage(SoundMeter.spell(45), "45 s", "seconds");
     Test.assertEqualMessage(SoundMeter.whole(-3.2), 0, "never below zero");
@@ -275,13 +277,9 @@ function testSession(logger as Logger) as Boolean {
 
 (:test)
 function testWaiting(logger as Logger) as Boolean {
-    Test.assertEqualMessage(SoundMeter.waiting(0, 0, null), "starting the microphone", "just started");
-    Test.assertEqualMessage(SoundMeter.waiting(1, 0, null), "starting the microphone", "a second in");
-    Test.assertEqualMessage(SoundMeter.waiting(2, 0, null), "waiting for sound", "two seconds, nothing yet");
-    Test.assertEqualMessage(SoundMeter.waiting(0, 1, null), "restarting the microphone", "first restart");
-    Test.assertEqualMessage(SoundMeter.waiting(5, 2, null), "restarting the microphone", "second");
-    Test.assertEqualMessage(SoundMeter.waiting(0, 3, null), "no sound from the microphone · BACK, then open again", "give up advice after three");
-    Test.assertEqualMessage(SoundMeter.waiting(0, 0, "Microphone unavailable (3)"), "Microphone unavailable (3) · retrying", "an error says so");
+    Test.assertEqualMessage(SoundMeter.waiting(0), "starting the microphone", "just started");
+    Test.assertEqualMessage(SoundMeter.waiting(1), "starting the microphone", "a second in");
+    Test.assertEqualMessage(SoundMeter.waiting(2), "waiting for sound", "two seconds, nothing yet");
     return true;
 }
 
@@ -297,10 +295,39 @@ function testDemo(logger as Logger) as Boolean {
         seen[SoundMeter.band(v)] = true;
     }
     logger.debug("bands seen " + seen);
-    Test.assertMessage(seen[0] && seen[2] && seen[3] && seen[4] && seen[5], "the demo walks the quiet, talk, traffic, risk and loud bands");
-    Test.assertMessage((s.peak as Float) > 110.0, "with a peak over 110: " + s.peak);
-    Test.assertMessage(s.dosePercent > 5.0, "and a dose worth showing: " + s.dosePercent);
+    Test.assertMessage(seen[0] && seen[2] && seen[3] && seen[4], "the demo walks the quiet, talk, traffic and risk bands");
+    Test.assertMessage((s.peak as Float) < s.offset, "and like the microphone reads no higher than its range: " + s.peak);
+    Test.assertMessage(s.everClipped, "the concert is past the microphone's range");
+    Test.assertMessage(!s.overRange(), "but the walk home is not");
+    Test.assertMessage(s.dosePercent > 0.1, "and a dose worth showing: " + s.dosePercent);
     Test.assertMessage(s.demoLevel(5) < 45.0 && s.demoLevel(125) < 45.0, "the demo cycles");
+    return true;
+}
+
+(:test)
+function testOverRange(logger as Logger) as Boolean {
+    SoundMeter.rms(sineWindow(1024, 32767, false), 0, 1);
+    Test.assertMessage(SoundMeter.lastMax >= SoundMeter.CLIP, "a full-scale sine reaches the end of the range: " + SoundMeter.lastMax);
+    SoundMeter.rms(sineWindow(1024, 8000, false), 0, 1);
+    Test.assertMessage(SoundMeter.lastMax < SoundMeter.CLIP, "a quieter one does not: " + SoundMeter.lastMax);
+
+    var s = new SoundSession();
+    s.warmupLeft = 0.0;
+    for (var i = 0; i < 16; i++) {
+        s.addSamples(-30.0, 0.0625, false);
+    }
+    s.addSamples(-2.0, 0.0625, true);
+    Test.assertMessage(!s.overRange() && !s.everClipped, "one clipped window, a clap, is not over range");
+    for (var i = 0; i < 16; i++) {
+        s.addSamples(-2.0, 0.0625, true);
+    }
+    Test.assertMessage(s.overRange() && s.everClipped, "a second of it is");
+    for (var i = 0; i < 32; i++) {
+        s.addSamples(-30.0, 0.0625, false);
+    }
+    Test.assertMessage(!s.overRange() && s.everClipped, "it passes, and the sitting remembers it");
+    s.reset();
+    Test.assertMessage(!s.everClipped, "reset forgets it");
     return true;
 }
 
@@ -598,7 +625,7 @@ function testMicContinuous(logger as Logger) as Boolean {
     Test.assertEqualMessage(port.inits, 1, "started once");
     Test.assertEqualMessage(port.stops, 0, "never stopped while it works");
     Test.assertMessage(sink.windows >= 58, "a window every tick: " + sink.windows);
-    Test.assertEqualMessage(mic.hertz, 8000, "8 kHz as the tuner uses");
+    Test.assertEqualMessage(mic.hertz, 8000, "the lowest rate the port takes");
     // a menu: the data is ignored, the microphone is not touched
     var calls = port.calls;
     var windows = sink.windows;
@@ -625,31 +652,25 @@ function testMicContinuous(logger as Logger) as Boolean {
 
 (:test)
 function testMicStalls(logger as Logger) as Boolean {
-    // the sound stops once: one careful restart, and it works again
+    // the sound stops: stopped once and left alone, with a message; no restart
     var port = new FakePort();
     var sink = new FakeSink();
     var mic = newMic(port, sink);
     fakeTicks(mic, port, 10, true);
     fakeTicks(mic, port, 6, false);
+    logger.debug("a stall: " + port.inits + " inits, " + port.stops + " stops, " + port.violations);
     Test.assertEqualMessage(port.stops, 1, "a stall is stopped");
-    fakeTicks(mic, port, 10, true);
-    logger.debug("one stall: " + port.inits + " inits, " + port.stops + " stops, " + port.violations);
-    Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(port.inits, 2, "started once more");
-    Test.assertEqualMessage(mic.phase, MIC_RUNNING, "and running");
-    // it stops again: left alone
-    fakeTicks(mic, port, 8, false);
-    Test.assertEqualMessage(mic.phase, MIC_DONE, "a second stall and it is left alone");
+    Test.assertEqualMessage(mic.phase, MIC_DONE, "and left alone");
     Test.assertEqualMessage(mic.error as String, "The microphone stopped sending sound", "and it says why");
-    Test.assertEqualMessage(port.inits, 2, "no third start");
+    Test.assertEqualMessage(port.inits, 1, "never started again in the same opening");
     var calls = port.calls;
     fakeBetween(mic, port, false);
     fakeTicks(mic, port, 20, true);
     Test.assertEqualMessage(port.calls, calls, "nothing more once left alone");
     mic.exit();
-    Test.assertEqualMessage(port.calls, calls, "exit has nothing to stop");
+    Test.assertEqualMessage(port.calls, calls, "exit does not stop it twice");
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    // the capture ends by itself (an error): a careful restart, after a gap
+    // the capture ends by itself (an error): left alone, nothing to stop
     port = new FakePort();
     mic = newMic(port, sink);
     fakeTicks(mic, port, 5, true);
@@ -660,14 +681,15 @@ function testMicStalls(logger as Logger) as Boolean {
     port.lastEnd = port.tick;
     fakeTicks(mic, port, 10, true);
     Test.assertMessage(port.violations.size() == 0, "no rule broken after an error: " + port.violations);
-    Test.assertEqualMessage(port.inits, 2, "restarted once after the error");
+    Test.assertEqualMessage(port.inits, 1, "not restarted after the error");
     Test.assertEqualMessage(port.stops, 0, "nothing to stop, it had ended");
+    Test.assertEqualMessage(mic.phase, MIC_DONE, "left alone");
     return true;
 }
 
 (:test)
 function testMicStuck(logger as Logger) as Boolean {
-    // a stop that never takes: never initialise over it; exit tries once more
+    // a stop that never takes: asked once, never again, never initialised over
     var port = new FakePort();
     port.stopWorks = false;
     var sink = new FakeSink();
@@ -676,11 +698,10 @@ function testMicStuck(logger as Logger) as Boolean {
     fakeTicks(mic, port, 20, false);
     logger.debug("stuck: " + port.inits + " inits, " + port.stops + " stops, " + mic.error);
     Test.assertMessage(port.violations.size() == 0, "no rule broken: " + port.violations);
-    Test.assertEqualMessage(port.inits, 1, "no second start while it will not stop");
-    Test.assertEqualMessage(mic.error as String, "The microphone would not stop", "left alone, and it says why");
-    var stops = port.stops;
+    Test.assertEqualMessage(port.inits, 1, "no second start");
+    Test.assertEqualMessage(port.stops, 1, "one stop");
     mic.exit();
-    Test.assertEqualMessage(port.stops, stops + 1, "leaving the app still stops a capture left running");
+    Test.assertEqualMessage(port.stops, 1, "leaving the app does not ask again");
     return true;
 }
 

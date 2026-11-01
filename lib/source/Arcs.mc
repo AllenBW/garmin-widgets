@@ -33,8 +33,8 @@ module Lib {
         // current pen colour.
         function drawClockwise(dc as Dc, cx as Numeric, cy as Numeric, r as Numeric,
                                startDeg12 as Numeric, sweepDeg as Numeric, width as Number) as Void {
-            if (sweepDeg <= 0) {
-                return;
+            if (sweepDeg < 1) {
+                return;     // drawArc rounds to whole degrees, and equal ends draw a full circle
             }
             dc.setPenWidth(width);
             if (sweepDeg >= 360) {

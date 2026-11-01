@@ -1,4 +1,5 @@
 import Toybox.Lang;
+import Toybox.Math;
 
 // The colours the data picks
 module Palette {
@@ -71,7 +72,10 @@ module Palette {
     // The accent layers take the outside temperature's colour, in mineral
     // tones: glacial slate below freezing, through lichen, moss and ochre,
     // to terracotta and red clay in the heat. Stops in Fahrenheit, blended
-    // in between; grey with no temperature yet.
+    // in between, in 2 °F steps: the colour keys the face's cached field,
+    // which takes several frames to redraw, so a weather sync that moves
+    // the temperature a fraction of a degree must not change it. Grey with
+    // no temperature yet.
     const STOPS_F = [25.0, 45.0, 60.0, 72.0, 85.0, 100.0] as Array<Float>;
     const STOPS_COLOR = [0x8FB8C8, 0x6FA8A0, 0x8FAE6A, 0xD2A24C, 0xC8703E, 0xB84A3A] as Array<Number>;
 
@@ -79,7 +83,7 @@ module Palette {
         if (celsius == null) {
             return GRAY;
         }
-        var f = celsius * 9.0 / 5.0 + 32.0;
+        var f = Math.round((celsius * 9.0 / 5.0 + 32.0) / 2.0).toFloat() * 2.0;
         if (f <= STOPS_F[0]) {
             return STOPS_COLOR[0];
         }
