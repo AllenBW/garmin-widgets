@@ -21,7 +21,11 @@ it to test.
 4. After approval, add the store link to the table in `README.md`.
 
 To update, run
-`scripts/package.sh <app>` again and upload it as a new version.
+`scripts/package.sh <app>` again and upload it as a new version from the
+app's page (Upload New Version), with a version above the last one; the
+listing carries over, and "What's New" says what changed. A beta app
+(the Beta App box on the first step) is visible only to the developer
+and cannot be made public: that takes a fresh upload under a new app id.
 
 ## Submitted and ready
 
@@ -31,12 +35,20 @@ and screen image (454 × 454, the simulator's display cut round) are in
 
 | App | Store page | State |
 |---|---|---|
-| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31, in review |
-| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31, in review |
-| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31, in review |
-| Vessel | | Ready: `dist/vessel.iq`, `docs/store/vessel-*.jpg` |
-| Inscription | | Ready: `dist/inscription.iq`, `docs/store/inscription-*.jpg` |
-| Overlap | | Ready: `dist/overlap.iq`, `docs/store/overlap-*.jpg` |
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night, in review |
+| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night, in review |
+| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night, in review |
+| Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
+| Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31, in review |
+| Daylight | <https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c> | Submitted 2026-10-31, in review |
+| Horizon | <https://apps.garmin.com/apps/c4305cc0-41b2-4604-9ab0-87e40858e8a4> | Submitted 2026-10-31, in review |
+| Night Sky | <https://apps.garmin.com/apps/a9a5898b-4678-42e7-bb82-3ac7f378b438> | Submitted 2026-10-31, in review |
+| Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
+| Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
+| Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
+| Vessel | | Ready to submit: `scripts/package.sh vessel`, `docs/store/vessel-*.jpg` |
+| Inscription | | Ready to submit: `scripts/package.sh inscription`, `docs/store/inscription-*.jpg` |
+| Overlap | | Ready to submit: `scripts/package.sh overlap`, `docs/store/overlap-*.jpg` |
 
 Screenshots: the store takes at most five. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
