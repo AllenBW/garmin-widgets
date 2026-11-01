@@ -46,9 +46,9 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
-| Vessel | | Ready to submit: `scripts/package.sh vessel`, `docs/store/vessel-*.jpg` |
-| Inscription | | Ready to submit: `scripts/package.sh inscription`, `docs/store/inscription-*.jpg` |
-| Overlap | | Ready to submit: `scripts/package.sh overlap`, `docs/store/overlap-*.jpg` |
+| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31, in review |
+| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31, in review |
+| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31, in review |
 
 Screenshots: the store takes at most five. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
