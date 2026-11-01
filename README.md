@@ -42,7 +42,20 @@ listing's cover and screenshots are in [`docs/store/`](docs/store/).
 <tr><td align="center"><img src="docs/store/vessel-screen.jpg" width="200" alt="Vessel"><br>Vessel</td><td align="center"><img src="docs/store/inscription-screen.jpg" width="200" alt="Inscription"><br>Inscription</td><td align="center"><img src="docs/store/overlap-screen.jpg" width="200" alt="Overlap"><br>Overlap</td><td align="center"><img src="docs/store/today-screen.jpg" width="200" alt="Today"><br>Today</td></tr>
 <tr><td align="center"><img src="docs/store/strata-screen.jpg" width="200" alt="Strata"><br>Strata</td><td align="center"><img src="docs/store/rings-screen.jpg" width="200" alt="Rings"><br>Rings</td><td align="center"><img src="docs/store/forage-screen.jpg" width="200" alt="Forage"><br>Forage</td><td align="center"><img src="docs/store/daylight-screen.jpg" width="200" alt="Daylight"><br>Daylight</td></tr>
 <tr><td align="center"><img src="docs/store/horizon-screen.jpg" width="200" alt="Horizon"><br>Horizon</td><td align="center"><img src="docs/store/nightsky-screen.jpg" width="200" alt="Night Sky"><br>Night Sky</td><td align="center"><img src="docs/store/sunmoon-screen.jpg" width="200" alt="Sun and Moon"><br>Sun and Moon</td><td align="center"><img src="docs/store/suncompass-screen.jpg" width="200" alt="Sun Compass"><br>Sun Compass</td></tr>
-<tr><td align="center"><img src="docs/store/sauna-start.jpg" width="200" alt="Sauna and Steam"><br>Sauna and Steam</td><td align="center"><img src="docs/store/sound-screen.jpg" width="200" alt="Sound Level"><br>Sound Level</td></tr>
+<tr><td align="center"><img src="docs/store/sauna-1-round.jpg" width="200" alt="Sauna and Steam"><br>Sauna and Steam</td><td align="center"><img src="docs/store/sound-screen.jpg" width="200" alt="Sound Level"><br>Sound Level</td></tr>
+</table>
+
+**More of Sauna and Steam:** a visit's break, its rounds, the heart-rate
+recovery after the last round, and past visits.
+
+<table>
+<tr><td align="center"><img src="docs/store/sauna-2-break.jpg" width="160" alt="Sauna and Steam: the break"><br>the break</td><td align="center"><img src="docs/store/sauna-3-rounds.jpg" width="160" alt="Sauna and Steam: the rounds"><br>the rounds</td><td align="center"><img src="docs/store/sauna-4-recovery.jpg" width="160" alt="Sauna and Steam: recovery"><br>recovery</td><td align="center"><img src="docs/store/sauna-5-visits.jpg" width="160" alt="Sauna and Steam: past visits"><br>past visits</td></tr>
+</table>
+
+**Rings and Strata in their other colours.**
+
+<table>
+<tr><td align="center"><img src="docs/store/rings-berry.jpg" width="160" alt="Rings Berry"><br>Rings: Berry</td><td align="center"><img src="docs/store/rings-forest.jpg" width="160" alt="Rings Forest"><br>Rings: Forest</td><td align="center"><img src="docs/store/strata-moss.jpg" width="160" alt="Strata Moss"><br>Strata: Moss</td><td align="center"><img src="docs/store/strata-clay.jpg" width="160" alt="Strata Clay"><br>Strata: Clay</td></tr>
 </table>
 
 ## Supported watches
