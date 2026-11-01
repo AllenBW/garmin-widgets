@@ -28,6 +28,11 @@ set -e
 
 # The simulator is one process shared by every session on this Mac: claim
 # it by ID for the run (scripts/simlock.sh), and give it back afterwards.
+# A private simulator of this worktree's own (scripts/simprivate.sh) needs
+# no claim.
+if "$ROOT/scripts/simprivate.sh" port >/dev/null 2>&1; then
+    exec "$ROOT/scripts/simprivate.sh" do "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
+fi
 "$ROOT/scripts/simlock.sh" claim 5
 trap '"$ROOT/scripts/simlock.sh" release >/dev/null 2>&1 || true' EXIT
 

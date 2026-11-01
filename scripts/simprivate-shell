@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# The SDK's shell, pointed at the private simulator (scripts/simprivate.sh):
+# monkeydo hands its shell --transport_args=127.0.0.1:<port> for each port it
+# tries; this one replaces the address with $CIQ_PRIVATE_PORT's, so every
+# try reaches the private simulator and never the shared one.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/scripts/sdk-env.sh"
+: "${CIQ_PRIVATE_PORT:?simprivate-shell runs only for scripts/simprivate.sh do}"
+args=()
+for a in "$@"; do
+    case "$a" in
+        --transport_args=*) args+=("--transport_args=127.0.0.1:$CIQ_PRIVATE_PORT") ;;
+        *) args+=("$a") ;;
+    esac
+done
+exec "$SDK/bin/shell" "${args[@]}"

@@ -1,0 +1,15 @@
+project.manifest = manifest.xml
+
+# Unit tests (tests/) are annotated (:test) and only compiled with --unit-test
+base.sourcePath = source;tests
+
+# Shared code: the Lib barrel at the repo root (lib/). Only the annotated
+# sub-modules listed here are compiled into this app.
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = aod;fmt;sun;daily;slots;icons;config;ink
+
+# A build with sample readings for screenshots (the simulator has few
+# complication values, no heart-rate history and no alarms):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh overlap <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample
