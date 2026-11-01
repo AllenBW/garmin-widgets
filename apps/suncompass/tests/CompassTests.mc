@@ -55,7 +55,8 @@ function testModelPath(logger as Logger) as Boolean {
     Test.assertEqualMessage(CompassText.headline(morning), "Sun 152° SE", "headline");
     var line = CompassText.nextLine(morning);
     Test.assertMessage(line.find("sets ") == 0 && line.find(":53 at 232°") != null, "next line: " + line);
-    Test.assertMessage(CompassText.detail(morning).find(" up, sets ") != null, "detail has the altitude");
+    var detail = CompassText.detail(morning);
+    Test.assertMessage(detail.find("sets ") == 0 && detail.find(" · 232°") != null, "glance detail: " + detail);
 
     var evening = CompassModel.statusAt(lat, lon, day + 17 * 3600);
     next = evening.nextEvent;

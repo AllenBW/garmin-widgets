@@ -45,8 +45,18 @@ function testOutlook(logger as Logger) as Boolean {
     // Rain now
     var wet = HorizonModel.build(now, [[10 * 3600, 80]] as Array<[Number, Number]>, rise, set, null, null);
     Test.assertEqualMessage(HorizonModel.rainText(wet), "rain now, 80%", "rain now");
-    var dry = HorizonModel.build(now, [[10 * 3600, 10]] as Array<[Number, Number]>, rise, set, null, null);
+    var dryHours = [] as Array<[Number, Number]>;
+    for (var k = 0; k < 12; k++) {
+        dryHours.add([10 * 3600 + k * 3600, 10]);
+    }
+    var dry = HorizonModel.build(now, dryHours, rise, set, null, null);
     Test.assertEqualMessage(HorizonModel.rainText(dry), "no rain in the next 12 h", "dry");
+    var short = HorizonModel.build(now, [[10 * 3600, 10], [11 * 3600, 10]] as Array<[Number, Number]>, rise, set, null, null);
+    Test.assertEqualMessage(HorizonModel.rainText(short), "no rain until " + Lib.Fmt.clock(12 * 3600), "a short forecast says how far it reaches");
+    var stale = HorizonModel.build(now, [[3 * 3600, 10], [4 * 3600, 10]] as Array<[Number, Number]>, rise, set, null, null);
+    Test.assertEqualMessage(HorizonModel.rainText(stale), "no forecast", "an old forecast is no forecast");
+    var raining = HorizonModel.build(now, [[now, 90], [11 * 3600, 10]] as Array<[Number, Number]>, rise, set, null, null);
+    Test.assertEqualMessage(HorizonModel.rainText(raining), "rain now, 90%", "the conditions now fill this hour");
     Test.assertMessage(dry.sunSecs != null, "sunset within 12 h of 10:08");
     var late = HorizonModel.build(5 * 3600, [] as Array<[Number, Number]>, rise, set, null, null);
     Test.assertMessage(late.sunSecs != null && late.sunIsRise, "sunrise next at 05:00");
@@ -64,6 +74,13 @@ function testParseClock(logger as Logger) as Boolean {
     Test.assertMessage(HorizonModel.parseClock(null) == null, "null");
     Test.assertMessage(HorizonModel.parseClock("none") == null, "no digits");
     Test.assertMessage(HorizonModel.parseClock("25:00") == null, "out of range");
+    Test.assertMessage(HorizonModel.parseClock("11/3") == null, "a date is not a time");
+    Test.assertMessage(HorizonModel.parseClock("Room 2") == null, "a bare number is not a time");
+    var at = HorizonModel.parseClock("Team at 4:05 pm");
+    Test.assertMessage(at != null && at == 16 * 3600 + 5 * 60, "the 'a' in 'at' is not am: " + at);
+    var tomorrow = HorizonModel.parseClock("Tomorrow 9:00");
+    Test.assertMessage(tomorrow != null && tomorrow == 9 * 3600, "words before the time");
+    Test.assertMessage(HorizonModel.parseClock("123:45") == null, "three digits");
     return true;
 }
 

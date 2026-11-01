@@ -7,7 +7,7 @@ enum {
     BEES_RAIN,      // rain likely, or a wet condition
     BEES_WIND,      // too windy to fly
     BEES_COLD,      // too cold to fly
-    BEES_CLEANSE,   // only cleansing flights: sunny, 50 to 54 °F
+    BEES_CLEANSE,   // only cleansing flights: a sunny winter day, 50 to 54 °F
     BEES_FLY,       // the foragers are out
     BEES_OPEN       // flying, and a good hour to open the hive
 }
@@ -37,7 +37,8 @@ class ForageHour {
 class ForageOutlook {
     var hourStart as Number = 0;
     var kinds as Array<Number> = new [12] as Array<Number>;
-    var hasForecast as Boolean = false;
+    var now as Number = BEES_UNKNOWN;       // the verdict, from the current conditions
+    var windowKnown as Boolean = false;     // every daylight hour from 10 to 16 in view has weather
     var openFrom as Number? = null;   // the first run of good hours to open the hive, as slots
     var openTo as Number? = null;
 
@@ -55,6 +56,7 @@ module ForageModel {
     const FLY_C = 12.8;        // 55 °F
     const CLEANSE_C = 10.0;    // 50 °F
     const OPEN_C = 18.3;       // 65 °F
+    const OPEN_MAX_C = 35.0;   // 95 °F: too hot to open, the comb softens and the bees are fanning
     const WIND_FLY = 8.9;      // 20 mph, in m/s
     const WIND_OPEN = 4.5;     // 10 mph
     const RAIN_FLY = 40;       // percent
@@ -64,8 +66,10 @@ module ForageModel {
     const OPEN_FROM = 10;      // the hive is opened between 10:00 and 16:00
     const OPEN_UNTIL = 16;
 
-    // What one hour means for the bees. day: the sun is up. hour: the clock hour, 0 to 23.
-    function kind(w as ForageHour, day as Boolean, hour as Number) as Number {
+    // What one hour means for the bees. day: the sun is up. hour: the clock
+    // hour, 0 to 23. winter: November to March, when a sunny 50 °F day means
+    // cleansing flights rather than simply too cold.
+    function kind(w as ForageHour, day as Boolean, hour as Number, winter as Boolean) as Number {
         var celsius = w.celsius;
         if (celsius == null) {
             return BEES_UNKNOWN;
@@ -85,24 +89,30 @@ module ForageModel {
         }
         if (celsius >= FLY_C) {
             var bright = (cloud != null && cloud < CLOUD_OPEN) || clear(condition);
-            if (hour >= OPEN_FROM && hour < OPEN_UNTIL && celsius >= OPEN_C && rain < RAIN_OPEN
-                    && wind < WIND_OPEN && bright) {
+            if (hour >= OPEN_FROM && hour < OPEN_UNTIL && celsius >= OPEN_C && celsius < OPEN_MAX_C
+                    && rain < RAIN_OPEN && wind < WIND_OPEN && bright) {
                 return BEES_OPEN;
             }
             return BEES_FLY;
         }
-        if (celsius >= CLEANSE_C && ((cloud != null && cloud < CLOUD_CLEANSE) || clear(condition))) {
+        if (winter && celsius >= CLEANSE_C && ((cloud != null && cloud < CLOUD_CLEANSE) || clear(condition))) {
             return BEES_CLEANSE;
         }
         return BEES_COLD;
     }
 
-    // nowSecs: seconds since midnight. rise, set: today's; tomorrowRise past 86400.
-    // The first entry for an hour wins, so the current conditions go last.
-    function build(nowSecs as Number, hours as Array<ForageHour>,
-                   rise as Number?, set as Number?, tomorrowRise as Number?) as ForageOutlook {
+    // nowSecs: seconds since midnight. current: the conditions now, or null
+    // when there are none or they are stale; they decide the verdict and the
+    // first cell, so the two always agree. hours: the forecast, the first
+    // entry for an hour winning. rise, set: today's; tomorrowRise past 86400.
+    function build(nowSecs as Number, current as ForageHour?, hours as Array<ForageHour>,
+                   rise as Number?, set as Number?, tomorrowRise as Number?, winter as Boolean) as ForageOutlook {
         var o = new ForageOutlook();
         o.hourStart = (nowSecs / 3600) * 3600;
+        if (current != null) {
+            o.now = kind(current, isDay(nowSecs, rise, set, tomorrowRise), nowSecs / 3600 % 24, winter);
+            o.kinds[0] = o.now;
+        }
         for (var i = 0; i < hours.size(); i++) {
             var h = hours[i];
             if (h.secs < o.hourStart) {
@@ -113,9 +123,23 @@ module ForageModel {
                 continue;
             }
             var start = o.hourStart + slot * 3600;
-            o.kinds[slot] = kind(h, isDay(start + 1800, rise, set, tomorrowRise), (start / 3600) % 24);
-            o.hasForecast = true;
+            o.kinds[slot] = kind(h, isDay(start + 1800, rise, set, tomorrowRise), (start / 3600) % 24, winter);
         }
+        // "No hive weather" is only a claim when the hours that could have
+        // been good are in view and all have weather
+        var openable = 0;
+        var known = 0;
+        for (var k = 0; k < 12; k++) {
+            var start = o.hourStart + k * 3600;
+            var hour = (start / 3600) % 24;
+            if (hour >= OPEN_FROM && hour < OPEN_UNTIL && isDay(start + 1800, rise, set, tomorrowRise)) {
+                openable++;
+                if (o.kinds[k] != BEES_UNKNOWN) {
+                    known++;
+                }
+            }
+        }
+        o.windowKnown = openable > 0 && known == openable;
         for (var k = 0; k < 12; k++) {
             if (o.kinds[k] == BEES_OPEN) {
                 if (o.openFrom == null) {
@@ -160,6 +184,17 @@ module ForageModel {
         return [0, 1, 22, 23, 40, 52].indexOf(condition) >= 0;
     }
 
+    // Snow, sleet and the wintry mixes, a subset of wet()
+    function snow(condition as Number?) as Boolean {
+        return condition != null
+            && ([4, 7, 16, 17, 18, 19, 21, 48, 50, 51] as Array<Number>).indexOf(condition) >= 0;
+    }
+
+    // November to March
+    function winter(month as Number) as Boolean {
+        return month >= 11 || month <= 3;
+    }
+
     // The verdict for now, in words: what the bees are doing
     function verdict(kind as Number) as String {
         switch (kind) {
@@ -191,10 +226,7 @@ module ForageModel {
             }
             return "open the hive " + clock24(o.hourStart + from * 3600) + "-" + end;
         }
-        if (!o.hasForecast) {
-            return "";
-        }
-        return "no hive weather in 12 h";
+        return o.windowKnown ? "no hive weather in 12 h" : "";
     }
 
     // Seconds since midnight -> "07:05", always 24-hour

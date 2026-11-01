@@ -29,7 +29,7 @@ in the SDK before relying on it.
 | 11 | **Today** | Watch face | The owner's own list and nothing else: next sun event, 24 h time, date, moon, heart rate, outside temperature, miles walked, alarms | S | Built in `apps/today/` |
 | 12 | **Strata** | Watch face | The Today list set into a field of soil layers from the owner's laser-cut planter: each reading in a clearing the layers part round, clean cut-out time, mineral temperature colour, stones for miles | M | Built in `apps/strata/` |
 | 13 | **Rings** | Watch face | Three goal rings open to the right (steps, floors in segments, Body Battery) with their numbers along the curves, the Today numbers down the right side, three colour sets, after a store face the owner picked | S | Built in `apps/rings/` |
-| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button | S–M | Rebuilt after crashing the watch: one continuous capture per opening, as the one app known to work on a fēnix 8 does (2026-10-31) |
+| 14 | **Sound Level** | Glance + app | An approximate sound level meter from the watch microphone, with the NIOSH danger range, the day's dose while open, and a cue by every button | S–M | Rebuilt after crashing the watch: one continuous capture per opening, never restarted in the app (2026-10-31); experimental |
 | 15 | **Forage** | Watch face | For the beekeeper: whether the bees are flying now, the next good hours to open the hive, the next twelve hours as a strip of comb, and the nectar year along the bezel | S–M | Built in `apps/forage/` |
 
 Considered and dropped:
@@ -425,8 +425,8 @@ like it; the code is in git history.
 fiddling with a wet watch, and coached against the published guidance.
 START picks the kind. Each kind has its own plan (targets, rounds, a heat
 cap, weekly goals, door sensitivity), its own history and weekly count,
-and the same screens and the same depth of coaching. Temperatures show in
-Fahrenheit unless the setting says otherwise. The idea comes from the
+and the same screens and the same depth of coaching. Temperatures follow the
+watch's unit unless the setting picks one. The idea comes from the
 store's "Sauna App" (manual LAP, four screens, a paid unlock); the
 owner's own ask was cueing on what the buttons will do, then a second
 kind of room with coaching for both.
@@ -599,7 +599,7 @@ nothing else, with no settings:
 - The date, "THU OCT 29", in grey.
 - The time, very large, always "07:05" whatever the 12/24 h setting says.
 - Three columns, a small label over a condensed bold value: **HR** in
-  red, **OUTSIDE** (the weather temperature, always in Fahrenheit: "52°F"), and
+  red, **OUTSIDE** (the weather temperature in the watch's unit: "52°F" or "11°C"), and
   **MILES** or **KM** (distance walked today to one decimal; the unit is
   the label so the value stays short).
 - The moon drawn as it is tonight, with the name of its phase beside it
@@ -620,7 +620,7 @@ weather or steps widget (there is no distance widget).
 | Time, date | `System.getClockTime`, `Gregorian.info` (`Lib.Fmt.clock24`) |
 | Moon | `Lib.Moon.phase` and `Lib.Moon.name`, synodic arithmetic, no data needed |
 | Heart rate | `Activity.getActivityInfo().currentHeartRate`, else the newest valid `ActivityMonitor.getHeartRateHistory` sample |
-| Outside temperature | `Weather.getCurrentConditions().temperature`, null until the phone syncs, shown in Fahrenheit whatever the watch's unit setting (`Lib.Fmt.fahrenheit`) |
+| Outside temperature | `Weather.getCurrentConditions().temperature`, null until the phone syncs, shown in the watch's unit (`Lib.Fmt.temperatureWithUnit`) |
 | Distance today | `ActivityMonitor.getInfo().distance` (cm) through `Lib.Fmt.distanceValue` and `distanceUnit` |
 | Alarms | `System.getDeviceSettings().alarmCount` |
 
@@ -854,23 +854,29 @@ lines it up with a phone meter.
   loud · hearing risk", "Dangerous · loud venue", "Pain · leave now"), a
   thick bar from 30 to 130 dB across two thirds of the screen filled in
   the bands' colours up to the level with the 70, 85, 100 and 120 lines
-  marked, "Safe all day" / "Safe for 15 min" / "Under 30 s" / "Leave
-  now", then "peak 94 · avg 71 · 4 min" and "dose 12% while open" in
-  grey (the owner asked on 2026-10-31 for a smaller number, a bigger bar
-  and bigger text at the foot). "Listening" with what is going on under it ("starting the
-  microphone", "waiting for sound", "restarting the microphone", and
-  after three silent starts "no sound from the microphone · BACK, then
-  open again") until the first level; the number dims and the same
-  status replaces the verdict when windows stop; a message when there
-  is no microphone or no usable format.
+  marked, NIOSH's daily limit at that level ("No daily limit", "NIOSH
+  limit 15 min", "Under 30 s", "Leave now"), then "max 94 · avg 71 ·
+  4 min" and "dose 12% while open" in grey (the owner asked on
+  2026-10-31 for a smaller number, a bigger bar and bigger text at the
+  foot). "Listening" with what is going on under it ("starting the
+  microphone", "waiting for sound") until the first level; the number
+  dims and the same status replaces the verdict when windows stop. When
+  the microphone stops sending sound it is left alone and the screen
+  says "Press BACK, then open it again"; a message when there is no
+  microphone or no usable format.
+- Past the microphone's range (below): the number in red with a "+",
+  "at least 89 dB · too loud to measure", "NIOSH limit under 3 h 10",
+  and from then on "max 89+" and "dose at least 2.1%".
 - Trend: the last two minutes, one point a second, coloured by band,
   with the 70, 85 and 100 lines across the chart.
 - Calibrate (from the menu): the live number again with "offset 90 dB"
   under it; UP and DOWN move the offset a decibel, START resets it to 90,
-  BACK keeps it. Written straight to the Calibration property, so the
-  phone shows the same value.
-- Menu: Demo (a made-up two minutes that walks every band, and a live
-  level that keeps walking them), Calibrate, Clear session.
+  BACK keeps it. Written to the Calibration property once, when
+  calibrating ends (not on every press), so the phone shows the same value.
+- Menu: Demo (a made-up two minutes from a quiet room to a concert, and
+  a live level that keeps walking them; like the real microphone it
+  reads no higher than its range, so the concert shows as too loud to
+  measure), Calibrate, Clear session.
 - Glance: "SOUND LEVEL", "72 dB · Busy traffic", "4 min ago · while the
   app was open"; "Open to measure" before the first reading.
 
@@ -900,33 +906,41 @@ settling), and the first level shown is the energy average of the next
 full second, so the number opens on the room rather than on a spike
 that then falls (the owner's first report from the watch, 2026-10-31).
 
+**The microphone's range:** dBFS cannot go above 0, so with the offset
+at 90 the meter cannot read above about 90 dB: a 105 dB concert would
+read 90 and claim hours of safe listening. So every window also keeps
+its loudest sample, and when samples reach the end of the range
+(|v| ≥ 32000) for half of the last second the level is shown as a
+floor, not a reading: "at least 89 dB · too loud to measure", with the
+limit as an upper bound and the dose as a lower one. A single clipped
+window (a clap) does not count. Whether the watch's microphone clips
+or compresses loud sound has to be checked against a phone meter.
 **Platform:** a watch-app with a glance (the microphone is allowed for
 device apps and audio providers only). `Audio.Capture` with
 `CONTAINER_WAV`, `CODEC_LPCM`, mono, at the lowest rate the watch
-accepts (the fēnix 8 refuses 8 kHz and gives 11.025 kHz), one window
-of 8192 bytes at a time with `WINDOW_FILLED_STOP`, the next started
-from `onComplete`, no filters so the levels stay honest. **Why one shot
-(from the watch logs, 2026-10-31):** with `WINDOW_FILLED_CONTINUE` the
-fēnix 8 on firmware 23.40 handed over three windows after a start and
-then nothing, and a stop flushed data it had been holding; after a
-one-shot window the capture is uninitialised again, so each window is
-a fresh initialisation; every window carries its own 44-byte WAV
-header, and the first 4096 bytes after it read about −13 dBFS whatever
-the room, so windows are 12288 bytes and those bytes are left out.
-RMS is taken about the window's mean, so a bias is not sound. Capture is foreground only; it stops in `onHide` and
-starts again in `onShow`. A start that fails is retried from the
-one-second tick, a running capture that delivers no window for two
-seconds is stopped and started again (the owner's second report from
-the watch: the microphone shown as on, no level ever), and a stop's
-late completion callback cannot end a capture started after it. The
-starts and the first windows are logged (println, so `SOUND.TXT` on the
-watch says what the microphone did). Nothing is kept but the last
-reading for the glance. Settings: the calibration offset (50 to 130, default 90) and the
-buzz.
+accepts (the fēnix 8 refuses 8 kHz), in windows of 2048 bytes with
+`WINDOW_FILLED_CONTINUE`, no filters so the levels stay honest. **Why
+one continuous capture (from the watch, 2026-10-31):** every build that
+stopped and started capture again and again (one-shot windows started
+from `onComplete`, a restart after a stall) rebooted the whole watch, a
+firmware trap with nothing in `CIQ_LOG`, and a restart never brought
+the sound back while closing and opening the app did. So `SoundMic`
+initialises and starts capture once per opening and stops it once on
+exit; menus, the demo and calibrating only ignore the data. The
+callbacks note what happened and hand the window on, and never print,
+touch the microphone or throw; the microphone is touched only from the
+one-second tick, which logs what the callbacks noted. A capture that
+sends nothing for four seconds is stopped once and left alone with
+"Press BACK, then open it again". The screen redraws at most four times
+a second whatever the window rate, and the tick catches its own faults.
+RMS is taken about the window's mean, so a bias is not sound. Capture
+is foreground only. Nothing is kept but the last reading for the
+glance, timed when its sound came. Settings: the calibration offset
+(50 to 130, default 90) and the buzz.
 
-**Not done, to learn on a watch:** whether the fēnix 8 delivers windows
-to a third-party app at all (no public report yet), the offset that
-matches a phone meter, how the wrist and a sleeve change the reading, and
+**Not done, to learn on a watch:** how long a capture keeps delivering
+windows on the fēnix 8 (it has stalled after a few minutes), the offset
+that matches a phone meter, what the microphone does with loud sound, how the wrist and a sleeve change the reading, and
 battery while the microphone runs. Not built: A-weighting, octave bands,
 a log of readings.
 

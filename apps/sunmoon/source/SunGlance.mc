@@ -50,6 +50,8 @@ class SunGlance extends WatchUi.GlanceView {
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), _bigFont, SunText.headline(s), left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, SunText.goldenLine(s, _now), left);
+        var line = SunText.goldenLine(s, _now);
+        var font = Lib.Fmt.fitFont(dc, line, [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>, dc.getWidth());
+        dc.drawText(0, (h * 0.85).toNumber(), font, line, left);
     }
 }

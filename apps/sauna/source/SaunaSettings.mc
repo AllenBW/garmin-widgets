@@ -39,9 +39,9 @@ module SaunaSettings {
         return v < lo ? lo : (v > hi ? hi : v);
     }
 
-    // Fahrenheit by default; 1 is Celsius, 2 follows the watch
+    // The watch's unit by default (2); 0 is Fahrenheit, 1 Celsius
     function applyUnit() as Void {
-        var unit = number("TempUnit", 0);
+        var unit = number("TempUnit", 2);
         if (unit == 2) {
             SaunaText.fahrenheit = System.getDeviceSettings().temperatureUnits != System.UNIT_METRIC;
         } else {

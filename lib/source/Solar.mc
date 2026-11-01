@@ -51,11 +51,30 @@ module Lib {
             return d;
         }
 
+        // [sunrise, sunset, tomorrow's sunrise] as seconds after dayStart, for
+        // faces that lay the day out from local midnight. Polar day is light
+        // from midnight until two days on, polar night never light.
+        function riseSet(lat as Float, lon as Float, dayStart as Number) as [Number?, Number?, Number?] {
+            var today = crossings(lat, lon, dayStart, RISE_SET);
+            var rise = today[0];
+            var set = today[1];
+            if (rise == null || set == null) {
+                var up = elevation(lat, lon, dayStart + 43200) > RISE_SET;
+                return up ? [0, 2 * 86400, 0] : [0, 0, 2 * 86400];
+            }
+            var tomorrow = crossings(lat, lon, dayStart + 86400, RISE_SET)[0];
+            return [rise - dayStart, set - dayStart, (tomorrow != null) ? tomorrow - dayStart : null];
+        }
+
         // Unix seconds when the sun reaches `altitude` degrees on the local
         // day beginning at dayStart: [morning, evening], either null when it
         // never gets there.
         function crossings(lat as Float, lon as Float, dayStart as Number, altitude as Float) as [Number?, Number?] {
-            var utcMidnight = ((dayStart + 43200) / 86400) * 86400;   // the UTC day that holds local noon
+            // The UTC day whose solar noon (about 12:00 UTC less 4 minutes per
+            // degree east) falls in this local day. Anchoring on clock noon
+            // instead picks yesterday where the clock runs far ahead of the
+            // sun, as in New Zealand's summer (UTC+13 at 175 E).
+            var utcMidnight = ((dayStart + (lon * 240.0).toNumber() + 43200) / 86400) * 86400;
             return [crossing(lat, lon, utcMidnight, altitude, -1.0d), crossing(lat, lon, utcMidnight, altitude, 1.0d)];
         }
 

@@ -11,7 +11,7 @@ import Toybox.System;
 module Readings {
 
     enum Kind {
-        TEMPERATURE,     // °F, always (the owner's choice)
+        TEMPERATURE,     // in the watch's unit
         RAIN,            // the chance of rain, %
         HEART,           // bpm
         DISTANCE,        // walked today, mi or km
@@ -30,7 +30,7 @@ module Readings {
     function read(kind as Number, celsius as Float?) as [String, String] {
         switch (kind) {
             case TEMPERATURE:
-                return [(celsius != null) ? Math.round(celsius * 9.0 / 5.0 + 32.0).toNumber().toString() : "--", "°F"];
+                return [(celsius != null) ? Lib.Fmt.temperatureValue(celsius) : "--", Lib.Fmt.temperatureUnit()];
             case RAIN:
                 return [orDashes(Lib.Daily.rainChance()), "%"];
             case HEART:
