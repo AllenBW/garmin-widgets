@@ -24,24 +24,24 @@ from preview_faces import (BEDSIDE, DATA, SS, Face, accent_color, bell, digit_fo
 L = dict(
     digits=0.250, aod_digits=0.235,   # each row's digit height
     row_gap=0.035,                    # between the hours' and the minutes' ink
-    legend_em=0.038,
+    legend_em=0.046, aod_legend_em=0.040,   # a little smaller in standby, to stay under 10 % lit
     radius=0.425,                     # the legend's middle, from the centre
-    value_track=0.008,                # letter spacing in a value
-    word_track=0.010,                 # in a word and the date
-    tight_track=0.006,                # in a word, when the legend would not fit
-    word_gap=0.012,                   # between a value and its word
+    value_track=0.006,                # letter spacing in a value
+    word_track=0.008,                 # in a word and the date
+    tight_track=0.004,                # in a word, when the legend would not fit
+    word_gap=0.022,                   # between a value and its word
     word_space=0.013,                 # between the words of a name ("BODY BATT")
     separator_gap=0.024, tight_gap=0.0145,   # either side of the dot between bottom readings, and closed up
     beads=72, bead_radius=0.372, bead_size=0.9, bead=0.30,   # the beaded rim: a dot every 5°
-    value=0.85, word=0.60,            # the values' and words' shares of the data colour
-    aod_value=0.50, aod_word=0.36, aod_date=0.6,
+    value=1.0, word=0.78,            # the values' and words' shares of the data colour
+    aod_value=0.60, aod_word=0.45, aod_date=0.6,
     bell_y=0.165, bell=0.026,         # the alarm bell, at twelve inside the beads
     night=0.85,                       # the colours after sunset
-    date_span=100.0, side_span=32.0, bottom_span=112.0,   # the arcs the legend may fill
+    date_span=100.0, side_span=40.0, bottom_span=124.0,   # the arcs the legend may fill
 )
 LONG, SHORT, BARE = range(3)
 STYLES = ["PridiRegular", "BionicBold", "RobotoCondensedBold", "BionicMedium"]   # Pridi, Bionic, Condensed, Rajdhani
-DEFAULTS = dict(style=0, accent=0, data=0, slots=("temp", "battery", "heart", "steps", "body"), alarm=1)
+DEFAULTS = dict(style=0, accent=0, data=0, slots=("temp", "pressure", "heart", "steps", "sun"), alarm=1)
 SAMPLES = {"day": dict(hours="14", minutes="38", night=False),
            "night": dict(hours="21", minutes="05", night=True)}
 
@@ -54,14 +54,15 @@ def item(kind, night, level, value_c, word_c, px, tight=False):
     value, unit = value.upper(), unit.upper()
     if not unit and len(value) > 1 and value.endswith("°"):
         value, unit = value[:-1], "°"
-    runs = [(value, value_c, px(L["value_track"]), 0, 0)]
+    name = word(kind, night, level != LONG) if level < BARE else ""
+    track = px(L["tight_track"] if tight else L["word_track"])
+    first = bool(name) and kind in ("sun", "app", "vo2")      # "SUNSET 19:22", as Lib.Slots.word has it
+    runs = [(name, word_c, track, 0, px(L["word_space"]))] if first else []
+    runs.append((value, value_c, px(L["value_track"]), px(L["word_gap"]) if first else 0, 0))
     if unit:
         runs.append((unit, value_c, px(L["value_track"]), 0, 0))
-    if level < BARE:
-        name = word(kind, night, level != LONG)
-        if name:
-            runs.append((name, word_c, px(L["tight_track"] if tight else L["word_track"]), px(L["word_gap"]),
-                         px(L["word_space"])))
+    if name and not first:
+        runs.append((name, word_c, track, px(L["word_gap"]), px(L["word_space"])))
     return runs
 
 
@@ -157,7 +158,7 @@ def render(path, mode="day", size=454, st=None, date="SATURDAY · 31 OCTOBER"):
         return face.done(path)
 
     # The date across the top (its short form if too long), the bell at twelve
-    lf = font("PridiRegular" if st["style"] == 0 else "RobotoCondensedRegular", L["legend_em"], size)
+    lf = font("PridiRegular" if st["style"] == 0 else "RobotoCondensedBold", L["aod_legend_em" if thin else "legend_em"], size)
     date_c = scale(accent, L["aod_date"]) if thin else accent
     runs = [(date, date_c, px(L["word_track"]), 0, 0)]
     if runs_length(face, lf, runs) > math.radians(L["date_span"]) * r:

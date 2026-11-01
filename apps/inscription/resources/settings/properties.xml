@@ -8,15 +8,15 @@
     <property id="DataColor" type="number">0</property>
     <!-- The readings as Complications.Type numbers -->
     <!-- Left of the rim -->
-    <property id="Slot1" type="number">38</property>
+    <property id="Reading1" type="number">8</property>
     <!-- Right of the rim -->
-    <property id="Slot2" type="number">1</property>
+    <property id="Reading2" type="number">16</property>
     <!-- Bottom left -->
-    <property id="Slot3" type="number">18</property>
+    <property id="Reading3" type="number">18</property>
     <!-- Bottom middle -->
-    <property id="Slot4" type="number">2</property>
+    <property id="Reading4" type="number">2</property>
     <!-- Bottom right -->
-    <property id="Slot5" type="number">23</property>
+    <property id="Reading5" type="number">13</property>
     <!-- Standby turns into a dim red bedside clock during the watch's sleep hours -->
     <property id="Bedside" type="boolean">true</property>
 </properties>

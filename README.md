@@ -16,9 +16,9 @@ family, written in Monkey C for Connect IQ.
 | [Strata](apps/strata/) | Watch face | The same list set into a field of soil layers that part round each reading; colours and the four readings are yours to choose |
 | [Rings](apps/rings/) | Watch face | Three goal rings (steps, floors, Body Battery) with their numbers along the curves and the day's readings down the side, in three colour sets |
 | [Forage](apps/forage/) | Watch face | For beekeepers: whether the bees are flying, when to open the hive, the next twelve hours as comb |
-| [Vessel](apps/vessel/) | Watch face | The time as two glasses that fill to your readings (Body Battery and steps by default), the next sunrise or sunset at the foot |
-| [Inscription](apps/inscription/) | Watch face | A coin: the time in the middle, the date and five readings set round the rim in small capitals |
-| [Overlap](apps/overlap/) | Watch face | The hours enormous and quiet behind bright minutes, cropped by the bezel, the date and two readings |
+| [Vessel](apps/vessel/) | Watch face | The time as two glasses that fill to your readings (the temperature and heart rate by default), the next sunrise or sunset at the foot |
+| [Inscription](apps/inscription/) | Watch face | A coin: the time in the middle, the date and five readings set round the rim (the weather, the barometer and its trend, heart rate, steps, the next sunrise or sunset) |
+| [Overlap](apps/overlap/) | Watch face | The hours enormous and quiet behind bright minutes, cropped by the bezel, the date and two readings (the next sunrise or sunset and the temperature) |
 | [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain |
 | [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline |
 | [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it |
@@ -32,6 +32,18 @@ family, written in Monkey C for Connect IQ.
 > at your own risk.
 
 Every design, with mockups, is in [`designs/DESIGNS.md`](designs/DESIGNS.md).
+
+## What they look like
+
+The store screenshots, from the simulator with sample readings. Every
+listing's cover and screenshots are in [`docs/store/`](docs/store/).
+
+<table>
+<tr><td align="center"><img src="docs/store/vessel-screen.jpg" width="200" alt="Vessel"><br>Vessel</td><td align="center"><img src="docs/store/inscription-screen.jpg" width="200" alt="Inscription"><br>Inscription</td><td align="center"><img src="docs/store/overlap-screen.jpg" width="200" alt="Overlap"><br>Overlap</td><td align="center"><img src="docs/store/today-screen.jpg" width="200" alt="Today"><br>Today</td></tr>
+<tr><td align="center"><img src="docs/store/strata-screen.jpg" width="200" alt="Strata"><br>Strata</td><td align="center"><img src="docs/store/rings-screen.jpg" width="200" alt="Rings"><br>Rings</td><td align="center"><img src="docs/store/forage-screen.jpg" width="200" alt="Forage"><br>Forage</td><td align="center"><img src="docs/store/daylight-screen.jpg" width="200" alt="Daylight"><br>Daylight</td></tr>
+<tr><td align="center"><img src="docs/store/horizon-screen.jpg" width="200" alt="Horizon"><br>Horizon</td><td align="center"><img src="docs/store/nightsky-screen.jpg" width="200" alt="Night Sky"><br>Night Sky</td><td align="center"><img src="docs/store/sunmoon-screen.jpg" width="200" alt="Sun and Moon"><br>Sun and Moon</td><td align="center"><img src="docs/store/suncompass-screen.jpg" width="200" alt="Sun Compass"><br>Sun Compass</td></tr>
+<tr><td align="center"><img src="docs/store/sauna-screen.jpg" width="200" alt="Sauna and Steam"><br>Sauna and Steam</td><td align="center"><img src="docs/store/sound-screen.jpg" width="200" alt="Sound Level"><br>Sound Level</td></tr>
+</table>
 
 ## Supported watches
 
@@ -144,8 +156,9 @@ no code was copied.
 > three tests pass (the goal fractions and readings, drawing every ring
 > state, every colour set and both modes, the ring geometry and press
 > targets, the themes). Vessel, Inscription and Overlap build
-> cleanly for all three and their tests pass: Vessel's five (the shared
-> reading arithmetic, every complication kind and its words, the accent
+> cleanly for all three and their tests pass: Vessel's six (the shared
+> reading arithmetic, the barometer's trend and the weather from a
+> temperature, every complication kind and its words, the accent
 > lift and the digit ink, drawing every mode with full, empty and
 > rangeless glasses, standby and the bedside clock, the press targets,
 > the phone app's settings), and three each for Inscription and Overlap

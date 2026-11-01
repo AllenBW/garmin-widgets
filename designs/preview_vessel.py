@@ -24,16 +24,17 @@ L = dict(
     axis=0.430,                       # the date's and the foot's centre: the glasses' axis
     mark_gap=0.026, mark_w=0.018, mark_h=0.022,   # the waterline mark: a triangle pointing at the glass
     value_x=0.036,                    # from the mark's tip to the reading
-    value_em=0.062, aod_value_em=0.054,
-    icon=0.032,
+    value_em=0.070, aod_value_em=0.060, unit=0.70,   # a unit's size, of the value's
+    icon=0.040,
     full=0.96,                        # a glass this full is full
-    date_y=0.112, date_em=0.040, track=0.007,
+    date_y=0.112, date_em=0.050, track=0.007,   # the date's and the foot's
+    date=0.85, aod_date=0.55,         # their share of the data colour
     foot_y=0.870,
-    bell_gap=0.042,                   # from the date's end to the alarm bell's centre
+    bell_gap=0.048,                   # from the date's end to the alarm bell's centre
     night=0.85,                       # the colours after sunset
 )
 STYLES = ["BionicBold", "RobotoCondensedBold", "BionicMedium"]   # Bionic, Condensed, Rajdhani
-DEFAULTS = dict(style=0, accent=0, data=0, slots=("body", "steps", "sun"), alarm=1)
+DEFAULTS = dict(style=0, accent=0, data=0, slots=("temp", "heart", "sun"), alarm=1)
 SAMPLES = {"day": dict(hours="14", minutes="38", date="SATURDAY 31", night=False),
            "night": dict(hours="21", minutes="05", date="SATURDAY 31", night=True)}
 
@@ -85,7 +86,7 @@ def render(path, mode="day", size=454, st=None):
             mw, mh = face.px(L["mark_w"]), face.px(L["mark_h"])
             face.d.polygon([(tx, at), (tx + mw, at - mh / 2), (tx + mw, at + mh / 2)], fill=rgb(scale(c, 0.7)))
         vf = font("RobotoCondensedBold", L["aod_value_em"] if thin else L["value_em"], size)
-        uf = font("RobotoCondensedBold", L["value_em"] * 0.62, size)
+        uf = font("RobotoCondensedBold", L["value_em"] * L["unit"], size)
         b = face.d.textbbox((0, 0), "0", font=vf, anchor="ls")
         vx = tx + face.px(L["value_x"])
         vbase = at - (b[1] + b[3]) / 2
@@ -105,9 +106,9 @@ def render(path, mode="day", size=454, st=None):
         if st["alarm"]:
             bell(face, ax, face.px(L["date_y"]), face.px(0.036), BEDSIDE)
         return face.done(path)
-    # the date and the foot in the data colour, quiet: the accent is the minutes'
-    df = font("RobotoCondensedRegular", L["date_em"], size)
-    date_c = scale(data, 0.45 if thin else 0.62)
+    # the date and the foot in the data colour, a little quieter: the accent is the minutes'
+    df = font("RobotoCondensedBold", L["date_em"], size)
+    date_c = scale(data, L["aod_date"] if thin else L["date"])
     w = spaced(face, ax, face.px(L["date_y"]), df, sm["date"], date_c, face.px(L["track"]))
     if st["alarm"]:
         bell(face, ax + w / 2 + face.px(L["bell_gap"]), face.px(L["date_y"]), face.px(0.030), date_c)

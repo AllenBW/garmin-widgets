@@ -46,9 +46,9 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
-| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31, in review |
-| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31, in review |
-| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31, in review |
+| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
+| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
+| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
 
 Screenshots: the store takes at most five. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
@@ -120,17 +120,18 @@ and Body Battery) with their numbers written along the curves, and the
 day's readings down the right side. Three colour sets.
 
 **Vessel** (Watch face). The time as two glasses that fill to your
-readings: the hours fill to your Body Battery and the minutes to your
-step goal, each number sitting on its waterline, and the next sunrise or
-sunset at the foot. Pick any reading for each glass and the foot
+readings: the hours fill to the temperature (between today's low and
+high) and the minutes to your heart rate, each number sitting on its
+waterline, and the next sunrise or sunset at the foot. Pick any reading for each glass and the foot
 (complications from other apps too), any accent colour, a data colour and
 one of three typefaces, in the watch's own face editor or the phone app.
 Press and hold a reading to open it. A dim always-on mode keeps the
 waterlines, and a red bedside clock takes over during your sleep hours.
 
 **Inscription** (Watch face). A coin: the time struck large in the
-middle, the date and five readings set round the rim in small capitals
-inside a beaded edge. Choose each reading (complications from other apps
+middle, the date and five readings set round the rim in capitals inside
+a beaded edge: the weather, the barometer with its trend, heart rate,
+steps and the next sunrise or sunset. Choose each reading (complications from other apps
 too), any accent colour, a data colour and the typeface (a serif by
 default), in the watch's own face editor or the phone app. Press and hold
 a reading to open it. A dim always-on mode and a red bedside clock during
@@ -139,7 +140,7 @@ your sleep hours.
 **Overlap** (Watch face). A poster for your wrist: the hours enormous and
 quiet, cropped by the edge of the screen and tinted by your accent, with
 the minutes bright in front of them, the date and two readings tucked
-below. Choose the readings (complications from other apps too), any
+below (the next sunrise or sunset and the temperature). Choose the readings (complications from other apps too), any
 accent colour, a data colour and one of three typefaces, in the watch's
 own face editor or the phone app. A dim always-on mode and a red bedside
 clock during your sleep hours.

@@ -23,10 +23,11 @@ module Lib {
             return (p < 1) ? 1 : p;
         }
 
-        // The icon for a reading kind. `rise` picks sunrise over sunset, `night`
-        // the moon over the sun in the weather, `level` the battery's fill.
+        // The icon for a reading kind. `way` (Slots.Reading's) picks sunrise
+        // over sunset and the barometer's arrow, `night` the moon over the sun
+        // in the weather, `level` the battery's fill.
         function draw(dc as Dc, kind as Number, cx as Float, cy as Float, s as Float, color as Number,
-                      night as Boolean, rise as Boolean, level as Number) as Void {
+                      night as Boolean, way as Number, level as Number) as Void {
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             switch (kind) {
                 case Slots.HEART:         heart(dc, cx, cy, s); break;
@@ -41,10 +42,10 @@ module Lib {
                 case Slots.ALTITUDE:      mountain(dc, cx, cy, s); break;
                 case Slots.PULSE_OX:      drop(dc, cx, cy, s, color); break;
                 case Slots.BREATH:        lungs(dc, cx, cy, s, color); break;
-                case Slots.SUN:           sun(dc, cx, cy, s, rise); break;
+                case Slots.SUN:           sun(dc, cx, cy, s, way > 0); break;
                 case Slots.NOTIFICATIONS: bubble(dc, cx, cy, s); break;
                 case Slots.RECOVERY:      hourglass(dc, cx, cy, s); break;
-                case Slots.PRESSURE:      gauge(dc, cx, cy - s * 0.07, s); break;     // its ink sits low
+                case Slots.PRESSURE:      trend(dc, cx, cy, s, way, 1.0, 0.0, 0.0, -1.0); break;
                 case Slots.SLEEP:         bed(dc, cx, cy, s); break;
                 case Slots.CALENDAR:      calendar(dc, cx, cy, s); break;
             }
@@ -240,15 +241,31 @@ module Lib {
             dc.fillPolygon(shape(cx, cy, s, [-0.32, -0.46, 0.32, -0.46, 0.05, 0.0, 0.32, 0.46, -0.32, 0.46, -0.05, 0.0] as Array<Float>));
         }
 
-        // A dial with its needle (pressure)
-        function gauge(dc as Dc, cx as Float, cy as Float, s as Float) as Void {
-            var r = s * 0.52;
-            var y = cy + s * 0.3;
+        // The barometer's trend, an arrow: up and forward while it rises
+        // (`way` 1), down and forward while it falls (-1), straight on while
+        // it holds (0). (ax, ay) is the text's forward direction on the
+        // screen and (ux, uy) its up, so the arrow can follow text set round
+        // a rim; (1, 0) and (0, -1) on a level line.
+        function trend(dc as Dc, cx as Float, cy as Float, s as Float, way as Number,
+                       ax as Float, ay as Float, ux as Float, uy as Float) as Void {
+            // the arrow's direction in the text's frame
+            var f = (way == 0) ? 1.0 : 0.7071;
+            var v = way * 0.7071;
+            var dx = f * ax + v * ux;
+            var dy = f * ay + v * uy;
+            // and its side, a quarter turn from it
+            var px = -dy;
+            var py = dx;
+            var tip = s * 0.46;
+            var back = s * 0.46;
+            var head = s * 0.42;
+            var wide = s * 0.30;
+            var neckX = cx + dx * (tip - head);
+            var neckY = cy + dy * (tip - head);
             dc.setPenWidth(pen(3.5));
-            dc.drawArc(cx, y, r, Graphics.ARC_CLOCKWISE, 180, 0);
-            var a = Math.toRadians(-55);
-            dc.drawLine(cx, y, cx + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8);
-            dc.fillCircle(cx, y, s * 0.12);
+            dc.drawLine(cx - dx * back, cy - dy * back, neckX, neckY);
+            dc.fillPolygon([[cx + dx * tip, cy + dy * tip], [neckX + px * wide, neckY + py * wide],
+                            [neckX - px * wide, neckY - py * wide]] as Array<Graphics.Point2D>);
         }
 
         function calendar(dc as Dc, cx as Float, cy as Float, s as Float) as Void {

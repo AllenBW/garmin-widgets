@@ -10,12 +10,13 @@ import Toybox.WatchUi;
 // Vessel: the digits are the gauges. The hours (in the data colour) stand
 // over the minutes (in the accent), set left of the axis, each pair drawn
 // as a glass that fills from the bottom to a reading: the hours to the
-// first slot (Body Battery by default), the minutes to the second (steps
-// against the goal). Each reading's number sits on its waterline, to the
-// right of the glass, marked by a small triangle pointing at it. The date
-// in quiet spaced capitals over the time, a third reading under it in
-// words ("SUNSET 19:22" by default), nothing else; the accent is the
-// minutes' alone. A reading with no range fills its glass, unmarked.
+// first slot (the weather by default: the temperature between today's low
+// and high), the minutes to the second (the heart rate, from resting to
+// the maximum). Each reading's number sits on its waterline, to the right
+// of the glass, marked by a small triangle pointing at it. The date in
+// spaced capitals over the time, a third reading under it in words
+// ("SUNSET 19:22" by default), nothing else; the accent is the minutes'
+// alone. A reading with no range fills its glass, unmarked.
 //
 // Everything is set in the watch face editor or the phone app's settings
 // (Lib.Config): the typeface, the accent (any colour), the data colour,
@@ -41,22 +42,25 @@ class VesselView extends WatchUi.WatchFace {
     private const MARK_W = 0.018;                // the mark: a small triangle pointing at the glass
     private const MARK_H = 0.022;
     private const VALUE_X = 0.036;               // from the mark's tip to the reading
-    private const VALUE_EM = 0.062;
-    private const AOD_VALUE_EM = 0.054;
-    private const ICON = 0.032;
+    private const VALUE_EM = 0.070;
+    private const AOD_VALUE_EM = 0.060;
+    private const UNIT = 0.70;                   // a unit's size, of the value's
+    private const ICON = 0.040;
     private const FULL = 0.96;                   // a glass this full is full
     private const DATE_Y = 0.112;
-    private const DATE_EM = 0.040;
+    private const DATE_EM = 0.050;               // the date's and the foot's
+    private const DATE = 0.85;                   // their share of the data colour
+    private const AOD_DATE = 0.55;
     private const TRACK = 0.007;                 // the spaced capitals' letter spacing
     private const FOOT_Y = 0.870;
-    private const BELL_GAP = 0.042;              // from the date's end to the alarm bell's centre
+    private const BELL_GAP = 0.048;              // from the date's end to the alarm bell's centre
     private const EM_HEIGHT = 1.173;             // Roboto Condensed's height per em (Lib.Ink.HEIGHT)
     private const NIGHT = 0.85;                  // the colours after sunset
 
     enum Style { BIONIC, CONDENSED, RAJDHANI }
     private const FACES = [Lib.Ink.BIONIC_BOLD, Lib.Ink.CONDENSED_BOLD, Lib.Ink.BIONIC_MEDIUM] as Array<Number>;
     private const DEFAULTS = [
-        Complications.COMPLICATION_TYPE_BODY_BATTERY, Complications.COMPLICATION_TYPE_STEPS,
+        Complications.COMPLICATION_TYPE_CURRENT_WEATHER, Complications.COMPLICATION_TYPE_HEART_RATE,
         Complications.COMPLICATION_TYPE_SUNRISE      // the next sunrise or sunset
     ] as Array<Complications.Type>;
     const SLOTS = 3;
@@ -156,12 +160,13 @@ class VesselView extends WatchUi.WatchFace {
     }
 
     // The complication a press and hold at (x, y) opens: a glass's or the
-    // foot's reading, or the calendar from the date
+    // foot's reading (the weather for the temperature), or the calendar
+    // from the date
     function targetAt(x as Number, y as Number) as Complications.Id? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
             if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
-                return (t[0] < SLOTS) ? _ids[t[0]] : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
+                return (t[0] < SLOTS) ? Lib.Slots.opens(_kinds[t[0]], _ids[t[0]]) : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             }
         }
         return null;
@@ -183,8 +188,8 @@ class VesselView extends WatchUi.WatchFace {
         _aodTimeFont = Lib.Ink.font(face, _aodEm, Graphics.FONT_NUMBER_MEDIUM);
         _valueFont = font("RobotoCondensedBold", VALUE_EM, Graphics.FONT_SMALL);
         _aodValueFont = font("RobotoCondensedBold", AOD_VALUE_EM, Graphics.FONT_TINY);
-        _unitFont = font("RobotoCondensedBold", VALUE_EM * 0.62, Graphics.FONT_XTINY);
-        _dateFont = font("RobotoCondensedRegular", DATE_EM, Graphics.FONT_XTINY);
+        _unitFont = font("RobotoCondensedBold", VALUE_EM * UNIT, Graphics.FONT_XTINY);
+        _dateFont = font("RobotoCondensedBold", DATE_EM, Graphics.FONT_XTINY);
     }
 
     private function font(face as String, em as Float, fallback as FontType) as FontType {
@@ -250,16 +255,16 @@ class VesselView extends WatchUi.WatchFace {
         _alarms = 1;
         _night = false;
         var samples = {
-            Lib.Slots.HEART => ["72", "", 0.32, null, false], Lib.Slots.STEPS => ["8412", "", 0.84, null, false],
-            Lib.Slots.BATTERY => ["81", "%", 0.81, null, false], Lib.Slots.BODY => ["64", "", 0.64, null, false],
-            Lib.Slots.STRESS => ["28", "", 0.28, null, false], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, false],
-            Lib.Slots.SUN => ["19:22", "", 0.62, null, false],
-            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", false]
+            Lib.Slots.HEART => ["72", "", 0.32, null, 0], Lib.Slots.STEPS => ["8412", "", 0.84, null, 0],
+            Lib.Slots.BATTERY => ["81", "%", 0.81, null, 0], Lib.Slots.BODY => ["64", "", 0.64, null, 0],
+            Lib.Slots.STRESS => ["28", "", 0.28, null, 0], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, 0],
+            Lib.Slots.SUN => ["19:22", "", 0.62, null, -1], Lib.Slots.PRESSURE => ["1013", "HPA", null, null, 1],
+            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", 0]
         } as Dictionary<Number, Lib.Slots.Reading>;
         var readings = [] as Array<Lib.Slots.Reading>;
         for (var n = 0; n < _kinds.size(); n++) {
             var r = samples[_kinds[n]];
-            readings.add((r != null) ? r : ["--", "", null, null, false] as Lib.Slots.Reading);
+            readings.add((r != null) ? r : ["--", "", null, null, 0] as Lib.Slots.Reading);
         }
         _readings = readings;
     }
@@ -371,16 +376,16 @@ class VesselView extends WatchUi.WatchFace {
                 drawWaterline(dc, row, right + w * MARK_GAP, at, gauge, reading, _kinds[row], color, quiet, thin);
             }
         }
-        // the date and the foot in the data colour, quiet: the accent is the minutes'
-        var dateColor = Lib.Config.scale(data, thin ? 0.45 : 0.62);
+        // the date and the foot in the data colour, a little quieter: the accent is the minutes'
+        var dateColor = Lib.Config.scale(data, thin ? AOD_DATE : DATE);
         var dateWidth = spaced(dc, w * AXIS + ox, h * DATE_Y + oy, _dateFont, _date, dateColor);
         if (_alarms > 0) {
-            Lib.Icons.bell(dc, w * AXIS + ox + dateWidth / 2 + w * BELL_GAP, h * DATE_Y + oy, w * 0.030, dateColor);
+            Lib.Icons.bell(dc, w * AXIS + ox + dateWidth / 2 + w * BELL_GAP, h * DATE_Y + oy, w * 0.036, dateColor);
         }
         if (!thin) {
             _targets.add([SLOTS, (w * AXIS).toNumber(), (h * DATE_Y).toNumber(), (dateWidth / 2).toNumber(), (w * 0.04).toNumber()]);
             if (_readings.size() > 2) {
-                drawFoot(dc, w * AXIS, h * FOOT_Y, _readings[2], _kinds[2], quiet);
+                drawFoot(dc, w * AXIS, h * FOOT_Y, _readings[2], _kinds[2], dateColor);
             }
         }
     }

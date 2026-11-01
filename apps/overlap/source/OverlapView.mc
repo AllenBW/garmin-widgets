@@ -12,7 +12,8 @@ import Toybox.WatchUi;
 // brightness, warmed by a little of the accent), high and left of centre
 // so the bezel crops both digits; the minutes stand bright in the accent,
 // low right, in front of them, the hours knocked out round them. Low
-// left, the date in spaced capitals and two small readings under it.
+// left, the date in spaced capitals and two readings under it (the next
+// sunrise or sunset and the weather's temperature by default).
 // Nothing else. The hours always have two digits (12-hour time too):
 // they are the backdrop, and a lone 9's tail would read as a minus.
 //
@@ -43,21 +44,21 @@ class OverlapView extends WatchUi.WatchFace {
     private const HOURS_ACCENT = 0.12;           // plus this much of the accent
     private const AOD_HOURS = 0.45;              // their outline's share of the data colour, in standby
     private const AOD_MINUTES = 0.85;
-    private const LEFT = 0.215;                  // the date's and the readings' left edge
+    private const LEFT = 0.180;                  // the date's and the readings' left edge
     private const DATE_Y = 0.790;
-    private const DATE_EM = 0.046;
+    private const DATE_EM = 0.050;
     private const TRACK = 0.008;                 // the date's letter spacing
-    private const BELL_X = 0.185;                // the alarm bell's centre, left of the date
+    private const BELL_X = 0.150;                // the alarm bell's centre, left of the date
     private const BELL = 0.030;
     private const READING_Y = 0.855;
-    private const READING_EM = 0.040;
-    private const SMALL_EM = 0.036;              // a lone reading that still doesn't fit
-    private const READING_DIM = 0.70;            // the readings' share of the data colour
-    private const READING_RIGHT = 0.455;         // the readings never run past this,
+    private const READING_EM = 0.046;
+    private const SMALL_EM = 0.040;              // the readings when they still don't fit
+    private const READING_DIM = 0.92;            // the readings' share of the data colour
+    private const READING_RIGHT = 0.500;         // the readings never run past this,
     private const READING_CLEAR = 0.020;         // nor closer than this to the minutes' ink
-    private const ICON = 0.030;
-    private const ICON_GAP = 0.012;              // from an icon to its value
-    private const READING_GAP = 0.032;           // between the two readings (heart rate and steps fit with icons)
+    private const ICON = 0.036;
+    private const ICON_GAP = 0.010;              // from an icon to its value
+    private const READING_GAP = 0.024;           // between the two readings (the sun and the temperature fit with icons)
     private const EM_HEIGHT = 1.173;             // Roboto Condensed's height per em (Lib.Ink.HEIGHT)
     private const NIGHT = 0.85;                  // the colours after sunset (not the hours)
 
@@ -81,7 +82,7 @@ class OverlapView extends WatchUi.WatchFace {
         [0, 0, 0, 0, 0, 0] as Array<Number>
     ] as Array<Array<Number>>;
     private const DEFAULTS = [
-        Complications.COMPLICATION_TYPE_HEART_RATE, Complications.COMPLICATION_TYPE_STEPS
+        Complications.COMPLICATION_TYPE_SUNRISE, Complications.COMPLICATION_TYPE_CURRENT_WEATHER
     ] as Array<Complications.Type>;
     const SLOTS = 2;
 
@@ -181,13 +182,13 @@ class OverlapView extends WatchUi.WatchFace {
         return null;
     }
 
-    // The complication a press and hold at (x, y) opens: a reading's, or
-    // the calendar from the date
+    // The complication a press and hold at (x, y) opens: a reading's (the
+    // weather for the temperature), or the calendar from the date
     function targetAt(x as Number, y as Number) as Complications.Id? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
             if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
-                return (t[0] < SLOTS) ? _ids[t[0]] : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
+                return (t[0] < SLOTS) ? Lib.Slots.opens(_kinds[t[0]], _ids[t[0]]) : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             }
         }
         return null;
@@ -210,7 +211,7 @@ class OverlapView extends WatchUi.WatchFace {
         _dateFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * DATE_EM * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
         _readingFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * READING_EM * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
         _smallFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * SMALL_EM * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
-        _unitFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * READING_EM * 0.62 * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
+        _unitFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * READING_EM * 0.70 * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
         _labelFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * READING_EM * 0.75 * EM_HEIGHT).toNumber(), Graphics.FONT_XTINY);
         _smallLabelFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * SMALL_EM * 0.75 * EM_HEIGHT).toNumber(),
                                              Graphics.FONT_XTINY);
@@ -275,15 +276,16 @@ class OverlapView extends WatchUi.WatchFace {
         _alarms = 0;
         _night = false;
         var samples = {
-            Lib.Slots.HEART => ["72", "", 0.32, null, false], Lib.Slots.STEPS => ["8412", "", 0.84, null, false],
-            Lib.Slots.BATTERY => ["81", "%", 0.81, null, false], Lib.Slots.BODY => ["64", "", 0.64, null, false],
-            Lib.Slots.STRESS => ["28", "", 0.28, null, false], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, false],
-            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", false]
+            Lib.Slots.HEART => ["72", "", 0.32, null, 0], Lib.Slots.STEPS => ["8412", "", 0.84, null, 0],
+            Lib.Slots.BATTERY => ["81", "%", 0.81, null, 0], Lib.Slots.BODY => ["64", "", 0.64, null, 0],
+            Lib.Slots.STRESS => ["28", "", 0.28, null, 0], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, 0],
+            Lib.Slots.SUN => ["19:22", "", 0.62, null, -1], Lib.Slots.PRESSURE => ["1013", "HPA", null, null, 1],
+            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", 0]
         } as Dictionary<Number, Lib.Slots.Reading>;
         var readings = [] as Array<Lib.Slots.Reading>;
         for (var n = 0; n < _kinds.size(); n++) {
             var r = samples[_kinds[n]];
-            readings.add((r != null) ? r : ["--", "", null, null, false] as Lib.Slots.Reading);
+            readings.add((r != null) ? r : ["--", "", null, null, 0] as Lib.Slots.Reading);
         }
         _readings = readings;
     }
@@ -425,9 +427,9 @@ class OverlapView extends WatchUi.WatchFace {
     }
 
     // The readings in a row from x, never past `cap` (READING_RIGHT, or
-    // nearer the minutes when they are wide): without units if they don't fit, then the first alone,
-    // then in a smaller font. Never without their icons (or another app's
-    // label): they are a reading's only cue.
+    // nearer the minutes when they are wide): without units if they don't
+    // fit, then in a smaller font, then the first alone. Never without
+    // their icons (or another app's label): they are a reading's only cue.
     private function drawReadings(dc as Dc, x as Float, y as Float, cap as Float, dim as Float) as Void {
         var w = _w;
         var room = cap - x;
@@ -436,8 +438,8 @@ class OverlapView extends WatchUi.WatchFace {
         var small = false;
         for (var fit = 0; fit < 4; fit++) {
             units = fit == 0;
-            count = (fit < 2) ? count : 1;
-            small = fit == 3;
+            small = fit >= 2;
+            count = (fit < 3) ? count : 1;
             var font = small ? _smallFont : _readingFont;
             var total = 0.0;
             for (var n = 0; n < count; n++) {

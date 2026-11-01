@@ -1066,23 +1066,28 @@ gauge is the time itself.
 **Layout (fractions of the width):** hours (the data colour) over minutes
 (the accent), each 0.285 tall, 0.040 apart, the stack centred at 0.485,
 their ink right edge at 0.655. The filled part solid, the rest a 3 px
-outline (2 px in Rajdhani). The hours fill to reading 1 (Body Battery by
-default), the minutes to reading 2 (steps against the goal); 96 % and
-over counts as full. Each reading's number (RobotoCondensedBold, 0.062
-em) sits on its waterline right of the glass, marked by a small filled
+outline (2 px in Rajdhani). The hours fill to reading 1 (the weather by
+default: the temperature between today's low and high), the minutes to
+reading 2 (the heart rate, from resting to the maximum); 96 % and over
+counts as full. Each reading's number (RobotoCondensedBold, 0.070 em)
+sits on its waterline right of the glass, marked by a small filled
 triangle pointing at the glass (0.018 × 0.022, the row colour at 70 %;
 a dash read as a minus sign), kept inside its glass's band, with its
-icon in the data colour at 57 %. A reading with no range fills its glass
-solid, with no mark and its number at the glass's middle. The accent is
-the minutes' alone: the date in spaced capitals (RobotoCondensedRegular
-0.040, tracking 0.007) at 0.112 in the data colour at 62 %, a bell after
-it while an alarm is set, and reading 3 at the foot (0.870) in words,
-"SUNSET 19:22" by default, both centred on the glasses' axis at 0.43.
+icon (0.040) in the data colour at 75 %. A reading with no range fills
+its glass solid, with no mark and its number at the glass's middle. The
+accent is the minutes' alone: the date in spaced capitals
+(RobotoCondensedBold 0.050, tracking 0.007) at 0.112 in the data colour
+at 85 %, a bell after it while an alarm is set, and reading 3 at the foot
+(0.870) the same way, "SUNSET 19:22" by default, both centred on the
+glasses' axis at 0.43. (November 2026: the owner found the small text
+hard to read, so the date, foot, numbers and icons grew and brightened,
+and no default reading is a battery. A press and hold on the
+temperature opens the weather.)
 Typefaces: Bionic (default), Condensed, Rajdhani.
 
 **Standby:** the glasses empty to a single waterline drawn across each
-digit, the outlines at 80 %, the readings at 55 %, no foot; about 7.4 %
-lit (8.0 % on the 416 px screen). During the watch's sleep hours, the
+digit, the outlines at 80 %, the readings at 55 %, no foot; about 7.7 %
+lit (8.3 % on the 416 px screen). During the watch's sleep hours, the
 bedside clock: the outlined time alone in ember red 0x8C2A1C, a bell at
 the date's place while an alarm is set (5.3 %).
 
@@ -1094,20 +1099,31 @@ inside a beaded rim. No gauges.
 
 **Layout:** the time stacked and centred on its ink, solid, 0.25 tall per
 row. Pridi, the serif, is the default and sets the date and legend too
-(Bionic, Condensed and Rajdhani set them in RobotoCondensedRegular). The
+(Bionic, Condensed and Rajdhani set them in RobotoCondensedBold). The
 date round the top in the accent ("SATURDAY · 31 OCTOBER", the short
 "WED · 30 SEP" past 100°); the bell inside the rim at (0.50, 0.165) while
 an alarm is set. Reading 1 at 9 o'clock and reading 2 at 3 o'clock (each
-at most 32°, with the short word: "46° TEMP", "81% BATT"), readings 3 to
-5 along the bottom (at most 112°: "72 BPM · 8412 STEPS · 64 BODY BATT"),
-0.038 em on a radius of 0.425, one `drawRadialText` per character: the
-values in the data colour at 85 % (tracking 0.005), their words at 60 %
-(tracking 0.010), units tight. Too long, an item closes up, then takes
-its short word (whole or familiar words only: BATT, BODY, MIN, REST),
-then drops it. 72 beads at radius 0.372 in the data colour at 30 %.
+at most 40°, with the short word: "46° TEMP", "1013HPA" and the
+barometer's arrow), readings 3 to 5 along the bottom (at most 124°: "72
+BPM · 8412 STEPS · SUNSET 19:22"; the sun and other apps' labels put
+their word first), 0.046 em on a radius of 0.425, one `drawRadialText`
+per character: the values in the data colour (tracking 0.006), their
+words at 78 % (tracking 0.008, 0.022 from the value), units tight. Too
+long, an item closes up, then takes its short word (whole or familiar
+words only: BATT, BODY, MIN, REST), then drops it. 72 beads at radius
+0.372 in the data colour at 30 %. The barometer (by default at 3
+o'clock) ends with an arrow set like the text round it: up and forward
+while the pressure has risen 1 hPa or more in three hours, down and
+forward while it has fallen, straight on while steady, and level when
+the altitude moved over 10 m in that time (`Lib.Slots.pressureTrend`).
+The other faces draw the same arrow as the barometer's icon. Defaults
+(November 2026, at the owner's word): the weather, the barometer, heart
+rate, steps, the next sunrise or sunset; a hold on the temperature opens
+the weather.
 
-**Standby:** the time outlined, the date and the bottom legend dim, no
-side readings or beads; about 7.8 % lit (8.4 % at 416). Bedside clock as
+**Standby:** the time outlined, the date and the bottom legend dim and
+a little smaller (0.040 em), no side readings or beads; about 8.1 % lit
+(8.8 % at 416 in Rajdhani, the most). Bedside clock as
 Vessel's, the bell at the same place inside the rim (4.6 %).
 
 ## 18. Overlap: the hours as landscape, the minutes as subject
@@ -1125,11 +1141,14 @@ the minutes' ink top and left of their ink left (less 0.016, at most
 window's top where a second hour digit would leave a loose stroke, and
 in Bionic a corner clip removes the 2's terminal at the bezel; every
 hour in every typeface is checked by `designs/preview_overlap.py
---check`. The date in spaced bold capitals in the accent at (0.215,
-0.790), a bell before it while an alarm is set; two readings under it at
-0.855 (RobotoCondensedBold 0.040, the data colour at 70 %, icons at 57 %),
-kept left of 0.455: units go first, then the second reading, never an
-icon. Typefaces: Bionic, Condensed, Rajdhani.
+--check`. The date in spaced bold capitals (0.050) in the accent at
+(0.180, 0.790), a bell before it while an alarm is set; two readings
+under it at 0.855 (RobotoCondensedBold 0.046, the data colour at 92 %,
+icons 0.036 at 75 %), kept left of 0.500 and clear of the minutes:
+units go first, then the size (0.040), then the second reading, never
+an icon. The readings default to the next sunrise or sunset and the
+weather (November 2026: the owner found heart rate and steps no use
+here). Typefaces: Bionic, Condensed, Rajdhani.
 
 **Standby:** both as 1 px outlines (the hours at 45 %), the window kept,
 the date dim, no readings; about 6.7 % lit (7.5 % at 416, 9.4 % at worst:

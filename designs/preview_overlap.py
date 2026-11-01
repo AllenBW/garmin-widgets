@@ -31,13 +31,13 @@ L = dict(
     loose=0.050,                      # and a piece cut loose from its digit thinner than this, a fleck
     hours_data=0.30, hours_accent=0.12,                     # the hours: data × 0.30 + accent × 0.12
     aod_hours=0.45, aod_minutes=0.85,
-    left=0.215,                       # the date's and the readings' left edge
-    date_y=0.790, date_em=0.046, track=0.008,
-    bell_x=0.185, bell=0.030,         # the alarm bell, left of the date
-    reading_y=0.855, reading_em=0.040, small_em=0.036, reading_dim=0.70,
-    reading_right=0.455,              # the readings never run past this,
+    left=0.180,                       # the date's and the readings' left edge
+    date_y=0.790, date_em=0.050, track=0.008,
+    bell_x=0.150, bell=0.030,         # the alarm bell, left of the date
+    reading_y=0.855, reading_em=0.046, small_em=0.040, reading_dim=0.92,
+    reading_right=0.500,              # the readings never run past this,
     reading_clear=0.020,              # nor closer than this to the minutes' ink
-    icon=0.030, icon_gap=0.012, reading_gap=0.032,
+    icon=0.036, icon_gap=0.010, reading_gap=0.024,
     night=0.85,                       # the colours after sunset (not the hours)
 )
 STYLES = ["BionicBold", "RobotoCondensedBold", "BionicMedium"]   # Bionic, Condensed, Rajdhani
@@ -50,7 +50,7 @@ RAISE = [[20, 0, 0, 37, 0, 30, 0, 0, 0, 0], [20, 0, 0, 4, 0, 6, 0, 0, 0, 0], [20
 # hours for their first digit, 0 to 2, per typeface: Bionic's 2 leaves its
 # top terminal cut loose by the bezel. From `--check`; OverlapView.CORNER.
 CORNER = [[(0, 0), (0, 0), (92, 295)], [(0, 0), (0, 0), (0, 0)], [(0, 0), (0, 0), (0, 0)]]
-DEFAULTS = dict(style=0, accent=0, data=0, slots=("heart", "steps"), alarm=0)
+DEFAULTS = dict(style=0, accent=0, data=0, slots=("sun", "temp"), alarm=0)
 SAMPLES = {"day": dict(hours="14", minutes="38", date="SAT 31", night=False),
            "night": dict(hours="21", minutes="05", date="SAT 31", night=True)}
 
@@ -122,7 +122,7 @@ def render(path, mode="day", size=454, st=None):
         return face.done(path)
 
     # The readings, never past reading_right: without units if they don't
-    # fit, then the first alone, then in a smaller font. Never without
+    # fit, then in a smaller font, then the first alone. Never without
     # their icons (or another app's label): they are the only cue.
     s = face.px(L["icon"])
     gap = face.px(L["icon_gap"])
@@ -131,9 +131,9 @@ def render(path, mode="day", size=454, st=None):
         return font("RobotoCondensedBold", em * (0.75 if len(LABELS[kind]) <= 3 else 0.62), size)
 
     for kinds, units, em in ((st["slots"][:2], True, L["reading_em"]), (st["slots"][:2], False, L["reading_em"]),
-                             (st["slots"][:1], False, L["reading_em"]), (st["slots"][:1], False, L["small_em"])):
+                             (st["slots"][:2], False, L["small_em"]), (st["slots"][:1], False, L["small_em"])):
         tf = font("RobotoCondensedBold", em, size)
-        uf = font("RobotoCondensedBold", L["reading_em"] * 0.62, size)
+        uf = font("RobotoCondensedBold", L["reading_em"] * 0.70, size)
 
         def width(kind):
             value, unit, _ = reading(kind, night)

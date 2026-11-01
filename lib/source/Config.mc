@@ -7,7 +7,7 @@ module Lib {
 
     // A face's settings, which come from two places with the same choices:
     // the phone app's settings list (resources/settings: Style, Accent,
-    // DataColor, Slot1..SlotN, Bedside) and the fēnix 8's watch face editor
+    // DataColor, Reading1..ReadingN, Bedside) and the fēnix 8's watch face editor
     // (resources/configs/watchface.xml: styles, accent colours, data
     // colours, complications 1..N). Whichever was changed last wins: the
     // app calls changedOnPhone from onSettingsChanged, the delegate
@@ -22,7 +22,7 @@ module Lib {
         const DATA = [0xF2ECE2, 0xB4BAC2, 0xE6CFA0, 0xCFE6FF, 0xF8D2D8] as Array<Number>;
         const BEDSIDE = 0x8C2A1C;        // a dim ember red that keeps night vision
         const LIGHT = 0.30;              // the least luminance an accent is drawn with
-        const QUIET = 0.57;              // icons and quiet text: the data colour at this
+        const QUIET = 0.75;              // icons and quiet text: the data colour at this
 
         const SOURCE = "Source";
         const PHONE = "phone";
@@ -38,7 +38,7 @@ module Lib {
             var data = DATA[number("DataColor", 0, DATA.size() - 1)];
             var ids = [] as Array<Complications.Id>;
             for (var n = 0; n < defaults.size(); n++) {
-                var type = Application.Properties.getValue("Slot" + (n + 1));
+                var type = Application.Properties.getValue("Reading" + (n + 1));
                 ids.add(new Complications.Id(((type instanceof Number && type > 0) ? type : defaults[n]) as Complications.Type));
             }
             if (Application has :WatchFaceConfig && !PHONE.equals(Application.Storage.getValue(SOURCE))) {

@@ -289,13 +289,16 @@ def hourglass(f, cx, cy, s, c):
                 fill=rgb(c))
 
 
-def gauge(f, cx, cy, s, c):
-    r = s * 0.52
-    y = cy + s * 0.3
-    f.d.arc((cx - r, y - r, cx + r, y + r), 180, 360, fill=rgb(c), width=lw(f, 3.5))
-    a = math.radians(-55)
-    f.d.line([(cx, y), (cx + math.cos(a) * r * 0.8, y + math.sin(a) * r * 0.8)], fill=rgb(c), width=lw(f, 3.5))
-    ell(f, cx, y, s * 0.12, s * 0.12, c)
+def trend(f, cx, cy, s, c, way=1):
+    """The barometer's arrow (Lib.Icons.trend): up and forward rising, down and forward falling."""
+    k = 1.0 if way == 0 else 0.7071
+    dx, dy = k, -way * 0.7071
+    px_, py_ = -dy, dx
+    tip, back, head, wide = s * 0.46, s * 0.46, s * 0.42, s * 0.30
+    nx, ny = cx + dx * (tip - head), cy + dy * (tip - head)
+    f.d.line([(cx - dx * back, cy - dy * back), (nx, ny)], fill=rgb(c), width=lw(f, 3.5))
+    f.d.polygon([(cx + dx * tip, cy + dy * tip), (nx + px_ * wide, ny + py_ * wide), (nx - px_ * wide, ny - py_ * wide)],
+                fill=rgb(c))
 
 
 def crescent(f, cx, cy, s, c):
@@ -329,7 +332,7 @@ def phone_off(f, cx, cy, s, c):
 
 ICONS = dict(heart=heart, steps=steps, battery=battery, body=bolt, stress=stress, calories=flame,
              floors=stairs, intensity=chevrons, altitude=mountain, pulseox=drop, breath=lungs, notes=bubble,
-             recovery=hourglass, pressure=gauge, sleep=bed, calendar=calendar)
+             recovery=hourglass, pressure=trend, sleep=bed, calendar=calendar)
 LABELS = dict(vo2="VO2", app="GLU")     # kinds shown by a short label in place of an icon
 
 
@@ -341,7 +344,7 @@ def draw_icon(face, kind, cx, cy, s, c, night, small=False):
     elif kind == "temp":
         weather(face, cx, cy + face.px(0.006), s, c, night)
     elif kind == "pressure":
-        gauge(face, cx, cy - face.px(0.004), s, c)
+        trend(face, cx, cy, s, c, 0 if night else 1)       # rising by day, steady at night
     else:
         ICONS[kind](face, cx, cy, s, c)
 
@@ -520,7 +523,7 @@ def accent_color(st):
     return (r << 16) | (g << 8) | b
 
 
-QUIET = 0.57    # icons and quiet text: the data colour at this (Lib.Config.QUIET)
+QUIET = 0.75    # icons and quiet text: the data colour at this (Lib.Config.QUIET)
 
 
 def sheet(out, items, cols=None):

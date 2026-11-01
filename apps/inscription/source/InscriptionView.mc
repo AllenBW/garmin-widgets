@@ -10,13 +10,15 @@ import Toybox.WatchUi;
 
 // Inscription: a coin. The time struck large in the middle, the hours (in
 // the data colour) over the minutes (in the accent), and round the rim, in
-// small spaced capitals like a coin's legend, the date across the top in
-// the accent and the five readings in the data colour, softened: one at
-// nine o'clock, one at three, three along the bottom reading left to
-// right, each its value and the word that names it ("72 BPM", "8412
-// STEPS"), the value brighter than its word. A beaded rim sets the field
-// off from the legend. No icons, no gauges. With the Pridi typeface the
-// legend is set in Pridi too.
+// spaced capitals like a coin's legend, the date across the top in the
+// accent and the five readings in the data colour: one at nine o'clock
+// (the weather's temperature by default), one at three (the barometer),
+// three along the bottom reading left to right (heart rate, steps, the
+// next sunrise or sunset), each its value and the word that names it ("72
+// BPM", "8412 STEPS", "SUNSET 19:22"), the value brighter than its word.
+// A beaded rim sets the field off from the legend. No icons and no gauges
+// but the barometer's arrow, up, down or level with its trend. With the
+// Pridi typeface the legend is set in Pridi too.
 //
 // Everything is set in the watch face editor or the phone app's settings
 // (Lib.Config): the typeface, the accent (any colour), the data colour,
@@ -38,12 +40,13 @@ class InscriptionView extends WatchUi.WatchFace {
     private const DIGITS = 0.250;                // each row's digit height
     private const AOD_DIGITS = 0.235;
     private const ROW_GAP = 0.035;               // between the hours' and the minutes' ink
-    private const LEGEND_EM = 0.038;
+    private const LEGEND_EM = 0.046;
+    private const AOD_LEGEND_EM = 0.040;         // a little smaller in standby, to stay under 10 % lit
     private const RADIUS = 0.425;                // the legend's middle, from the centre
-    private const VALUE_TRACK = 0.008;           // letter spacing in a value
-    private const WORD_TRACK = 0.010;            // in a word and the date
-    private const TIGHT_TRACK = 0.006;           // in a word, when the legend would not fit
-    private const WORD_GAP = 0.012;              // between a value and its word
+    private const VALUE_TRACK = 0.006;           // letter spacing in a value
+    private const WORD_TRACK = 0.008;            // in a word and the date
+    private const TIGHT_TRACK = 0.004;           // in a word, when the legend would not fit
+    private const WORD_GAP = 0.022;              // between a value and its word
     private const WORD_SPACE = 0.013;            // between the words of a name ("BODY BATT")
     private const SEPARATOR_GAP = 0.024;         // either side of the dot between bottom readings
     private const TIGHT_GAP = 0.0145;            // and when the bottom would not fit
@@ -51,31 +54,37 @@ class InscriptionView extends WatchUi.WatchFace {
     private const BEAD_RADIUS = 0.372;
     private const BEAD_SIZE = 0.9;               // px, on the 454 px screen
     private const BEAD = 0.30;                   // the beads' share of the data colour
-    private const VALUE = 0.85;                  // the values' share of the data colour
-    private const WORD = 0.60;                   // the words'
-    private const AOD_VALUE = 0.50;
-    private const AOD_WORD = 0.36;
+    private const VALUE = 1.0;                   // the values' share of the data colour
+    private const WORD = 0.78;                   // the words'
+    private const AOD_VALUE = 0.60;
+    private const AOD_WORD = 0.45;
+    private const ARROW = 0.040;                 // the barometer's arrow
+    private const ARROW_GAP = 0.010;             // from the reading to it
     private const AOD_DATE = 0.6;
     private const BELL_Y = 0.165;                // the alarm bell, at twelve inside the beads
     private const BELL = 0.026;
     private const NIGHT = 0.85;                  // the colours after sunset
     // The arcs the legend may fill, in degrees, so its items never run into
     // each other: the date 100° round twelve (else its short form), each
-    // side 32° round three or nine o'clock, the bottom 112° round six. Too
+    // side 40° round three or nine o'clock, the bottom 124° round six. Too
     // long, the words and dots close up first; then, longest item first,
     // a long word gives way to its short one and a short one to none. The
     // sides start at the short word.
     private const DATE_SPAN = 100.0;
-    private const SIDE_SPAN = 32.0;
-    private const BOTTOM_SPAN = 112.0;
+    private const SIDE_SPAN = 40.0;
+    private const BOTTOM_SPAN = 124.0;
     enum Level { LONG, SHORT, BARE }
+    // Stand-ins in a run for the barometer's arrow, by its trend
+    private const RISING = "↗";
+    private const STEADY = "→";
+    private const FALLING = "↘";
 
     enum Style { PRIDI, BIONIC, CONDENSED, RAJDHANI }
     private const FACES = [Lib.Ink.PRIDI, Lib.Ink.BIONIC_BOLD, Lib.Ink.CONDENSED_BOLD, Lib.Ink.BIONIC_MEDIUM] as Array<Number>;
     private const DEFAULTS = [
-        Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE, Complications.COMPLICATION_TYPE_BATTERY,
+        Complications.COMPLICATION_TYPE_CURRENT_WEATHER, Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE,
         Complications.COMPLICATION_TYPE_HEART_RATE, Complications.COMPLICATION_TYPE_STEPS,
-        Complications.COMPLICATION_TYPE_BODY_BATTERY
+        Complications.COMPLICATION_TYPE_SUNRISE      // the next sunrise or sunset
     ] as Array<Complications.Type>;
     const SLOTS = 5;
 
@@ -94,6 +103,8 @@ class InscriptionView extends WatchUi.WatchFace {
     private var _timeFont as FontType = Graphics.FONT_NUMBER_HOT;
     private var _aodTimeFont as FontType = Graphics.FONT_NUMBER_MEDIUM;
     private var _legendFont as FontType = Graphics.FONT_XTINY;
+    private var _aodLegendFont as FontType = Graphics.FONT_XTINY;
+    private var _legend as FontType = Graphics.FONT_XTINY;     // the one this draw uses
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -171,13 +182,13 @@ class InscriptionView extends WatchUi.WatchFace {
         return null;
     }
 
-    // The complication a press and hold at (x, y) opens: a reading's, or
-    // the calendar from the date
+    // The complication a press and hold at (x, y) opens: a reading's (the
+    // weather for the temperature), or the calendar from the date
     function targetAt(x as Number, y as Number) as Complications.Id? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
             if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
-                return (t[0] < SLOTS) ? _ids[t[0]] : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
+                return (t[0] < SLOTS) ? Lib.Slots.opens(_kinds[t[0]], _ids[t[0]]) : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             }
         }
         return null;
@@ -196,7 +207,9 @@ class InscriptionView extends WatchUi.WatchFace {
         _aodEm = Lib.Ink.em(face, _w * AOD_DIGITS);
         _timeFont = Lib.Ink.font(face, _em, Graphics.FONT_NUMBER_HOT);
         _aodTimeFont = Lib.Ink.font(face, _aodEm, Graphics.FONT_NUMBER_MEDIUM);
-        _legendFont = Lib.Ink.font((_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_REGULAR, _w * LEGEND_EM, Graphics.FONT_XTINY);
+        var legend = (_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_BOLD;
+        _legendFont = Lib.Ink.font(legend, _w * LEGEND_EM, Graphics.FONT_XTINY);
+        _aodLegendFont = Lib.Ink.font(legend, _w * AOD_LEGEND_EM, Graphics.FONT_XTINY);
     }
 
     // ------------------------------------------------------------ state
@@ -261,15 +274,16 @@ class InscriptionView extends WatchUi.WatchFace {
         _alarms = 1;
         _night = false;
         var samples = {
-            Lib.Slots.HEART => ["72", "", 0.32, null, false], Lib.Slots.STEPS => ["8412", "", 0.84, null, false],
-            Lib.Slots.BATTERY => ["81", "%", 0.81, null, false], Lib.Slots.BODY => ["64", "", 0.64, null, false],
-            Lib.Slots.STRESS => ["28", "", 0.28, null, false], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, false],
-            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", false]
+            Lib.Slots.HEART => ["72", "", 0.32, null, 0], Lib.Slots.STEPS => ["8412", "", 0.84, null, 0],
+            Lib.Slots.BATTERY => ["81", "%", 0.81, null, 0], Lib.Slots.BODY => ["64", "", 0.64, null, 0],
+            Lib.Slots.STRESS => ["28", "", 0.28, null, 0], Lib.Slots.TEMPERATURE => ["46°", "", 0.55, null, 0],
+            Lib.Slots.SUN => ["19:22", "", 0.62, null, -1], Lib.Slots.PRESSURE => ["1013", "HPA", null, null, 1],
+            Lib.Slots.OTHER => ["112", "", 0.45, "GLU", 0]
         } as Dictionary<Number, Lib.Slots.Reading>;
         var readings = [] as Array<Lib.Slots.Reading>;
         for (var n = 0; n < _kinds.size(); n++) {
             var r = samples[_kinds[n]];
-            readings.add((r != null) ? r : ["--", "", null, null, false] as Lib.Slots.Reading);
+            readings.add((r != null) ? r : ["--", "", null, null, 0] as Lib.Slots.Reading);
         }
         _readings = readings;
     }
@@ -334,6 +348,7 @@ class InscriptionView extends WatchUi.WatchFace {
         var dim = _night ? NIGHT : 1.0;
         var data = Lib.Config.scale(_data, dim);
         var accent = Lib.Config.scale(_accent, dim);
+        _legend = thin ? _aodLegendFont : _legendFont;
         if (!thin) {
             drawBeads(dc, cx, cy, Lib.Config.scale(data, BEAD));
         }
@@ -414,7 +429,7 @@ class InscriptionView extends WatchUi.WatchFace {
         var total = legend(dc, cx, cy, runs, 180.0, true);
         if (!thin) {
             // each bottom reading's press target, where it falls along the rim
-            var dot = dc.getTextWidthInPixels("·", _legendFont) + 2 * gap;
+            var dot = dc.getTextWidthInPixels("·", _legend) + 2 * gap;
             var start = 0.0;
             for (var k = 0; k < items.size(); k++) {
                 var size = runsLength(dc, items[k]);
@@ -476,9 +491,12 @@ class InscriptionView extends WatchUi.WatchFace {
 
     // A reading as it is inscribed, as runs: its value, its unit set tight
     // against it, and (by `level`) the word that names it, closed up when
-    // `tight`
+    // `tight`; the word first for the sun ("SUNSET 19:22") and another
+    // app's label, as Lib.Slots.word has it. The barometer ends with its
+    // trend's arrow.
     private function item(n as Number, level as Number, tight as Boolean, value as Number, word as Number) as Array<Run> {
         var r = _readings[n];
+        var kind = _kinds[n];
         var text = r[0].toUpper();
         var unit = r[1].toUpper();
         var last = (text.length() > 1) ? text.substring(text.length() - 1, text.length()) : null;
@@ -486,15 +504,22 @@ class InscriptionView extends WatchUi.WatchFace {
             unit = "°";
             text = text.substring(0, text.length() - 1) as String;
         }
-        var runs = [[text, value, _w * VALUE_TRACK, 0.0, 0.0]] as Array<Run>;
+        var name = (level < BARE) ? Lib.Slots.word(kind, r, level != LONG).toUpper() : "";
+        var track = _w * (tight ? TIGHT_TRACK : WORD_TRACK);
+        var first = !name.equals("") && (kind == Lib.Slots.SUN || kind == Lib.Slots.OTHER || kind == Lib.Slots.VO2);
+        var runs = [] as Array<Run>;
+        if (first) {
+            runs.add([name, word, track, 0.0, _w * WORD_SPACE]);
+        }
+        runs.add([text, value, _w * VALUE_TRACK, first ? _w * WORD_GAP : 0.0, 0.0]);
         if (!unit.equals("")) {
             runs.add([unit, value, _w * VALUE_TRACK, 0.0, 0.0]);
         }
-        if (level < BARE) {
-            var name = Lib.Slots.word(_kinds[n], r, level != LONG).toUpper();
-            if (!name.equals("")) {
-                runs.add([name, word, _w * (tight ? TIGHT_TRACK : WORD_TRACK), _w * WORD_GAP, _w * WORD_SPACE]);
-            }
+        if (!first && !name.equals("")) {
+            runs.add([name, word, track, _w * WORD_GAP, _w * WORD_SPACE]);
+        }
+        if (kind == Lib.Slots.PRESSURE && !text.equals("--")) {
+            runs.add([(r[4] > 0) ? RISING : ((r[4] < 0) ? FALLING : STEADY), value, 0.0, _w * ARROW_GAP, 0.0]);
         }
         return runs;
     }
@@ -515,18 +540,21 @@ class InscriptionView extends WatchUi.WatchFace {
             total += runsLength(dc, items[k]);
         }
         if (items.size() > 1) {
-            total += (items.size() - 1) * (dc.getTextWidthInPixels("·", _legendFont) + 2 * _w * (tight ? TIGHT_GAP : SEPARATOR_GAP));
+            total += (items.size() - 1) * (dc.getTextWidthInPixels("·", _legend) + 2 * _w * (tight ? TIGHT_GAP : SEPARATOR_GAP));
         }
         return total;
     }
 
     // A character's width in a run; a space set to make the run's own gap
-    // between its neighbours, letter spacing included
+    // between its neighbours, letter spacing included; the arrow's
     private function width(dc as Dc, ch as String, run as Run) as Float {
         if (run[4] > 0.0 && ch.equals(" ")) {
             return run[4] - 2 * run[2];
         }
-        return dc.getTextWidthInPixels(ch, _legendFont).toFloat();
+        if (arrow(ch) != null) {
+            return _w * ARROW;
+        }
+        return dc.getTextWidthInPixels(ch, _legend).toFloat();
     }
 
     // The length along the rim of runs as legend() sets them
@@ -551,7 +579,7 @@ class InscriptionView extends WatchUi.WatchFace {
     // time, since drawRadialText has no letter spacing. Returns the length
     // along the rim, in px.
     private function legend(dc as Dc, cx as Float, cy as Float, runs as Array<Run>, angle as Float, bottom as Boolean) as Float {
-        var font = _legendFont;
+        var font = _legend;
         var r = _w * RADIUS;
         var total = runsLength(dc, runs);
         var sign = bottom ? -1.0 : 1.0;
@@ -569,6 +597,16 @@ class InscriptionView extends WatchUi.WatchFace {
                 var a = angle + sign * Math.toDegrees((pos + cw / 2.0) / r);
                 pos += cw + ((j < chars.size() - 1) ? run[2] : 0.0);
                 if (ch.equals(" ")) {
+                    continue;
+                }
+                var way = arrow(ch);
+                if (way != null) {
+                    // drawn, set like the text round it: forward along the
+                    // rim, up away from the centre (toward it along the bottom)
+                    var t = Math.toRadians(a);
+                    var sin = Math.sin(t).toFloat();
+                    var cos = Math.cos(t).toFloat();
+                    Lib.Icons.trend(dc, cx + r * sin, cy - r * cos, _w * ARROW, way, sign * cos, sign * sin, sign * sin, -sign * cos);
                     continue;
                 }
                 if (radial) {
@@ -593,6 +631,17 @@ class InscriptionView extends WatchUi.WatchFace {
             }
         }
         return total;
+    }
+
+    // The trend a stand-in for the barometer's arrow stands for, or null
+    private function arrow(ch as String) as Number? {
+        if (ch.equals(RISING)) {
+            return 1;
+        }
+        if (ch.equals(FALLING)) {
+            return -1;
+        }
+        return ch.equals(STEADY) ? 0 : null;
     }
 
     // A press target round a legend item `length` px long centred on
