@@ -11,11 +11,12 @@ function testLightText(logger as Logger) as Boolean {
     var rise = 8 * 3600 + 4 * 60;
     var set = 15 * 3600 + 53 * 60;
     var tomorrowRise = day + 86400 + rise;
-    Test.assertEqualMessage(DaylightText.light(6 * 3600, rise, set, tomorrowRise, day, true), "sunrise in 2h 04m", "before sunrise");
-    Test.assertEqualMessage(DaylightText.light(10 * 3600 + 8 * 60, rise, set, tomorrowRise, day, true), "5h 45m of light left", "daytime");
-    Test.assertEqualMessage(DaylightText.light(20 * 3600, rise, set, tomorrowRise, day, true), "sunrise in 12h 04m", "after sunset");
-    Test.assertEqualMessage(DaylightText.light(12 * 3600, null, null, null, day, true), "no sunrise today", "polar night");
-    Test.assertEqualMessage(DaylightText.light(12 * 3600, null, null, null, day, false), "no location yet", "never located");
+    Test.assertEqualMessage(DaylightText.light(6 * 3600, rise, set, tomorrowRise, day, true, false), "sunrise in 2h 04m", "before sunrise");
+    Test.assertEqualMessage(DaylightText.light(10 * 3600 + 8 * 60, rise, set, tomorrowRise, day, true, false), "5h 45m of light left", "daytime");
+    Test.assertEqualMessage(DaylightText.light(20 * 3600, rise, set, tomorrowRise, day, true, false), "sunrise in 12h 04m", "after sunset");
+    Test.assertEqualMessage(DaylightText.light(12 * 3600, null, null, null, day, true, false), "no sunrise today", "polar night");
+    Test.assertEqualMessage(DaylightText.light(12 * 3600, null, null, null, day, true, true), "no sunset today", "midnight sun");
+    Test.assertEqualMessage(DaylightText.light(12 * 3600, null, null, null, day, false, false), "no location yet", "never located");
     return true;
 }
 

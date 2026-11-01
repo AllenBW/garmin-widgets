@@ -23,7 +23,7 @@ class CompassView extends WatchUi.View {
 
     private const POLL_MS = 250;
     private const SMOOTHING = 0.5;       // how far towards each new reading per poll
-    private const SETTLED = 0.3;         // degrees: smaller moves are not worth a redraw
+    private const SETTLED = 1.0;         // degrees: smaller moves (a still wrist's noise) are not worth a redraw
     private const LABEL_EVERY = 3;       // hours between labelled dots
 
     private var _sky as SunSky?;

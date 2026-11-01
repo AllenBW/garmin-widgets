@@ -65,7 +65,7 @@ always-on mode that shifts each minute.
 
 **Daylight** (Watch face). A 24-hour sun dial. The day's light runs round
 the edge, with golden hours marked and how much light is left, plus
-altitude and pressure.
+altitude and the pressure trend (left out while you climb or descend).
 
 **Readiness** (Watch face). Your body metrics without opening a widget:
 Body Battery and stress gauges, sleep score, recovery time, resting heart
@@ -83,12 +83,15 @@ your next calendar event fall.
 now, the next good hours to open the hive (warm, calm, dry, late morning to
 mid-afternoon), the next twelve hours as a strip of comb, and the
 beekeeper's year along the bottom of the bezel. Uses the hourly forecast
-from your phone.
+from your phone; it says nothing rather than guess when the weather is
+hours old. The time is in 24-hour form. The nectar calendar follows the
+mid-Atlantic United States (Virginia, Maryland); elsewhere the seasons
+along the bezel will be early or late.
 
 **Today** (Watch face). One plain list and nothing else: the next sunrise
 or sunset, the time in 24-hour form, the date, the moon and its phase,
-heart rate, the outside temperature, distance walked today and any alarms
-set. No settings.
+heart rate, the outside temperature (in the watch's unit), distance walked
+today and any alarms set. No settings.
 
 **Strata** (Watch face). The day's readings set into a field of soil
 layers that part round each one like water round a stone. The time is cut
@@ -120,6 +123,10 @@ visit is saved to Garmin Connect.
 
 **Sound Level** (Tools). Experimental. An approximate sound level meter
 from the watch microphone: the level in decibels coloured by how loud it
-is, how long it is safe to stay at that level (NIOSH: 85 dB for 8 hours,
-half the time for every 3 dB more), and a dose while the app is open. Not
-a calibrated instrument.
+is, NIOSH's daily limit at that level (85 dB for 8 hours, half the time
+for every 3 dB more), and a dose while the app is open. Past what the
+microphone can read it says "too loud to measure" rather than showing a
+number that is too low. It listens only while open, and never records,
+stores or sends audio. Not a calibrated instrument and not a medical
+device; calibrate it against a phone meter from the menu. If the
+microphone stops sending sound, press BACK and open the app again.

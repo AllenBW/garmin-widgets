@@ -117,6 +117,9 @@ class StrataView extends WatchUi.WatchFace {
     // blit a frame. Without it the layers go straight to the screen.
     private const BATCH = 16;
     private var _base as Graphics.BufferedBitmapReference? = null;
+    // Held for as long as the face runs: the pool may reclaim a bitmap
+    // nothing holds, and a fresh blank one from get() would show no field
+    private var _bitmap as Graphics.BufferedBitmap? = null;
     private var _key as String = "";
     private var _baseLayer as Number = 0;    // the next layer to draw into the bitmap
     private var _failed as Boolean = false;
@@ -413,20 +416,23 @@ class StrataView extends WatchUi.WatchFace {
         if (_failed || !(Graphics has :createBufferedBitmap)) {
             return null;
         }
-        if (_base == null) {
+        var base = _bitmap;
+        if (base == null) {
             try {
-                _base = Graphics.createBufferedBitmap({:width => dc.getWidth(), :height => dc.getHeight()});
+                if (_base == null) {
+                    _base = Graphics.createBufferedBitmap({:width => dc.getWidth(), :height => dc.getHeight()});
+                }
+                base = (_base as Graphics.BufferedBitmapReference).get() as Graphics.BufferedBitmap?;
             } catch (e) {
-                _failed = true;
+                _failed = true;   // no room in the pool: the layers go straight to the screen
                 return null;
             }
-            _key = "";
-        }
-        var base = (_base as Graphics.BufferedBitmapReference).get() as Graphics.BufferedBitmap?;
-        if (base == null) {
-            _base = null;   // reclaimed by the pool; make it again next time
-            _key = "";
-            return null;
+            if (base == null) {
+                _base = null;     // reclaimed by the pool; make it again next time
+                return null;
+            }
+            _bitmap = base;
+            _key = "";            // a new bitmap is blank whatever the key said
         }
         var bdc = base.getDc();
         var key = earth.toString() + "/" + accent.toString();

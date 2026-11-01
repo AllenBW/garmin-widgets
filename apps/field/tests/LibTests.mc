@@ -1,6 +1,7 @@
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Test;
+import Toybox.Time;
 
 // Run No Evil tests for the Lib barrel: scripts/test.sh field [device].
 // Everything annotated (:test) is left out of normal builds.
@@ -101,7 +102,11 @@ function testAodOffsets(logger as Logger) as Boolean {
         seen.put((off[0] / step + 2) * 5 + (off[1] / step + 2), true);
     }
     Test.assertEqualMessage(seen.size(), 25, "all 25 cells visited in an hour");
-    Test.assertMessage(Lib.Aod.offset(0, step)[0] != Lib.Aod.offset(1, step)[0], "moves every minute");
+    for (var m = 0; m < 60; m++) {
+        var a = Lib.Aod.offset(m, step);
+        var b = Lib.Aod.offset(m + 1, step);
+        Test.assertMessage(a[0] != b[0] && a[1] != b[1], "both axes move at minute " + m);
+    }
 
     Test.assertEqualMessage(Lib.Aod.dim(0xFFB020), 0x3F2C08, "quarter brightness");
     Test.assertEqualMessage(Lib.Aod.dim(0xFFFFFF), 0x3F3F3F, "white dims to 25 %");
@@ -134,6 +139,13 @@ function testFmt(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Fmt.clock24(7 * 3600 + 5 * 60), "07:05", "24 h keeps the leading zero");
     Test.assertEqualMessage(Lib.Fmt.clock24(17 * 3600 + 41 * 60), "17:41", "24 h evening");
     Test.assertEqualMessage(Lib.Fmt.clock24(23 * 3600 + 59 * 60 + 59), "23:59", "24 h last minute");
+    Test.assertEqualMessage(Lib.Fmt.clock24(-600), "23:50", "yesterday wraps");
+    var now = Time.now().value();
+    var midnight = now - Lib.Fmt.localSeconds(now);
+    Test.assertEqualMessage(Lib.Fmt.wallSeconds(midnight + 3 * 3600 + 60, midnight) % 3600, 60, "wall seconds keep the minutes");
+    Test.assertMessage(Lib.Fmt.wallSeconds(midnight + 86400 + 7200, midnight) >= 86400, "tomorrow runs past 86400");
+    Test.assertEqualMessage(Lib.Fmt.clock24(86400 + 300), "00:05", "tomorrow wraps");
+    Test.assertEqualMessage(Lib.Fmt.clock(-600), is24 ? "23:50" : "11:50", "clock wraps too");
 
     var miles = System.getDeviceSettings().distanceUnits != System.UNIT_METRIC;
     Test.assertEqualMessage(Lib.Fmt.distanceUnit(), miles ? "mi" : "km", "distance unit");
@@ -143,12 +155,12 @@ function testFmt(logger as Logger) as Boolean {
     var metric = System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC;
     Test.assertEqualMessage(Lib.Fmt.temperature(18), metric ? "18°" : "64°", "temperature");
     Test.assertEqualMessage(Lib.Fmt.temperature(-3.4), metric ? "-3°" : "26°", "temperature rounds");
-    Test.assertEqualMessage(Lib.Fmt.fahrenheit(18), "64°F", "always Fahrenheit");
+    Test.assertEqualMessage(Lib.Fmt.temperatureWithUnit(18), metric ? "18°C" : "64°F", "temperature with its unit");
+    Test.assertEqualMessage(Lib.Fmt.temperatureUnit(), metric ? "°C" : "°F", "temperature unit");
     Test.assertEqualMessage(Lib.Fmt.compact(8412), "8412", "four digits stay whole");
     Test.assertEqualMessage(Lib.Fmt.compact(12345), "12.3k", "five digits in thousands");
     Test.assertEqualMessage(Lib.Fmt.compact(123456), "123k", "six digits in whole thousands");
     Test.assertEqualMessage(Lib.Fmt.compact(-15000), "-15.0k", "below zero too");
-    Test.assertEqualMessage(Lib.Fmt.fahrenheit(-40), "-40°F", "minus forty is the same in both");
-    Test.assertEqualMessage(Lib.Fmt.fahrenheit(-3.4), "26°F", "Fahrenheit rounds");
+    Test.assertEqualMessage(Lib.Fmt.temperatureWithUnit(-40), metric ? "-40°C" : "-40°F", "minus forty is the same in both");
     return true;
 }

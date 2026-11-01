@@ -32,6 +32,8 @@ class HorizonView extends WatchUi.WatchFace {
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
     private var _minute as Number = -1;
+    private var _sunKey as String = "";            // the day and place the sun times are for
+    private var _sun as [Number?, Number?, Number?] = [null, null, null];
     private var _outlook as HorizonOutlook = new HorizonOutlook();
     private var _temp as String = "";
     private var _smallFont as FontType = Graphics.FONT_XTINY;
@@ -74,15 +76,16 @@ class HorizonView extends WatchUi.WatchFace {
     // Once a minute: the forecast, the sun and the calendar into the outlook
     function refresh() as Void {
         var clock = System.getClockTime();
-        if (clock.min == _minute) {
+        var now = Time.now().value();
+        if (now / 60 == _minute) {
             return;
         }
-        _minute = clock.min;
+        _minute = now / 60;
         var nowSecs = clock.hour * 3600 + clock.min * 60;
-        var now = Time.now().value();
         var dayStart = now - (nowSecs + clock.sec);
 
-        // Hourly forecast as [seconds since midnight, chance]
+        // Hourly forecast as [wall-clock seconds since midnight, chance], and
+        // the chance now for this hour, unless the phone has been away for hours
         var hours = [] as Array<[Number, Number]>;
         if ((Toybox has :Weather) && (Weather has :getHourlyForecast)) {
             var forecast = Weather.getHourlyForecast();
@@ -91,35 +94,22 @@ class HorizonView extends WatchUi.WatchFace {
                     var when = forecast[i].forecastTime;
                     var chance = forecast[i].precipitationChance;
                     if (when != null && chance != null) {
-                        hours.add([when.value() - dayStart, chance]);
+                        hours.add([Lib.Fmt.wallSeconds(when.value(), dayStart), chance]);
                     }
                 }
             }
         }
-
-        // Sunrise and sunset: the sun maths from the last known location,
-        // else the watch's own figures
-        var rise = null;
-        var set = null;
-        var tomorrowRise = null;
-        var where = Lib.Location.get();
-        if (where != null) {
-            var today = Lib.Solar.day(where[0], where[1], dayStart);
-            var tomorrow = Lib.Solar.day(where[0], where[1], dayStart + 86400);
-            var r = today.rise;
-            var s = today.set;
-            var tr = tomorrow.rise;
-            rise = (r != null) ? r - dayStart : null;
-            set = (s != null) ? s - dayStart : null;
-            tomorrowRise = (tr != null) ? tr - dayStart : null;
-        } else {
-            var times = Lib.Sun.today();
-            rise = times[0];
-            set = times[1];
-            tomorrowRise = (rise != null) ? rise + 86400 : null;
+        if (Toybox has :Weather) {
+            var cc = Weather.getCurrentConditions();
+            var seen = (cc != null) ? cc.observationTime : null;
+            var chance = (cc != null) ? cc.precipitationChance : null;
+            if (chance != null && (seen == null || now - seen.value() < 3 * 3600)) {
+                hours.add([nowSecs, chance]);
+            }
         }
 
-        _outlook = HorizonModel.build(nowSecs, hours, rise, set, tomorrowRise, calendarText());
+        var sun = sunTimes(dayStart);
+        _outlook = HorizonModel.build(nowSecs, hours, sun[0], sun[1], sun[2], calendarText());
 
         _temp = "";
         if (Toybox has :Weather) {
@@ -129,6 +119,25 @@ class HorizonView extends WatchUi.WatchFace {
                 _temp = Lib.Fmt.temperature(celsius);
             }
         }
+    }
+
+    // Sunrise, sunset and tomorrow's sunrise as seconds after today's
+    // midnight, worked out once a day (and again when the place changes):
+    // the sun maths from the last known location, else the watch's own figures
+    private function sunTimes(dayStart as Number) as [Number?, Number?, Number?] {
+        var where = Lib.Location.get();
+        var key = dayStart.toString() + ((where != null) ? where[0].format("%.2f") + where[1].format("%.2f") : "");
+        if (!key.equals(_sunKey)) {
+            _sunKey = key;
+            if (where != null) {
+                _sun = Lib.Solar.riseSet(where[0], where[1], dayStart);
+            } else {
+                var times = Lib.Sun.today();
+                var rise = times[0];
+                _sun = [rise, times[1], (rise != null) ? rise + 86400 : null];
+            }
+        }
+        return _sun;
     }
 
     // The next calendar event's time as the complication gives it, or null
@@ -162,6 +171,12 @@ class HorizonView extends WatchUi.WatchFace {
             var start = HorizonModel.dialDegrees(o.hourStart + k * 3600) + 1.5;
             var color = o.night[k] ? NIGHT : TRACK;
             var chance = o.rain[k];
+            if (chance < 0) {
+                // No forecast for this hour: a hairline, so it never reads as dry
+                dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+                Lib.Arcs.drawClockwise(dc, cx, cy, ringR, start, 27, 2);
+                continue;
+            }
             if (chance >= 60) {
                 color = CYAN;
             } else if (chance >= 40) {

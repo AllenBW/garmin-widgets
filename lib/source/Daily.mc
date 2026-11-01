@@ -90,11 +90,10 @@ module Lib {
             return (celsius != null) ? celsius.toFloat() : null;
         }
 
-        // The outside temperature, always in Fahrenheit (the owner's choice,
-        // whatever the watch's unit setting), "52°F"
+        // The outside temperature in the watch's unit, "52°F" or "11°C"
         function temperature() as String {
             var celsius = temperatureCelsius();
-            return (celsius != null) ? Lib.Fmt.fahrenheit(celsius) : "--";
+            return (celsius != null) ? Lib.Fmt.temperatureWithUnit(celsius) : "--";
         }
 
         // Distance walked today in centimetres, or null

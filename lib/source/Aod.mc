@@ -15,12 +15,13 @@ module Lib {
             return (settings has :requiresBurnInProtection) && settings.requiresBurnInProtection;
         }
 
-        // Offset for this minute: walks a 5x5 grid, one step per minute, so
-        // the layout moves every minute and returns to a cell only after 25.
+        // Offset for this minute: visits every cell of a 5x5 grid once in 25
+        // minutes, and moves along both axes every minute, so a long
+        // horizontal or vertical stroke never stays on the same pixels.
         // Range is -2*step .. +2*step on each axis.
         function offset(minute as Number, step as Number) as [Number, Number] {
             var dx = ((minute % 5) - 2) * step;
-            var dy = (((minute / 5) % 5) - 2) * step;
+            var dy = (((2 * minute + minute / 5 + 1) % 5) - 2) * step;
             return [dx, dy];
         }
 

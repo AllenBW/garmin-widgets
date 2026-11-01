@@ -106,7 +106,13 @@ class SaunaView extends WatchUi.View {
         }
     }
 
+    // A menu pushed over a running visit hides the view: the visit's clock,
+    // the sensors and the beat listener keep going, or the menu's time would
+    // be missing from the rounds, the cues and the FIT laps
     function onHide() as Void {
+        if (_tracker != null && !_paused) {
+            return;
+        }
         stopTimer();
         stopListening();
         if (Toybox has :Sensor) {

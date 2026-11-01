@@ -31,6 +31,29 @@ function testSolarKnownTimes(logger as Logger) as Boolean {
     Test.assertMessage(rise != null && (rise - 1734768240).abs() < 180, "London sunrise 08:04");
     Test.assertMessage(set != null && (set - 1734796419).abs() < 180, "London sunset 15:53");
 
+    // Auckland, 31 October 2026 on daylight time (UTC+13, local day starts
+    // 11:00 UTC the day before): sunrise 06:17, sunset 19:52 NZDT. Anchoring
+    // on clock noon used to pick the wrong UTC day here.
+    var auckland = Lib.Solar.crossings(-36.8485, 174.7633, 1793358000, Lib.Solar.RISE_SET);
+    rise = auckland[0];
+    set = auckland[1];
+    logger.debug("Auckland rise " + rise + " set " + set);
+    Test.assertMessage(rise != null && (rise - 1793380636).abs() < 180, "Auckland sunrise 06:17 NZDT");
+    Test.assertMessage(set != null && (set - 1793429544).abs() < 180, "Auckland sunset 19:52 NZDT");
+
+    // The same as seconds after midnight, and the polar cases
+    var nycDay = Lib.Solar.riseSet(40.7128, -74.0060, 1718942400);
+    var r0 = nycDay[0];
+    var s0 = nycDay[1];
+    var t0 = nycDay[2];
+    Test.assertMessage(r0 != null && (r0 - (1718961907 - 1718942400)).abs() < 180, "riseSet sunrise after midnight");
+    Test.assertMessage(s0 != null && (s0 - (1719016250 - 1718942400)).abs() < 180, "riseSet sunset after midnight");
+    Test.assertMessage(t0 != null && t0 > 86400 && t0 < 86400 + 6 * 3600, "riseSet tomorrow's sunrise");
+    var polarDay = Lib.Solar.riseSet(69.65, 18.96, 1718920800);
+    Test.assertMessage(polarDay[0] == 0 && polarDay[1] == 2 * 86400, "midnight sun: light all day");
+    var polarNight = Lib.Solar.riseSet(69.65, 18.96, 1734735600);
+    Test.assertMessage(polarNight[0] == 0 && polarNight[1] == 0, "polar night: never light");
+
     // Tromso, 21 June 2024: the sun never sets
     var tromso = Lib.Solar.crossings(69.65, 18.96, 1718920800, Lib.Solar.RISE_SET);
     Test.assertMessage(tromso[0] == null && tromso[1] == null, "midnight sun");
@@ -86,6 +109,16 @@ function testModelWindows(logger as Logger) as Boolean {
     var none = SunModel.statusAt(69.65, 18.96, 1718920800 + 12 * 3600);   // Tromso in June
     logger.debug("Tromso: " + SunText.headline(none) + " / " + SunText.goldenLine(none, 1718920800 + 12 * 3600));
     Test.assertMessage(none.located, "located even with no sunset");
+    Test.assertEqualMessage(SunText.headline(none), "No sunset today", "midnight sun");
+
+    // Tromso at noon on 21 Dec 2024 (UTC+1): polar night, the sun at -3 degrees,
+    // so golden hour all through the short day until it sinks past -4
+    var dark = SunModel.statusAt(69.65, 18.96, 1734735600 + 12 * 3600);
+    goldenAt = dark.goldenAt;
+    logger.debug("Tromso in December: " + SunText.headline(dark) + " / " + SunText.goldenLine(dark, 1734735600 + 12 * 3600));
+    Test.assertEqualMessage(SunText.headline(dark), "No sunrise today", "polar night");
+    Test.assertMessage(dark.goldenNow && goldenAt != null && goldenAt > 1734735600 + 12 * 3600 && goldenAt < 1734735600 + 15 * 3600,
+        "polar noon is golden until the early afternoon");
     return true;
 }
 

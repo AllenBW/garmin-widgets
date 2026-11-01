@@ -67,6 +67,14 @@ module Lib {
             return clock(localSeconds(unix));
         }
 
+        // A moment as wall-clock seconds after the local midnight at dayStart,
+        // past 86400 for tomorrow: an hour's label stays right across a clock change
+        function wallSeconds(unix as Number, dayStart as Number) as Number {
+            var wall = localSeconds(unix);
+            var days = Math.round((unix - dayStart - wall).toFloat() / 86400.0).toNumber();
+            return days * 86400 + wall;
+        }
+
         // Unix seconds -> seconds since local midnight
         function localSeconds(unix as Number) as Number {
             var info = Gregorian.info(new Time.Moment(unix), Time.FORMAT_SHORT);
@@ -81,8 +89,9 @@ module Lib {
 
         // Seconds since midnight -> "6:52" or "17:41", following the 12/24 h setting
         function clock(secondsSinceMidnight as Number) as String {
-            var hour = (secondsSinceMidnight / 3600) % 24;
-            var min = (secondsSinceMidnight / 60) % 60;
+            var secs = wrapDay(secondsSinceMidnight);
+            var hour = secs / 3600;
+            var min = (secs / 60) % 60;
             if (!System.getDeviceSettings().is24Hour) {
                 hour = hour % 12;
                 if (hour == 0) {
@@ -92,10 +101,17 @@ module Lib {
             return Lang.format("$1$:$2$", [hour.format("%d"), min.format("%02d")]);
         }
 
+        // Seconds into 0 .. 86399: yesterday's -600 is 23:50, tomorrow's 86700 is 00:05
+        function wrapDay(seconds as Number) as Number {
+            var secs = seconds % 86400;
+            return (secs < 0) ? secs + 86400 : secs;
+        }
+
         // Seconds since midnight -> "07:05" or "17:41", always 24-hour
         function clock24(secondsSinceMidnight as Number) as String {
-            var hour = (secondsSinceMidnight / 3600) % 24;
-            var min = (secondsSinceMidnight / 60) % 60;
+            var secs = wrapDay(secondsSinceMidnight);
+            var hour = secs / 3600;
+            var min = (secs / 60) % 60;
             return Lang.format("$1$:$2$", [hour.format("%02d"), min.format("%02d")]);
         }
 
@@ -121,9 +137,14 @@ module Lib {
             return temperatureValue(celsius) + "°";
         }
 
-        // Celsius -> "64°F", always Fahrenheit whatever the device setting
-        function fahrenheit(celsius as Numeric) as String {
-            return Math.round(celsius * 9.0 / 5.0 + 32.0).toNumber().toString() + "°F";
+        // Celsius -> "18°C" or "64°F", following the device setting
+        function temperatureWithUnit(celsius as Numeric) as String {
+            return temperatureValue(celsius) + temperatureUnit();
+        }
+
+        // "°C" or "°F", following the device setting
+        function temperatureUnit() as String {
+            return (System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC) ? "°C" : "°F";
         }
 
         // Celsius -> "18" or "64" (no unit), following the device setting

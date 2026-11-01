@@ -51,6 +51,8 @@ class CompassGlance extends WatchUi.GlanceView {
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), _bigFont, CompassText.headline(s), left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, CompassText.detail(s), left);
+        var detail = CompassText.detail(s);
+        var font = Lib.Fmt.fitFont(dc, detail, [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>, dc.getWidth());
+        dc.drawText(0, (h * 0.85).toNumber(), font, detail, left);
     }
 }

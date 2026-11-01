@@ -16,15 +16,18 @@ module CompassText {
         return "Sun " + degrees(s.az) + " " + CompassModel.cardinal(s.az);
     }
 
-    // "31° up, sets 17:41 at 232°", "rises 7:12 at 108°", "up all day"
+    // The glance's short line: "sets 17:41 · 232°", "rises 7:12 · 108°",
+    // "up all day"; the headline already says where the sun is
     function detail(s as SunSky) as String {
         if (!s.located) {
-            return "sync the phone or use GPS";
+            return "sync phone or use GPS";
         }
-        if (s.up && s.nextEvent != null) {
-            return degrees(s.alt) + " up, " + nextLine(s);
+        var at = s.nextEvent;
+        var az = s.nextAz;
+        if (at == null || az == null) {
+            return nextLine(s);
         }
-        return nextLine(s);
+        return (s.nextIsRise ? "rises " : "sets ") + Lib.Fmt.clockAt(at) + " · " + degrees(az);
     }
 
     // "sets 17:41 at 232°", "rises 7:12 at 108°", or the polar cases
