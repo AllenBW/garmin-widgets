@@ -23,7 +23,7 @@ it to test.
 To update, run
 `scripts/package.sh <app>` again and upload it as a new version.
 
-## Submitted
+## Submitted and ready
 
 The developer display name is **AllenBW**. Each listing's cover (500 × 500)
 and screen image (454 × 454, the simulator's display cut round) are in
@@ -34,6 +34,9 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31, in review |
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31, in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31, in review |
+| Vessel | | Ready: `dist/vessel.iq`, `docs/store/vessel-*.jpg` |
+| Inscription | | Ready: `dist/inscription.iq`, `docs/store/inscription-*.jpg` |
+| Overlap | | Ready: `dist/overlap.iq`, `docs/store/overlap-*.jpg` |
 
 Screenshots: the store takes at most five. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
@@ -100,6 +103,31 @@ Battery, elevation, humidity, wind, battery or steps).
 **Rings** (Watch face). Three goal rings open to the right (steps, floors
 and Body Battery) with their numbers written along the curves, and the
 day's readings down the right side. Three colour sets.
+
+**Vessel** (Watch face). The time as two glasses that fill to your
+readings: the hours fill to your Body Battery and the minutes to your
+step goal, each number sitting on its waterline, and the next sunrise or
+sunset at the foot. Pick any reading for each glass and the foot
+(complications from other apps too), any accent colour, a data colour and
+one of three typefaces, in the watch's own face editor or the phone app.
+Press and hold a reading to open it. A dim always-on mode keeps the
+waterlines, and a red bedside clock takes over during your sleep hours.
+
+**Inscription** (Watch face). A coin: the time struck large in the
+middle, the date and five readings set round the rim in small capitals
+inside a beaded edge. Choose each reading (complications from other apps
+too), any accent colour, a data colour and the typeface (a serif by
+default), in the watch's own face editor or the phone app. Press and hold
+a reading to open it. A dim always-on mode and a red bedside clock during
+your sleep hours.
+
+**Overlap** (Watch face). A poster for your wrist: the hours enormous and
+quiet, cropped by the edge of the screen and tinted by your accent, with
+the minutes bright in front of them, the date and two readings tucked
+below. Choose the readings (complications from other apps too), any
+accent colour, a data colour and one of three typefaces, in the watch's
+own face editor or the phone app. A dim always-on mode and a red bedside
+clock during your sleep hours.
 
 **Battery Planner** (Widget). Tells you when to charge. It records the
 battery every half hour, learns your drain over the last week and projects

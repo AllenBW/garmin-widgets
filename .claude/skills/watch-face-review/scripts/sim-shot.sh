@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Capture an app's sample build on the shared simulator.
+# Capture an app's sample build on the simulator: this worktree's private
+# one when scripts/simprivate.sh has started it (no lock), else the shared one.
 #
 #   .claude/skills/watch-face-review/scripts/sim-shot.sh <app> <out.png> [device]
 #
@@ -22,16 +23,22 @@ ME="${CIQ_SIM_ID:-$(basename "$ROOT")}"
 PY="${PYTHON:-python3}"
 source "$ROOT/scripts/sdk-env.sh"
 
-# Wait on someone else's live claim, then claim for 10 minutes
+PORT="$("$ROOT/scripts/simprivate.sh" port 2>/dev/null || true)"
+SIMPID="$("$ROOT/scripts/simprivate.sh" pid 2>/dev/null || true)"
+
+# Wait on someone else's live claim, then claim for 10 minutes (shared only)
 for _ in $(seq 60); do
+    [ -n "$PORT" ] && break
     if [ -f "$LOCK" ] && ! grep -q "owner=$ME" "$LOCK" && [ "$(grep until "$LOCK" | cut -d= -f2)" -gt "$(date +%s)" ]; then
         sleep 10
     else
         break
     fi
 done
-printf "owner=%s\nuntil=%s\n" "$ME" $(($(date +%s) + 600)) > "$LOCK"
-trap 'grep -q "owner=$ME" "$LOCK" 2>/dev/null && rm -f "$LOCK"' EXIT
+if [ -z "$PORT" ]; then
+    printf "owner=%s\nuntil=%s\n" "$ME" $(($(date +%s) + 600)) > "$LOCK"
+    trap 'grep -q "owner=$ME" "$LOCK" 2>/dev/null && rm -f "$LOCK"' EXIT
+fi
 
 JUNGLE="monkey.jungle"
 [ -f "$ROOT/apps/$APP/sample.jungle" ] && JUNGLE="monkey.jungle;sample.jungle"
@@ -39,12 +46,18 @@ CIQ_JUNGLE="$JUNGLE" "$ROOT/scripts/build.sh" "$APP" "$DEVICE" >/dev/null
 cp "$ROOT/apps/$APP/bin/$APP.prg" "$ROOT/apps/$APP/bin/$APP-shot.prg"
 "$ROOT/scripts/build.sh" "$APP" "$DEVICE" >/dev/null
 
-pgrep -f "[C]onnectIQ.app/Contents/MacOS" >/dev/null || { "$SDK/bin/connectiq" >/dev/null 2>&1 & sleep 14; }
-(cd "$ROOT/apps/$APP" && timeout 15 "$SDK/bin/monkeydo" "bin/$APP-shot.prg" "$DEVICE" >/dev/null 2>&1 || true)
+if [ -z "$PORT" ]; then
+    pgrep -f "[C]onnectIQ.app/Contents/MacOS" >/dev/null || { "$SDK/bin/connectiq" >/dev/null 2>&1 & sleep 14; }
+fi
+if [ -n "$PORT" ]; then
+    (cd "$ROOT/apps/$APP" && timeout 15 "$ROOT/scripts/simprivate.sh" do "bin/$APP-shot.prg" "$DEVICE" >/dev/null 2>&1 || true)
+else
+    (cd "$ROOT/apps/$APP" && timeout 15 "$SDK/bin/monkeydo" "bin/$APP-shot.prg" "$DEVICE" >/dev/null 2>&1 || true)
+fi
 sleep 6   # a face that fills a bitmap over several frames needs a moment
 
 [ -x "$HERE/windows" ] || swiftc "$HERE/windows.swift" -o "$HERE/windows" 2>/dev/null
-for ID in $("$HERE/windows"); do
+for ID in $("$HERE/windows" $SIMPID); do
     screencapture -x -o -l "$ID" "$OUT" 2>/dev/null && break
 done
 [ -f "$OUT" ] || { echo "no simulator window captured" >&2; exit 1; }

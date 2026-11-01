@@ -1,0 +1,2 @@
+# Sample readings in place of the live ones (see monkey.jungle)
+base.excludeAnnotations = live

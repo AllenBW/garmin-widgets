@@ -1022,6 +1022,141 @@ feeding reminder belongs on the season line.
 
 ---
 
+## 16. Vessel: the digits are the gauges
+
+**Purpose:** the owner asked for a face like Big Easy (a store face with
+500k+ downloads: the time as large as the screen allows, readings round
+it) that "needs two things: a standby mode, and to be better than the
+Big Easy", with the complications and the colour theirs to choose. Big
+Easy's users complain that setup is hard and done on the phone with no
+preview, that the colours don't change for night, that with its large
+fonts Garmin switches the always-on display off (over 10 % lit), and that
+weather, Body Battery and opening widgets are paid extras.
+
+A first answer, Marquee (the time on a lit sign with bulbs as gauges),
+passed four review rounds on polish, but the owner found it meant
+nothing ("what, like a ticket?") and a tidier rework of it a data screen
+("you're just firehosing me with data … it needs to feel special"). An
+art critique of the concept (Picasso, Monet, O'Keeffe; see
+`.claude/skills/watch-face-review/references/concept.md`) led to three
+faces where the time is the picture, and the owner asked for all three:
+Vessel (#16), Inscription (#17) and Overlap (#18). They share their
+readings, icons, settings and digit ink through `Lib.Slots`,
+`Lib.Icons`, `Lib.Config` and `Lib.Ink`, and their settings resources
+come from `designs/gen_face_settings.py`.
+
+**Idea:** each pair of digits is a glass that fills from the bottom to a
+reading, so the time slowly fills and drains through the day and the
+gauge is the time itself.
+
+**Layout (fractions of the width):** hours (the data colour) over minutes
+(the accent), each 0.285 tall, 0.040 apart, the stack centred at 0.485,
+their ink right edge at 0.655. The filled part solid, the rest a 3 px
+outline (2 px in Rajdhani). The hours fill to reading 1 (Body Battery by
+default), the minutes to reading 2 (steps against the goal); 96 % and
+over counts as full. Each reading's number (RobotoCondensedBold, 0.062
+em) sits on its waterline right of the glass, marked by a small filled
+triangle pointing at the glass (0.018 × 0.022, the row colour at 70 %;
+a dash read as a minus sign), kept inside its glass's band, with its
+icon in the data colour at 57 %. A reading with no range fills its glass
+solid, with no mark and its number at the glass's middle. The accent is
+the minutes' alone: the date in spaced capitals (RobotoCondensedRegular
+0.040, tracking 0.007) at 0.112 in the data colour at 62 %, a bell after
+it while an alarm is set, and reading 3 at the foot (0.870) in words,
+"SUNSET 19:22" by default, both centred on the glasses' axis at 0.43.
+Typefaces: Bionic (default), Condensed, Rajdhani.
+
+**Standby:** the glasses empty to a single waterline drawn across each
+digit, the outlines at 80 %, the readings at 55 %, no foot; about 7.4 %
+lit (8.0 % on the 416 px screen). During the watch's sleep hours, the
+bedside clock: the outlined time alone in ember red 0x8C2A1C, a bell at
+the date's place while an alarm is set (5.3 %).
+
+## 17. Inscription: a coin
+
+**Idea:** the time struck large in the middle, the date and the readings
+inscribed round the rim in small spaced capitals like a coin's legend,
+inside a beaded rim. No gauges.
+
+**Layout:** the time stacked and centred on its ink, solid, 0.25 tall per
+row. Pridi, the serif, is the default and sets the date and legend too
+(Bionic, Condensed and Rajdhani set them in RobotoCondensedRegular). The
+date round the top in the accent ("SATURDAY · 31 OCTOBER", the short
+"WED · 30 SEP" past 100°); the bell inside the rim at (0.50, 0.165) while
+an alarm is set. Reading 1 at 9 o'clock and reading 2 at 3 o'clock (each
+at most 32°, with the short word: "46° TEMP", "81% BATT"), readings 3 to
+5 along the bottom (at most 112°: "72 BPM · 8412 STEPS · 64 BODY BATT"),
+0.038 em on a radius of 0.425, one `drawRadialText` per character: the
+values in the data colour at 85 % (tracking 0.005), their words at 60 %
+(tracking 0.010), units tight. Too long, an item closes up, then takes
+its short word (whole or familiar words only: BATT, BODY, MIN, REST),
+then drops it. 72 beads at radius 0.372 in the data colour at 30 %.
+
+**Standby:** the time outlined, the date and the bottom legend dim, no
+side readings or beads; about 7.8 % lit (8.4 % at 416). Bedside clock as
+Vessel's, the bell at the same place inside the rim (4.6 %).
+
+## 18. Overlap: the hours as landscape, the minutes as subject
+
+**Idea:** a poster: the hours enormous and quiet, cropped by the bezel,
+the minutes bright in front of them, knocking a window out of them.
+
+**Layout:** the hours 0.70 tall, their ink centred at (0.47, 0.40), in
+the data colour at 30 % plus the accent at 12 % (bronze on Bone and
+Amber, 3.2:1; slate with Sky, mauve with Rose), not dimmed at night,
+always two digits (12-hour "09"). The minutes in the accent, 0.26 tall,
+centred at 0.700, ink right edge 0.875; the hours are drawn only above
+the minutes' ink top and left of their ink left (less 0.016, at most
+0.458), so no hour shows through a counter. A small table raises the
+window's top where a second hour digit would leave a loose stroke, and
+in Bionic a corner clip removes the 2's terminal at the bezel; every
+hour in every typeface is checked by `designs/preview_overlap.py
+--check`. The date in spaced bold capitals in the accent at (0.215,
+0.790), a bell before it while an alarm is set; two readings under it at
+0.855 (RobotoCondensedBold 0.040, the data colour at 70 %, icons at 57 %),
+kept left of 0.455: units go first, then the second reading, never an
+icon. Typefaces: Bionic, Condensed, Rajdhani.
+
+**Standby:** both as 1 px outlines (the hours at 45 %), the window kept,
+the date dim, no readings; about 6.7 % lit (7.5 % at 416, 9.4 % at worst:
+Rajdhani, 08:58, an alarm, 416). Bedside clock: the same composition in
+ember red, the hours at 85 % of it, the bell at the minutes' corner.
+
+## 16–18 together
+
+**Settings** (the watch's face editor with its live preview, and the
+same choices in the phone app's settings list; `Lib.Config` takes
+whichever was changed last, the editor's until either is): the typeface,
+the accent (any colour in the editor, eight on the phone; a dark pick is
+lifted until it reads on black), the data colour (Bone, Silver, Sand,
+Ice, Blush), every reading (any complication in the editor, other apps'
+included, which show their short label; on the phone, the 21 Garmin
+readings with an icon and a word), and the bedside clock.
+
+**Interaction:** press and hold a reading to open its complication's
+widget, the date to open the calendar; in the editor a tap picks a
+reading's slot.
+
+**Night:** after sunset every colour at 85 %.
+
+**Data:** `Lib.Slots` (the watch's APIs for the Garmin kinds it knows,
+the complication's value for the rest, and each kind's long and short
+word), `Lib.Daily`, `Lib.Sun`.
+
+**Review:** three rounds of the watch-face-review team on all three
+faces together. They forced the triangle in place of Vessel's dash, the
+accent kept to the minutes, the beaded rim and Pridi as Inscription's
+default, whole words on the rim, Overlap's tinted hours (they were a
+grey slab at 2.2:1), the deeper crop, the knocked-out window, and the
+crop check for every hour.
+
+**Not done:** seconds (the fēnix 8 has no partial updates); always-on
+and the bedside clock can't be driven in the simulator, so they are
+checked in the previews and the tests only; how Garmin's face editor
+presents the any-colour picker hasn't been seen on the watch.
+
+---
+
 ## Shared building blocks
 
 - **`lib/` barrel** (`Lib`, a Monkey C library shared by every app; each

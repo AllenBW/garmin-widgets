@@ -12,6 +12,14 @@ four pass, then port to Monkey C and confirm on the simulator. Read
 `references/pitfalls.md` before the first render; it holds the platform
 traps that cost rounds last time.
 
+## 0. Find the idea first
+
+Polish can't make a dull idea special. Before any preview script, read
+`references/concept.md`: an art critique of the concept (Picasso, Monet,
+O'Keeffe), the principle that the time is the picture and the data
+whispers or becomes part of it, and three different ideas sketched as
+one image each for the owner to choose from.
+
 ## 1. Previews with sample data (before any reviewer)
 
 The simulator shows almost no data (no heart-rate history, distance,
