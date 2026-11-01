@@ -6,6 +6,7 @@ import Toybox.Time.Gregorian;
 (:glance)
 class SunStatus {
     var located as Boolean = false;        // false: no position has ever been known
+    var up as Boolean = false;             // the sun is above the horizon now
     var today as Lib.SunDay? = null;
     var nextIsRise as Boolean = true;
     var nextEvent as Number? = null;       // the next sunrise or sunset, Unix seconds
@@ -52,44 +53,35 @@ module SunModel {
             s.nextEvent = tomorrow.rise;
         }
 
-        // Golden hour: -4 up to +6 in the morning, +6 down to -4 in the evening
-        var golden = nextWindow(now, [
-            [today.goldenMorningStart, today.goldenMorningEnd],
-            [today.goldenEveningStart, today.goldenEveningEnd],
-            [tomorrow.goldenMorningStart, tomorrow.goldenMorningEnd]
-        ] as Array<[Number?, Number?]>);
-        s.goldenNow = golden[0];
-        s.goldenAt = golden[1];
-
-        // Blue hour: -6 up to -4 in the morning, -4 down to -6 in the evening
-        var blue = nextWindow(now, [
-            [today.blueMorningStart, today.goldenMorningStart],
-            [today.goldenEveningEnd, today.blueEveningEnd],
-            [tomorrow.blueMorningStart, tomorrow.goldenMorningStart]
-        ] as Array<[Number?, Number?]>);
-        s.blueNow = blue[0];
-        s.blueAt = blue[1];
+        // Golden hour is the sun between -4 and +6 degrees, blue hour between
+        // -6 and -4. Whether we are in one comes from the sun's height now, so
+        // a far-north winter day that never climbs past +6 is golden all day.
+        // Its end, or the next one's start, is the next crossing of a band edge.
+        var elevation = Lib.Solar.elevation(lat, lon, now);
+        s.up = elevation > Lib.Solar.RISE_SET;
+        s.goldenNow = elevation >= Lib.Solar.GOLDEN_LOW && elevation < Lib.Solar.GOLDEN_HIGH;
+        s.goldenAt = nextCrossing(now, [
+            today.goldenMorningStart, today.goldenMorningEnd, today.goldenEveningStart, today.goldenEveningEnd,
+            tomorrow.goldenMorningStart, tomorrow.goldenMorningEnd, tomorrow.goldenEveningStart, tomorrow.goldenEveningEnd
+        ] as Array<Number?>);
+        s.blueNow = elevation >= Lib.Solar.BLUE_LOW && elevation < Lib.Solar.GOLDEN_LOW;
+        s.blueAt = nextCrossing(now, [
+            today.blueMorningStart, today.goldenMorningStart, today.goldenEveningEnd, today.blueEveningEnd,
+            tomorrow.blueMorningStart, tomorrow.goldenMorningStart, tomorrow.goldenEveningEnd, tomorrow.blueEveningEnd
+        ] as Array<Number?>);
         return s;
     }
 
-    // Windows in time order: [inside one now?, the moment that matters]: the
-    // end of the current window, or the start of the next one. Windows
-    // missing a start (polar summer) are skipped.
-    function nextWindow(now as Number, windows as Array<[Number?, Number?]>) as [Boolean, Number?] {
-        for (var i = 0; i < windows.size(); i++) {
-            var start = windows[i][0];
-            var end = windows[i][1];
-            if (start == null) {
-                continue;
-            }
-            if (now < start) {
-                return [false, start];
-            }
-            if (end != null && now < end) {
-                return [true, end];
+    // The earliest of `times` after now, skipping the ones that never happen
+    function nextCrossing(now as Number, times as Array<Number?>) as Number? {
+        var best = null;
+        for (var i = 0; i < times.size(); i++) {
+            var t = times[i];
+            if (t != null && t > now && (best == null || t < best)) {
+                best = t;
             }
         }
-        return [false, null];
+        return best;
     }
 
     // Local midnight before `now`, Unix seconds

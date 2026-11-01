@@ -498,7 +498,8 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     glance.onUpdate(glanceDc);
     SaunaHistory.add([Time.now().value() - 3600, KIND_STEAM, 2, 1450, 1200, 131, 24, 441, 62, 51] as Array<Number>);
     glance.onUpdate(glanceDc);
-    Test.assertMessage(SaunaText.fahrenheit, "the glance applied the default unit, Fahrenheit");
+    Test.assertEqualMessage(SaunaText.fahrenheit, System.getDeviceSettings().temperatureUnits != System.UNIT_METRIC,
+        "the glance applied the default unit, the watch's");
 
     var view = new SaunaView();
     view.onLayout(screen);

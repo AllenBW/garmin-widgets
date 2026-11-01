@@ -36,6 +36,7 @@ class SoundView extends WatchUi.View {
 
     private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
     private const STALE_AFTER = 5;       // seconds without a window before the number dims
+    private const DRAW_EVERY = 250;      // ms: the windows redraw the screen at most four times a second
     private const SCALE_LO = 30;         // the bar and the chart run from here
     private const SCALE_HI = 130;        // to here
 
@@ -54,6 +55,8 @@ class SoundView extends WatchUi.View {
     private var _pending as Number = EVENT_NONE;   // a buzz to give on the next tick, never inside a callback
     private var _sinceStart as Number = 0;         // seconds since the app came on screen
     private var _sinceData as Number = 0;
+    private var _lastDraw as Number = 0;           // System.getTimer() at the last redraw a window asked for
+    private var _logged as Number = 0;             // windows seen at the last status line
     private var _buzz as Boolean = true;
     private var _settingsLoaded as Boolean = false;
 
@@ -170,38 +173,58 @@ class SoundView extends WatchUi.View {
             return;
         }
         var level = SoundMeter.dbfs(SoundMeter.rms(audioData, offset, STRIDE));
+        var clipped = SoundMeter.lastMax >= SoundMeter.CLIP;
         _sinceData = 0;
         _seen++;
-        if (_seen <= 6 || _seen % 2000 == 0) {
-            System.println("sound: window " + _seen + ": " + audioData.size() + " B, header " + offset + ", " + level.format("%.1f") + " dBFS");
-        }
-        var event = _session.addWindow(level, samples.toFloat() / (hertz > 0 ? hertz : 8000));
+        var event = _session.addSamples(level, samples.toFloat() / (hertz > 0 ? hertz : 8000), clipped);
         if (event != EVENT_NONE) {
             _pending = event;
+        }
+        var now = System.getTimer();
+        if (now - _lastDraw >= DRAW_EVERY) {
+            _lastDraw = now;
+            WatchUi.requestUpdate();
+        }
+    }
+
+    // Once a second: the chart, the staleness, the demo's own sound, the
+    // microphone's housekeeping and the log. Nothing may throw out of a
+    // timer callback, so a fault is logged and the next tick tries again.
+    function onTick() as Void {
+        try {
+            if (_demo) {
+                for (var i = 0; i < 4; i++) {
+                    react(_session.demoWindow(_demoTicks, 0.25));
+                }
+                _demoTicks++;
+                _sinceData = 0;
+            } else {
+                _sinceData++;
+                _sinceStart++;
+            }
+            _mic.tick();
+            _session.tick();
+            if (_pending != EVENT_NONE) {
+                react(_pending);
+                _pending = EVENT_NONE;
+            }
+            logStatus();
+        } catch (e) {
+            var m = e.getErrorMessage();
+            System.println("sound: tick failed: " + (m == null ? "?" : m));
         }
         WatchUi.requestUpdate();
     }
 
-    // Once a second: the chart, the staleness, the demo's own sound, the glance's reading
-    function onTick() as Void {
-        if (_demo) {
-            var db = _session.demoLevel(_demoTicks);
-            _demoTicks++;
-            for (var i = 0; i < 4; i++) {
-                react(_session.addWindow(db - _session.offset, 0.25));
-            }
-            _sinceData = 0;
-        } else {
-            _sinceData++;
-            _sinceStart++;
+    // A status line for the watch's log: the first seconds of sound, then every ten minutes
+    private function logStatus() as Void {
+        if (_seen == _logged || (_sinceStart > 5 && _sinceStart % 600 != 0)) {
+            return;
         }
-        _mic.tick();
-        _session.tick();
-        if (_pending != EVENT_NONE) {
-            react(_pending);
-            _pending = EVENT_NONE;
-        }
-        WatchUi.requestUpdate();
+        _logged = _seen;
+        var l = _session.level;
+        System.println("sound: " + _seen + " windows at " + _mic.hertz + " Hz, level "
+            + (l == null ? "--" : l.format("%.1f")) + (_session.overRange() ? " (over range)" : "") + ", " + _mic.faults + " faults");
     }
 
     // The buzz as a line is crossed: short for 85, long for 100
@@ -230,11 +253,11 @@ class SoundView extends WatchUi.View {
         }
     }
 
-    // The last reading, for the glance (not the demo's)
+    // The last reading, for the glance (not the demo's), timed when its sound came
     private function remember() as Void {
         var l = _session.level;
         if (l != null && !_demo) {
-            SoundStore.save(SoundMeter.whole(l), Time.now().value(), SoundMeter.name(l));
+            SoundStore.save(SoundMeter.whole(l), Time.now().value() - _sinceData, SoundMeter.name(l));
         }
     }
 
@@ -242,6 +265,9 @@ class SoundView extends WatchUi.View {
         _mic.exit();
         stopTimer();
         remember();
+        if (_calibrating) {
+            finishCalibrate();
+        }
     }
 
     // The demo: the microphone off, a made-up two minutes behind, and a level that walks the bands
@@ -301,16 +327,19 @@ class SoundView extends WatchUi.View {
         setOffset(90);
     }
 
+    // Kept in memory while calibrating; written once, when calibrating ends
     private function setOffset(v as Number) as Void {
         _session.offset = v.toFloat();
-        try {
-            Properties.setValue("Calibration", v);
-        } catch (e) {
-        }
     }
 
     function finishCalibrate() as Void {
         _calibrating = false;
+        try {
+            if (offsetSetting() != offset()) {
+                Properties.setValue("Calibration", offset());
+            }
+        } catch (e) {
+        }
     }
 
     function offset() as Number {
@@ -388,7 +417,7 @@ class SoundView extends WatchUi.View {
 
     // What is going on with the microphone, for under "Listening" or a dim number
     private function waitingText() as String {
-        return SoundMeter.waiting(_sinceStart, _mic.restarts, null);
+        return SoundMeter.waiting(_sinceStart);
     }
 
     private function drawLive(dc as Dc) as Void {
@@ -403,7 +432,8 @@ class SoundView extends WatchUi.View {
             dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.45).toNumber(), _lineFont, fit(dc, error, _lineFont, (w * 0.8).toNumber()), centre);
             dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, (h * 0.58).toNumber(), _labelFont, "Demo is in the menu", centre);
+            dc.drawText(cx, (h * 0.58).toNumber(), _labelFont,
+                _captureError != null ? "Demo is in the menu" : "Press BACK, then open it again", centre);
             return;
         }
         if (level == null) {
@@ -414,28 +444,33 @@ class SoundView extends WatchUi.View {
             return;
         }
         var dim = stale();
-        var tone = dim ? DIM : colour(level);
+        var over = _session.overRange() && !dim;
+        var tone = dim ? DIM : (over ? RED : colour(level));
+        var number = SoundMeter.whole(level).toString();
         dc.setColor(tone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.37).toNumber(), _bigFont, SoundMeter.whole(level).toString(), centre);
+        dc.drawText(cx, (h * 0.37).toNumber(), _bigFont, over ? number + "+" : number, centre);
         dc.setColor(dim ? GRAY : tone, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.52).toNumber(), _lineFont, fit(dc, dim ? waitingText() : SoundMeter.describe(level), _lineFont, (w * 0.84).toNumber()), centre);
+        var line = dim ? waitingText() : (over ? "at least " + number + " dB · too loud to measure" : SoundMeter.describe(level));
+        dc.drawText(cx, (h * 0.52).toNumber(), _lineFont, fit(dc, line, _lineFont, (w * 0.84).toNumber()), centre);
         drawScale(dc, level);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.75).toNumber(), _lineFont, SoundMeter.safeFor(level), centre);
+        dc.drawText(cx, (h * 0.75).toNumber(), _lineFont, fit(dc, SoundMeter.limit(level, over), _lineFont, (w * 0.84).toNumber()), centre);
         drawStats(dc, (h * 0.825).toNumber(), (h * 0.885).toNumber());
     }
 
-    // "peak 94 · avg 71 · 4 min" and "dose 12% while open"
+    // "max 94 · avg 71 · 4 min" and "dose 12% while open"; "max 89+" and
+    // "dose at least 12%" once part of it was louder than the microphone reads
     private function drawStats(dc as Dc, y1 as Number, y2 as Number) as Void {
         var cx = dc.getWidth() / 2;
         var centre = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var peak = _session.peak;
         var avg = _session.average();
+        var over = _session.everClipped;
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, y1, _statFont,
-            "peak " + (peak == null ? "--" : SoundMeter.whole(peak).toString()) + " · avg " + (avg == null ? "--" : SoundMeter.whole(avg).toString())
+            "max " + (peak == null ? "--" : SoundMeter.whole(peak).toString() + (over ? "+" : "")) + " · avg " + (avg == null ? "--" : SoundMeter.whole(avg).toString())
             + " · " + SoundMeter.spell(_session.seconds.toNumber()), centre);
-        dc.drawText(cx, y2, _statFont, "dose " + doseText() + " while open", centre);
+        dc.drawText(cx, y2, _statFont, (over ? "dose at least " : "dose ") + doseText() + " while open", centre);
     }
 
     // The day's dose used so far, to a tenth under one percent
@@ -716,7 +751,7 @@ class SoundDelegate extends WatchUi.BehaviorDelegate {
             menu.addItem(new WatchUi.MenuItem("Demo", "every band, made-up numbers", :demo, null));
         }
         menu.addItem(new WatchUi.MenuItem("Calibrate", "match a phone meter", :calibrate, null));
-        menu.addItem(new WatchUi.MenuItem("Clear session", "peak, average and dose", :clear, null));
+        menu.addItem(new WatchUi.MenuItem("Clear session", "max, average and dose", :clear, null));
         WatchUi.pushView(menu, new SoundMenuDelegate(_view), WatchUi.SLIDE_UP);
     }
 }

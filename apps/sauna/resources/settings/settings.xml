@@ -2,9 +2,9 @@
     <group id="watch" title="@Strings.GroupWatch" description="@Strings.GroupWatchPrompt">
         <setting propertyKey="@Properties.TempUnit" title="@Strings.TempUnitTitle">
             <settingConfig type="list">
+                <listEntry value="2">@Strings.UnitWatch</listEntry>
                 <listEntry value="0">@Strings.UnitF</listEntry>
                 <listEntry value="1">@Strings.UnitC</listEntry>
-                <listEntry value="2">@Strings.UnitWatch</listEntry>
             </settingConfig>
         </setting>
         <setting propertyKey="@Properties.AutoRounds" title="@Strings.AutoRoundsTitle" prompt="@Strings.AutoRoundsPrompt">

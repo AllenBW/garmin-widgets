@@ -27,6 +27,7 @@ module SoundMeter {
 
     const FLOOR = -96.0;           // dBFS of digital silence
     const FULL_SCALE = 32768.0;
+    const CLIP = 32000;            // a sample this far out is the microphone at the end of its range
     const HEADER = 44;             // a WAV header, when a window opens with one
     const DAY = 28800;             // 8 h, the allowed time at 85 dB
     const REL = 85.0;              // NIOSH's recommended exposure limit
@@ -74,21 +75,14 @@ module SoundMeter {
         return bytes[at] == a && bytes[at + 1] == b && bytes[at + 2] == c && bytes[at + 3] == d;
     }
 
-    // What the screen says under "Listening" while no level can be shown:
-    // `seconds` since the microphone was last started, `restarts` the
-    // starts in a row that gave no sound, `error` what the last one said
-    function waiting(seconds as Number, restarts as Number, error as String?) as String {
-        if (error != null) {
-            return error + " · retrying";
-        }
-        if (restarts >= 3) {
-            return "no sound from the microphone · BACK, then open again";
-        }
-        if (restarts > 0) {
-            return "restarting the microphone";
-        }
+    // What the screen says under "Listening" while no level can be shown,
+    // `seconds` after the app came on screen
+    function waiting(seconds as Number) as String {
         return seconds < 2 ? "starting the microphone" : "waiting for sound";
     }
+
+    // The loudest sample the last rms() or rmsOf() saw, as a magnitude
+    var lastMax as Number = 0;
 
     // RMS of the 16-bit little-endian samples from `offset` to `end`
     // (the whole array when end is 0), taking every `stride`-th one:
@@ -104,6 +98,7 @@ module SoundMeter {
         var sum = 0;
         var squares = 0.0d;
         var n = 0;
+        var top = 0;
         var size = bytes.size();
         if (end > 0 && end < size) {
             size = end;
@@ -117,7 +112,13 @@ module SoundMeter {
             sum += v;
             squares += v * v;
             n++;
+            if (v > top) {
+                top = v;
+            } else if (-v > top) {
+                top = -v;
+            }
         }
+        lastMax = top;
         if (n == 0) {
             return 0.0;
         }
@@ -188,19 +189,22 @@ module SoundMeter {
         return NAMES[b];
     }
 
-    // "Safe all day", "Safe for 15 min", "Under 30 s", "Leave now"
-    function safeFor(db as Float) as String {
+    // NIOSH's daily limit at this level: "No daily limit", "NIOSH limit
+    // 15 min", "Under 30 s", "Leave now". overRange: the microphone is at
+    // the end of its range, so the level is at least `db` and the limit at
+    // most this.
+    function limit(db as Float, overRange as Boolean) as String {
         if (db >= PAIN) {
             return "Leave now";
         }
         var t = allowedSeconds(db);
         if (t < 0 || t >= 86400) {
-            return "Safe all day";
+            return overRange ? "Limit unknown · too loud" : "No daily limit";
         }
         if (t < 30) {
             return "Under 30 s";
         }
-        return "Safe for " + spell(t);
+        return (overRange ? "NIOSH limit under " : "NIOSH limit ") + spell(t);
     }
 
     // Seconds -> "8 h", "1 h 30", "15 min", "45 s"
@@ -240,6 +244,7 @@ class SoundSession {
     const SEED = 1.0;         // seconds averaged before the first level shows
     const HOLD = 15;          // seconds between buzzes for one line
     const HYSTERESIS = 2.0;   // dB the level must fall before a line can fire again
+    const CLIP_SHARE = 0.5;   // over range once this share of the last second reached the end of the range
 
     var offset as Float = 90.0;   // the calibration: dBFS + offset = dB
     var level as Float? = null;   // the smoothed level
@@ -247,11 +252,13 @@ class SoundSession {
     var peak as Float? = null;
     var seconds as Float = 0.0;   // audio measured
     var dosePercent as Float = 0.0;
+    var everClipped as Boolean = false; // some of this sitting was louder than the microphone reads
     var warmupLeft as Float = WARMUP;   // seconds still to discard
     var warmup as Float = WARMUP;       // what a start discards (the view may set it)
     var seed as Float = SEED;           // seconds averaged before the first level (the view may set it)
     var smooth as Float = SMOOTH;       // seconds the shown level settles over (the view may set it)
 
+    private var _clipShare as Float = 0.0;
     private var _seedEnergy as Float = 0.0;
     private var _seedSeconds as Float = 0.0;
     private var _energy as Float = 0.0;
@@ -274,6 +281,8 @@ class SoundSession {
         peak = null;
         seconds = 0.0;
         dosePercent = 0.0;
+        everClipped = false;
+        _clipShare = 0.0;
         warmupLeft = warmup;
         _seedEnergy = 0.0;
         _seedSeconds = 0.0;
@@ -291,6 +300,25 @@ class SoundSession {
     // The microphone has (re)started: its first moments are discarded
     function restarted() as Void {
         warmupLeft = warmup;
+    }
+
+    // The microphone has been at the end of its range for much of the last
+    // second: the real level is at least what it reads, and may be far more.
+    // A single clap that clips one window does not count.
+    function overRange() as Boolean {
+        return _clipShare >= CLIP_SHARE;
+    }
+
+    // A window and whether it reached the end of the microphone's range
+    function addSamples(dbfs as Float, windowSeconds as Float, clipped as Boolean) as Number {
+        if (warmupLeft <= 0.0) {
+            var a = windowSeconds < 1.0 ? windowSeconds : 1.0;
+            _clipShare += ((clipped ? 1.0 : 0.0) - _clipShare) * a;
+            if (overRange()) {
+                everClipped = true;
+            }
+        }
+        return addWindow(dbfs, windowSeconds);
     }
 
     // One window of sound: its dBFS and its length in seconds. Returns
@@ -384,17 +412,24 @@ class SoundSession {
         return _trend[(_next + SoundMeter.TREND_POINTS - _count + i) % SoundMeter.TREND_POINTS];
     }
 
-    // A made-up two minutes that walks through every band, for looking at
-    // the screens: a quiet room, a conversation, traffic, a workshop, a
-    // concert with a peak, then the walk home
+    // A made-up two minutes for looking at the screens: a quiet room, a
+    // conversation, traffic, a workshop, a concert, then the walk home.
+    // Like the real microphone it reads no higher than the top of its
+    // range, a decibel under the offset, and says so.
     function seedDemo() as Void {
         reset();
         warmupLeft = 0.0;   // made-up sound has no start transient
         for (var t = 0; t < SoundMeter.TREND_POINTS; t++) {
-            var db = demoLevel(t);
-            addWindow(db - offset, 1.0);
+            demoWindow(t, 1.0);
             tick();
         }
+    }
+
+    // The demo's sound at second t, fed as one window
+    function demoWindow(t as Number, windowSeconds as Float) as Number {
+        var db = demoLevel(t);
+        var top = offset - 1.0;
+        return addSamples((db < top ? db : top) - offset, windowSeconds, db >= top);
     }
 
     // The demo's level at second t, cycling every two minutes
@@ -404,8 +439,8 @@ class SoundSession {
         if (s < 20) { return 36.0 + wobble; }
         if (s < 40) { return 61.0 + wobble; }
         if (s < 60) { return 76.0 + wobble; }
-        if (s < 80) { return 90.0 + wobble; }
-        if (s < 100) { return (s == 88 ? 112.0 : 104.0) + wobble; }
+        if (s < 80) { return 86.0 + wobble; }
+        if (s < 100) { return 104.0 + wobble; }
         return 58.0 + wobble;
     }
 }

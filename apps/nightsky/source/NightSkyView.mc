@@ -45,6 +45,11 @@ class NightSkyView extends WatchUi.WatchFace {
     private var _sun as [Float, Float] = [-90.0, 0.0];      // altitude, azimuth
     private var _moon as [Float, Float] = [-90.0, 0.0];
     private var _planets as Array<[Float, Float]> = [[-90.0, 0.0], [-90.0, 0.0], [-90.0, 0.0], [-90.0, 0.0]] as Array<[Float, Float]>;
+    // Right ascension and declination, which change slowly: the Sun and
+    // planets worked out once an hour, the Moon every ten minutes
+    private var _radecHour as Number = -1;
+    private var _moonSlot as Number = -1;
+    private var _radec as Array<[Float, Float]> = new [6] as Array<[Float, Float]>;   // Sun, Moon, planets
 
     // Screen position of every catalogue star this minute, -1 when below the horizon
     private var _sx as Array<Number> = new [Stars.COUNT] as Array<Number>;
@@ -103,7 +108,7 @@ class NightSkyView extends WatchUi.WatchFace {
     // Once a minute: where everything is, from the last known location.
     // `full` places every star; always-on only needs the brightest.
     function refresh(w as Number, h as Number, full as Boolean) as Void {
-        var minute = System.getClockTime().min;
+        var minute = Time.now().value() / 60;
         var sameMinute = (minute == _minute);
         if (sameMinute && (!full || _fullMinute == minute)) {
             return;
@@ -118,13 +123,24 @@ class NightSkyView extends WatchUi.WatchFace {
             _lat = where[0];
             var now = Time.now().value();
             _lst = Lib.Sky.lst(now, where[1]);
-            var sun = Lib.Sky.sun(now);
+            if (minute / 60 != _radecHour) {
+                _radecHour = minute / 60;
+                _radec[0] = Lib.Sky.sun(now);
+                for (var p = 0; p < 4; p++) {
+                    _radec[2 + p] = Lib.Sky.planet(p, now);
+                }
+            }
+            if (minute / 10 != _moonSlot) {
+                _moonSlot = minute / 10;
+                _radec[1] = Lib.Sky.moon(now);
+            }
+            var sun = _radec[0];
             _sun = Lib.Sky.altAz(sun[0], sun[1], _lat, _lst);
             _day = _sun[0] > DAY_ALTITUDE;
-            var moon = Lib.Sky.moon(now);
+            var moon = _radec[1];
             _moon = Lib.Sky.altAz(moon[0], moon[1], _lat, _lst);
             for (var p = 0; p < 4; p++) {
-                var radec = Lib.Sky.planet(p, now);
+                var radec = _radec[2 + p];
                 _planets[p] = Lib.Sky.altAz(radec[0], radec[1], _lat, _lst);
             }
         }
