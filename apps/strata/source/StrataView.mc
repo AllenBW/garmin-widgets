@@ -383,7 +383,7 @@ class StrataView extends WatchUi.WatchFace {
     // True once the layers are all in the bitmap (for the tests)
     function fieldReady() as Boolean {
         var layers = _layers;
-        return _failed || (layers != null && _baseLayer >= layers.lines.size());
+        return _failed || (layers != null && _baseLayer >= layers.count());
     }
 
     // ---------------------------------------------------------------- active
@@ -405,7 +405,7 @@ class StrataView extends WatchUi.WatchFace {
         if (base != null) {
             dc.drawBitmap(0, 0, base);
         } else {
-            drawLayers(dc, layers, layers.lines, layers.starts, 0, layers.lines.size(), 0, 0, earth, fieldAccent);
+            drawLayers(dc, layers, 0, layers.count(), 0, 0, earth, fieldAccent);
         }
         var shown = pebblesShown();
         dc.setColor(night ? STONE_NIGHT : STONE_DAY, Graphics.COLOR_TRANSPARENT);
@@ -499,13 +499,13 @@ class StrataView extends WatchUi.WatchFace {
             _key = key;
             _baseLayer = 0;
         }
-        var count = layers.lines.size();
+        var count = layers.count();
         if (_baseLayer < count) {
             var end = _baseLayer + BATCH;
             if (end > count) {
                 end = count;
             }
-            drawLayers(bdc, layers, layers.lines, layers.starts, _baseLayer, end, 0, 0, earth, accent);
+            drawLayers(bdc, layers, _baseLayer, end, 0, 0, earth, accent);
             _baseLayer = end;
             if (_baseLayer < count) {
                 WatchUi.requestUpdate();   // keep going
@@ -528,22 +528,26 @@ class StrataView extends WatchUi.WatchFace {
     // Pieces from..to-1 of `lines` (always-on's, or the layers'), thin,
     // offset by (ox, oy), in `earth` and the accents in `accent` (all of
     // always-on's are accents)
-    private function drawLayers(dc as Dc, layers as Layers, lines as Array<Array<Float>>, starts as Array<Float>,
-                                from as Number, to as Number, ox as Number, oy as Number, earth as Number, accent as Number) as Void {
-        var aod = lines != layers.lines;
+    private function drawLayers(dc as Dc, layers as Layers, from as Number, to as Number, ox as Number, oy as Number,
+                                earth as Number, accent as Number) as Void {
         var step = layers.step;
+        var aodFrom = layers.count();
+        var chunks = layers.chunks;
+        var f = layers.f;
+        var size = Field.CHUNK;
         _pen = 0;
         _color = -1;
         for (var k = from; k < to; k++) {
-            var isAccent = aod || layers.isAccent(k);
+            var isAccent = k >= aodFrom || layers.isAccent(k);
             setLine(dc, 1, isAccent ? accent : earth);
-            var ys = lines[k];
-            var x0 = starts[k];
+            var at = layers.offsets[k];
+            var end = at + layers.length(k);
+            var x0 = layers.start(k);
             var x1 = x0 + ox;
-            var y1 = ys[0] + oy;
-            for (var i = 1; i < ys.size(); i++) {
-                var x2 = x0 + i * step + ox;
-                var y2 = ys[i] + oy;
+            var y1 = chunks[at / size][at % size] * f + oy;
+            for (var j = at + 1; j < end; j++) {
+                var x2 = x0 + (j - at) * step + ox;
+                var y2 = chunks[j / size][j % size] * f + oy;
                 dc.drawLine(x1, y1, x2, y2);
                 x1 = x2;
                 y1 = y2;
@@ -843,7 +847,7 @@ class StrataView extends WatchUi.WatchFace {
         // One layer in eight, dim, then the time in outline and the sun line
         var night = !isDay() && _dayNight;
         var accent = Palette.layerAccent(_accent, _celsius, Palette.strata(_strata, night), night);
-        drawLayers(dc, layers, layers.aodLines, layers.aodStarts, 0, layers.aodLines.size(), off[0], off[1], 0, Palette.scale(accent, 0.6));
+        drawLayers(dc, layers, layers.count(), layers.count() + layers.aodCount(), off[0], off[1], 0, Palette.scale(accent, 0.6));
         drawOutline(dc, cx, (h * TIME_Y).toNumber() + off[1], _timeFont, _time, AOD_TIME, 1);
         var sun = _sun;
         if (sun != null) {
