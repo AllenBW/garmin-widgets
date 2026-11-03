@@ -46,7 +46,7 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
-| Tally | — | Ready to submit as a beta (dist/tally.iq; images tally-cover, tally-screen, tally-2-rings, tally-3-strip, tally-4-before); phone settings need a store install, and going public later needs a new app id |
+| Tally | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); going public needs a new app id |
 | Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
 | Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
 | Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
