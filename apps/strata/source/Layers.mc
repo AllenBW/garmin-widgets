@@ -14,18 +14,32 @@ class Layers {
 
     var scale as Float = 1.0;                                            // screen px per generated px
     var step as Float = 8.0;                                             // px between samples along a line
-    var starts as Array<Float> = [] as Array<Float>;                     // x of each piece's first sample
-    var lines as Array<Array<Float>> = [] as Array<Array<Float>>;        // y at each sample, top piece first
-    var aodStarts as Array<Float> = [] as Array<Float>;                  // the same for always-on's pieces
-    var aodLines as Array<Array<Float>> = [] as Array<Array<Float>>;
     var pebbles as Array<Array<Number>> = [] as Array<Array<Number>>;    // [x, y, rx, ry], scattered order
+
+    // The samples stay in Field's constant arrays, scaled as they are read:
+    // a scaled copy of all 3,005 took about 38 KB of the face's 128 KB.
+    // Pieces 0 to count() - 1 are the layers, top piece first; the rest,
+    // always-on's.
+    // (StrataView.drawLayers reads them directly: a call per sample would
+    // spend the watchdog's allowance)
+    var chunks as Array<Array<Number>> = [] as Array<Array<Number>>;
+    var offsets as Array<Number> = [] as Array<Number>;                 // each piece's first sample
+    var f as Float = 0.1;                                                // tenths of a generated px to screen px
 
     function initialize(w as Number, h as Number) {
         scale = w.toFloat() / Field.SIZE;
         step = Field.STEP * scale;
-        var chunks = Field.chunks();
-        var at = read(chunks, 0, Field.FIRST, Field.LENGTH, starts, lines);
-        read(chunks, at, Field.AOD_FIRST, Field.AOD_LENGTH, aodStarts, aodLines);
+        f = scale / 10.0;
+        chunks = Field.chunks();
+        var at = 0;
+        for (var k = 0; k < Field.LENGTH.size(); k++) {
+            offsets.add(at);
+            at += Field.LENGTH[k];
+        }
+        for (var k = 0; k < Field.AOD_LENGTH.size(); k++) {
+            offsets.add(at);
+            at += Field.AOD_LENGTH[k];
+        }
         for (var p = 0; p + 3 < Field.PEBBLES.size(); p += 4) {
             pebbles.add([
                 (Field.PEBBLES[p] * scale).toNumber(),
@@ -36,25 +50,32 @@ class Layers {
         }
     }
 
-    // Read the pieces `firsts` and `lengths` describe, from sample `at` on,
-    // into `xs` and `ys`, scaled. Returns the sample after the last.
-    private function read(chunks as Array<Array<Number>>, at as Number, firsts as Array<Number>, lengths as Array<Number>,
-                          xs as Array<Float>, ys as Array<Array<Float>>) as Number {
-        for (var k = 0; k < firsts.size(); k++) {
-            xs.add(firsts[k] * step);
-            var piece = [] as Array<Float>;
-            for (var i = 0; i < lengths[k]; i++) {
-                var n = at + i;
-                piece.add(chunks[n / Field.CHUNK][n % Field.CHUNK] * scale / 10.0);
-            }
-            at += lengths[k];
-            ys.add(piece);
-        }
-        return at;
+    // How many pieces the layers come in, and always-on's after them
+    function count() as Number {
+        return Field.LENGTH.size();
+    }
+
+    function aodCount() as Number {
+        return Field.AOD_LENGTH.size();
+    }
+
+    // Piece k's first sample's x, and its number of samples
+    function start(k as Number) as Float {
+        return ((k < count()) ? Field.FIRST[k] : Field.AOD_FIRST[k - count()]) * step;
+    }
+
+    function length(k as Number) as Number {
+        return (k < count()) ? Field.LENGTH[k] : Field.AOD_LENGTH[k - count()];
+    }
+
+    // Piece k's y at sample i
+    function y(k as Number, i as Number) as Float {
+        var n = offsets[k] + i;
+        return chunks[n / Field.CHUNK][n % Field.CHUNK] * f;
     }
 
     // True for the accent layers (every fourth, like the planter's deep score)
     function isAccent(k as Number) as Boolean {
-        return Field.ACCENT[k] == 1;
+        return k < count() && Field.ACCENT[k] == 1;
     }
 }
