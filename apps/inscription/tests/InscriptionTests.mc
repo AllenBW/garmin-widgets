@@ -74,6 +74,7 @@ function testInscriptionTargets(logger as Logger) as Boolean {
     Test.assertEqualMessage(view.slotAt((w * 0.925).toNumber(), (h * 0.5).toNumber()) as Number, 2, "three o'clock");
     Test.assertEqualMessage(view.slotAt((w * 0.5).toNumber(), (h * 0.925).toNumber()) as Number, 4, "the bottom's middle");
     Test.assertMessage(view.slotAt((w * 0.5).toNumber(), (h * 0.5).toNumber()) == null, "the time is no target");
+    Test.assertMessage(view.timeAt((w * 0.5).toNumber(), (h * 0.5).toNumber()), "a hold on the time: the looks");
     var id = view.targetAt((w * 0.5).toNumber(), (h * 0.075).toNumber());
     Test.assertMessage(id != null && id.getType() == Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, "the date opens the calendar");
     id = view.targetAt((w * 0.075).toNumber(), (h * 0.5).toNumber());
@@ -134,3 +135,24 @@ function day() as Array<Lib.Slots.Reading> {
             ["8412", "", 0.84, null, 0], ["64", "", 0.64, null, 0]] as Array<Lib.Slots.Reading>;
 }
 
+
+// Every look draws, awake and in standby, the look's name over the date
+(:test)
+function testInscriptionLooks(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var view = new InscriptionView();
+    view.onLayout(dc);
+    Application.Storage.setValue(Lib.Look.KEY, Lib.Look.LOW);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Test.assertEqualMessage(Lib.Look.next(), (m + 3) % Lib.Look.MODES, "the next look");
+        view.reloadSettings();
+        view.onUpdate(dc);
+        view.setAwake(false);
+        view.onUpdate(dc);
+        view.setAwake(true);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    return true;
+}

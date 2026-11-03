@@ -24,6 +24,15 @@ module Lib {
         const LIGHT = 0.30;              // the least luminance an accent is drawn with
         const QUIET = 0.75;              // icons and quiet text: the data colour at this
 
+        // The personas the daily look steps through: [accent, data colour],
+        // each face choosing the typeface (Gold, Ember, Orchard, Dusk, and
+        // the fluorescent orange, green and yellow-green on white)
+        const PERSONAS = [
+            [0xFFB020, 0xE6CFA0], [0xFF5A36, 0xE6CFA0], [0x8CE03C, 0xF2ECE2], [0xA77BFF, 0xF8D2D8],
+            [Look.BLAZE, Look.WHITE], [Look.VOLT, Look.WHITE], [Look.FLARE, Look.WHITE]
+        ] as Array<[Number, Number]>;
+        const NAMES = ["GOLD", "EMBER", "ORCHARD", "DUSK", "BLAZE", "VOLT", "FLARE"] as Array<String>;
+
         const SOURCE = "Source";
         const PHONE = "phone";
         const EDITOR = "editor";
@@ -72,8 +81,31 @@ module Lib {
             return [style, lift(accent), data, ids, (bedside instanceof Boolean) ? bedside : true];
         }
 
+        // The settings as the look `mode` has them: high visibility and low
+        // light in the first typeface, a persona in the face's own choice
+        // (`styles`, one per persona); the readings and bedside clock as set
+        function look(s as Settings, mode as Number, styles as Array<Number>) as Settings {
+            if (mode == Look.BRIGHT) {
+                return [0, Look.BLAZE, Look.WHITE, s[3], s[4]];
+            }
+            if (mode == Look.LOW) {
+                return [0, Look.GLOW, Look.CREAM, s[3], s[4]];
+            }
+            if (mode == Look.DAILY) {
+                var p = Look.day(PERSONAS.size());
+                return [styles[p], PERSONAS[p][0], PERSONAS[p][1], s[3], s[4]];
+            }
+            return s;
+        }
+
+        // Icons' and quiet text's share of the data colour in a look
+        function quiet(mode as Number) as Float {
+            return (mode == Look.BRIGHT) ? 1.0 : ((mode == Look.LOW) ? 0.85 : QUIET);
+        }
+
         function changedOnPhone() as Void {
             Application.Storage.setValue(SOURCE, PHONE);
+            Look.changedOnPhone();
         }
 
         function changedInEditor() as Void {

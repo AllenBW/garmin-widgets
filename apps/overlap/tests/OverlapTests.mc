@@ -68,6 +68,7 @@ function testOverlapTargets(logger as Logger) as Boolean {
     Test.assertEqualMessage(view.slotAt((w * 0.40).toNumber(), (h * 0.855).toNumber()) as Number, 2, "the second reading");
     Test.assertMessage(view.slotAt((w * 0.25).toNumber(), (h * 0.790).toNumber()) == null, "the date is no slot");
     Test.assertMessage(view.slotAt((w * 0.50).toNumber(), (h * 0.40).toNumber()) == null, "the time is no target");
+    Test.assertMessage(view.timeAt((w * 0.50).toNumber(), (h * 0.40).toNumber()), "a hold on the time: the looks");
     var id = view.targetAt((w * 0.25).toNumber(), (h * 0.790).toNumber());
     Test.assertMessage(id != null && id.getType() == Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, "the date opens the calendar");
     id = view.targetAt((w * 0.25).toNumber(), (h * 0.855).toNumber());
@@ -105,5 +106,26 @@ function testOverlapPhoneSettings(logger as Logger) as Boolean {
     Test.assertMessage(phone, "the phone app's first reading");
     Test.assertEqualMessage(s[0], 2, "the phone's typeface");
     Test.assertEqualMessage((s[3][1] as Complications.Id).getType(), Complications.COMPLICATION_TYPE_CURRENT_WEATHER, "the second at its default");
+    return true;
+}
+
+// Every look draws, awake and in standby, the look's name over the date
+(:test)
+function testOverlapLooks(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var view = new OverlapView();
+    view.onLayout(dc);
+    Application.Storage.setValue(Lib.Look.KEY, Lib.Look.LOW);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Test.assertEqualMessage(Lib.Look.next(), (m + 3) % Lib.Look.MODES, "the next look");
+        view.reloadSettings();
+        view.onUpdate(dc);
+        view.setAwake(false);
+        view.onUpdate(dc);
+        view.setAwake(true);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
     return true;
 }

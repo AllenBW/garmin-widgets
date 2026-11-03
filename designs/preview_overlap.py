@@ -19,7 +19,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
-from preview_faces import (BEDSIDE, DATA, QUIET, SS, Face, LABELS, accent_color, bell, digit_font, draw_icon,  # noqa: E402
+from preview_faces import (BEDSIDE, DATA, QUIET, SS, Face, LABELS, accent_color, bell, data_color, digit_font, draw_icon,  # noqa: E402
                            font, glyph_mask, options, outline_of, paint, place, reading, rgb, scale, spaced)
 
 L = dict(
@@ -75,6 +75,7 @@ def knockout(face, m, clip_x, clip_y, corner=(0, 0)):
 
 def render(path, mode="day", size=454, st=None):
     st = dict(DEFAULTS, **(st or {}))
+    L.update({k[2:]: v / 1000 for k, v in st.items() if k.startswith("L_")})   # a look's sizes, in thousandths
     sm = dict(SAMPLES["night" if mode in ("night", "bedside") else "day"])
     if "hours" in st:
         sm["hours"] = f"{st['hours']:02d}"
@@ -84,8 +85,8 @@ def render(path, mode="day", size=454, st=None):
     thin = mode in ("aod", "bedside")
     face = Face(size)
     dim = L["night"] if night else 1.0
-    accent = accent_color(st)
-    data = DATA[st["data"]][1]
+    accent = scale(accent_color(st), st.get("bright", 100) / 100)
+    data = scale(data_color(st), st.get("bright", 100) / 100)
     hours_c = mix(data, L["aod_hours"] if thin else L["hours_data"], accent, L["hours_accent"])
     minutes_c = scale(accent, (L["aod_minutes"] if thin else 1.0) * dim)
     if mode == "bedside":
@@ -144,7 +145,7 @@ def render(path, mode="day", size=454, st=None):
             break
     x = face.px(L["left"])
     y = face.px(L["reading_y"])
-    quiet = scale(data, QUIET * dim)
+    quiet = scale(data, st.get("quiet", QUIET * 100) / 100 * dim)
     for kind in kinds:
         value, unit, _ = reading(kind, night)
         if kind in LABELS:

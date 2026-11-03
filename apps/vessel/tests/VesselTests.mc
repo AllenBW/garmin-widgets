@@ -141,7 +141,8 @@ function testVesselDrawsEveryMode(logger as Logger) as Boolean {
     view.setState("8", "05", odd, 1, true, false);
     view.onUpdate(dc);
 
-    // Press targets: the glasses and the foot open their readings, the date the calendar
+    // Press targets: the readings open their complications, the date the
+    // calendar, the time the next look; in the editor the glasses pick their slots
     var day = [["64", "", 0.64, null, 0], ["8412", "", 0.84, null, 0], ["81", "%", 0.81, null, 0]]
               as Array<Lib.Slots.Reading>;
     view.setState("14", "38", day, 1, false, false);
@@ -153,8 +154,11 @@ function testVesselDrawsEveryMode(logger as Logger) as Boolean {
     Test.assertMessage(view.slotAt((w * 0.43).toNumber(), (h * 0.112).toNumber()) == null, "the date is no slot");
     var id = view.targetAt((w * 0.43).toNumber(), (h * 0.112).toNumber());
     Test.assertMessage(id != null && id.getType() == Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, "the date opens the calendar");
-    id = view.targetAt((w * 0.50).toNumber(), (h * 0.33).toNumber());
+    // the hours' reading sits on its waterline, 64 % up the glass (VesselView.MID, DIGITS, ROW_GAP)
+    id = view.targetAt((w * 0.75).toNumber(), (h * 0.283).toNumber());
     Test.assertMessage(id != null && id.getType() == Complications.COMPLICATION_TYPE_CURRENT_WEATHER, "the weather by default");
+    Test.assertMessage(view.timeAt((w * 0.50).toNumber(), (h * 0.33).toNumber()), "a hold on the hours: the looks");
+    Test.assertMessage(view.targetAt((w * 0.50).toNumber(), (h * 0.33).toNumber()) == null, "the time opens nothing");
 
     // Standby, then the bedside clock with and without an alarm
     view.setAwake(false);
@@ -191,9 +195,13 @@ function testPhoneSettings(logger as Logger) as Boolean {
     var view = new VesselView();
     view.onLayout(dc);
     view.onUpdate(dc);
-    var id = view.targetAt((w * 0.50).toNumber(), (h * 0.33).toNumber());
+    // the readings on their waterlines, 64 % and 84 % up the glasses
+    view.setState("14", "38", [["64", "", 0.64, null, 0], ["72", "", 0.84, null, 0], ["7:12", "", null, null, 1]]
+                  as Array<Lib.Slots.Reading>, 0, false, false);
+    view.onUpdate(dc);
+    var id = view.targetAt((w * 0.75).toNumber(), (h * 0.283).toNumber());
     var phone = id != null && id.getType() == Complications.COMPLICATION_TYPE_STRESS;
-    id = view.targetAt((w * 0.50).toNumber(), (h * 0.67).toNumber());
+    id = view.targetAt((w * 0.75).toNumber(), (h * 0.551).toNumber());
     var kept = id != null && id.getType() == Complications.COMPLICATION_TYPE_HEART_RATE;
 
     Application.Properties.setValue("Reading1", Complications.COMPLICATION_TYPE_CURRENT_WEATHER as Number);
@@ -207,5 +215,70 @@ function testPhoneSettings(logger as Logger) as Boolean {
     Test.assertMessage(kept, "the other slots at their defaults");
     var foot = s[3][2];
     Test.assertEqualMessage(foot.getType(), Complications.COMPLICATION_TYPE_SUNRISE, "the foot: the next sunrise or sunset");
+    return true;
+}
+
+// Lib.Look, for every face that links it: holding the time steps through
+// the looks, the phone's choice wins when it changes, a persona a day
+(:test)
+function testLooks(logger as Logger) as Boolean {
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Look.SEEN);
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.YOURS, "your settings to begin with");
+    Test.assertMessage(!Lib.Look.shown(), "no name yet");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.BRIGHT, "a hold: high visibility");
+    Test.assertMessage(Lib.Look.shown(), "its name shows");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.LOW, "then low light");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.DAILY, "then the day's persona");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.YOURS, "and round");
+
+    // the phone: another setting changed leaves the hold's choice, a new look wins
+    Lib.Look.next();
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.BRIGHT, "another setting changed: the hold's look stays");
+    Application.Properties.setValue("Look", Lib.Look.LOW);
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.LOW, "the phone's new look");
+    Lib.Look.next();
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.DAILY, "the phone unchanged since: the hold stays");
+
+    // a persona a day, round the week
+    Test.assertEqualMessage(Lib.Look.dayOf(0, 7), 0, "day 0");
+    Test.assertEqualMessage(Lib.Look.dayOf(20398, 7) == Lib.Look.dayOf(20399, 7), false, "the next day, the next persona");
+    Test.assertEqualMessage(Lib.Look.dayOf(-1, 7), 6, "never negative");
+    Test.assertEqualMessage(Lib.Look.title(Lib.Look.BRIGHT, Lib.Config.NAMES), "HIGH VIS", "high visibility's name");
+    var today = Lib.Look.title(Lib.Look.DAILY, Lib.Config.NAMES);
+    Test.assertMessage(Lib.Config.NAMES.indexOf(today) >= 0, "the day's persona by name: " + today);
+
+    // Lib.Config.look: the fixed looks' colours, a persona's from the table
+    var s = Lib.Config.read(3, [Complications.COMPLICATION_TYPE_CURRENT_WEATHER, Complications.COMPLICATION_TYPE_HEART_RATE,
+                                Complications.COMPLICATION_TYPE_SUNRISE] as Array<Complications.Type>);
+    var b = Lib.Config.look(s, Lib.Look.BRIGHT, [1, 1, 1, 1, 1, 1, 1] as Array<Number>);
+    Test.assertMessage(b[0] == 0 && b[1] == Lib.Look.BLAZE && b[2] == Lib.Look.WHITE && b[3] == s[3], "high visibility");
+    var p = Lib.Look.day(Lib.Config.PERSONAS.size());
+    var d = Lib.Config.look(s, Lib.Look.DAILY, [2, 2, 2, 2, 2, 2, 2] as Array<Number>);
+    Test.assertMessage(d[0] == 2 && d[1] == Lib.Config.PERSONAS[p][0] && d[2] == Lib.Config.PERSONAS[p][1], "the day's persona");
+    Test.assertEqualMessage(Lib.Config.look(s, Lib.Look.YOURS, [] as Array<Number>), s, "yours as set");
+    Test.assertEqualMessage(Lib.Config.quiet(Lib.Look.BRIGHT), 1.0, "icons at full in high visibility");
+
+    // the face in each look, with the look's name over the time
+    var settings = System.getDeviceSettings();
+    var w = settings.screenWidth;
+    var h = settings.screenHeight;
+    var dc = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
+    var view = new VesselView();
+    view.onLayout(dc);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Application.Storage.setValue(Lib.Look.KEY, m);
+        view.reloadSettings();
+        view.onUpdate(dc);
+        view.setAwake(false);
+        view.onUpdate(dc);
+        view.setAwake(true);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Look.SEEN);
+    Application.Properties.setValue("Look", Lib.Look.YOURS);
     return true;
 }
