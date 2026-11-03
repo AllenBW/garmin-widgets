@@ -9,6 +9,9 @@ import Toybox.Time;
 // [time, name index, time, name index, ...], and the newest KEEP chunks stay
 // on the watch; the sheet keeps everything. Names go in a table that only
 // grows, so a renamed button keeps its old entries under the old name.
+// An entry can be changed or deleted from the History list; a deleted one
+// keeps its number with the name index GONE. Changes to entries the sheet
+// already has wait in EDITS until it confirms them.
 //
 // Loaded in the background service too (it sends what the sheet hasn't
 // confirmed), so nothing here uses Lib.
@@ -23,6 +26,8 @@ module TallyLog {
     const SENT = "sent";        // entries the sheet has confirmed
     const ID = "id";            // this install, so the sheet can tell watches apart
     const LAST = "last";        // the glance's line: [time, name, colour, days running]
+    const EDITS = "edits";      // [number, time, name ("" deleted), ...] for the sheet
+    const GONE = -1;
 
     function count() as Number {
         var n = Storage.getValue(COUNT);
@@ -50,8 +55,8 @@ module TallyLog {
         return (v instanceof Array) ? v as Array<Number> : [] as Array<Number>;
     }
 
-    // Log `name` at `time`; returns the entry's number
-    function add(time as Number, name as String) as Number {
+    // The name's index in the table, added if it's new
+    function nameIndex(name as String) as Number {
         var table = names();
         var index = table.indexOf(name);
         if (index < 0) {
@@ -59,6 +64,12 @@ module TallyLog {
             Storage.setValue(NAMES, table as Array<Storage.ValueType>);
             index = table.size() - 1;
         }
+        return index;
+    }
+
+    // Log `name` at `time`; returns the entry's number
+    function add(time as Number, name as String) as Number {
+        var index = nameIndex(name);
         var n = count();
         var c = n / CHUNK;
         var items = (n % CHUNK == 0) ? [] as Array<Number> : chunk(c);
@@ -93,7 +104,81 @@ module TallyLog {
         return true;
     }
 
-    // Entries logged at or after `since`, oldest first: [times, name indexes]
+    // Entry `n`: [time, name], the name "" when deleted; null when it isn't on the watch
+    function entry(n as Number) as [Number, String]? {
+        if (n < first() || n >= count()) {
+            return null;
+        }
+        var items = chunk(n / CHUNK);
+        var i = (n % CHUNK) * 2;
+        if (i + 1 >= items.size()) {
+            return null;
+        }
+        return [items[i], (items[i + 1] < 0) ? "" : names()[items[i + 1]]];
+    }
+
+    // Change entry `n` to `name` at `time`; the name "" deletes it. If the
+    // sheet already has it, the change waits in EDITS for the sheet.
+    function change(n as Number, time as Number, name as String) as Void {
+        if (entry(n) == null) {
+            return;
+        }
+        var c = n / CHUNK;
+        var items = chunk(c);
+        var i = (n % CHUNK) * 2;
+        items[i] = time;
+        items[i + 1] = name.equals("") ? GONE : nameIndex(name);
+        Storage.setValue("c" + c, items as Array<Storage.ValueType>);
+        if (n < sent()) {
+            var queue = edits();
+            // a later change to the same entry replaces the earlier one
+            for (var k = 0; k + 2 < queue.size(); k += 3) {
+                if (queue[k] == n) {
+                    queue = queue.slice(0, k).addAll(queue.slice(k + 3, null));
+                    break;
+                }
+            }
+            queue.addAll([n, time, name]);
+            Storage.setValue(EDITS, queue as Array<Storage.ValueType>);
+        }
+    }
+
+    function edits() as Array {
+        var v = Storage.getValue(EDITS);
+        return (v instanceof Array) ? v as Array : [] as Array;
+    }
+
+    // The sheet has applied the first `k` changes
+    function confirmEdits(k as Number) as Void {
+        var queue = edits();
+        Storage.setValue(EDITS, queue.slice(k * 3 < queue.size() ? k * 3 : queue.size(), null) as Array<Storage.ValueType>);
+    }
+
+    // Up to `max` entries still on the watch, newest first, deleted ones
+    // left out: [numbers, times, name indexes]
+    function latest(max as Number) as [Array<Number>, Array<Number>, Array<Number>] {
+        var numbers = [] as Array<Number>;
+        var times = [] as Array<Number>;
+        var which = [] as Array<Number>;
+        var c = -1;
+        var items = [] as Array<Number>;
+        for (var n = count() - 1; n >= first() && numbers.size() < max; n--) {
+            if (n / CHUNK != c) {
+                c = n / CHUNK;
+                items = chunk(c);
+            }
+            var i = (n % CHUNK) * 2;
+            if (i + 1 < items.size() && items[i + 1] >= 0) {
+                numbers.add(n);
+                times.add(items[i]);
+                which.add(items[i + 1]);
+            }
+        }
+        return [numbers, times, which];
+    }
+
+    // Entries logged at or after `since`, oldest first, deleted ones left
+    // out: [times, name indexes]
     function since(since as Number) as [Array<Number>, Array<Number>] {
         var times = [] as Array<Number>;
         var which = [] as Array<Number>;
@@ -113,7 +198,7 @@ module TallyLog {
         for (var p = parts.size() - 1; p >= 0; p--) {
             var items = parts[p];
             for (var i = 0; i + 1 < items.size(); i += 2) {
-                if (items[i] >= since) {
+                if (items[i] >= since && items[i + 1] >= 0) {
                     times.add(items[i]);
                     which.add(items[i + 1]);
                 }
@@ -124,7 +209,8 @@ module TallyLog {
 
     // Up to `max` entries from the first the sheet hasn't confirmed, logged
     // before `before` (so an entry can still be undone while it settles):
-    // [number of the first, times, names], or null when there are none
+    // [number of the first, times, names ("" for one deleted, which the
+    // sheet skips but counts)], or null when there are none
     function unsent(max as Number, before as Number) as [Number, Array<Number>, Array<String>]? {
         var from = sent();
         if (from < first()) {
@@ -146,7 +232,7 @@ module TallyLog {
                 break;
             }
             times.add(items[i]);
-            labels.add(table[items[i + 1]]);
+            labels.add((items[i + 1] < 0) ? "" : table[items[i + 1]]);
         }
         return (times.size() == 0) ? null : [from, times, labels];
     }

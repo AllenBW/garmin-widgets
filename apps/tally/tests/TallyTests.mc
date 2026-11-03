@@ -19,6 +19,7 @@ function clearLog() as Void {
     Storage.deleteValue(TallyLog.SENT);
     Storage.deleteValue(TallyLog.NAMES);
     Storage.deleteValue(TallyLog.LAST);
+    Storage.deleteValue(TallyLog.EDITS);
 }
 }
 
@@ -147,11 +148,32 @@ function testLog(logger as Logger) as Boolean {
     Test.assertMessage(!TallyLog.undo(), "the sheet has the rest: no undo");
     Test.assertMessage(TallyLog.unsent(10, t + 1000) == null, "nothing waiting");
 
+    // History: change and delete. Entry 1 (Bed) is with the sheet, so its
+    // changes wait for it; a new unsent entry is changed in place
+    TallyLog.change(1, t + 90, "Milk");
+    var e = TallyLog.entry(1) as [Number, String];
+    Test.assertMessage(e[0] == t + 90 && e[1].equals("Milk"), "entry 1 is now Milk at +90");
+    Test.assertEqualMessage(TallyLog.edits().size(), 3, "one change for the sheet");
+    TallyLog.change(1, t + 90, "");
+    Test.assertEqualMessage(TallyLog.edits().size(), 3, "the delete replaces it");
+    Test.assertMessage((TallyLog.edits()[2] as String).equals(""), "as a delete");
+    Test.assertEqualMessage(TallyLog.since(t)[0].size(), 1, "the deleted entry is left out");
+    Test.assertEqualMessage(TallyLog.latest(10)[0].size(), 1, "and out of History");
+    TallyLog.confirmEdits(1);
+    Test.assertEqualMessage(TallyLog.edits().size(), 0, "the sheet applied it");
+    var n = TallyLog.add(t + 300, "Typo");
+    TallyLog.change(n, t + 300, "");
+    Test.assertEqualMessage(TallyLog.edits().size(), 0, "an unsent entry changes in place");
+    var gap = TallyLog.unsent(10, t + 1000) as [Number, Array<Number>, Array<String>];
+    Test.assertMessage(gap[0] == n && gap[2][0].equals(""), "sent as a gap the sheet counts");
+    TallyLog.confirm(n + 1);
+    Test.assertMessage(TallyLog.latest(5)[0][0] == 0, "History, newest first: entry 0");
+
     // past a chunk
     for (var i = 0; i < TallyLog.CHUNK + 5; i++) {
         TallyLog.add(t + 200 + i, "Tick");
     }
-    Test.assertEqualMessage(TallyLog.since(t).size() > 0 ? TallyLog.since(t)[0].size() : 0, TallyLog.CHUNK + 7, "every entry across two chunks");
+    Test.assertEqualMessage(TallyLog.since(t)[0].size(), TallyLog.CHUNK + 6, "every live entry across two chunks");
     Test.assertEqualMessage(TallyLog.first(), 0, "nothing dropped yet");
     var id = TallyLog.installId();
     Test.assertMessage(id.length() == 8 && id.equals(TallyLog.installId()), "a steady install id");
@@ -168,6 +190,9 @@ function testDraw(logger as Logger) as Boolean {
     var screen = (Graphics.createBufferedBitmap({:width => w, :height => settings.screenHeight}).get() as Graphics.BufferedBitmap).getDc();
     var view = new TallyView();
     view.onLayout(screen);
+    logger.debug("font heights: xtiny " + Graphics.getFontHeight(Graphics.FONT_XTINY) + " tiny " + Graphics.getFontHeight(Graphics.FONT_TINY)
+                 + " small " + Graphics.getFontHeight(Graphics.FONT_SMALL) + " medium " + Graphics.getFontHeight(Graphics.FONT_MEDIUM)
+                 + " vector 0.042 em " + Graphics.getFontHeight(Lib.Fmt.vectorFont("RobotoCondensedRegular", (w * 0.042 * 1.17).toNumber(), Graphics.FONT_XTINY)));
     for (var p = 0; p < 4; p++) {
         view.page = p;
         view.onUpdate(screen);
@@ -197,6 +222,11 @@ function testDraw(logger as Logger) as Boolean {
         view.tap(w / 2, w / 2);
         Test.assertEqualMessage(TallyLog.count(), before, "the centre undid it");
     }
+    // All: the buttons, then a name typed with Other
+    TallyLog.add(Time.now().value() - 60, "Hiccups");
+    view.reload();
+    var all = TallyAll.names(view);
+    Test.assertMessage(all.indexOf("Hiccups") == view.buttons().size(), "a typed name follows the buttons: " + all);
     var glanceDc = (Graphics.createBufferedBitmap({:width => (w * 0.77).toNumber(), :height => (w * 0.29).toNumber()}).get() as Graphics.BufferedBitmap).getDc();
     var glance = new TallyGlance();
     glance.onLayout(glanceDc);
