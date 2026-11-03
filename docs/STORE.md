@@ -46,6 +46,7 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
+| Tally | — | Ready to submit as a beta (dist/tally.iq; images tally-cover, tally-screen, tally-2-rings, tally-3-strip, tally-4-before); phone settings need a store install, and going public later needs a new app id |
 | Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
 | Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
 | Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
@@ -164,6 +165,24 @@ start and end on their own: the watch's thermometer notices when it warms
 as you go in and cools as you come out. To mark the door yourself, turn
 off "Notice going in", "Notice going out" or both in the app's settings on
 your phone; LAP marks the door by hand at any time.
+
+**Tally** (Tools). Buttons you make, one tap to log, and the pattern they
+draw. Set up to twelve buttons on your phone (Garmin Connect, the app's
+settings): a name, a colour, normal or large, and the hours each shows,
+so the morning's buttons give way to the evening's. On the watch they
+sit in a ring; a tap logs the moment with a buzz, and a tap in the
+middle within six seconds takes it back. Every button is always in the
+All list, with Other for anything unexpected, typed on the watch. Swipe
+for the last two weeks: a ring per day with each entry a dot at its
+time, so a habit lines up as a spoke ("usually 7:55, 12 of 14 days"); a
+strip of what came before; and which buttons tend to come before one,
+against the days it didn't happen. The glance shows the newest entry
+and how long ago. Optionally every entry also goes to a Google Sheet of
+your own, with a summary for sharing (setup guide:
+github.com/AllenBW/garmin-widgets/tree/main/apps/tally/sheet). The
+entries stay on your watch and in your own sheet; nothing else is
+collected. It shows what happened together, not what caused what, and
+is not a medical device.
 
 **Sound Level** (Tools). Experimental. An approximate sound level meter
 from the watch microphone: the level in decibels coloured by how loud it
