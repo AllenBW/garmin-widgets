@@ -53,8 +53,13 @@ module SaunaSettings {
         return number("ActivityType", 0) == 0;
     }
 
-    function autoRounds() as Boolean {
-        return bool("AutoRounds", true);
+    // The thermometer notices the door: going in and going out, each on its own
+    function autoIn() as Boolean {
+        return bool("AutoIn", true);
+    }
+
+    function autoOut() as Boolean {
+        return bool("AutoOut", true);
     }
 
     // Tenths: 10 is the plan's rate as is, 6 more eager, 15 more relaxed

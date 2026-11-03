@@ -489,7 +489,7 @@ kind of room with coaching for both.
 
 **Coaching** (the line under the timer, with a buzz at each turn)
 - Arrival: "Drink, shower, then go in", then "Walk in when ready" (or
-  "LAP when you go in" with the automatic door off).
+  "LAP when you go in" with noticing going in off).
 - In the heat: a countdown "4:30 left"; "Time to cool down" at the round
   target (one long buzz); "Over 20 min · come out" once a minute past the
   longest round (two long); "That's 45 min of heat · come out" when the
@@ -538,7 +538,13 @@ kind of room with coaching for both.
   when the watch warms the kind's enter rate above its coolest reading of
   the last minute, or cools the leave rate below its hottest, never
   within 90 s of the last change or three minutes of a button press;
-  the sensitivity setting scales both rates. Two buzzes in, one out.
+  the sensitivity setting scales both rates. Going in and going out are
+  each their own setting (owner, 2026-11-03), so one can be left to LAP
+  while the thermometer still notices the other. The three-minute hold
+  after a press still applies, so with going in left to LAP a round
+  under three minutes is noticed ending at three; kept, since a press
+  made early (still cooling from a plunge) would otherwise end the
+  round at once. Two buzzes in, one out.
 - Recovery: the peak in the half minute after leaving, then the fall one
   and two minutes after that peak, per round and averaged.
 - Heat guard: a list setting, 113 / 122 / 131 °F (45 / 50 / 55 °C) or
@@ -555,9 +561,9 @@ and the beat-to-beat intervals through `registerSensorDataListener`,
 `ActivityMonitor`'s respiration rate and stress score, `UserProfile` for
 the birth year, `Fit` and `FitContributor` for the file (eighteen
 developer fields, each created on its own so a refusal drops only that
-one). Settings in four groups: the watch (unit, automatic door, door
-sensitivity, hot warning, activity type), heart-rate coaching, the sauna
-plan, the steam-room plan.
+one). Settings in four groups: the watch (unit, noticing going in,
+noticing going out, door sensitivity, hot warning, activity type),
+heart-rate coaching, the sauna plan, the steam-room plan.
 
 **Not done, to learn on a watch:** how the fēnix 8's thermometer really
 moves in each room (the FIT file logs it every second so the rates can
