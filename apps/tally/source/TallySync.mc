@@ -8,7 +8,8 @@ import Toybox.Time;
 // Sends the entries the sheet hasn't confirmed to the owner's Google Sheet
 // (the Apps Script web app in apps/tally/sheet/), BATCH at a time, through
 // the phone or Wi-Fi. The script answers with the number of the next entry
-// it wants, so a batch that arrives twice is written once.
+// it wants, so a batch that arrives twice is written once. Once the sheet
+// has every entry, changes made in the History list go the same way.
 //
 // Runs in the foreground (after a tap settles) and in the background
 // service (every SYNC_MINUTES while anything is waiting).
@@ -36,17 +37,27 @@ class TallySender {
         if (link.find("https://") != 0) {
             return false;
         }
+        var params = {"id" => TallyLog.installId()} as Dictionary<Object, Object>;
         var batch = TallyLog.unsent(BATCH, Time.now().value() - SETTLE);
-        if (batch == null) {
+        var lines = "";
+        if (batch != null) {
+            for (var i = 0; i < batch[1].size(); i++) {
+                lines += batch[1][i].toString() + "|" + clean(batch[2][i]) + "\n";
+            }
+            params["from"] = batch[0].toString();
+        } else if (TallyLog.sent() == TallyLog.count() && TallyLog.edits().size() > 0) {
+            // changes: "<number>|<time>|<name>", the name empty for deleted
+            var queue = TallyLog.edits();
+            for (var k = 0; k + 2 < queue.size() && k < BATCH * 3; k += 3) {
+                lines += (queue[k] as Number).toString() + "|" + (queue[k + 1] as Number).toString() + "|" + clean(queue[k + 2] as String) + "\n";
+            }
+            params["op"] = "edit";
+        } else {
             return false;
         }
-        var lines = "";
-        for (var i = 0; i < batch[1].size(); i++) {
-            lines += batch[1][i].toString() + "|" + clean(batch[2][i]) + "\n";
-        }
+        params["e"] = lines;
         try {
-            Communications.makeWebRequest(link,
-                {"id" => TallyLog.installId(), "from" => batch[0].toString(), "e" => lines},
+            Communications.makeWebRequest(link, params,
                 {:method => Communications.HTTP_REQUEST_METHOD_GET,
                  :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON},
                 method(:onResponse));
@@ -76,6 +87,11 @@ class TallySender {
                 TallyLog.confirm(next.toNumber());
                 ok = true;
             }
+            var edited = data["edited"];
+            if (edited instanceof Number || edited instanceof Float || edited instanceof Long) {
+                TallyLog.confirmEdits(edited.toNumber());
+                ok = true;
+            }
         }
         var done = _done;
         if (done != null) {
@@ -89,7 +105,7 @@ class TallySender {
             return;
         }
         try {
-            var waiting = TallyLog.sent() < TallyLog.count() && url().find("https://") == 0;
+            var waiting = (TallyLog.sent() < TallyLog.count() || TallyLog.edits().size() > 0) && url().find("https://") == 0;
             var registered = Background.getTemporalEventRegisteredTime() != null;
             if (waiting && !registered) {
                 Background.registerForTemporalEvent(new Time.Duration(SYNC_MINUTES * 60));

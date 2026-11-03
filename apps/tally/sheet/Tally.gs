@@ -4,10 +4,14 @@
 // Garmin Connect (Tally's settings, Google Sheet link).
 //
 // The watch sends GET ?id=<watch>&from=<first entry's number>&e=<lines>,
-// each line "<unix seconds>|<button name>". The script remembers, per
-// watch, the number of the next entry it wants, so a batch that arrives
-// twice is written once, and answers {"ok": true, "next": n}. It only ever
-// appends: nothing in the sheet can be read through the link.
+// each line "<unix seconds>|<button name>" (an empty name is an entry
+// deleted before it was sent: counted, not written). The script
+// remembers, per watch, the number of the next entry it wants, so a batch
+// that arrives twice is written once, and answers {"ok": true, "next": n}.
+// Changes made in the watch's History come as op=edit, each line
+// "<entry number>|<unix seconds>|<name>" (empty: delete the row), answered
+// {"ok": true, "edited": lines}. Nothing in the sheet can be read through
+// the link.
 //
 // After each batch it rebuilds the "Summary" tab from the last DAYS days,
 // for whatever buttons the log holds: each button's count and usual time,
@@ -18,13 +22,16 @@ var SUMMARY = 'Summary';
 var DAYS = 28;
 var WINDOW = 2 * 3600;   // "usually": the busiest two hours of the day
 var BEFORE = 6 * 3600;   // "came before": within six hours
-var HEADERS = ['When', 'Day', 'Time', 'Button', 'Unix', 'Watch', 'Note'];
+var HEADERS = ['When', 'Day', 'Time', 'Button', 'Unix', 'Watch', 'Entry', 'Note'];
 
 function doGet(e) {
   var p = e.parameter;
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
+    if (p.op === 'edit') {
+      return json({ok: true, edited: edit(p)});
+    }
     var props = PropertiesService.getScriptProperties();
     var key = 'next_' + p.id;
     var next = Number(props.getProperty(key) || 0);
@@ -38,10 +45,11 @@ function doGet(e) {
         return;  // already written
       }
       var bar = line.indexOf('|');
-      var unix = Number(line.slice(0, bar));
-      var when = new Date(unix * 1000);
-      rows.push([when, Utilities.formatDate(when, zone, 'yyyy-MM-dd'), Utilities.formatDate(when, zone, 'HH:mm'),
-                 line.slice(bar + 1), unix, p.id, '']);
+      var name = line.slice(bar + 1);
+      if (name === '') {
+        return;  // deleted on the watch before it was sent
+      }
+      rows.push(row(Number(line.slice(0, bar)), name, p.id, from + i, zone));
     });
     if (rows.length) {
       sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, HEADERS.length).setValues(rows);
@@ -59,6 +67,49 @@ function doGet(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function row(unix, name, watch, entry, zone) {
+  var when = new Date(unix * 1000);
+  return [when, Utilities.formatDate(when, zone, 'yyyy-MM-dd'), Utilities.formatDate(when, zone, 'HH:mm'),
+          name, unix, watch, entry, ''];
+}
+
+// Changes from the watch's History: find each entry's row by watch and
+// entry number, then rewrite it (keeping the Note) or delete it
+function edit(p) {
+  var lines = String(p.e || '').split('\n').filter(String);
+  var sheet = tab();
+  var zone = Session.getScriptTimeZone();
+  var last = sheet.getLastRow();
+  var keys = last < 2 ? [] : sheet.getRange(2, 6, last - 1, 2).getValues();
+  var gone = [];
+  lines.forEach(function (line) {
+    var parts = line.split('|');
+    var entry = Number(parts[0]);
+    var unix = Number(parts[1]);
+    var name = parts.slice(2).join('|');
+    for (var r = 0; r < keys.length; r++) {
+      if (String(keys[r][0]) === String(p.id) && Number(keys[r][1]) === entry) {
+        if (name === '') {
+          gone.push(r + 2);
+        } else {
+          var note = sheet.getRange(r + 2, 8).getValue();
+          var fresh = row(unix, name, p.id, entry, zone);
+          fresh[7] = note;
+          sheet.getRange(r + 2, 1, 1, HEADERS.length).setValues([fresh]);
+        }
+        break;
+      }
+    }
+  });
+  gone.sort(function (a, b) { return b - a; }).forEach(function (r) { sheet.deleteRow(r); });
+  try {
+    summarize();
+  } catch (err) {
+    console.error(err);
+  }
+  return lines.length;
 }
 
 // The Log tab, made with its headers the first time

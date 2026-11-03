@@ -26,21 +26,22 @@ class TallyView extends WatchUi.View {
     const UNDO = 6;                 // seconds
 
     // the log page, as fractions of the width
-    const R_OUT = 0.445;
-    const R_IN = 0.215;
+    const R_OUT = 0.480;
+    const R_IN = 0.250;
     const GAP = 3;                  // degrees between wedges
     const WEDGE_DIM = 0.22;         // a wedge's fill against its name's colour
 
     // the rings page
-    const RING_IN = 0.150;
-    const RING_OUT = 0.385;
-    const DIAL = 0.405;
+    const RING_IN = 0.240;
+    const RING_OUT = 0.355;
+    const DIAL = 0.366;
+    const DIAL_LABEL = 0.428;
 
     // the strip page
-    const STRIP_X0 = 0.13;
-    const STRIP_X1 = 0.87;
-    const STRIP_Y0 = 0.27;
-    const STRIP_Y1 = 0.71;
+    const STRIP_X0 = 0.15;
+    const STRIP_X1 = 0.85;
+    const STRIP_Y0 = 0.30;
+    const STRIP_Y1 = 0.65;
     const STRIP_HOURS = 9;
 
     const WHITE = 0xF2ECE2;
@@ -76,12 +77,15 @@ class TallyView extends WatchUi.View {
     function onLayout(dc as Dc) as Void {
         _w = dc.getWidth();
         _cx = _w / 2;
-        _names = [font("RobotoCondensedBold", 0.060), font("RobotoCondensedBold", 0.050),
-                  font("RobotoCondensedBold", 0.042), font("RobotoCondensedBold", 0.036)] as Array<FontType>;
-        _big = font("RobotoCondensedBold", 0.068);
-        _mid = font("RobotoCondensedBold", 0.040);
-        _small = font("RobotoCondensedRegular", 0.034);
-        _tiny = font("RobotoCondensedRegular", 0.030);
+        // The smallest is the watch's own smallest (FONT_XTINY, 37 px tall
+        // on the 454 px screens); the first builds' 22 px was unreadable
+        // on the wrist. Condensed, so the words still fit.
+        _names = [font("RobotoCondensedBold", 0.090), font("RobotoCondensedBold", 0.078),
+                  font("RobotoCondensedBold", 0.068), font("RobotoCondensedBold", 0.060)] as Array<FontType>;
+        _big = font("RobotoCondensedBold", 0.130);
+        _mid = font("RobotoCondensedBold", 0.090);
+        _small = font("RobotoCondensedBold", 0.078);
+        _tiny = font("RobotoCondensedRegular", 0.068);
     }
 
     // A font whose capitals' em is `em` of the width (a vector font's size
@@ -225,7 +229,7 @@ class TallyView extends WatchUi.View {
     }
 
     // Send what the sheet hasn't confirmed (after the undo window)
-    private function sync() as Void {
+    function sync() as Void {
         if (_sender == null && !undoing()) {
             var sender = new TallySender(method(:onSynced));
             if (sender.send()) {
@@ -237,7 +241,7 @@ class TallyView extends WatchUi.View {
     function onSynced(ok as Boolean) as Void {
         _sender = null;
         TallySender.schedule();
-        if (ok && TallyLog.sent() < TallyLog.count()) {
+        if (ok && (TallyLog.sent() < TallyLog.count() || TallyLog.edits().size() > 0)) {
             sync();     // more than one batch waiting
         }
     }
@@ -367,12 +371,25 @@ class TallyView extends WatchUi.View {
             var x = _cx + mid * Math.cos(a);
             var y = _cx - mid * Math.sin(a);
             var label = b.name.toUpper();
-            var room = (share >= 180) ? _w * 0.34 : 2 * mid * Math.sin(Math.toRadians(share / 2)) - _w * 0.05;
+            var room = (share >= 180) ? _w * 0.40 : 2 * mid * Math.sin(Math.toRadians(share / 2)) - _w * 0.025;
+            // a label reads across, so on the side wedges it must also stay
+            // between the middle circle and the screen's edge at its height
+            var dx = (x - _cx).abs();
+            var far = (y - _cx).abs() + _w * 0.03;     // the text's row furthest out
+            var near = (y - _cx).abs() - _w * 0.03;    // and nearest the middle
+            var edge = _w * 0.485;
+            var inner = _w * R_IN;
+            var outside = (edge > far) ? Math.sqrt(edge * edge - far * far) - dx : 0.0;
+            var inside = (inner > near) ? dx - Math.sqrt(inner * inner - near * near) : _w * 1.0;
+            var across = 2 * ((outside < inside) ? outside : inside) - _w * 0.02;
+            if (across < room) {
+                room = across;
+            }
             var f = Lib.Fmt.fitFont(dc, label, _names, room.toNumber());
             var today = todayCount(b.name);
-            text(dc, x, (today > 0) ? y - _w * 0.016 : y, f, label, b.colour);
+            text(dc, x, (today > 0) ? y - _w * 0.030 : y, f, label, b.colour);
             if (today > 0) {
-                text(dc, x, y + _w * 0.036, _tiny, today + " TODAY", scale(b.colour, 0.7));
+                text(dc, x, y + _w * 0.048, _tiny, today + " TODAY", scale(b.colour, 0.75));
             }
         }
         drawCentre(dc);
@@ -391,10 +408,10 @@ class TallyView extends WatchUi.View {
 
     private function drawCentre(dc as Dc) as Void {
         var c = _cx;
+        var r = _w * (R_IN - 0.015);
         if (_buttons.size() == 0) {
-            text(dc, c, c - _w * 0.06, _small, "ADD BUTTONS IN", GRAY);
-            text(dc, c, c, _small, "GARMIN CONNECT", GRAY);
-            text(dc, c, c + _w * 0.06, _small, "OR TAP FOR OTHER", GRAY);
+            text(dc, c, c - _w * 0.045, _tiny, "ADD BUTTONS", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, "ON THE PHONE", GRAY);
             return;
         }
         var d = _days as TallyDays;
@@ -402,32 +419,42 @@ class TallyView extends WatchUi.View {
         if (undoing() && n > 0) {
             var name = d.names[d.which[n - 1]];
             var colour = TallyButtons.colourOf(name, _buttons);
-            text(dc, c, c - _w * 0.075, _tiny, "LOGGED", GRAY);
-            text(dc, c, c - _w * 0.010, Lib.Fmt.fitFont(dc, name.toUpper(), [_mid, _small] as Array<FontType>, px(0.34)), name.toUpper(), colour);
-            text(dc, c, c + _w * 0.060, _tiny, "TAP TO UNDO", GRAY);
+            text(dc, c, c - _w * 0.085, _tiny, "LOGGED", GRAY);
+            fitted(dc, c, c, [_mid, _small, _tiny] as Array<FontType>, name.toUpper(), colour, chord(r, 0.0));
+            text(dc, c, c + _w * 0.085, _tiny, "TAP: UNDO", GRAY);
             // the time left to undo, as a shrinking ring
             var left = (_undoUntil * 1000 - (Time.now().value() * 1000 + System.getTimer() % 1000)).toFloat() / (UNDO * 1000);
             if (left > 0) {
-                dc.setPenWidth(px(0.008));
+                dc.setPenWidth(px(0.010));
                 dc.setColor(scale(colour, 0.6), Graphics.COLOR_TRANSPARENT);
-                dc.drawArc(c, c, _w * (R_IN - 0.022), Graphics.ARC_CLOCKWISE, 90, 90 - 360 * (left > 0.999 ? 0.999 : left));
+                dc.drawArc(c, c, _w * (R_IN - 0.014), Graphics.ARC_CLOCKWISE, 90, 90 - 360 * (left > 0.999 ? 0.999 : left));
             }
             return;
         }
         if (n == 0) {
-            text(dc, c, c - _w * 0.03, _small, "TAP A BUTTON", GRAY);
-            text(dc, c, c + _w * 0.03, _small, "TO LOG IT", GRAY);
-            text(dc, c, c + _w * 0.13, _tiny, "ALL", scale(GRAY, 0.8));
+            text(dc, c, c - _w * 0.045, _tiny, "TAP A BUTTON", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, "TO LOG IT", GRAY);
             return;
         }
         var name = d.names[d.which[n - 1]];
         var colour = TallyButtons.colourOf(name, _buttons);
         var label = (d.day[n - 1] == 0) ? ago(Lib.Fmt.localSeconds(Time.now().value()) - d.sec[n - 1])
                   : (d.day[n - 1] == 1) ? "YESTERDAY" : weekday(d.day[n - 1]);
-        text(dc, c, c - _w * 0.085, _tiny, label, GRAY);
-        text(dc, c, c - _w * 0.018, _big, Lib.Fmt.clock(d.sec[n - 1]), colour);
-        text(dc, c, c + _w * 0.052, Lib.Fmt.fitFont(dc, name.toUpper(), [_small, _tiny] as Array<FontType>, px(0.32)), name.toUpper(), scale(colour, 0.75));
-        text(dc, c, c + _w * 0.135, _tiny, "ALL", scale(GRAY, 0.8));
+        fitted(dc, c, c - _w * 0.115, [_tiny] as Array<FontType>, label, GRAY, chord(r, 0.115 + 0.03));
+        text(dc, c, c - _w * 0.005, _big, Lib.Fmt.clock(d.sec[n - 1]), colour);
+        fitted(dc, c, c + _w * 0.110, [_small, _tiny] as Array<FontType>, name.toUpper(), scale(colour, 0.85), chord(r, 0.110 + 0.035));
+    }
+
+    // The width of a circle of radius r at `offset` (a fraction of the
+    // width) from its centre
+    private function chord(r as Float, offset as Float) as Number {
+        var o = _w * offset;
+        return (o >= r) ? 0 : (2 * Math.sqrt(r * r - o * o)).toNumber();
+    }
+
+    // Text in the first font that fits `room`
+    private function fitted(dc as Dc, x as Numeric, y as Numeric, fonts as Array<FontType>, s as String, c as Number, room as Number) as Void {
+        text(dc, x, y, Lib.Fmt.fitFont(dc, s, fonts, room), s, c);
     }
 
     // "2H 10M AGO", "JUST NOW"
@@ -458,8 +485,8 @@ class TallyView extends WatchUi.View {
         drawDialMarks(dc);
         var name = pickedName();
         if (name == null) {
-            text(dc, c, c - _w * 0.02, _small, "NOTHING", GRAY);
-            text(dc, c, c + _w * 0.03, _small, "LOGGED YET", GRAY);
+            text(dc, c, c - _w * 0.045, _tiny, "NOTHING", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, "LOGGED YET", GRAY);
             return;
         }
         var colour = TallyButtons.colourOf(name, _buttons);
@@ -470,21 +497,22 @@ class TallyView extends WatchUi.View {
             dc.setPenWidth(px(0.010));
             dc.setColor(scale(colour, 0.45), Graphics.COLOR_TRANSPARENT);
             var a0 = 90 - usual[2] * 360.0 / 86400;
-            dc.drawArc(c, c, _w * (RING_OUT + 0.022), Graphics.ARC_CLOCKWISE, a0, a0 - TallyStats.WINDOW * 360.0 / 86400);
+            dc.drawArc(c, c, _w * (RING_OUT + 0.006), Graphics.ARC_CLOCKWISE, a0, a0 - TallyStats.WINDOW * 360.0 / 86400);
         }
         dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < mine[0].size(); i++) {
             var p = dial(r0 + (r1 - r0) * (DAYS - 1 - mine[0][i]) / (DAYS - 1), mine[1][i]);
-            dc.fillCircle(p[0], p[1], _w * 0.011);
+            dc.fillCircle(p[0], p[1], _w * 0.0085);
         }
-        text(dc, c, c - _w * 0.072, Lib.Fmt.fitFont(dc, name.toUpper(), [_small, _tiny] as Array<FontType>, px(0.24)), name.toUpper(), colour);
+        var r = _w * (RING_IN - 0.012);
+        fitted(dc, c, c - _w * 0.110, [_small, _tiny] as Array<FontType>, name.toUpper(), colour, chord(r, 0.110 + 0.03));
         if (usual != null && usual[1] >= 3) {
-            text(dc, c, c - _w * 0.006, _big, Lib.Fmt.clock(usual[0]), colour);
+            text(dc, c, c, _big, Lib.Fmt.clock(usual[0]), colour);
             var within = TallyStats.daysWithin(mine[0], mine[1], usual[2], TallyStats.WINDOW);
-            text(dc, c, c + _w * 0.062, _tiny, within + " OF " + DAYS + " DAYS", GRAY);
+            fitted(dc, c, c + _w * 0.110, [_tiny] as Array<FontType>, within + "/" + DAYS + " DAYS", GRAY, chord(r, 0.110 + 0.03));
         } else {
-            text(dc, c, c - _w * 0.006, _big, mine[0].size().toString(), colour);
-            text(dc, c, c + _w * 0.062, _tiny, "IN " + DAYS + " DAYS", GRAY);
+            text(dc, c, c, _big, mine[0].size().toString(), colour);
+            fitted(dc, c, c + _w * 0.110, [_tiny] as Array<FontType>, "IN " + DAYS + " DAYS", GRAY, chord(r, 0.110 + 0.03));
         }
     }
 
@@ -499,7 +527,7 @@ class TallyView extends WatchUi.View {
         }
         var labels = ["MIDNIGHT", hourLabel(6), "NOON", hourLabel(18)] as Array<String>;
         for (var k = 0; k < 4; k++) {
-            var p = dial(_w * 0.458, k * 6 * 3600);
+            var p = dial(_w * DIAL_LABEL, k * 6 * 3600);
             text(dc, p[0], p[1], _tiny, labels[k], GRAY);
         }
     }
@@ -518,8 +546,8 @@ class TallyView extends WatchUi.View {
         var c = _cx;
         var name = pickedName();
         if (name == null) {
-            text(dc, c, c - _w * 0.02, _small, "NOTHING", GRAY);
-            text(dc, c, c + _w * 0.03, _small, "LOGGED YET", GRAY);
+            text(dc, c, c - _w * 0.045, _tiny, "NOTHING", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, "LOGGED YET", GRAY);
             return;
         }
         var d = _days as TallyDays;
@@ -534,8 +562,8 @@ class TallyView extends WatchUi.View {
         var y0 = _w * STRIP_Y0;
         var y1 = _w * STRIP_Y1;
 
-        text(dc, c, _w * 0.135, Lib.Fmt.fitFont(dc, name.toUpper(), [_mid, _small] as Array<FontType>, px(0.56)), name.toUpper(), colour);
-        text(dc, c, _w * 0.190, _tiny, "AND WHAT CAME BEFORE", GRAY);
+        fitted(dc, c, _w * 0.130, [_mid, _small] as Array<FontType>, name.toUpper(), colour, px(0.56));
+        fitted(dc, c, _w * 0.215, [_tiny] as Array<FontType>, "AND WHAT CAME BEFORE", GRAY, px(0.80));
 
         dc.setPenWidth(1);
         dc.setColor(0x1A1A1A, Graphics.COLOR_TRANSPARENT);
@@ -547,7 +575,7 @@ class TallyView extends WatchUi.View {
             var x = x0 + (x1 - x0) * h / STRIP_HOURS;
             dc.setColor(FAINT, Graphics.COLOR_TRANSPARENT);
             dc.drawLine(x, y0 - _w * 0.02, x, y1 + _w * 0.01);
-            text(dc, x, y1 + _w * 0.045, _tiny, shortHour(start / 3600 + h), GRAY);
+            text(dc, x, y1 + _w * 0.060, _tiny, shortHour(start / 3600 + h), GRAY);
         }
 
         // the others first, small and dim, then the picked name on top
@@ -588,43 +616,53 @@ class TallyView extends WatchUi.View {
         var c = _cx;
         var name = pickedName();
         if (name == null) {
-            text(dc, c, c - _w * 0.02, _small, "NOTHING", GRAY);
-            text(dc, c, c + _w * 0.03, _small, "LOGGED YET", GRAY);
+            text(dc, c, c - _w * 0.045, _tiny, "NOTHING", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, "LOGGED YET", GRAY);
             return;
         }
         var d = _days as TallyDays;
         var colour = TallyButtons.colourOf(name, _buttons);
-        text(dc, c, _w * 0.125, _tiny, "BEFORE", GRAY);
-        text(dc, c, _w * 0.180, Lib.Fmt.fitFont(dc, name.toUpper(), [_mid, _small] as Array<FontType>, px(0.56)), name.toUpper(), colour);
+        text(dc, c, _w * 0.105, _tiny, "BEFORE", GRAY);
+        fitted(dc, c, _w * 0.185, [_mid, _small] as Array<FontType>, name.toUpper(), colour, px(0.60));
         var rows = beforeRows(name);
         if (rows.size() == 0) {
             var mine = d.of(name)[0].size();
-            text(dc, c, c - _w * 0.03, _small, (mine < 3) ? "LOG IT A FEW" : "NOTHING CAME", GRAY);
-            text(dc, c, c + _w * 0.03, _small, (mine < 3) ? "MORE TIMES" : "BEFORE IT OFTEN", GRAY);
+            text(dc, c, c - _w * 0.045, _tiny, (mine < 3) ? "LOG IT A FEW" : "NOTHING CAME", GRAY);
+            text(dc, c, c + _w * 0.045, _tiny, (mine < 3) ? "MORE TIMES" : "BEFORE IT OFTEN", GRAY);
         }
         for (var k = 0; k < rows.size(); k++) {
             var r = rows[k];
-            var y = _w * (0.315 + 0.13 * k);
+            var y = _w * (0.345 + 0.275 * k);
             var label = (r[0] as String).toUpper();
-            var count = "  " + (r[1] as Number) + " OF " + (r[2] as Number);
-            var wl = dc.getTextWidthInPixels(label, _mid);
-            var wc = dc.getTextWidthInPixels(count, _mid);
+            var count = "  " + (r[1] as Number) + "/" + (r[2] as Number);
+            var f = Lib.Fmt.fitFont(dc, label + count, [_mid, _small, _tiny] as Array<FontType>, px(0.80));
+            var wl = dc.getTextWidthInPixels(label, f);
+            var wc = dc.getTextWidthInPixels(count, f);
             var x = c - (wl + wc) / 2;
             var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
             dc.setColor(TallyButtons.colourOf(r[0] as String, _buttons), Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, y, _mid, label, left);
+            dc.drawText(x, y, f, label, left);
             dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x + wl, y, _mid, count, left);
-            var detail = "USUALLY " + Lib.Fmt.countdown(r[3] as Number).toUpper() + " BEFORE";
+            dc.drawText(x + wl, y, f, count, left);
+            text(dc, c, y + _w * 0.080, _tiny, "USUALLY " + gap(r[3] as Number) + " BEFORE", GRAY);
             if ((r[5] as Number) >= 2) {
-                detail += " · " + (r[4] as Number) + " OF " + (r[5] as Number) + " DAYS WITHOUT";
+                fitted(dc, c, y + _w * 0.150, [_tiny] as Array<FontType>, (r[4] as Number) + "/" + (r[5] as Number) + " DAYS WITHOUT IT",
+                       scale(GRAY, 0.8), chord(_w * 0.49, 0.345 + 0.275 * k + 0.150 - 0.5 + 0.03));
             }
-            text(dc, c, y + _w * 0.048, _tiny, detail, GRAY);
         }
-        text(dc, c, _w * 0.875, _tiny, "WITHIN 6 H · LAST " + DAYS + " DAYS", scale(GRAY, 0.8));
     }
 
-    // [name, hits, of, median gap, control hits, controls] for up to four
+    // "45 MIN", "2 H"; the half hours too, past an hour ("2½ H")
+    private function gap(seconds as Number) as String {
+        var m = seconds / 60;
+        if (m < 60) {
+            return m + " MIN";
+        }
+        var halves = (m + 15) / 30;
+        return (halves / 2) + ((halves % 2 == 1) ? "½" : "") + " H";
+    }
+
+    // [name, hits, of, median gap, control hits, controls] for up to two
     // names that came before `name` at least twice, the clearest first
     private function beforeRows(name as String) as Array<Array> {
         var d = _days as TallyDays;
@@ -658,7 +696,7 @@ class TallyView extends WatchUi.View {
             rows = rows.slice(0, k).addAll([[other, r[0], r[1], r[2], r[3], r[4]]]).addAll(rows.slice(k, null));
             scores = scores.slice(0, k).addAll([score]).addAll(scores.slice(k, null));
         }
-        return (rows.size() > 4) ? rows.slice(0, 4) : rows;
+        return (rows.size() > 2) ? rows.slice(0, 2) : rows;
     }
 
     // The three names seen most often in the strip besides the picked one
@@ -676,19 +714,24 @@ class TallyView extends WatchUi.View {
                 top.add(best);
             }
         }
-        var dotGap = _w * 0.020;
+        var dotGap = _w * 0.026;
         var space = _w * 0.040;
         var total = 0;
         for (var k = 0; k < top.size(); k++) {
             total += dotGap + dc.getTextWidthInPixels(d.names[top[k]].toUpper(), _tiny) + ((k > 0) ? space : 0);
         }
+        while (total > _w * 0.62 && top.size() > 1) {
+            var last = d.names[top[top.size() - 1]].toUpper();
+            total -= dotGap + dc.getTextWidthInPixels(last, _tiny) + space;
+            top = top.slice(0, top.size() - 1);
+        }
         var x = _cx - total / 2;
-        var y = _w * 0.845;
+        var y = _w * 0.825;
         for (var k = 0; k < top.size(); k++) {
             var label = d.names[top[k]].toUpper();
             var col = TallyButtons.colourOf(d.names[top[k]], _buttons);
             dc.setColor(col, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(x + _w * 0.007, y, _w * 0.007);
+            dc.fillCircle(x + _w * 0.008, y, _w * 0.009);
             dc.setColor(scale(col, 0.85), Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + dotGap, y, _tiny, label, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
             x += dotGap + dc.getTextWidthInPixels(label, _tiny) + space;
@@ -732,6 +775,14 @@ class TallyDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // The watch offers a touch to the behaviours first (a tap is "select",
+    // like START) and only delivers it raw as onTap when they decline. So
+    // onSelect declines, onTap acts on where the tap landed, and onKey on
+    // the START button. (The simulator calls onTap first, which hid this.)
+    function onSelect() as Boolean {
+        return false;
+    }
+
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
         if (_view.page != PAGE_LOG) {
             _view.nextName();
@@ -744,7 +795,11 @@ class TallyDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
-    function onSelect() as Boolean {
+    function onKey(evt as WatchUi.KeyEvent) as Boolean {
+        var key = evt.getKey();
+        if (key != WatchUi.KEY_ENTER && key != WatchUi.KEY_START) {
+            return false;
+        }
         if (_view.page != PAGE_LOG) {
             _view.nextName();
         } else if (_view.undoing()) {

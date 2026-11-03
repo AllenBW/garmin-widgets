@@ -14,6 +14,19 @@ class TallyDays {
         var today = TallyStats.dayKey(now);
         var log = TallyLog.since(now - days * 86400 - 86400);
         var times = log[0];
+        // in time order: a time changed in History can move an entry
+        for (var i = 1; i < times.size(); i++) {
+            var k = i;
+            while (k > 0 && times[k - 1] > times[k]) {
+                var t = times[k];
+                times[k] = times[k - 1];
+                times[k - 1] = t;
+                var w = log[1][k];
+                log[1][k] = log[1][k - 1];
+                log[1][k - 1] = w;
+                k--;
+            }
+        }
         for (var i = 0; i < times.size(); i++) {
             var ago = today - TallyStats.dayKey(times[i]);
             if (ago >= 0 && ago < days) {

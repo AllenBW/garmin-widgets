@@ -27,8 +27,9 @@ nearby (or Wi-Fi).
 ## Tabs
 
 **Log**: a row per entry. When (date and time), Day, Time, Button, Unix
-(seconds), Watch (which watch sent it), Note (empty: yours to fill in on
-the phone).
+(seconds), Watch (which watch sent it), Entry (its number on that watch),
+Note (empty: yours to fill in on the phone). An entry changed or deleted
+in the watch's History is changed or deleted here too (the Note stays).
 
 **Summary**: rebuilt after every batch from the last 28 days, for
 whatever buttons the log holds (or Tally → Update summary in the

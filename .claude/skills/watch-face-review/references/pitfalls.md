@@ -152,3 +152,15 @@ this list when a new one bites.
   A jungle can't swap `project.manifest` ("Attempting to reset project
   property"), and when the sample build fails, `sim-shot.sh` captures
   the last good one without a word: check the build first (2026-11-03).
+
+- **On the watch, a tap goes to `onSelect` first** (a tap is the select
+  behaviour, like START); only when that returns false does it arrive as
+  `onTap`. The simulator calls `onTap` first, so an app that opens a menu
+  in `onSelect` works there and on the watch turns every tap into the
+  menu. Decline in `onSelect`, act in `onTap`, and take the START button
+  in `onKey` (Sauna and Tally do).
+- **Text smaller than the watch's own is unreadable on the wrist.** The
+  fēnix 8's FONT_XTINY is 37 px tall on 454 px (`Graphics.getFontHeight`);
+  a vector font at 22 px looked fine in the simulator's enlarged window
+  and was "almost unusably small" on the watch. Measure against
+  getFontHeight, not by eye in the simulator (2026-11-03).

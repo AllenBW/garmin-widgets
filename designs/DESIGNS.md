@@ -1225,10 +1225,22 @@ then about 6 mm across at its inner edge and 12 mm at its outer on the
 4 mm. A tap logs it with a buzz; the wedge brightens
 and the centre says LOGGED with a shrinking ring for the 6-second undo
 (a tap on the centre takes it back). Otherwise the centre shows the
-newest entry (its time large in its colour) and opens **All**: every
-button whatever the hour, the names typed with Other in the last two
-weeks, and **Other…**, a name typed on the watch's keyboard for
-something no button covers. START opens All too.
+newest entry (how long ago, its time large in its colour, its name) and
+opens **All**: every button whatever the hour, every other name with
+entries in the last 90 days, **Other…** (a name typed on the watch's
+keyboard, for something no button covers), **Add a past entry** (a name,
+then the day, hour and minute: one missed earlier) and **History**.
+START opens All too.
+
+**History:** the last 100 entries, newest time first. Choose one to
+change its button or its time, or to delete it (asked twice). A change
+to an entry the sheet already has waits on the watch and goes to the
+sheet as an edit, which rewrites or deletes that row.
+
+**Text:** nothing smaller than the watch's own smallest font (FONT_XTINY,
+37 px tall on the 454 px screens), in Roboto Condensed so the words fit.
+The first build's 22 px was unreadable on the wrist; the layouts carry
+fewer words instead.
 
 **The pattern pages** (up and down; a tap or START moves to the next
 name, and the choice is remembered):
@@ -1242,7 +1254,7 @@ name, and the choice is remembered):
   usual time, every name in its colour (dimmer and smaller than the one
   picked), with the three most frequent others in a legend: what came
   before.
-- **Before:** up to four other names that came within six hours before
+- **Before:** up to two other names that came within six hours before
   the picked one at least twice: "MILK 9 OF 11", then "usually 45m
   before · 2 of 3 days without", the same check at its usual time on the
   days with entries but without it. That baseline keeps a daily routine
