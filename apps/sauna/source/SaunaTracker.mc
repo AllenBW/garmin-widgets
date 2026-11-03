@@ -111,7 +111,8 @@ class SaunaTracker {
 
     var plan as SaunaPlan = new SaunaPlan(KIND_SAUNA);
     var guided as Boolean = true;      // false: a free session, in and out as you like, no targets
-    var auto as Boolean = true;
+    var autoIn as Boolean = true;      // the thermometer notices going in
+    var autoOut as Boolean = true;     // and going out, each its own setting
     var sensitivity as Float = 1.0;    // scales the plan's door rates: under 1 is more eager
     var hotTemp as Float = 50.0;       // 0 turns the heat guard off
     var baselineDrop as Number? = null;   // this kind's usual one-minute fall from earlier visits
@@ -208,15 +209,15 @@ class SaunaTracker {
 
         // the door
         var event = EVENT_NONE;
-        if (auto && now - _lastChange >= MIN_PHASE && now - _lastManual >= MANUAL_HOLD) {
+        if ((autoIn || autoOut) && now - _lastChange >= MIN_PHASE && now - _lastManual >= MANUAL_HOLD) {
             if (phase != PHASE_SAUNA) {
-                var rise = rise();
+                var rise = autoIn ? rise() : null;
                 if (rise != null && rise >= plan.enterRate * sensitivity - 0.001) {
                     enter();
                     event = EVENT_ENTER;
                 }
             } else {
-                var fall = fall();
+                var fall = autoOut ? fall() : null;
                 if (fall != null && fall >= plan.leaveRate * sensitivity - 0.001) {
                     leave();
                     event = EVENT_LEAVE;
@@ -425,7 +426,7 @@ class SaunaTracker {
             if (ps < 90 && guided) {
                 return "Drink, shower, then go in";
             }
-            return auto ? "Walk in when ready" : "LAP when you go in";
+            return autoIn ? "Walk in when ready" : "LAP when you go in";
         }
         if (phase == PHASE_BREAK && coachStand && ps < STAND_SHOWN) {
             return "Stand up slowly";
