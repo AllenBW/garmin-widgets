@@ -34,10 +34,12 @@ done
 # wait for the switch rather than failing on the first listing.
 wait_for_mtp() {
     local n=0 gone=0
-    until ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idProduct" = 20920' || [ "$n" -ge 20 ]; do
+    # grep without -q: under pipefail, -q's early exit kills ioreg with
+    # SIGPIPE and fails the test once the USB tree is long (a dock)
+    until ioreg -p IOUSB -l -w0 2>/dev/null | grep '"idProduct" = 20920' >/dev/null || [ "$n" -ge 20 ]; do
         # the watch drops off the bus for a few seconds while it switches
         # modes, so only give up when it has been gone for a while
-        if ioreg -p IOUSB -l -w0 2>/dev/null | grep -q '"idVendor" = 2334'; then
+        if ioreg -p IOUSB -l -w0 2>/dev/null | grep '"idVendor" = 2334' >/dev/null; then
             gone=0
         else
             gone=$((gone + 1))
