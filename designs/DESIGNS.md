@@ -1276,6 +1276,46 @@ reminders. A widget can't publish a complication.
 
 ---
 
+## Looks: high visibility, low light and a persona a day (every face with settings)
+
+**Why** (owner, 2026-11-03): the faces have many settings and they are a
+pain to reach; what's wanted is one easy way to a look that reads well,
+in low light too, or a shuffle of looks chosen for legibility, new each
+day so the face stays fresh.
+
+**How:** `Lib.Look` keeps which look is on: YOURS (the settings as set),
+BRIGHT (high visibility), LOW (low light) or DAILY (one of the face's
+personas, the next each day, so a set of seven comes round once a week).
+Press and hold the time to step through them in that order (the only
+in-face gesture: a tap reaches a face only in the editor); the date shows
+the look's name for 2.5 s. The phone app's settings gain a Look list at
+the top with the same four; whichever was changed last wins (a change to
+another setting leaves a held look alone). The watch's face editor has no
+place for it. On Vessel the digits are the hold (each glass's number
+still opens its reading), and in the editor they still pick the slot.
+
+- **High visibility:** fluorescent orange (`#FF6A13`, chosen over green
+  and yellow-green, which sat too close to white) with pure white text,
+  icons at full. Vessel's readings, date and foot about 40 % larger;
+  Inscription's legend 26 % larger (it falls back to its short words);
+  Overlap's first reading alone and the date about 35 % larger, its
+  corner being tight; Strata's layers dimmed to 55 % and the time orange
+  (its clearings are generated for fixed sizes, so nothing grows); Rings'
+  rings fluorescent; Field's ring orange and its text white.
+- **Low light:** the same sizes in warm cream (`#F0D2A8`) and a soft
+  orange (`#FF9A3C`). Dimming everything was tried first and read muddy.
+- **Personas:** bold typefaces only (the thin ones are hard at a
+  glance). Vessel, Inscription and Overlap share Gold, Ember, Orchard,
+  Dusk and the fluorescent Blaze, Volt and Flare (`Lib.Config.PERSONAS`);
+  Strata has Moss, Clay, Sand, Ochre, Lichen, Ember (the time in the
+  accent) and the three fluorescents; Rings its three sets and three
+  fluorescent ones; Field six accents.
+- Standby is unchanged in every look, so the lit-pixel budget holds.
+  `designs/preview_*.py` take a look's colours (`data=0x…`, `quiet=`,
+  `bright=`) and sizes (`L_<name>=` in thousandths).
+
+---
+
 ## Shared building blocks
 
 - **`lib/` barrel** (`Lib`, a Monkey C library shared by every app; each
