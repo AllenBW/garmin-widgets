@@ -203,7 +203,8 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
     Test.assertMessage(dist != null && dist == Complications.COMPLICATION_TYPE_STEPS, "the footprints open steps");
     var date = view.targetAt(w / 2, (h * 0.252).toNumber());
     Test.assertMessage(date != null && date == Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, "the date opens the calendar");
-    Test.assertMessage(view.targetAt(w / 2, (h * 0.47).toNumber()) == null, "the time is not a target");
+    Test.assertMessage(view.targetAt(w / 2, (h * 0.47).toNumber()) == null, "the time opens nothing");
+    Test.assertMessage(view.timeAt(w / 2, (h * 0.47).toNumber()), "a hold on the time: the looks");
 
     // The sun line with alarms set, both ways round
     view.drawSunLine(dc, w / 2, (h * 0.15).toNumber(), w, true, "07:12", 0xE9B04F, 0xE6DCCB, 2);
@@ -234,6 +235,18 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
         Application.Properties.setValue("Slot" + (n + 1), Readings.DEFAULTS[n]);
     }
     Application.Properties.setValue("TimeStyle", 0);
+
+    // Each look, the hold stepping from one to the next, the layers redrawn in its colours
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Test.assertEqualMessage(Lib.Look.next(), (m + 1) % Lib.Look.MODES, "the next look");
+        view.reloadSettings();
+        for (var f = 0; f < 7; f++) {
+            view.onUpdate(dc);
+        }
+        Test.assertMessage(view.fieldReady(), "the layers in look " + m);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
     view.reloadSettings();
 
     view.onEnterSleep();

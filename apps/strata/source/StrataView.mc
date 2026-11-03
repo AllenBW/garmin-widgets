@@ -31,6 +31,11 @@ import Toybox.WatchUi;
 // filled or in outline (its colour goes to whichever), and what each of
 // the four readings is.
 //
+// Holding the time steps through the looks (Lib.Look): those settings,
+// high visibility (the layers dimmed, the time fluorescent orange, the
+// text white), low light (soil, ember and sandstone), and the day's
+// persona; the date shows the look's name for a moment.
+//
 // Always-on: one layer in eight, dim, the time in outline, the sun line,
 // the date and the moon's lit limb and terminator, shifted each minute
 // (Lib.Aod).
@@ -73,6 +78,23 @@ class StrataView extends WatchUi.WatchFace {
     private const PEBBLE_CM = 40234;         // a quarter mile per stone
     private const PEBBLE_LEAST = 4;          // and none until the first mile
     private const KEYLINE = 3;               // px of black round the time
+
+    // The looks (Lib.Look): [strata, every fourth layer, the time's colour,
+    // 1 for the layers dimmed and the text white]
+    private const BRIGHT = [Palette.SLATE, Palette.BLAZE, Palette.TIME_ACCENT, 1] as Array<Number>;
+    private const LOW = [Palette.SOIL, Palette.EMBER, Palette.TIME_SANDSTONE, 0] as Array<Number>;
+    // The personas, the next each day: Moss, Clay, Sand, then the time in
+    // the accent's colour (Ochre, Lichen, Ember), then the fluorescents
+    private const PERSONAS = [
+        [Palette.MOSS, Palette.LICHEN, Palette.TIME_BONE, 0], [Palette.CLAY, Palette.OCHRE, Palette.TIME_SANDSTONE, 0],
+        [Palette.SAND, Palette.ACCENT_TONE, Palette.TIME_ACCENT, 0], [Palette.SOIL, Palette.OCHRE, Palette.TIME_ACCENT, 0],
+        [Palette.SLATE, Palette.LICHEN, Palette.TIME_ACCENT, 0], [Palette.CLAY, Palette.EMBER, Palette.TIME_ACCENT, 0],
+        [Palette.SLATE, Palette.BLAZE, Palette.TIME_ACCENT, 1], [Palette.MOSS, Palette.VOLT, Palette.TIME_ACCENT, 1],
+        [Palette.SOIL, Palette.FLARE, Palette.TIME_ACCENT, 1]
+    ] as Array<Array<Number>>;
+    private const NAMES = ["MOSS", "CLAY", "SAND", "OCHRE", "LICHEN", "EMBER", "BLAZE", "VOLT", "FLARE"] as Array<String>;
+    private const DIMMED = 0.55;             // the layers under fluorescent text
+    private const TIME = -1;                 // the time's press target: the looks
     private const EM_HEIGHT = 1.17;          // a vector font's height, in ems
 
     // Settings (resources/settings)
@@ -84,6 +106,9 @@ class StrataView extends WatchUi.WatchFace {
     private var _dayNight as Boolean = true;
     private var _stones as Boolean = true;
     private var _slots as Array<Number> = Readings.DEFAULTS;   // the kind in each reading slot
+    private var _look as Number = Lib.Look.YOURS;
+    private var _earth as Float = 1.0;       // the layers' brightness
+    private var _cream as Number = CREAM;    // the date, the sun line and the readings
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -151,7 +176,35 @@ class StrataView extends WatchUi.WatchFace {
         _stones = (stones instanceof Boolean) ? stones : true;
         _timeColorValue = null;
         readEditor();
+        _look = Lib.Look.mode();
+        var look = (_look == Lib.Look.BRIGHT) ? BRIGHT : ((_look == Lib.Look.LOW) ? LOW : null);
+        if (_look == Lib.Look.DAILY) {
+            look = PERSONAS[Lib.Look.day(PERSONAS.size())];
+        }
+        _earth = 1.0;
+        _cream = CREAM;
+        if (look != null) {
+            _strata = look[0];
+            _accent = look[1];
+            _timeColor = look[2];
+            _timeColorValue = null;
+            if (look[3] == 1) {
+                _earth = DIMMED;
+                _cream = Lib.Look.WHITE;
+            }
+        }
         _minute = -1;
+    }
+
+    // Whether (x, y) is on the time, where a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        for (var i = 0; i < _targets.size(); i++) {
+            var t = _targets[i];
+            if (t[0] == TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // The fēnix 8's watch face editor (resources/configs/watchface.xml), over
@@ -311,7 +364,7 @@ class StrataView extends WatchUi.WatchFace {
     function targetAt(x as Number, y as Number) as Complications.Type? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
-            if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+            if (t[0] != TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
                 return t[0] as Complications.Type;
             }
         }
@@ -343,7 +396,7 @@ class StrataView extends WatchUi.WatchFace {
         var targets = [] as Array<Array<Number>>;
         var day = isDay();
         var night = !day && _dayNight;
-        var earth = Palette.strata(_strata, night);
+        var earth = Palette.scale(Palette.strata(_strata, night), _earth);
         var fieldAccent = Palette.layerAccent(_accent, _celsius, earth, night);
         var timeColor = (_timeColorValue != null) ? _timeColorValue as Number : Palette.time(_timeColor, _accent, _celsius, earth);
 
@@ -372,12 +425,13 @@ class StrataView extends WatchUi.WatchFace {
         } else {
             drawCutOut(dc, cx, timeY, _timeFont, _time, timeColor, KEYLINE);
         }
+        targets.add([TIME, cx, timeY, (w * 0.38).toNumber(), (h * 0.1).toNumber()]);
 
         // The next sun event, and any alarm
         var sunY = (h * SUN_Y).toNumber();
         var sun = _sun;
         if (sun != null) {
-            drawSunLine(dc, cx, sunY, w, sun[0], Lib.Fmt.clock24(sun[1]), sun[0] ? SUNRISE : SUNSET, CREAM, _alarms);
+            drawSunLine(dc, cx, sunY, w, sun[0], Lib.Fmt.clock24(sun[1]), sun[0] ? SUNRISE : SUNSET, _cream, _alarms);
             var type = sun[0] ? Complications.COMPLICATION_TYPE_SUNRISE : Complications.COMPLICATION_TYPE_SUNSET;
             targets.add([type as Number, cx, sunY, (w * 0.15).toNumber(), (h * 0.04).toNumber()]);
         } else {
@@ -387,8 +441,8 @@ class StrataView extends WatchUi.WatchFace {
         // The date
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var dateY = (h * DATE_Y).toNumber();
-        dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, dateY, _dateFont, _date, center);
+        dc.setColor(_cream, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, dateY, _dateFont, Lib.Look.shown() ? Lib.Look.title(_look, NAMES) : _date, center);
         targets.add([Complications.COMPLICATION_TYPE_CALENDAR_EVENTS as Number, cx, dateY, (w * 0.26).toNumber(), (h * 0.045).toNumber()]);
 
         // The four readings the settings chose: a cue over each number
@@ -747,7 +801,7 @@ class StrataView extends WatchUi.WatchFace {
     // its right, on one baseline
     private function drawReading(dc as Dc, x as Number, baseline as Number, w as Number, value as String, unit as String) as Void {
         var half = dc.getTextWidthInPixels(value, _valueFont) / 2;
-        dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cream, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x - half, baseline - Graphics.getFontAscent(_valueFont), _valueFont, value, Graphics.TEXT_JUSTIFY_LEFT);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x + half + (w * 0.008).toNumber(), baseline - Graphics.getFontAscent(_unitFont), _unitFont, unit, Graphics.TEXT_JUSTIFY_LEFT);

@@ -5,7 +5,8 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Watch faces get one gesture: press and hold. Holding on the sun line, the
-// date or a reading opens the native widget for it. In the watch face
+// date or a reading opens the native widget for it, and holding on the
+// time steps to the next look (Lib.Look). In the watch face
 // editor, a tap on a reading picks its slot, and each edit redraws.
 class StrataDelegate extends WatchUi.WatchFaceDelegate {
 
@@ -17,10 +18,16 @@ class StrataDelegate extends WatchUi.WatchFaceDelegate {
     }
 
     function onPress(clickEvent as ClickEvent) as Boolean {
+        var xy = clickEvent.getCoordinates();
+        if (_view.timeAt(xy[0], xy[1])) {
+            Lib.Look.next();
+            _view.reloadSettings();
+            WatchUi.requestUpdate();
+            return true;
+        }
         if (!(Toybox has :Complications)) {
             return false;
         }
-        var xy = clickEvent.getCoordinates();
         var type = _view.targetAt(xy[0], xy[1]);
         if (type == null) {
             return false;
