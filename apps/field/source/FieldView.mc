@@ -20,6 +20,11 @@ import Toybox.Weather;
 //            disturb), date, time, three slots (settings), footer with the
 //            next sun event plus the moon at night (or weather and
 //            notifications, or off).
+// Holding the time steps through the looks (Lib.Look): the settings, high
+// visibility (the ring fluorescent orange, the time and text white and
+// brighter), low light (ember and cream), and the day's persona (an accent,
+// the time in it for the fluorescent ones); the date shows the look's name
+// for a moment.
 // Always-on: hollow time, dim date, the next sun event, a 2 px hairline ring,
 //            everything shifted a few pixels each minute. Well under 10 % of
 //            pixels lit.
@@ -41,6 +46,12 @@ class FieldView extends WatchUi.WatchFace {
     private const ORANGE = 0xFF7A3D;
     private const CYAN = 0x3EC6E0;
     private const RED = 0xFF4D4D;
+    // The personas, the next each day: [the accent, the time's colour]
+    private const PERSONAS = [
+        [AMBER, WHITE], [CYAN, WHITE], [0x46D18A, WHITE], [Lib.Look.BLAZE, Lib.Look.BLAZE],
+        [Lib.Look.VOLT, Lib.Look.VOLT], [Lib.Look.FLARE, Lib.Look.FLARE]
+    ] as Array<Array<Number>>;
+    private const NAMES = ["AMBER", "CYAN", "GREEN", "BLAZE", "VOLT", "FLARE"] as Array<String>;
 
     // What the bezel ring shows (resources/settings/properties.xml "Ring")
     private const RING_STEPS = 0;
@@ -64,6 +75,11 @@ class FieldView extends WatchUi.WatchFace {
 
     // Settings
     private var _accent as Number = AMBER;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _time as Number = WHITE;     // the time
+    private var _text as Number = GRAY;      // the date and the footer
+    private var _label as Number = DIM;      // the slots' labels
+    private var _timeBox as Array<Number> = [] as Array<Number>;   // [x, y, half width, half height], awake
     private var _ring as Number = RING_DAYLIGHT;
     private var _footer as Number = FOOTER_SUN;
     private var _signals as Boolean = true;
@@ -103,7 +119,32 @@ class FieldView extends WatchUi.WatchFace {
             numberProperty("Slot2", Slots.STEPS),
             numberProperty("Slot3", Slots.BODY_BATTERY)
         ];
+        _look = Lib.Look.mode();
+        _time = WHITE;
+        _text = GRAY;
+        _label = DIM;
+        if (_look == Lib.Look.BRIGHT) {
+            _accent = Lib.Look.BLAZE;
+            _time = Lib.Look.WHITE;
+            _text = Lib.Look.WHITE;
+            _label = GRAY;
+        } else if (_look == Lib.Look.LOW) {
+            _accent = Lib.Look.GLOW;
+            _time = Lib.Look.CREAM;
+            _text = Lib.Look.CREAM;
+            _label = 0x8A7A62;
+        } else if (_look == Lib.Look.DAILY) {
+            var p = PERSONAS[Lib.Look.day(PERSONAS.size())];
+            _accent = p[0];
+            _time = p[1];
+        }
         _signalMinute = -1;
+    }
+
+    // Whether (x, y) is on the time, where a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        var b = _timeBox;
+        return b.size() == 4 && (x - b[0]).abs() <= b[2] && (y - b[1]).abs() <= b[3];
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -112,6 +153,7 @@ class FieldView extends WatchUi.WatchFace {
         }
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+        _timeBox = [] as Array<Number>;
 
         if (!_awake && _burnIn) {
             drawAlwaysOn(dc);
@@ -171,12 +213,13 @@ class FieldView extends WatchUi.WatchFace {
         // Date (TINY: 47 px box, sits above the time box)
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, date, center);
+        dc.setColor(_text, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Lib.Look.title(_look, NAMES) : date, center);
 
         // Time (NUMBER_MEDIUM: 153 px box, ink about 105 px, 264 px wide)
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_time, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.452).toNumber(), Graphics.FONT_NUMBER_MEDIUM, timeString(), center);
+        _timeBox = [cx, (h * 0.452).toNumber(), (w * 0.3).toNumber(), (h * 0.11).toNumber()];
 
         // Three slots, 118 px apart at 454: condensed label over a SMALL value
         var xs = [w * 0.24, w * 0.5, w * 0.76];
@@ -186,7 +229,7 @@ class FieldView extends WatchUi.WatchFace {
         for (var i = 0; i < 3; i++) {
             var kind = _slots[i];
             var x = xs[i].toNumber();
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_label, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, labelY, _labelFont, Slots.label(kind), center);
             dc.setColor(Slots.color(kind), Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, valueY, Graphics.FONT_SMALL, Slots.value(kind), center);
@@ -201,14 +244,14 @@ class FieldView extends WatchUi.WatchFace {
         if (_footer == FOOTER_OFF) {
             // nothing
         } else if (_footer == FOOTER_SUN) {
-            drawSunFooter(dc, cx, footerY, w, GRAY, AMBER, ORANGE);
+            drawSunFooter(dc, cx, footerY, w, _text, AMBER, ORANGE);
         } else if (_footer == FOOTER_WEATHER) {
             var text = footerText(true);
             if (dc.getTextWidthInPixels(text, Graphics.FONT_XTINY) > maxWidth) {
                 text = footerText(false);
             }
             if (text.length() > 0) {
-                dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(_text, Graphics.COLOR_TRANSPARENT);
                 dc.drawText(cx, footerY, Graphics.FONT_XTINY, text, center);
             }
         }
