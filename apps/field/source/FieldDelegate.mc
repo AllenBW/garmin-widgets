@@ -4,7 +4,8 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Input for the Field face. Watch faces only get one gesture: a press and
-// hold (onPress). Holding on a slot opens the native widget for its data.
+// hold (onPress). Holding on a slot opens the native widget for its data,
+// and holding on the time steps to the next look (Lib.Look).
 class FieldDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as FieldView;
@@ -15,10 +16,16 @@ class FieldDelegate extends WatchUi.WatchFaceDelegate {
     }
 
     function onPress(clickEvent as ClickEvent) as Boolean {
+        var xy = clickEvent.getCoordinates();
+        if (_view.timeAt(xy[0], xy[1])) {
+            Lib.Look.next();
+            _view.reloadSettings();
+            WatchUi.requestUpdate();
+            return true;
+        }
         if (!(Toybox has :Complications)) {
             return false;
         }
-        var xy = clickEvent.getCoordinates();
         var kind = _view.slotAt(xy[0], xy[1]);
         if (kind == null) {
             return false;

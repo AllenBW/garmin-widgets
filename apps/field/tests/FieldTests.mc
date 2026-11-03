@@ -59,6 +59,17 @@ function testFieldDrawsEveryMode(logger as Logger) as Boolean {
     var left = view.slotAt((w * 0.24).toNumber(), (h * 0.695).toNumber());
     Test.assertMessage(left != null && left == Slots.HEART_RATE, "left slot");
     Test.assertMessage(view.slotAt(w / 2, h / 2) == null, "the time is not a slot");
+    Test.assertMessage(view.timeAt(w / 2, (h * 0.45).toNumber()), "a hold on the time: the looks");
+
+    // Each look, the hold stepping from one to the next
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Test.assertEqualMessage(Lib.Look.next(), (m + 1) % Lib.Look.MODES, "the next look");
+        view.reloadSettings();
+        view.onUpdate(dc);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    view.reloadSettings();
     Test.assertMessage(view.slotAt(w / 2, (h * 0.9).toNumber()) == null, "the footer is not a slot");
 
     var stats = System.getSystemStats();

@@ -1,4 +1,6 @@
 <properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Lib.Look: 0 your settings below, 1 high visibility, 2 low light, 3 a new look each day -->
+    <property id="Look" type="number">0</property>
     <property id="AccentColor" type="number">0xFFB020</property>
     <!-- Ring: 0 step goal progress, 1 battery, 2 off, 3 daylight (24 h dial) -->
     <property id="Ring" type="number">3</property>
