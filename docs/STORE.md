@@ -35,8 +35,8 @@ and screen image (454 × 454, the simulator's display cut round) are in
 
 | App | Store page | State |
 |---|---|---|
-| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night, in review |
-| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night, in review |
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
+| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), in review |
 | Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
 | Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31, in review |
@@ -47,11 +47,14 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
 | Tally | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); going public needs a new app id |
-| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
-| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
-| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text), in review |
+| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
+| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
+| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
 
-Screenshots: the store takes at most five. Sauna and Steam has the demo
+Screenshots: the store takes at most five. Since 1.0.2 each face with
+looks (Vessel, Inscription, Overlap, Strata, Rings) also shows itself in
+high visibility (`<face>-high-visibility.jpg`), taken from a throwaway
+copy with the look fixed. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
 recovery chart, the visits), Rings its three colour sets, Strata Soil, Moss
 and Clay. They were taken from throwaway copies of each app built in the
@@ -110,41 +113,59 @@ heart rate, the outside temperature (in the watch's unit), distance walked
 today and any alarms set. No settings.
 
 **Strata** (Watch face). The day's readings set into a field of soil
-layers that part round each one like water round a stone. The time is cut
-cleanly out of the layers, a stone turns up for every quarter mile walked,
-and the moon sits at the foot. Choose the colours and what each of the
-four readings shows (temperature, rain, heart rate, distance, Body
-Battery, elevation, humidity, wind, battery or steps).
+layers that part round each one like water round a stone. The time is
+cut cleanly out of the layers, a stone turns up for every quarter mile
+walked, and the moon sits at the foot. Choose the colours and what each
+of the four readings shows (temperature, rain, heart rate, distance,
+Body Battery, elevation, humidity, wind, battery or steps). Press and
+hold the time to switch looks: high visibility (the layers dimmed, the
+time fluorescent orange, the text white), low light (soil, ember and
+sandstone) or a new look each day. The Look setting in the phone app
+picks one too.
 
-**Rings** (Watch face). Three goal rings open to the right (steps, floors
-and Body Battery) with their numbers written along the curves, and the
-day's readings down the right side. Three colour sets.
+**Rings** (Watch face). Three goal rings open to the right (steps,
+floors and Body Battery) with their numbers written along the curves,
+and the day's readings down the right side. Three colour sets. Press and
+hold the time to switch looks: high visibility (fluorescent rings, the
+time orange, the text white), low light (ember and cream) or a new
+colour set each day. The Look setting in the phone app picks one too.
 
 **Vessel** (Watch face). The time as two glasses that fill to your
 readings: the hours fill to the temperature (between today's low and
 high) and the minutes to your heart rate, each number sitting on its
-waterline, and the next sunrise or sunset at the foot. Pick any reading for each glass and the foot
-(complications from other apps too), any accent colour, a data colour and
-one of three typefaces, in the watch's own face editor or the phone app.
-Press and hold a reading to open it. A dim always-on mode keeps the
-waterlines, and a red bedside clock takes over during your sleep hours.
+waterline, and the next sunrise or sunset at the foot. Pick any reading
+for each glass and the foot (complications from other apps too), any
+accent colour, a data colour and one of three typefaces, in the watch's
+own face editor or the phone app. Press and hold a reading to open it. A
+dim always-on mode keeps the waterlines, and a red bedside clock takes
+over during your sleep hours. Press and hold the time to switch looks:
+high visibility (white and fluorescent orange, the readings larger), low
+light (the same in warm cream) or a new look each day. The Look setting
+in the phone app picks one too.
 
 **Inscription** (Watch face). A coin: the time struck large in the
 middle, the date and five readings set round the rim in capitals inside
 a beaded edge: the weather, the barometer with its trend, heart rate,
-steps and the next sunrise or sunset. Choose each reading (complications from other apps
-too), any accent colour, a data colour and the typeface (a serif by
-default), in the watch's own face editor or the phone app. Press and hold
-a reading to open it. A dim always-on mode and a red bedside clock during
-your sleep hours.
+steps and the next sunrise or sunset. Choose each reading (complications
+from other apps too), any accent colour, a data colour and the typeface
+(a serif by default), in the watch's own face editor or the phone app.
+Press and hold a reading to open it. A dim always-on mode and a red
+bedside clock during your sleep hours. Press and hold the time to switch
+looks: high visibility (white and fluorescent orange, the legend
+larger), low light (the same in warm cream) or a new look each day. The
+Look setting in the phone app picks one too.
 
-**Overlap** (Watch face). A poster for your wrist: the hours enormous and
-quiet, cropped by the edge of the screen and tinted by your accent, with
-the minutes bright in front of them, the date and two readings tucked
-below (the next sunrise or sunset and the temperature). Choose the readings (complications from other apps too), any
-accent colour, a data colour and one of three typefaces, in the watch's
-own face editor or the phone app. A dim always-on mode and a red bedside
-clock during your sleep hours.
+**Overlap** (Watch face). A poster for your wrist: the hours enormous
+and quiet, cropped by the edge of the screen and tinted by your accent,
+with the minutes bright in front of them, the date and two readings
+tucked below (the next sunrise or sunset and the temperature). Choose
+the readings (complications from other apps too), any accent colour, a
+data colour and one of three typefaces, in the watch's own face editor
+or the phone app. A dim always-on mode and a red bedside clock during
+your sleep hours. Press and hold the time to switch looks: high
+visibility (white and fluorescent orange, the first reading alone and
+larger), low light (the same in warm cream) or a new look each day. The
+Look setting in the phone app picks one too.
 
 **Battery Planner** (Widget). Tells you when to charge. It records the
 battery every half hour, learns your drain over the last week and projects
