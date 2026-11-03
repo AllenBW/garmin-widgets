@@ -49,7 +49,7 @@ function testRingsDrawsEveryState(logger as Logger) as Boolean {
     view.onUpdate(dc);
 
     // Every theme draws
-    for (var theme = 0; theme < 3; theme++) {
+    for (var theme = 0; theme <= Themes.LOW; theme++) {
         Application.Properties.setValue("Theme", theme);
         view.reloadSettings();
         view.onUpdate(dc);
@@ -76,7 +76,18 @@ function testRingsDrawsEveryState(logger as Logger) as Boolean {
     Test.assertMessage(hr != null && hr == Complications.COMPLICATION_TYPE_HEART_RATE, "the heart rate row");
     var temp = view.targetAt((w * 0.74).toNumber(), (h * 0.725).toNumber());
     Test.assertMessage(temp != null && temp == Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE, "the temperature row");
-    Test.assertMessage(view.targetAt((w * 0.62).toNumber(), (h * 0.5).toNumber()) == null, "the time is not a target");
+    Test.assertMessage(view.targetAt((w * 0.62).toNumber(), (h * 0.5).toNumber()) == null, "the time opens nothing");
+    Test.assertMessage(view.timeAt((w * 0.62).toNumber(), (h * 0.5).toNumber()), "a hold on the time: the looks");
+
+    // Each look, the hold stepping from one to the next
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    for (var m = 0; m < Lib.Look.MODES; m++) {
+        Test.assertEqualMessage(Lib.Look.next(), (m + 1) % Lib.Look.MODES, "the next look");
+        view.reloadSettings();
+        view.onUpdate(dc);
+    }
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    view.reloadSettings();
 
     view.onEnterSleep();
     started = System.getTimer();

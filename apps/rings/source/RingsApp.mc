@@ -19,6 +19,7 @@ class RingsApp extends Application.AppBase {
 
     // The colours changed in the phone app or the on-device editor
     function onSettingsChanged() as Void {
+        Lib.Look.changedOnPhone();
         var view = _view;
         if (view != null) {
             view.reloadSettings();
