@@ -42,6 +42,7 @@ module TallyButtons {
     // The phone's colour list, in its order (designs/gen_tally_settings.py)
     const COLOURS = [0xFF6B5A, 0xFFB020, 0xA8E05F, 0x4FD1A5, 0x5AB4FF, 0xA88BFF, 0xFF7EB6, 0xF2ECE2,
                      0xFF8A3D, 0x3FC8C8, 0x7A8CFF, 0xF5E05A] as Array<Number>;
+    const NAMES = ["Coral", "Amber", "Lime", "Mint", "Sky", "Violet", "Pink", "Bone", "Orange", "Teal", "Blue", "Yellow"] as Array<String>;
     const OTHER = 0x9A9A9A;     // a name logged with Other, or a button since renamed
 
     const SLOTS = 12;
@@ -51,9 +52,7 @@ module TallyButtons {
     function all() as Array<TallyButton> {
         var out = [] as Array<TallyButton>;
         for (var i = 1; i <= SLOTS; i++) {
-            var b = parse({"name" => Properties.getValue("B" + i + "Name"), "colour" => Properties.getValue("B" + i + "Colour"),
-                           "from" => Properties.getValue("B" + i + "From"), "until" => Properties.getValue("B" + i + "Until"),
-                           "size" => Properties.getValue("B" + i + "Size")});
+            var b = slot(i);
             if (b != null) {
                 out.add(b);
             }
@@ -69,6 +68,13 @@ module TallyButtons {
                 new TallyButton("Headache", COLOURS[0], ALWAYS, 24, 2), new TallyButton("Nausea", COLOURS[6], ALWAYS, 24, 1),
                 new TallyButton("Dinner", COLOURS[7], 16, 21, 1), new TallyButton("Medicine", COLOURS[5], 19, 22, 1),
                 new TallyButton("Bed", COLOURS[10], 19, 24, 1)] as Array<TallyButton>;
+    }
+
+    // The button in phone setting slot 1 .. SLOTS, or null when it's empty
+    function slot(i as Number) as TallyButton? {
+        return parse({"name" => Properties.getValue("B" + i + "Name"), "colour" => Properties.getValue("B" + i + "Colour"),
+                      "from" => Properties.getValue("B" + i + "From"), "until" => Properties.getValue("B" + i + "Until"),
+                      "size" => Properties.getValue("B" + i + "Size")});
     }
 
     function parse(entry as Dictionary<String, Object?>) as TallyButton? {

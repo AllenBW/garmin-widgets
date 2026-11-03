@@ -4,6 +4,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.Test;
 import Toybox.Time;
+import Toybox.WatchUi;
 
 // Run No Evil tests for Tally: scripts/test.sh tally [device]. The log runs
 // on the test app's own object store, emptied first.
@@ -118,6 +119,53 @@ function testButtons(logger as Logger) as Boolean {
     Test.assertMessage(big.size == 2 && (TallyButtons.parse({"name" => "Y", "size" => 7}) as TallyButton).size == 1, "sizes");
     Test.assertEqualMessage(TallyButtons.onScreen([evening, night] as Array<TallyButton>, 12, [0, 0] as Array<Number>).size(), 0, "none at noon");
     Test.assertEqualMessage(TallyButtons.colourOf("Nope", many), TallyButtons.OTHER, "an unknown name is grey");
+    return true;
+}
+
+(:test)
+function testEdit(logger as Logger) as Boolean {
+    // the buttons changed on the watch, in the phone's own slots; put back after
+    var fields = ["Name", "Colour", "From", "Until", "Size"] as Array<String>;
+    var saved = [] as Array<Properties.ValueType>;
+    for (var i = 1; i <= TallyButtons.SLOTS; i++) {
+        for (var f = 0; f < fields.size(); f++) {
+            saved.add(Properties.getValue("B" + i + fields[f]));
+        }
+    }
+    for (var i = 1; i <= TallyButtons.SLOTS; i++) {
+        TallyEdit.set(i, "Name", "");
+    }
+    TallyEdit.set(2, "Name", "Feed");
+    TallyEdit.set(2, "Colour", 0);
+    TallyEdit.set(2, "From", 22);
+    TallyEdit.set(2, "Until", 6);
+    TallyEdit.set(2, "Size", 2);
+    var b = TallyButtons.slot(2) as TallyButton;
+    Test.assertMessage(b.name.equals("Feed") && b.from == 22 && b.until == 6 && b.size == 2, "written to slot 2");
+    Test.assertMessage(TallyButtons.slot(1) == null, "slot 1 empty");
+    Test.assertEqualMessage(TallyEdit.colourName(b.colour), "Coral", "colour name");
+    Test.assertMessage(TallyEdit.describe(b).find("large") != null && !TallyEdit.hours(b).equals("always"), "describe");
+    Test.assertEqualMessage(TallyEdit.freeColour(), 1, "the first colour no button has");
+    var menu = new WatchUi.Menu2({:title => "Buttons"});
+    TallyEdit.fill(menu);
+    Test.assertMessage((menu.getItem(0) as WatchUi.MenuItem).getId() == 2 && (menu.getItem(1) as WatchUi.MenuItem).getId() == TallyEdit.ADD && menu.getItem(2) == null, "one button, then Add");
+    TallyEdit.fill(menu);
+    Test.assertMessage(menu.getItem(2) == null, "refilled, not doubled");
+    var slot = new WatchUi.Menu2({:title => ""});
+    TallyEdit.fillSlot(slot, 2);
+    TallyEdit.set(2, "Name", "Bottle");
+    TallyEdit.fillSlot(slot, 2);
+    Test.assertMessage("Bottle".equals((slot.getItem(0) as WatchUi.MenuItem).getSubLabel()) && slot.getItem(5) == null, "slot menu refreshed in place");
+    TallyEdit.set(2, "From", TallyButtons.ALWAYS);
+    Test.assertEqualMessage(TallyEdit.hours(TallyButtons.slot(2) as TallyButton), "always", "always");
+
+    var k = 0;
+    for (var i = 1; i <= TallyButtons.SLOTS; i++) {
+        for (var f = 0; f < fields.size(); f++) {
+            Properties.setValue("B" + i + fields[f], saved[k]);
+            k++;
+        }
+    }
     return true;
 }
 
