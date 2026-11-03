@@ -2,7 +2,8 @@
     <!-- Edited on the phone (Connect IQ app) or in the simulator (Edit Application.Properties data).
          Minutes here become seconds in SaunaPlan. -->
     <property id="TempUnit" type="number">2</property>
-    <property id="AutoRounds" type="boolean">true</property>
+    <property id="AutoIn" type="boolean">true</property>
+    <property id="AutoOut" type="boolean">true</property>
     <property id="DoorSensitivity" type="number">10</property>
     <property id="HotWatch" type="number">50</property>
     <property id="ActivityType" type="number">0</property>

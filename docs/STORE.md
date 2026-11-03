@@ -37,7 +37,7 @@ and screen image (454 × 454, the simulator's display cut round) are in
 |---|---|---|
 | Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night, in review |
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night, in review |
-| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night, in review |
+| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), in review |
 | Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
 | Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31, in review |
 | Daylight | <https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c> | Submitted 2026-10-31, in review |
@@ -157,10 +157,13 @@ today's path of the sun drawn across it: where it rises, where it is now
 and where it sets.
 
 **Sauna and Steam** (Health and fitness). Times a sauna or steam-room
-visit round by round. The watch's thermometer notices the door, your heart
-rate recovery is measured after each round, the coaching follows the
-published guidance, every button has its job written beside it, and the
-visit is saved to Garmin Connect.
+visit round by round. Your heart-rate recovery is measured after each
+round, the coaching follows the published guidance, every button has its
+job written beside it, and the visit is saved to Garmin Connect. Rounds
+start and end on their own: the watch's thermometer notices when it warms
+as you go in and cools as you come out. To mark the door yourself, turn
+off "Notice going in", "Notice going out" or both in the app's settings on
+your phone; LAP marks the door by hand at any time.
 
 **Sound Level** (Tools). Experimental. An approximate sound level meter
 from the watch microphone: the level in decibels coloured by how loud it
