@@ -8,13 +8,15 @@ import Toybox.WatchUi;
 // Every button, whatever the hour, then every other name with entries in
 // the last LOOKBACK days (the ones typed with Other), newest first, then
 // Other itself (a name typed on the watch, for something no button covers),
-// a past entry (one missed earlier: a name, then a time), and History.
+// a past entry (one missed earlier: a name, then a time), History, and the
+// buttons themselves (TallyEdit).
 // Choosing a name logs it now and goes back.
 module TallyAll {
 
     const OTHER = :other;
     const HISTORY = :history;
     const PAST = :past;
+    const BUTTONS = :buttons;
     const LOOKBACK = 90;        // days
 
     function open(view as TallyView) as Void {
@@ -27,6 +29,7 @@ module TallyAll {
         menu.addItem(new WatchUi.MenuItem("Other…", "type a name", OTHER, null));
         menu.addItem(new WatchUi.MenuItem("Add a past entry", "one you missed", PAST, null));
         menu.addItem(new WatchUi.MenuItem("History", "change or delete entries", HISTORY, null));
+        menu.addItem(new WatchUi.MenuItem("Buttons", "add, change or remove", BUTTONS, null));
         WatchUi.pushView(menu, new TallyAllDelegate(view), WatchUi.SLIDE_UP);
     }
 
@@ -63,6 +66,14 @@ module TallyAll {
         return (n > 0) ? n + " today" : null;
     }
 
+    // An hour on the clock: "07" or "7 am"; 24 is the midnight at the day's end
+    function hour(h as Number) as String {
+        if (System.getDeviceSettings().is24Hour) {
+            return h.format("%02d");
+        }
+        return ((h % 12 == 0) ? 12 : h % 12) + ((h % 24 < 12) ? " am" : " pm");
+    }
+
     // "Today 7:42", "Yesterday 19:05", "Tue 3 Nov 7:42"
     function when(t as Number) as String {
         var today = Time.today().value();
@@ -84,6 +95,12 @@ class TallyAllDelegate extends WatchUi.Menu2InputDelegate {
         var id = item.getId();
         if (id == TallyAll.HISTORY) {
             WatchUi.switchToView(TallyHistory.menu(), new TallyHistoryDelegate(_view), WatchUi.SLIDE_LEFT);
+            return;
+        }
+        if (id == TallyAll.BUTTONS) {
+            var menu = new WatchUi.Menu2({:title => "Buttons"});
+            TallyEdit.fill(menu);
+            WatchUi.switchToView(menu, new TallyButtonsDelegate(_view, menu), WatchUi.SLIDE_LEFT);
             return;
         }
         if (id == TallyAll.PAST) {
@@ -328,9 +345,8 @@ class TallyTimePicker extends WatchUi.Picker {
                      : Gregorian.info(new Time.Moment(today - d * 86400 + 43200), Time.FORMAT_MEDIUM).day_of_week as String);
         }
         var hours = [] as Array<String>;
-        var twelve = !System.getDeviceSettings().is24Hour;
         for (var h = 0; h < 24; h++) {
-            hours.add(twelve ? (((h % 12 == 0) ? 12 : h % 12) + ((h < 12) ? " am" : " pm")) : h.format("%02d"));
+            hours.add(TallyAll.hour(h));
         }
         var minutes = [] as Array<String>;
         for (var m = 0; m < 60; m++) {

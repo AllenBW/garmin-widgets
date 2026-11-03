@@ -75,7 +75,8 @@ Garmin fēnix 8 Pro (454×454 AMOLED/MicroLED, non-solar).
   in `ForageModel.mc` fed by the tests;
   `apps/tally/` the Tally glance + app, design #19, buttons the owner
   makes in twelve phone setting slots (`designs/gen_tally_settings.py`;
-  not an array setting, which Garmin Connect on Android can't save), each
+  not an array setting, which Garmin Connect on Android can't save) or on
+  the watch (`TallyEdit`, which writes the same slots), each
   tap logged in the object store and sent to the owner's Google Sheet
   (`sheet/Tally.gs`), whose stats are pure arithmetic in `TallyStats`;
   its sample build has no glance, so the simulator opens the app;
