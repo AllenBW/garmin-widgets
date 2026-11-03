@@ -35,7 +35,7 @@ and screen image (454 × 454, the simulator's display cut round) are in
 
 | App | Store page | State |
 |---|---|---|
-| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 the same day (about 18 KB less memory), in review |
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), in review |
 | Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
