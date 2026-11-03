@@ -7,7 +7,10 @@
                 <listEntry value="1">@Strings.UnitC</listEntry>
             </settingConfig>
         </setting>
-        <setting propertyKey="@Properties.AutoRounds" title="@Strings.AutoRoundsTitle" prompt="@Strings.AutoRoundsPrompt">
+        <setting propertyKey="@Properties.AutoIn" title="@Strings.AutoInTitle" prompt="@Strings.AutoInPrompt">
+            <settingConfig type="boolean"/>
+        </setting>
+        <setting propertyKey="@Properties.AutoOut" title="@Strings.AutoOutTitle" prompt="@Strings.AutoOutPrompt">
             <settingConfig type="boolean"/>
         </setting>
         <setting propertyKey="@Properties.DoorSensitivity" title="@Strings.DoorTitle" prompt="@Strings.DoorPrompt">

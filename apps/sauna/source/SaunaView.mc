@@ -204,7 +204,8 @@ class SaunaView extends WatchUi.View {
     }
 
     function applySettings(t as SaunaTracker) as Void {
-        t.auto = SaunaSettings.autoRounds();
+        t.autoIn = SaunaSettings.autoIn();
+        t.autoOut = SaunaSettings.autoOut();
         t.sensitivity = SaunaSettings.sensitivity();
         t.hotTemp = SaunaSettings.hotTemp();
         t.plan = SaunaSettings.plan(t.plan.kind);

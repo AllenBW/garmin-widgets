@@ -7,8 +7,10 @@
     <string id="UnitF">Fahrenheit</string>
     <string id="UnitC">Celsius</string>
     <string id="UnitWatch">The watch's setting</string>
-    <string id="AutoRoundsTitle">Mark rounds automatically</string>
-    <string id="AutoRoundsPrompt">The watch thermometer notices when you go in and out. LAP always works too.</string>
+    <string id="AutoInTitle">Notice going in</string>
+    <string id="AutoInPrompt">The watch thermometer starts a round when it warms as you walk in. LAP always works too.</string>
+    <string id="AutoOutTitle">Notice going out</string>
+    <string id="AutoOutPrompt">The watch thermometer ends a round when it cools as you walk out. LAP always works too.</string>
     <string id="DoorTitle">Door sensitivity</string>
     <string id="DoorPrompt">How much the watch must warm or cool before a round starts or ends on its own.</string>
     <string id="DoorNormal">Normal</string>

@@ -143,6 +143,51 @@ function testTrackerAuto(logger as Logger) as Boolean {
     return true;
 }
 
+// Going in and going out are each their own setting: with one off, LAP
+// marks that door and the thermometer still notices the other.
+(:test)
+function testTrackerDoorEachWay(logger as Logger) as Boolean {
+    var events = [[], []] as Array<Array<Number> >;
+    var at = [[], []] as Array<Array<Number> >;
+    for (var k = 0; k < 2; k++) {
+        var t = new SaunaTracker();
+        t.autoIn = k == 1;
+        t.autoOut = k == 0;
+        t.guided = false;    // a free session: the same doors, and no "drink, shower" first
+        if (k == 0) {
+            Test.assertEqualMessage(t.coach(), "LAP when you go in", "told to use LAP going in");
+        }
+        var temp = 33.0;
+        // the same sauna as testTrackerAuto: 60-299 heating, 300-599 cooling;
+        // with going in off, the heat comes back at 600 and nothing notices it
+        for (var s = 1; s <= (k == 0 ? 780 : 600); s++) {
+            if ((s >= 60 && s < 300) || s >= 600) {
+                temp += 0.05;
+            } else if (s >= 300) {
+                temp -= 0.04;
+                if (temp < 33.0) { temp = 33.0; }
+            }
+            var e = t.tick(90, temp);
+            if ((k == 0 && s == 60) || (k == 1 && s == 330)) {
+                e = t.mark();    // LAP, by hand, for the door that is off
+            }
+            if (e == EVENT_ENTER || e == EVENT_LEAVE) {
+                events[k].add(e);
+                at[k].add(s);
+            }
+        }
+        Test.assertEqualMessage(t.roundCount(), 1, "one round either way");
+        Test.assertEqualMessage(t.phase, PHASE_BREAK, "out at the end");
+    }
+    logger.debug("in by hand: " + events[0] + " at " + at[0] + "; out by hand: " + events[1] + " at " + at[1]);
+    // in by hand at 60, out noticed 25 s after leaving, as with both on, and
+    // three minutes of heat after the break (noticed at 630 with going in on) start nothing
+    Test.assertMessage(events[0].size() == 2 && at[0][0] == 60 && (at[0][1] - 325).abs() <= 1, "going out noticed alone");
+    // in noticed 30 s after the door; leaving went unnoticed until LAP at 330
+    Test.assertMessage(events[1].size() == 2 && (at[1][0] - 90).abs() <= 1 && at[1][1] == 330, "going in noticed alone");
+    return true;
+}
+
 (:test)
 function testTrackerPlan(logger as Logger) as Boolean {
     var t = new SaunaTracker();
@@ -360,7 +405,8 @@ function testTrackerPlan(logger as Logger) as Boolean {
 
     // auto off: a sauna's worth of warming (staying under the hot warning) does nothing
     var u = new SaunaTracker();
-    u.auto = false;
+    u.autoIn = false;
+    u.autoOut = false;
     var any = false;
     temp = 30.0;
     for (var s = 0; s < 300; s++) {
@@ -542,7 +588,8 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     Test.assertEqualMessage(t.baselineDrop as Number, 24, "the usual steam drop came from the history");
     logger.debug("heart-rate ceiling from the simulator's profile: " + t.hrCeiling + " bpm; coaching switches " + t.coachHrHigh + " " + t.coachRecovery + " " + t.coachStand);
     Test.assertMessage(t.coachHrHigh && t.coachRecovery && t.coachStand && t.recoveryHr == 110, "the coaching defaults are on");
-    t.auto = false;   // the door is marked by hand here; the thermometer logic has its own test
+    t.autoIn = false;   // the door is marked by hand here; the thermometer logic has its own test
+    t.autoOut = false;
     view.onUpdate(screen);
     Test.assertEqualMessage(view.startCue(), "END", "recording START cue");
     Test.assertEqualMessage(view.backCue(), "IN", "BACK goes in");
@@ -600,7 +647,8 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     view.start(KIND_SAUNA, false, false);
     var f = view.tracker() as SaunaTracker;
     Test.assertMessage(f.plan.rounds == 3 && !f.guided, "a free sauna this time");
-    f.auto = false;
+    f.autoIn = false;
+    f.autoOut = false;
     view.mark();
     view.onUpdate(screen);
     Test.assertEqualMessage(f.coach(), "Out when you like", "free coaching");
