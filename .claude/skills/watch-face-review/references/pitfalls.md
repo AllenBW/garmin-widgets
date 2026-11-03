@@ -144,3 +144,11 @@ this list when a new one bites.
 - The spacing reviewer measures everything and can take over an hour;
   typography and the skeptic answer in a few minutes. Send narrow changes
   only to the lenses they touch.
+
+- **An app with a glance opens on its glance in the simulator** and
+  stays there (nothing can press START for you). For captures of a
+  glance + app, leave `getGlanceView` out of the sample build with an
+  annotation (Tally: `(:glanceview)`, excluded in `sample.jungle`).
+  A jungle can't swap `project.manifest` ("Attempting to reset project
+  property"), and when the sample build fails, `sim-shot.sh` captures
+  the last good one without a word: check the build first (2026-11-03).

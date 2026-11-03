@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <!-- Tally launcher icon (60 px): black disc, four coloured button wedges round a white dot -->
+  <g transform="scale(0.9375)">
+    <circle cx="32" cy="32" r="31" fill="#000000"/>
+    <path d="M14.64 11.32 A27 27 0 0 1 49.36 11.32 L40.36 22.04 A13 13 0 0 0 23.64 22.04 Z" fill="#FF6B5A"/>
+    <path d="M52.68 14.64 A27 27 0 0 1 52.68 49.36 L41.96 40.36 A13 13 0 0 0 41.96 23.64 Z" fill="#FFB020"/>
+    <path d="M49.36 52.68 A27 27 0 0 1 14.64 52.68 L23.64 41.96 A13 13 0 0 0 40.36 41.96 Z" fill="#5AB4FF"/>
+    <path d="M11.32 49.36 A27 27 0 0 1 11.32 14.64 L22.04 23.64 A13 13 0 0 0 22.04 40.36 Z" fill="#A88BFF"/>
+    <circle cx="32" cy="32" r="5" fill="#F2ECE2"/>
+  </g>
+</svg>

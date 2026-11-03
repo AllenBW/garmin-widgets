@@ -1,0 +1,6 @@
+# Made-up buttons and entries in place of the phone's (see monkey.jungle),
+# opening on the buttons, without the glance so that the simulator opens
+# straight on them. For a capture of another page, add a jungle that
+# excludes live and the other shot* annotations (TallySample.page); for
+# the glance, one that leaves glanceview in.
+base.excludeAnnotations = live;shotrings;shotstrip;shotbefore;shotglance;glanceview

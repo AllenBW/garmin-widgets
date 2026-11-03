@@ -6,7 +6,7 @@
 #
 # Claims /tmp/ciq-simulator.lock (waits up to 10 minutes on another
 # owner's live claim), builds the sample build (sample.jungle, if the app
-# has one) for the device, loads it, waits for it to draw, captures the
+# has one, or $CIQ_SHOT_JUNGLE) for the device, loads it, waits for it to draw, captures the
 # simulator window to <out.png> and a crop of the watch to <out>-crop.png,
 # rebuilds the normal build and releases the lock. Needs the sandbox off
 # (window list, screen capture) and Pillow for the crop (PYTHON, default
@@ -42,6 +42,7 @@ fi
 
 JUNGLE="monkey.jungle"
 [ -f "$ROOT/apps/$APP/sample.jungle" ] && JUNGLE="monkey.jungle;sample.jungle"
+JUNGLE="${CIQ_SHOT_JUNGLE:-$JUNGLE}"   # e.g. another page of an app's sample build
 CIQ_JUNGLE="$JUNGLE" "$ROOT/scripts/build.sh" "$APP" "$DEVICE" >/dev/null
 cp "$ROOT/apps/$APP/bin/$APP.prg" "$ROOT/apps/$APP/bin/$APP-shot.prg"
 "$ROOT/scripts/build.sh" "$APP" "$DEVICE" >/dev/null
