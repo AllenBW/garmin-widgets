@@ -20,11 +20,17 @@ import Toybox.WatchUi;
 // clock when alarms are set), the time in 24-hour form and the theme's
 // colour, the next sunrise or sunset, the outside temperature.
 //
+// Holding the time steps through the looks (Lib.Look): the colours set,
+// high visibility (fluorescent rings, the time orange, the text pure
+// white), low light (ember and cream), and the day's colour set; the date
+// shows the look's name for a moment.
+//
 // Always-on: the rings' fills as hairlines in a quarter of their colour,
 // the hollow time, the date and the sun event, dim, shifted each minute.
 class RingsView extends WatchUi.WatchFace {
 
     private const WHITE = 0xF2F2F2;
+    private const TIME = -1;             // the time's press target: the looks
     private const DIM = 0x5A5A5A;
     private const AMBER = 0xFFB020;
     private const ORANGE = 0xFF7A3D;
@@ -49,6 +55,8 @@ class RingsView extends WatchUi.WatchFace {
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
     private var _theme as Array<Number> = Themes.colors(Themes.SUNSET);
+    private var _look as Number = Lib.Look.YOURS;
+    private var _white as Number = WHITE;   // the column's text and icons
 
     private var _timeFont as FontType = Graphics.FONT_NUMBER_MILD;
     private var _rowFont as FontType = Graphics.FONT_TINY;
@@ -89,7 +97,28 @@ class RingsView extends WatchUi.WatchFace {
                 theme = config.styleId;
             }
         }
-        _theme = Themes.colors((theme instanceof Number) ? theme : Themes.SUNSET);
+        theme = (theme instanceof Number && theme >= 0 && theme < Themes.BLAZE) ? theme : Themes.SUNSET;
+        _look = Lib.Look.mode();
+        if (_look == Lib.Look.BRIGHT) {
+            theme = Themes.BRIGHT;
+        } else if (_look == Lib.Look.LOW) {
+            theme = Themes.LOW;
+        } else if (_look == Lib.Look.DAILY) {
+            theme = Themes.PERSONAS[Lib.Look.day(Themes.PERSONAS.size())];
+        }
+        _theme = Themes.colors(theme);
+        _white = (_look == Lib.Look.BRIGHT) ? Lib.Look.WHITE : ((_look == Lib.Look.LOW) ? Lib.Look.CREAM : WHITE);
+    }
+
+    // Whether (x, y) is on the time, where a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        for (var i = 0; i < _targets.size(); i++) {
+            var t = _targets[i];
+            if (t[0] == TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -194,7 +223,7 @@ class RingsView extends WatchUi.WatchFace {
         }
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
-            if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+            if (t[0] != TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
                 return t[0] as Complications.Type;
             }
         }
@@ -230,25 +259,26 @@ class RingsView extends WatchUi.WatchFace {
             rows.add((h * ROWS[i]).toNumber());
         }
 
-        Lib.Moon.draw(dc, iconX, rows[0], (w * 0.032).toNumber(), _phase, WHITE, DIM);
+        Lib.Moon.draw(dc, iconX, rows[0], (w * 0.032).toNumber(), _phase, _white, DIM);
 
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
         dc.drawText(valueX, rows[1], _rowFont, Lib.Daily.heartRate(), right);
-        drawHeart(dc, iconX, rows[1], icon, WHITE);
+        drawHeart(dc, iconX, rows[1], icon, _white);
         targets.add([Complications.COMPLICATION_TYPE_HEART_RATE as Number, valueX - (w * 0.06).toNumber(), rows[1], (w * 0.14).toNumber(), (h * 0.035).toNumber()]);
 
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(valueX, rows[2], _rowFont, _date, right);
+        dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(valueX, rows[2], _rowFont, Lib.Look.shown() ? Lib.Look.title(_look, Themes.NAMES) : _date, right);
         if (_alarms > 0) {
-            drawAlarm(dc, iconX, rows[2], icon, _alarms, WHITE);
+            drawAlarm(dc, iconX, rows[2], icon, _alarms, _white);
         }
         targets.add([Complications.COMPLICATION_TYPE_CALENDAR_EVENTS as Number, valueX - (w * 0.15).toNumber(), rows[2], (w * 0.18).toNumber(), (h * 0.03).toNumber()]);
 
         dc.setColor(_theme[3], Graphics.COLOR_TRANSPARENT);
         dc.drawText((w * TIME_RIGHT).toNumber(), rows[3], _timeFont, timeString(), right);
+        targets.add([TIME, (w * 0.71).toNumber(), rows[3], (w * 0.2).toNumber(), (h * 0.07).toNumber()]);
 
         var sun = _sun;
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
         if (sun != null) {
             dc.drawText(valueX, rows[4], _rowFont, Lib.Fmt.clock24(sun[1]), right);
             drawSunIcon(dc, iconX, rows[4], icon, sun[0]);
@@ -258,9 +288,9 @@ class RingsView extends WatchUi.WatchFace {
             dc.drawText(valueX, rows[4], _rowFont, "--:--", right);
         }
 
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
         dc.drawText(valueX, rows[5], _rowFont, _temperature, right);
-        drawThermometer(dc, iconX, rows[5], icon, WHITE);
+        drawThermometer(dc, iconX, rows[5], icon, _white);
         targets.add([Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE as Number, valueX - (w * 0.06).toNumber(), rows[5], (w * 0.14).toNumber(), (h * 0.035).toNumber()]);
 
         _targets = targets;
@@ -384,7 +414,7 @@ class RingsView extends WatchUi.WatchFace {
         dc.fillCircle(x, y - 2, half * 0.5);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x - half, y - 1, size, half + 2);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x - half, y - 1, size, 2);
         var a = y + 3;
         var b = y + half + 2;

@@ -1,4 +1,6 @@
 <properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Lib.Look: 0 your settings below, 1 high visibility, 2 low light, 3 a new look each day -->
+    <property id="Look" type="number">0</property>
     <!-- Theme: 0 Sunset (blue, orange, yellow), 1 Berry (magenta, red, orange), 2 Forest (green, sky, blue) -->
     <property id="Theme" type="number">0</property>
 </properties>
