@@ -23,7 +23,10 @@ import Toybox.WatchUi;
 // Everything is set in the watch face editor or the phone app's settings
 // (Lib.Config): the typeface, the accent (any colour), the data colour,
 // the five readings (any complication), and the bedside clock. After
-// sunset the colours soften.
+// sunset the colours soften. Holding the time steps through the looks
+// (Lib.Look): those settings, high visibility and low light (the legend
+// larger), and the day's persona; the date shows the look's name for a
+// moment.
 //
 // Standby (always-on): the time outlined, the date and the bottom legend
 // dim, shifted each minute (designs/preview_inscription.py). During the
@@ -41,6 +44,7 @@ class InscriptionView extends WatchUi.WatchFace {
     private const AOD_DIGITS = 0.235;
     private const ROW_GAP = 0.035;               // between the hours' and the minutes' ink
     private const LEGEND_EM = 0.046;
+    private const BIG_LEGEND_EM = 0.058;         // in high visibility and low light
     private const AOD_LEGEND_EM = 0.040;         // a little smaller in standby, to stay under 10 % lit
     private const RADIUS = 0.425;                // the legend's middle, from the centre
     private const VALUE_TRACK = 0.006;           // letter spacing in a value
@@ -87,6 +91,8 @@ class InscriptionView extends WatchUi.WatchFace {
         Complications.COMPLICATION_TYPE_SUNRISE      // the next sunrise or sunset
     ] as Array<Complications.Type>;
     const SLOTS = 5;
+    // Each persona's typeface (Lib.Config.PERSONAS)
+    private const STYLES = [PRIDI, BIONIC, CONDENSED, PRIDI, BIONIC, BIONIC, BIONIC] as Array<Number>;
 
     // Settings
     private var _style as Number = PRIDI;
@@ -95,6 +101,8 @@ class InscriptionView extends WatchUi.WatchFace {
     private var _ids as Array<Complications.Id> = [] as Array<Complications.Id>;
     private var _kinds as Array<Number> = [] as Array<Number>;
     private var _bedside as Boolean = true;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _big as Boolean = false;         // high visibility or low light
 
     // Fonts
     private var _w as Number = 454;
@@ -120,7 +128,8 @@ class InscriptionView extends WatchUi.WatchFace {
     private var _night as Boolean = false;
     private var _asleep as Boolean = false;      // within the watch's sleep hours
 
-    // Press targets, [slot (0-based, SLOTS for the date), x, y, half width, half height]
+    // Press targets, [slot (0-based, SLOTS for the date, TIME for the time), x, y, half width, half height]
+    private const TIME = 10;
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
     function initialize() {
@@ -132,8 +141,12 @@ class InscriptionView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ settings
 
     function reloadSettings() as Void {
-        var s = Lib.Config.read(FACES.size(), DEFAULTS);
-        var restyled = s[0] != _style;
+        var look = Lib.Look.mode();
+        var s = Lib.Config.look(Lib.Config.read(FACES.size(), DEFAULTS), look, STYLES);
+        var big = look == Lib.Look.BRIGHT || look == Lib.Look.LOW;
+        var restyled = s[0] != _style || big != _big;
+        _look = look;
+        _big = big;
         _style = s[0];
         _accent = s[1];
         _data = s[2];
@@ -182,12 +195,23 @@ class InscriptionView extends WatchUi.WatchFace {
         return null;
     }
 
+    // Whether (x, y) is on the time, where a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        for (var i = 0; i < _targets.size(); i++) {
+            var t = _targets[i];
+            if (t[0] == TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // The complication a press and hold at (x, y) opens: a reading's (the
     // weather for the temperature), or the calendar from the date
     function targetAt(x as Number, y as Number) as Complications.Id? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
-            if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+            if (t[0] != TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
                 return (t[0] < SLOTS) ? Lib.Slots.opens(_kinds[t[0]], _ids[t[0]]) : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             }
         }
@@ -208,7 +232,7 @@ class InscriptionView extends WatchUi.WatchFace {
         _timeFont = Lib.Ink.font(face, _em, Graphics.FONT_NUMBER_HOT);
         _aodTimeFont = Lib.Ink.font(face, _aodEm, Graphics.FONT_NUMBER_MEDIUM);
         var legend = (_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_BOLD;
-        _legendFont = Lib.Ink.font(legend, _w * LEGEND_EM, Graphics.FONT_XTINY);
+        _legendFont = Lib.Ink.font(legend, _w * (_big ? BIG_LEGEND_EM : LEGEND_EM), Graphics.FONT_XTINY);
         _aodLegendFont = Lib.Ink.font(legend, _w * AOD_LEGEND_EM, Graphics.FONT_XTINY);
     }
 
@@ -357,8 +381,9 @@ class InscriptionView extends WatchUi.WatchFace {
         // The date across the top (its short form if the long one is too
         // long), the alarm bell inside the beads at twelve
         var dateColor = thin ? Lib.Config.scale(accent, AOD_DATE) : accent;
-        var date = [[_date, dateColor, w * WORD_TRACK, 0.0, 0.0]] as Array<Run>;
-        if (runsLength(dc, date) > Math.toRadians(DATE_SPAN) * r) {
+        var named = !thin && Lib.Look.shown();
+        var date = [[named ? Lib.Look.title(_look, Lib.Config.NAMES) : _date, dateColor, w * WORD_TRACK, 0.0, 0.0]] as Array<Run>;
+        if (!named && runsLength(dc, date) > Math.toRadians(DATE_SPAN) * r) {
             date = [[_shortDate, dateColor, w * WORD_TRACK, 0.0, 0.0]] as Array<Run>;
         }
         var length = legend(dc, cx, cy, date, 0.0, false);
@@ -371,7 +396,7 @@ class InscriptionView extends WatchUi.WatchFace {
 
         // The readings: one at nine o'clock, one at three, three along the bottom
         var value = Lib.Config.scale(data, thin ? AOD_VALUE : VALUE);
-        var word = Lib.Config.scale(data, thin ? AOD_WORD : WORD);
+        var word = Lib.Config.scale(data, thin ? AOD_WORD : (_big ? Lib.Config.quiet(_look) : WORD));
         if (!thin) {
             var side = (Math.toRadians(SIDE_SPAN) * r).toFloat();
             var angles = [270.0, 90.0] as Array<Float>;
@@ -474,6 +499,7 @@ class InscriptionView extends WatchUi.WatchFace {
             } else {
                 dc.setColor(colors[row], Graphics.COLOR_TRANSPARENT);
                 dc.drawText(x, y, font, text, Graphics.TEXT_JUSTIFY_LEFT);
+                _targets.add([TIME, cx.toNumber(), mid.toNumber(), (ink / 2).toNumber(), (digits / 2 + gap / 2).toNumber()]);
             }
         }
     }

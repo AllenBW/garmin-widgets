@@ -504,6 +504,12 @@ def options(argv, defaults):
     return chosen
 
 
+def data_color(st):
+    """The data colour: an index into DATA or a 0x colour (a look's own)."""
+    d = st["data"]
+    return DATA[d][1] if d < len(DATA) else d
+
+
 def accent_color(st):
     """The accent: an index into ACCENTS or a 0x colour, lifted to read on
     black as Lib.Config.lift does."""

@@ -73,8 +73,9 @@ SAMPLES = {
 STRATA_DAY = [0x5C4A2E, 0x7A402E, 0x44582E, 0x405268, 0x76705A]      # Soil, Clay, Moss, Slate, Sand
 STRATA_NIGHT = [0x3E4556, 0x573B34, 0x2C4A44, 0x2A466A, 0x4E4A40]
 MOONLIGHT = 0x9FB4C8
-ACCENTS = [None, None, 0xE0B050, 0x6FA8A0, 0xC8703E]                  # temperature, tone on tone, Ochre, Lichen, Ember
-TIMES = [0xF2ECE2, None, 0xD9B98C]                                    # Bone, the accent, Sandstone
+ACCENTS = [None, None, 0xE0B050, 0x6FA8A0, 0xC8703E,                  # temperature, tone on tone, Ochre, Lichen, Ember
+           0xFF6A13, 0x5CFF2E, 0xD4FF1A]                               # the looks' fluorescent orange, green, yellow-green
+TIMES = [0xF2ECE2, None, 0xD9B98C, 0xFFFFFF]                          # Bone, the accent, Sandstone, (a look's) white
 DEFAULTS = dict(strata=0, accent=0, time=0, outline=False, daynight=True, stones=True, slots=(0, 1, 2, 3))
 # The reading kinds (Readings.Kind) and a sample of each, as the sample build has them
 KINDS = ["temperature", "rain", "heart", "distance", "body battery", "elevation", "humidity", "wind", "battery", "steps"]
@@ -93,7 +94,7 @@ def colours(s, settings):
     """earth, the accent layers, the time and the thermometer, as StrataView
     picks them for these settings."""
     night = not s["day"] and settings["daynight"]
-    earth = (STRATA_NIGHT if night else STRATA_DAY)[settings["strata"]]
+    earth = scale((STRATA_NIGHT if night else STRATA_DAY)[settings["strata"]], settings.get("earth", 100) / 100)
     temp = temperature_color(s["celsius"])
     choice = settings["accent"]
     full = blend(earth, C["cream"], 0.55) if choice == 1 else (temp if choice == 0 else ACCENTS[choice])
@@ -459,5 +460,7 @@ if __name__ == "__main__":
     # Settings as key=value after the size: strata=0-4 accent=0-4 time=0-2 outline=0/1 daynight=0/1 stones=0/1
     # slots=0123 (a reading kind 0-9 for each of the four slots)
     chosen = {k: (tuple(int(c) for c in v) if k == "slots" else int(v)) for k, v in (a.split("=") for a in sys.argv[4:])}
+    if chosen.pop("ink", 0):    # a look's text in pure white
+        C.update(white=0xFFFFFF, cream=0xFFFFFF, feet=0xFFFFFF)
     render(out, sys.argv[2] if len(sys.argv) > 2 else "day", int(sys.argv[3]) if len(sys.argv) > 3 else 454, chosen)
     print(out)

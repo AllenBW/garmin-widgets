@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
-from preview_faces import (BEDSIDE, DATA, QUIET, SS, Face, LABELS, accent_color, band, bell, digit_font, draw_icon,
+from preview_faces import (BEDSIDE, DATA, QUIET, SS, Face, LABELS, accent_color, band, data_color, bell, digit_font, draw_icon,
                            font, glyph_mask, options, outline_of, paint, place, reading, rgb, scale, spaced, word)
 
 L = dict(
@@ -41,6 +41,7 @@ SAMPLES = {"day": dict(hours="14", minutes="38", date="SATURDAY 31", night=False
 
 def render(path, mode="day", size=454, st=None):
     st = dict(DEFAULTS, **(st or {}))
+    L.update({k[2:]: v / 1000 for k, v in st.items() if k.startswith("L_")})   # a look's sizes, in thousandths
     sm = dict(SAMPLES["night" if mode in ("night", "bedside") else "day"])
     for k in ("hours", "minutes"):
         if k in st:
@@ -48,8 +49,8 @@ def render(path, mode="day", size=454, st=None):
     night = sm["night"]
     thin = mode in ("aod", "bedside")
     face = Face(size)
-    dim = L["night"] if night else 1.0
-    data = scale(DATA[st["data"]][1], dim)
+    dim = (L["night"] if night else 1.0) * st.get("bright", 100) / 100
+    data = scale(data_color(st), dim)
     accent = scale(accent_color(st), dim)
     if mode == "bedside":
         data = accent = BEDSIDE
@@ -57,7 +58,7 @@ def render(path, mode="day", size=454, st=None):
     f = digit_font(face, STYLES[st["style"]], dh)
     gap = face.px(L["row_gap"])
     cy = face.px(L["mid"])
-    quiet = scale(data, QUIET)
+    quiet = scale(data, st.get("quiet", QUIET * 100) / 100)
     right = face.px(L["ink_right"])
     line = (3 if size >= 440 and st["style"] != 2 else 2) * SS
     for row, (text, color) in enumerate(((sm["hours"], data), (sm["minutes"], accent))):

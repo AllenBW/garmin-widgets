@@ -21,7 +21,10 @@ import Toybox.WatchUi;
 // Everything is set in the watch face editor or the phone app's settings
 // (Lib.Config): the typeface, the accent (any colour), the data colour,
 // the three readings (any complication), and the bedside clock. After
-// sunset the colours soften.
+// sunset the colours soften. Holding the time steps through the looks
+// (Lib.Look): those settings, high visibility and low light (the readings,
+// date and foot larger), and the day's persona; the date shows the look's
+// name for a moment.
 //
 // Standby (always-on): the glasses empty to a single waterline drawn
 // across each digit, the outlines and the readings dim, shifted each
@@ -43,12 +46,15 @@ class VesselView extends WatchUi.WatchFace {
     private const MARK_H = 0.022;
     private const VALUE_X = 0.036;               // from the mark's tip to the reading
     private const VALUE_EM = 0.070;
+    private const BIG_VALUE_EM = 0.100;          // in high visibility and low light
     private const AOD_VALUE_EM = 0.060;
     private const UNIT = 0.70;                   // a unit's size, of the value's
     private const ICON = 0.040;
+    private const BIG_ICON = 0.054;
     private const FULL = 0.96;                   // a glass this full is full
     private const DATE_Y = 0.112;
     private const DATE_EM = 0.050;               // the date's and the foot's
+    private const BIG_DATE_EM = 0.064;
     private const DATE = 0.85;                   // their share of the data colour
     private const AOD_DATE = 0.55;
     private const TRACK = 0.007;                 // the spaced capitals' letter spacing
@@ -64,6 +70,8 @@ class VesselView extends WatchUi.WatchFace {
         Complications.COMPLICATION_TYPE_SUNRISE      // the next sunrise or sunset
     ] as Array<Complications.Type>;
     const SLOTS = 3;
+    // Each persona's typeface (Lib.Config.PERSONAS)
+    private const STYLES = [BIONIC, CONDENSED, BIONIC, CONDENSED, BIONIC, CONDENSED, BIONIC] as Array<Number>;
 
     // Settings
     private var _style as Number = BIONIC;
@@ -72,6 +80,8 @@ class VesselView extends WatchUi.WatchFace {
     private var _ids as Array<Complications.Id> = [] as Array<Complications.Id>;
     private var _kinds as Array<Number> = [] as Array<Number>;
     private var _bedside as Boolean = true;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _big as Boolean = false;         // high visibility or low light
 
     // Fonts
     private var _w as Number = 454;
@@ -97,7 +107,10 @@ class VesselView extends WatchUi.WatchFace {
     private var _night as Boolean = false;
     private var _asleep as Boolean = false;      // within the watch's sleep hours
 
-    // Press targets, [slot (0-based, SLOTS for the date), x, y, half width, half height]
+    // Press targets, [slot (0-based, SLOTS for the date, TIME + the row for
+    // a digit pair: its glass's slot in the editor, the looks to a hold), x,
+    // y, half width, half height]
+    private const TIME = 10;
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
     function initialize() {
@@ -109,8 +122,12 @@ class VesselView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ settings
 
     function reloadSettings() as Void {
-        var s = Lib.Config.read(FACES.size(), DEFAULTS);
-        var restyled = s[0] != _style;
+        var look = Lib.Look.mode();
+        var s = Lib.Config.look(Lib.Config.read(FACES.size(), DEFAULTS), look, STYLES);
+        var big = look == Lib.Look.BRIGHT || look == Lib.Look.LOW;
+        var restyled = s[0] != _style || big != _big;
+        _look = look;
+        _big = big;
         _style = s[0];
         _accent = s[1];
         _data = s[2];
@@ -152,11 +169,22 @@ class VesselView extends WatchUi.WatchFace {
     function slotAt(x as Number, y as Number) as Number? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
-            if (t[0] < SLOTS && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
-                return t[0] + 1;
+            if ((t[0] < SLOTS || t[0] >= TIME) && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+                return (t[0] >= TIME) ? t[0] - TIME + 1 : t[0] + 1;
             }
         }
         return null;
+    }
+
+    // Whether (x, y) is on the time, where a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        for (var i = 0; i < _targets.size(); i++) {
+            var t = _targets[i];
+            if (t[0] >= TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // The complication a press and hold at (x, y) opens: a glass's or the
@@ -165,7 +193,7 @@ class VesselView extends WatchUi.WatchFace {
     function targetAt(x as Number, y as Number) as Complications.Id? {
         for (var i = 0; i < _targets.size(); i++) {
             var t = _targets[i];
-            if ((x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
+            if (t[0] < TIME && (x - t[1]).abs() <= t[3] && (y - t[2]).abs() <= t[4]) {
                 return (t[0] < SLOTS) ? Lib.Slots.opens(_kinds[t[0]], _ids[t[0]]) : new Complications.Id(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             }
         }
@@ -186,10 +214,10 @@ class VesselView extends WatchUi.WatchFace {
         _aodEm = Lib.Ink.em(face, _w * AOD_DIGITS);
         _timeFont = Lib.Ink.font(face, _em, Graphics.FONT_NUMBER_HOT);
         _aodTimeFont = Lib.Ink.font(face, _aodEm, Graphics.FONT_NUMBER_MEDIUM);
-        _valueFont = font("RobotoCondensedBold", VALUE_EM, Graphics.FONT_SMALL);
+        _valueFont = font("RobotoCondensedBold", _big ? BIG_VALUE_EM : VALUE_EM, Graphics.FONT_SMALL);
         _aodValueFont = font("RobotoCondensedBold", AOD_VALUE_EM, Graphics.FONT_TINY);
-        _unitFont = font("RobotoCondensedBold", VALUE_EM * UNIT, Graphics.FONT_XTINY);
-        _dateFont = font("RobotoCondensedBold", DATE_EM, Graphics.FONT_XTINY);
+        _unitFont = font("RobotoCondensedBold", (_big ? BIG_VALUE_EM : VALUE_EM) * UNIT, Graphics.FONT_XTINY);
+        _dateFont = font("RobotoCondensedBold", _big ? BIG_DATE_EM : DATE_EM, Graphics.FONT_XTINY);
     }
 
     private function font(face as String, em as Float, fallback as FontType) as FontType {
@@ -335,7 +363,7 @@ class VesselView extends WatchUi.WatchFace {
         var mids = [h * MID - digits / 2 - gap / 2 + oy, h * MID + digits / 2 + gap / 2 + oy] as Array<Float>;
         var texts = [_hours, _minutes] as Array<String>;
         var colors = [data, accent] as Array<Number>;
-        var quiet = Lib.Config.scale(data, Lib.Config.QUIET);
+        var quiet = Lib.Config.scale(data, Lib.Config.quiet(_look));
         for (var row = 0; row < 2; row++) {
             var text = texts[row];
             var color = colors[row];
@@ -364,7 +392,7 @@ class VesselView extends WatchUi.WatchFace {
                 dc.setClip(0, cut, w, h - cut);
                 outline(dc, x, y, font, text, color, line, color);
                 dc.clearClip();
-                _targets.add([row, (right - ink / 2).toNumber(), mids[row].toNumber(), (ink / 2).toNumber(), (digits / 2).toNumber()]);
+                _targets.add([TIME + row, (right - ink / 2).toNumber(), mids[row].toNumber(), (ink / 2).toNumber(), (digits / 2).toNumber()]);
             }
             if (reading != null) {
                 // keep the number inside its glass's band, clear of the other one;
@@ -377,8 +405,9 @@ class VesselView extends WatchUi.WatchFace {
             }
         }
         // the date and the foot in the data colour, a little quieter: the accent is the minutes'
-        var dateColor = Lib.Config.scale(data, thin ? AOD_DATE : DATE);
-        var dateWidth = spaced(dc, w * AXIS + ox, h * DATE_Y + oy, _dateFont, _date, dateColor);
+        var dateColor = Lib.Config.scale(data, thin ? AOD_DATE : (_big ? 1.0 : DATE));
+        var date = (!thin && Lib.Look.shown()) ? Lib.Look.title(_look, Lib.Config.NAMES) : _date;
+        var dateWidth = spaced(dc, w * AXIS + ox, h * DATE_Y + oy, _dateFont, date, dateColor);
         if (_alarms > 0) {
             Lib.Icons.bell(dc, w * AXIS + ox + dateWidth / 2 + w * BELL_GAP, h * DATE_Y + oy, w * 0.036, dateColor);
         }
@@ -405,7 +434,7 @@ class VesselView extends WatchUi.WatchFace {
         }
         var font = thin ? _aodValueFont : _valueFont;
         var vx = x + w * VALUE_X;
-        var top = at - Graphics.getFontAscent(font) + Lib.Ink.TOP[Lib.Ink.CONDENSED_BOLD] * w * (thin ? AOD_VALUE_EM : VALUE_EM) / 2000.0;
+        var top = at - Graphics.getFontAscent(font) + Lib.Ink.TOP[Lib.Ink.CONDENSED_BOLD] * w * (thin ? AOD_VALUE_EM : (_big ? BIG_VALUE_EM : VALUE_EM)) / 2000.0;
         dc.setColor(c, Graphics.COLOR_TRANSPARENT);
         dc.drawText(vx, top, font, reading[0], Graphics.TEXT_JUSTIFY_LEFT);
         var end = vx + dc.getTextWidthInPixels(reading[0], font);
@@ -415,7 +444,7 @@ class VesselView extends WatchUi.WatchFace {
             end += dc.getTextWidthInPixels(reading[1], _unitFont) + 1;
         }
         var label = reading[3];
-        var s = w * ICON * (thin ? 0.85 : 1.0);
+        var s = w * (_big ? BIG_ICON : ICON) * (thin ? 0.85 : 1.0);
         var ic = thin ? Lib.Config.scale(quiet, 0.7) : quiet;
         if (label != null) {
             dc.setColor(ic, Graphics.COLOR_TRANSPARENT);

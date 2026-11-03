@@ -5,10 +5,10 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // Watch faces get one gesture: press and hold. Holding on a reading opens
-// the widget of whatever complication it shows, other apps' included, and
-// holding on the date opens the calendar. In
-// the watch face editor, a tap on a reading picks its slot, and each edit
-// redraws.
+// the widget of whatever complication it shows, other apps' included,
+// holding on the date opens the calendar, and holding on the time steps
+// to the next look (Lib.Look). In the watch face editor, a tap on a
+// reading picks its slot, and each edit redraws.
 class OverlapDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as OverlapView;
@@ -19,10 +19,16 @@ class OverlapDelegate extends WatchUi.WatchFaceDelegate {
     }
 
     function onPress(clickEvent as ClickEvent) as Boolean {
+        var xy = clickEvent.getCoordinates();
+        if (_view.timeAt(xy[0], xy[1])) {
+            Lib.Look.next();
+            _view.reloadSettings();
+            WatchUi.requestUpdate();
+            return true;
+        }
         if (!(Toybox has :Complications)) {
             return false;
         }
-        var xy = clickEvent.getCoordinates();
         var id = _view.targetAt(xy[0], xy[1]);
         if (id == null) {
             return false;

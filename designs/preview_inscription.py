@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from PIL import Image, ImageDraw  # noqa: E402
-from preview_faces import (BEDSIDE, DATA, SS, Face, accent_color, bell, digit_font, font, glyph_mask,  # noqa: E402
+from preview_faces import (BEDSIDE, DATA, SS, Face, accent_color, bell, data_color, digit_font, font, glyph_mask,  # noqa: E402
                            options, outline_of, paint, reading, rgb, scale, word)
 
 L = dict(
@@ -117,6 +117,7 @@ def ink_centred(face, f, text, cx, mid):
 
 def render(path, mode="day", size=454, st=None, date="SATURDAY · 31 OCTOBER"):
     st = dict(DEFAULTS, **(st or {}))
+    L.update({k[2:]: v / 1000 for k, v in st.items() if k.startswith("L_")})   # a look's sizes, in thousandths
     sm = dict(SAMPLES["night" if mode in ("night", "bedside") else "day"])
     if "hours" in st:
         sm["hours"] = str(st["hours"])
@@ -130,7 +131,8 @@ def render(path, mode="day", size=454, st=None, date="SATURDAY · 31 OCTOBER"):
     cx = cy = W / 2
     r = px(L["radius"])
     dim = L["night"] if night else 1.0
-    data = scale(DATA[st["data"]][1], dim)
+    dim *= st.get("bright", 100) / 100
+    data = scale(data_color(st), dim)
     accent = scale(accent_color(st), dim)
 
     if not thin:    # the beaded rim
@@ -171,7 +173,7 @@ def render(path, mode="day", size=454, st=None, date="SATURDAY · 31 OCTOBER"):
     # The readings: nine o'clock, three o'clock (from their short words),
     # then the bottom, where the longest item steps down first
     value_c = scale(data, L["aod_value"] if thin else L["value"])
-    word_c = scale(data, L["aod_word"] if thin else L["word"])
+    word_c = scale(data, L["aod_word"] if thin else st.get("quiet", L["word"] * 100) / 100)
     slots = st["slots"]
     if not thin:
         side = math.radians(L["side_span"]) * r
