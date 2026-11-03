@@ -6,6 +6,12 @@ module Palette {
 
     const GRAY = 0x8A8A8A;
 
+    const SOIL = 0;
+    const CLAY = 1;
+    const MOSS = 2;
+    const SLATE = 3;
+    const SAND = 4;
+
     // The layers' colour by day and by night, one pair per Strata setting:
     // Soil, Clay, Moss, Slate, Sand. All about as bright, so a reading
     // reads the same on any of them.
@@ -13,14 +19,24 @@ module Palette {
     const STRATA_NIGHT = [0x3E4556, 0x573B34, 0x2C4A44, 0x2A466A, 0x4E4A40] as Array<Number>;
 
     // Every fourth layer, per Accent setting: the outside temperature,
-    // tone on tone (a paler strata), or Ochre, Lichen or Ember
+    // tone on tone (a paler strata), or Ochre, Lichen or Ember; then the
+    // looks' fluorescent orange, green and yellow-green (Lib.Look), which
+    // no setting offers
     const ACCENT_TEMPERATURE = 0;
     const ACCENT_TONE = 1;
-    const ACCENTS = [0, 0, 0xE0B050, 0x6FA8A0, 0xC8703E] as Array<Number>;
+    const ACCENTS = [0, 0, 0xE0B050, 0x6FA8A0, 0xC8703E, Lib.Look.BLAZE, Lib.Look.VOLT, Lib.Look.FLARE] as Array<Number>;
+    const OCHRE = 2;
+    const LICHEN = 3;
+    const EMBER = 4;
+    const BLAZE = 5;
+    const VOLT = 6;
+    const FLARE = 7;
     const MOONLIGHT = 0x9FB4C8;              // the temperature's layers at night: the strata half way to this
 
     // The time, per TimeColor setting: Bone, the accent, Sandstone
+    const TIME_BONE = 0;
     const TIME_ACCENT = 1;
+    const TIME_SANDSTONE = 2;
     const TIMES = [0xF2ECE2, 0, 0xD9B98C] as Array<Number>;
     const CREAM = 0xE6DCCB;
 

@@ -1,6 +1,13 @@
 <strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
     <string id="AppName">Strata</string>
 
+    <string id="LookTitle">Look</string>
+    <string id="LookPrompt">Or press and hold the time on the watch to step through the looks.</string>
+    <string id="LookYours">Your settings below</string>
+    <string id="LookBright">High visibility</string>
+    <string id="LookLow">Low light</string>
+    <string id="LookDaily">A new look each day</string>
+
     <string id="Slot1Title">First reading</string>
     <string id="Slot2Title">Second reading</string>
     <string id="Slot3Title">Third reading</string>

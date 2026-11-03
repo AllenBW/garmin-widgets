@@ -1,4 +1,6 @@
 <properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Lib.Look: 0 your settings below, 1 high visibility, 2 low light, 3 a new look each day -->
+    <property id="Look" type="number">0</property>
     <!-- The layers' colour (Palette.STRATA_DAY/STRATA_NIGHT): 0 Soil, 1 Clay, 2 Moss, 3 Slate, 4 Sand -->
     <property id="Strata" type="number">0</property>
     <!-- Every fourth layer (Palette.accent): 0 the outside temperature, 1 tone on tone, 2 Ochre, 3 Lichen, 4 Ember -->
