@@ -95,6 +95,9 @@ class FieldView extends WatchUi.WatchFace {
 
     // Signals are refreshed once a minute, not on every redraw
     private var _signalMinute as Number = -1;
+    // Today's sunrise and sunset, read once a minute rather than every frame
+    private var _sunMinute as Number = -1;
+    private var _sunTimes as [Number?, Number?] = [null, null];
     private var _rainChance as Number? = null;
     private var _pressureFalling as Boolean = false;
 
@@ -263,7 +266,7 @@ class FieldView extends WatchUi.WatchFace {
         dc.setColor(NIGHT, Graphics.COLOR_TRANSPARENT);
         Lib.Arcs.drawClockwise(dc, cx, cy, r, 0, 360, width);
 
-        var times = Lib.Sun.today();
+        var times = sunTimes();
         var rise = times[0];
         var set = times[1];
         if (rise != null && set != null && set > rise) {
@@ -299,6 +302,16 @@ class FieldView extends WatchUi.WatchFace {
             return steps.toFloat() / goal;
         }
         return null;
+    }
+
+    // Today's sunrise and sunset (Lib.Sun.today), refreshed each minute
+    private function sunTimes() as [Number?, Number?] {
+        var minute = System.getClockTime().min;
+        if (minute != _sunMinute) {
+            _sunMinute = minute;
+            _sunTimes = Lib.Sun.today();
+        }
+        return _sunTimes;
     }
 
     // --------------------------------------------------------------- signals
@@ -340,32 +353,34 @@ class FieldView extends WatchUi.WatchFace {
     }
 
     // True when the barometer has dropped by the storm-alert amount over the
-    // window: the oldest sample in the window against the newest.
+    // window: the oldest sample in the window against the newest, each read
+    // from its own end rather than walking the whole history
     private function pressureFalling() as Boolean {
         if (!(Toybox has :SensorHistory) || !(Toybox.SensorHistory has :getPressureHistory)) {
             return false;
         }
-        var iterator = SensorHistory.getPressureHistory({
-            :period => new Time.Duration(PRESSURE_WINDOW),
-            :order => SensorHistory.ORDER_NEWEST_FIRST
-        });
-        var newest = null;
-        var oldest = null;
-        var sample = iterator.next();
-        while (sample != null) {
-            var data = sample.data;
-            if (data != null) {
-                if (newest == null) {
-                    newest = data;
-                }
-                oldest = data;
-            }
-            sample = iterator.next();
-        }
+        var window = new Time.Duration(PRESSURE_WINDOW);
+        var newest = firstPressure(SensorHistory.getPressureHistory({:period => window, :order => SensorHistory.ORDER_NEWEST_FIRST}));
+        var oldest = firstPressure(SensorHistory.getPressureHistory({:period => window, :order => SensorHistory.ORDER_OLDEST_FIRST}));
         if (newest == null || oldest == null) {
             return false;
         }
         return (newest - oldest) <= PRESSURE_DROP;
+    }
+
+    // The first sample with data, giving up after a few empty ones
+    private function firstPressure(iterator as SensorHistory.SensorHistoryIterator) as Float? {
+        for (var i = 0; i < 5; i++) {
+            var sample = iterator.next();
+            if (sample == null) {
+                return null;
+            }
+            var data = sample.data;
+            if (data != null) {
+                return (data as Numeric).toFloat();
+            }
+        }
+        return null;
     }
 
     // Glyphs for whatever applies, centred on cx: rain (droplet + chance),
@@ -471,7 +486,7 @@ class FieldView extends WatchUi.WatchFace {
     // cx. The triangle is drawn, since the system fonts have no arrow glyphs.
     private function drawSunFooter(dc as Dc, cx as Number, y as Number, w as Number,
                                    textColor as ColorType, riseColor as ColorType, setColor as ColorType) as Void {
-        var next = Lib.Sun.next(Lib.Sun.today());
+        var next = Lib.Sun.next(sunTimes());
         if (next == null) {
             return;
         }
@@ -523,7 +538,7 @@ class FieldView extends WatchUi.WatchFace {
         // 2 px hairline ring in a quarter-brightness accent
         var ringR = w * 0.454;
         if (_ring == RING_DAYLIGHT) {
-            var times = Lib.Sun.today();
+            var times = sunTimes();
             var rise = times[0];
             var set = times[1];
             if (rise != null && set != null && set > rise) {
@@ -554,7 +569,7 @@ class FieldView extends WatchUi.WatchFace {
             Graphics.FONT_NUMBER_MEDIUM, timeString(), GRAY, center);
 
         // Next sun event, dim
-        var next = Lib.Sun.next(Lib.Sun.today());
+        var next = Lib.Sun.next(sunTimes());
         if (next != null) {
             var font = Graphics.FONT_XTINY;
             var text = Lib.Fmt.clock(next[1]);
