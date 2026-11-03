@@ -35,7 +35,7 @@ and screen image (454 × 454, the simulator's display cut round) are in
 
 | App | Store page | State |
 |---|---|---|
-| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 the same day (about 18 KB less memory), in review |
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), in review |
 | Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
@@ -46,13 +46,15 @@ and screen image (454 × 454, the simulator's display cut round) are in
 | Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
 | Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
+| Field | <https://apps.garmin.com/apps/482f6139-7e6d-432c-b448-762fa167a467> | Submitted 2026-11-03, in review |
 | Tally | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); going public needs a new app id |
 | Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
 | Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
 | Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
 
 Screenshots: the store takes at most five. Since 1.0.2 each face with
-looks (Vessel, Inscription, Overlap, Strata, Rings) also shows itself in
+looks (Vessel, Inscription, Overlap, Strata, Rings, and Field from its
+first upload) also shows itself in
 high visibility (`<face>-high-visibility.jpg`), taken from a throwaway
 copy with the look fixed. Sauna and Steam has the demo
 mode's screens (a round in the heat, the break, the rounds table, the
@@ -76,11 +78,15 @@ Category, then the description. Every app is free, with no ads and no
 data collected.
 
 **Field** (Watch face). An everyday face: the time large and legible, a
-24-hour daylight ring (or steps, or battery), three slots you choose
+24-hour daylight ring (or steps, or battery), three readings you choose
 (heart rate, steps and Body Battery by default), the next sunrise or
-sunset, and a row that lights up only for rain ahead, a falling barometer
-or a lost phone. Built for the fēnix 8's AMOLED screen, with a dim
-always-on mode that shifts each minute.
+sunset, and a row that lights up only for rain ahead, a falling
+barometer, a disconnected phone or do not disturb. Press and hold a
+reading to open it. Press and hold the time to switch looks: high
+visibility (the ring fluorescent orange, the text white), low light
+(ember and cream) or a new accent each day. The Look setting in the
+phone app picks one too. Built for the fēnix 8's AMOLED screen, with a
+dim always-on mode that shifts each minute.
 
 **Daylight** (Watch face). A 24-hour sun dial. The day's light runs round
 the edge, with golden hours marked and how much light is left, plus

@@ -13,40 +13,41 @@ import Toybox.WatchUi;
 function testLayers(logger as Logger) as Boolean {
     var started = System.getTimer();
     var layers = new Layers(454, 454);
-    logger.debug("scale: " + (System.getTimer() - started) + " ms, " + layers.lines.size() + " layers, " + layers.pebbles.size() + " pebbles");
+    logger.debug("scale: " + (System.getTimer() - started) + " ms, " + layers.count() + " layers, " + layers.pebbles.size() + " pebbles");
     Test.assertEqualMessage(layers.step, 8.0, "eight pixels between samples at 454");
-    Test.assertMessage(layers.lines.size() >= 30 && layers.lines.size() <= 120, "a dense field of layers, some in pieces: " + layers.lines.size());
+    Test.assertMessage(layers.count() >= 30 && layers.count() <= 120, "a dense field of layers, some in pieces: " + layers.count());
     var r2 = 224.5 * 224.5;   // the generator's disc, and the samples' rounding to tenths
     var accents = 0;
     var top = 999.0;
     var bottom = 0.0;
-    for (var k = 0; k < layers.lines.size(); k++) {
-        var ys = layers.lines[k];
-        Test.assertMessage(ys.size() >= 2, "a layer has at least one segment");
+    for (var k = 0; k < layers.count(); k++) {
+        var n = layers.length(k);
+        Test.assertMessage(n >= 2, "a layer has at least one segment");
         if (layers.isAccent(k)) {
             accents++;
         }
-        for (var i = 0; i < ys.size(); i++) {
-            var x = layers.starts[k] + i * layers.step;
-            var y = ys[i];
+        for (var i = 0; i < n; i++) {
+            var x = layers.start(k) + i * layers.step;
+            var y = layers.y(k, i);
             if (y < top) {
                 top = y;
             }
             if (y > bottom) {
                 bottom = y;
             }
-            if (i > 0 && i < ys.size() - 1) {
+            if (i > 0 && i < n - 1) {
                 // Only a layer's two end samples lie past the rim, so it reaches the edge
                 Test.assertMessage((x - 227.0) * (x - 227.0) + (y - 227.0) * (y - 227.0) < r2, "every inner sample is inside the disc: line " + k + " " + x + "," + y);
             }
         }
     }
     Test.assertMessage(top < 40.0 && bottom > 414.0, "the layers cover the whole face: " + top + " to " + bottom);
-    Test.assertMessage(accents >= 5 && accents * 3 <= layers.lines.size(), "about every fourth layer is the accent: " + accents);
-    Test.assertMessage(layers.aodLines.size() >= 5 && layers.aodLines.size() <= 15, "always-on has a few layers of its own: " + layers.aodLines.size());
+    Test.assertMessage(accents >= 5 && accents * 3 <= layers.count(), "about every fourth layer is the accent: " + accents);
+    Test.assertMessage(layers.aodCount() >= 5 && layers.aodCount() <= 15, "always-on has a few layers of its own: " + layers.aodCount());
     var aodSamples = 0;
-    for (var k = 0; k < layers.aodLines.size(); k++) {
-        aodSamples += layers.aodLines[k].size();
+    for (var k = layers.count(); k < layers.count() + layers.aodCount(); k++) {
+        aodSamples += layers.length(k);
+        Test.assertMessage(!layers.isAccent(k), "always-on's pieces take the accent their own way");
     }
     Test.assertMessage(aodSamples < 800, "always-on draws few enough segments for one frame: " + aodSamples);
     Test.assertMessage(layers.pebbles.size() > 0 && layers.pebbles.size() <= 48, "some pebbles, at most 48");
@@ -60,8 +61,11 @@ function testLayers(logger as Logger) as Boolean {
 
     // The 416 px screen gets the same field, scaled
     var small = new Layers(416, 416);
-    Test.assertEqualMessage(small.lines.size(), layers.lines.size(), "same layers at 416");
-    Test.assertMessage((small.lines[3][2] - layers.lines[3][2] * 416.0 / 454.0).abs() < 0.01, "scaled to 416");
+    Test.assertEqualMessage(small.count(), layers.count(), "same layers at 416");
+    Test.assertMessage((small.y(3, 2) - layers.y(3, 2) * 416.0 / 454.0).abs() < 0.01, "scaled to 416");
+    // the last sample of the last always-on piece is the last in the tables
+    var last = layers.count() + layers.aodCount() - 1;
+    Test.assertMessage(layers.y(last, layers.length(last) - 1) > 0.0, "every piece reads inside the tables");
     return true;
 }
 
