@@ -4,6 +4,8 @@
         <settingConfig type="list">
             <listEntry value="0">@Strings.LookYours</listEntry>
             <listEntry value="1">@Strings.LookBright</listEntry>
+            <listEntry value="4">@Strings.LookBrightBlue</listEntry>
+            <listEntry value="5">@Strings.LookBrightGreen</listEntry>
             <listEntry value="2">@Strings.LookLow</listEntry>
             <listEntry value="3">@Strings.LookDaily</listEntry>
         </settingConfig>

@@ -82,6 +82,8 @@ class StrataView extends WatchUi.WatchFace {
     // The looks (Lib.Look): [strata, every fourth layer, the time's colour,
     // 1 for the layers dimmed and the text white]
     private const BRIGHT = [Palette.SLATE, Palette.BLAZE, Palette.TIME_ACCENT, 1] as Array<Number>;
+    private const BRIGHT_BLUE = [Palette.SLATE, Palette.ARC, Palette.TIME_ACCENT, 1] as Array<Number>;
+    private const BRIGHT_GREEN = [Palette.SLATE, Palette.VOLT, Palette.TIME_ACCENT, 1] as Array<Number>;
     private const LOW = [Palette.SOIL, Palette.EMBER, Palette.TIME_SANDSTONE, 0] as Array<Number>;
     // The personas, the next each day: Moss, Clay, Sand, then the time in
     // the accent's colour (Ochre, Lichen, Ember), then the fluorescents
@@ -177,7 +179,8 @@ class StrataView extends WatchUi.WatchFace {
         _timeColorValue = null;
         readEditor();
         _look = Lib.Look.mode();
-        var look = (_look == Lib.Look.BRIGHT) ? BRIGHT : ((_look == Lib.Look.LOW) ? LOW : null);
+        var look = (_look == Lib.Look.BRIGHT) ? BRIGHT : (_look == Lib.Look.BRIGHT_BLUE) ? BRIGHT_BLUE
+                   : (_look == Lib.Look.BRIGHT_GREEN) ? BRIGHT_GREEN : ((_look == Lib.Look.LOW) ? LOW : null);
         if (_look == Lib.Look.DAILY) {
             look = PERSONAS[Lib.Look.day(PERSONAS.size())];
         }

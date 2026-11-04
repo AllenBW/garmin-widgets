@@ -119,7 +119,7 @@ function testOverlapLooks(logger as Logger) as Boolean {
     view.onLayout(dc);
     Application.Storage.setValue(Lib.Look.KEY, Lib.Look.LOW);
     for (var m = 0; m < Lib.Look.MODES; m++) {
-        Test.assertEqualMessage(Lib.Look.next(), (m + 3) % Lib.Look.MODES, "the next look");
+        Test.assertEqualMessage(Lib.Look.next(), Lib.Look.ORDER[(Lib.Look.ORDER.indexOf(Lib.Look.LOW) + m + 1) % Lib.Look.MODES], "the next look");
         view.reloadSettings();
         view.onUpdate(dc);
         view.setAwake(false);

@@ -101,13 +101,17 @@ class RingsView extends WatchUi.WatchFace {
         _look = Lib.Look.mode();
         if (_look == Lib.Look.BRIGHT) {
             theme = Themes.BRIGHT;
+        } else if (_look == Lib.Look.BRIGHT_BLUE) {
+            theme = Themes.BRIGHT_BLUE;
+        } else if (_look == Lib.Look.BRIGHT_GREEN) {
+            theme = Themes.BRIGHT_GREEN;
         } else if (_look == Lib.Look.LOW) {
             theme = Themes.LOW;
         } else if (_look == Lib.Look.DAILY) {
             theme = Themes.PERSONAS[Lib.Look.day(Themes.PERSONAS.size())];
         }
         _theme = Themes.colors(theme);
-        _white = (_look == Lib.Look.BRIGHT) ? Lib.Look.WHITE : ((_look == Lib.Look.LOW) ? Lib.Look.CREAM : WHITE);
+        _white = Lib.Look.bright(_look) ? Lib.Look.WHITE : ((_look == Lib.Look.LOW) ? Lib.Look.CREAM : WHITE);
     }
 
     // Whether (x, y) is on the time, where a hold steps to the next look

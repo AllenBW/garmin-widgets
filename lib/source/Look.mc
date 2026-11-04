@@ -5,24 +5,28 @@ import Toybox.Time;
 
 module Lib {
 
-    // A face's look: the settings as chosen (YOURS), two looks for seeing it
-    // easily (BRIGHT, high visibility: white and fluorescent orange, the
-    // readings larger; LOW, low light: the same sizes in warm cream), and
+    // A face's look: the settings as chosen (YOURS), looks for seeing it
+    // easily (high visibility: white and a fluorescent colour, the readings
+    // larger, in orange (BRIGHT), blue (BRIGHT_BLUE) or green
+    // (BRIGHT_GREEN); LOW, low light: the same sizes in warm cream), and
     // DAILY, one of the face's personas, the next each day. Holding the time
-    // steps through them in that order; the phone app's "Look" setting
-    // picks one too, and whichever was changed last wins. Each face draws
-    // the looks its own way; this keeps which one is on.
+    // steps through them in ORDER; the phone app's "Look" setting picks one
+    // too, and whichever was changed last wins. Each face draws the looks
+    // its own way; this keeps which one is on. The numbers are stored on
+    // watches, so new looks take new numbers at the end.
     (:look)
     module Look {
 
-        enum Mode { YOURS, BRIGHT, LOW, DAILY }
-        const MODES = 4;
+        enum Mode { YOURS, BRIGHT, LOW, DAILY, BRIGHT_BLUE, BRIGHT_GREEN }
+        const MODES = 6;
+        const ORDER = [YOURS, BRIGHT, BRIGHT_BLUE, BRIGHT_GREEN, LOW, DAILY] as Array<Number>;
         const SHOWN = 2500;        // ms the look's name stands in for the date after a hold
 
         // The looks' colours
         const BLAZE = 0xFF6A13;    // fluorescent orange: high visibility's accent
         const VOLT = 0x5CFF2E;     // fluorescent green
         const FLARE = 0xD4FF1A;    // fluorescent yellow-green
+        const ARC = 0x2EA8FF;      // electric blue
         const WHITE = 0xFFFFFF;
         const CREAM = 0xF0D2A8;    // low light's text
         const GLOW = 0xFF9A3C;     // and its accent
@@ -41,9 +45,19 @@ module Lib {
             return (m instanceof Number && m >= 0 && m < MODES) ? m : YOURS;
         }
 
+        // Any of the high visibility looks
+        function bright(m as Number) as Boolean {
+            return m == BRIGHT || m == BRIGHT_BLUE || m == BRIGHT_GREEN;
+        }
+
+        // A high visibility look's colour (orange for any other look)
+        function blaze(m as Number) as Number {
+            return (m == BRIGHT_BLUE) ? ARC : ((m == BRIGHT_GREEN) ? VOLT : BLAZE);
+        }
+
         // A hold on the time: the next look, its name shown for a moment
         function next() as Number {
-            var m = (mode() + 1) % MODES;
+            var m = ORDER[(ORDER.indexOf(mode()) + 1) % MODES];
             Application.Storage.setValue(KEY, m);
             changedAt = System.getTimer();
             return m;
@@ -79,7 +93,13 @@ module Lib {
         // The look's name, in capitals: a persona's from `names`
         function title(m as Number, names as Array<String>) as String {
             if (m == BRIGHT) {
-                return "HIGH VIS";
+                return "HI-VIS ORANGE";
+            }
+            if (m == BRIGHT_BLUE) {
+                return "HI-VIS BLUE";
+            }
+            if (m == BRIGHT_GREEN) {
+                return "HI-VIS GREEN";
             }
             if (m == LOW) {
                 return "LOW LIGHT";

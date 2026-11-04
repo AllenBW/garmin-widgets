@@ -122,7 +122,8 @@ no code was copied.
   (sidereal time, the Sun, Moon and planets in the sky), `Cues` (the
   button cues at Garmin's hint angles, and which cue a touch landed on),
   `Daily` (the everyday readings Today, Strata and Rings share) and `Look`
-  (the looks a hold on the time steps through: high visibility, low light,
+  (the looks a hold on the time steps through: high visibility in orange,
+  blue or green, low light,
   a persona a day).
 
 > **Status:** Field compiles cleanly at the strict type-check level for the
