@@ -49,8 +49,9 @@ the Summary tab selected.
 
 ## Privacy
 
-The link can only add rows: nothing in the sheet can be read through
-it, but anyone who has the link could add rows, so keep it to yourself.
+Nothing in the sheet can be read through the link, but anyone who has
+it could add rows, or change or delete the ones the watch sent, so keep
+it to yourself.
 The sheet sits in your own Google account, under your control, and is
 yours to look after, the more so if it holds someone's health
 information. A changed script needs Deploy → Manage deployments → edit →
