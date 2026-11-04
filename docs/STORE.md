@@ -35,22 +35,22 @@ and screen image (454 × 454, the simulator's display cut round) are in
 
 | App | Store page | State |
 |---|---|---|
-| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 the same day (about 18 KB less memory), in review |
-| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks), in review |
+| Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 the same day (about 18 KB less memory); 1.0.4 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
+| Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
 | Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), in review |
-| Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, in review |
-| Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31, in review |
-| Daylight | <https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c> | Submitted 2026-10-31, in review |
-| Horizon | <https://apps.garmin.com/apps/c4305cc0-41b2-4604-9ab0-87e40858e8a4> | Submitted 2026-10-31, in review |
-| Night Sky | <https://apps.garmin.com/apps/a9a5898b-4678-42e7-bb82-3ac7f378b438> | Submitted 2026-10-31, in review |
-| Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, in review |
-| Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, in review |
+| Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31, approved 2026-11-03 |
+| Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31, approved 2026-11-03 |
+| Daylight | <https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c> | Submitted 2026-10-31, approved 2026-11-03 |
+| Horizon | <https://apps.garmin.com/apps/c4305cc0-41b2-4604-9ab0-87e40858e8a4> | Submitted 2026-10-31, approved 2026-11-03 |
+| Night Sky | <https://apps.garmin.com/apps/a9a5898b-4678-42e7-bb82-3ac7f378b438> | Submitted 2026-10-31, approved 2026-11-03 |
+| Sun and Moon | <https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c> | Submitted 2026-10-31, approved 2026-11-03 |
+| Sun Compass | <https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4> | Submitted 2026-10-31, approved 2026-11-03 |
 | Sound Level | Beta app (only the developer sees it) | Submitted 2026-10-31 as a beta; going public needs a new app id in its manifest |
-| Field | <https://apps.garmin.com/apps/482f6139-7e6d-432c-b448-762fa167a467> | Submitted 2026-11-03, in review |
-| Tally | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); 1.0.1 the same day (taps that log, readable text, History, past entries); going public needs a new app id |
-| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
-| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
-| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks), in review |
+| Field | <https://apps.garmin.com/apps/482f6139-7e6d-432c-b448-762fa167a467> | Submitted 2026-11-03; 1.0.1 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
+| Tally | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); 1.0.1 the same day (taps that log, readable text, History, past entries); 1.0.2 on 2026-11-04 (buttons made and changed on the watch); going public needs a new app id |
+| Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
+| Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
+| Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), in review |
 
 Screenshots: the store takes at most five. Since 1.0.2 each face with
 looks (Vessel, Inscription, Overlap, Strata, Rings, and Field from its
@@ -82,11 +82,14 @@ data collected.
 (heart rate, steps and Body Battery by default), the next sunrise or
 sunset, and a row that lights up only for rain ahead, a falling
 barometer, a disconnected phone or do not disturb. Press and hold a
-reading to open it. Press and hold the time to switch looks: high
-visibility (the ring fluorescent orange, blue or green, the text white), low light
-(ember and cream) or a new accent each day. The Look setting in the
-phone app picks one too. Built for the fēnix 8's AMOLED screen, with a
-dim always-on mode that shifts each minute.
+reading to open it. To change the look, press and hold the time (the big
+numbers). Each hold moves to the next look and shows its name for a
+moment where the date is: your own settings, high visibility in orange,
+then blue, then green (the ring fluorescent, the text white), low light
+for a dark room (ember and cream), a new accent each day, and back to
+your own. The Look setting in the phone app picks one too. Built for the
+fēnix 8's AMOLED screen, with a dim always-on mode that shifts each
+minute.
 
 **Daylight** (Watch face). A 24-hour sun dial. The day's light runs round
 the edge, with golden hours marked and how much light is left, plus
@@ -123,18 +126,23 @@ layers that part round each one like water round a stone. The time is
 cut cleanly out of the layers, a stone turns up for every quarter mile
 walked, and the moon sits at the foot. Choose the colours and what each
 of the four readings shows (temperature, rain, heart rate, distance,
-Body Battery, elevation, humidity, wind, battery or steps). Press and
-hold the time to switch looks: high visibility in orange, blue or green
-(the layers dimmed, the time fluorescent, the text white), low light (soil, ember and
-sandstone) or a new look each day. The Look setting in the phone app
-picks one too.
+Body Battery, elevation, humidity, wind, battery or steps). To change
+the look, press and hold the time (the big numbers). Each hold moves to
+the next look and shows its name for a moment where the date is: your
+own settings, high visibility in orange, then blue, then green (the
+layers dimmed, the time fluorescent, the text white), low light for a
+dark room (soil, ember and sandstone), a new look each day, and back to
+your own. The Look setting in the phone app picks one too.
 
 **Rings** (Watch face). Three goal rings open to the right (steps,
 floors and Body Battery) with their numbers written along the curves,
-and the day's readings down the right side. Three colour sets. Press and
-hold the time to switch looks: high visibility in orange, blue or green
-(fluorescent rings, the text white), low light (ember and cream) or a new
-colour set each day. The Look setting in the phone app picks one too.
+and the day's readings down the right side. Three colour sets. To change
+the look, press and hold the time (the big numbers). Each hold moves to
+the next look and shows its name for a moment where the date is: your
+own settings, high visibility in orange, then blue, then green
+(fluorescent rings, the text white), low light for a dark room (ember
+and cream), a new colour set each day, and back to your own. The Look
+setting in the phone app picks one too.
 
 **Vessel** (Watch face). The time as two glasses that fill to your
 readings: the hours fill to the temperature (between today's low and
@@ -144,11 +152,13 @@ for each glass and the foot (complications from other apps too), any
 accent colour, a data colour and one of three typefaces, in the watch's
 own face editor or the phone app. Press and hold a reading to open it. A
 dim always-on mode keeps the waterlines, and a red bedside clock takes
-over during your sleep hours. Press and hold the time to switch looks:
-high visibility (white and fluorescent orange, blue or green, the
-readings larger), low
-light (the same in warm cream) or a new look each day. The Look setting
-in the phone app picks one too.
+over during your sleep hours. To change the look, press and hold the
+time (the big numbers). Each hold moves to the next look and shows its
+name for a moment where the date is: your own settings, high visibility
+in orange, then blue, then green (white with the fluorescent colour, the
+readings larger), low light for a dark room (the same in warm cream), a
+new look each day, and back to your own. The Look setting in the phone
+app picks one too.
 
 **Inscription** (Watch face). A coin: the time struck large in the
 middle, the date and five readings set round the rim in capitals inside
@@ -157,10 +167,13 @@ steps and the next sunrise or sunset. Choose each reading (complications
 from other apps too), any accent colour, a data colour and the typeface
 (a serif by default), in the watch's own face editor or the phone app.
 Press and hold a reading to open it. A dim always-on mode and a red
-bedside clock during your sleep hours. Press and hold the time to switch
-looks: high visibility (white and fluorescent orange, blue or green, the
-legend larger), low light (the same in warm cream) or a new look each day. The
-Look setting in the phone app picks one too.
+bedside clock during your sleep hours. To change the look, press and
+hold the time (the big numbers). Each hold moves to the next look and
+shows its name for a moment where the date is: your own settings, high
+visibility in orange, then blue, then green (white with the fluorescent
+colour, the legend larger), low light for a dark room (the same in warm
+cream), a new look each day, and back to your own. The Look setting in
+the phone app picks one too.
 
 **Overlap** (Watch face). A poster for your wrist: the hours enormous
 and quiet, cropped by the edge of the screen and tinted by your accent,
@@ -169,10 +182,13 @@ tucked below (the next sunrise or sunset and the temperature). Choose
 the readings (complications from other apps too), any accent colour, a
 data colour and one of three typefaces, in the watch's own face editor
 or the phone app. A dim always-on mode and a red bedside clock during
-your sleep hours. Press and hold the time to switch looks: high
-visibility (white and fluorescent orange, blue or green, the first
-reading alone and larger), low light (the same in warm cream) or a new look each day. The
-Look setting in the phone app picks one too.
+your sleep hours. To change the look, press and hold the time (the big
+numbers). Each hold moves to the next look and shows its name for a
+moment where the date is: your own settings, high visibility in orange,
+then blue, then green (white with the fluorescent colour, the first
+reading alone and larger), low light for a dark room (the same in warm
+cream), a new look each day, and back to your own. The Look setting in
+the phone app picks one too.
 
 **Battery Planner** (Widget). Tells you when to charge. It records the
 battery every half hour, learns your drain over the last week and projects
@@ -197,21 +213,22 @@ your phone; LAP marks the door by hand at any time.
 **Tally** (Tools). Buttons you make, one tap to log, and the pattern
 they draw. Set up to twelve buttons on your phone (Garmin Connect, the
 app's settings): a name, a colour, normal or large, and the hours each
-shows, so the morning's buttons give way to the evening's. On the watch
-they sit in a ring; a tap logs the moment with a buzz, and a tap in the
-middle within six seconds takes it back. The All list has every button,
-every name used in the last 90 days, and Other for anything unexpected,
-typed on the watch; add an entry you missed earlier, or open History to
-change or delete one. Swipe for the last two weeks: a ring per day with
-each entry a dot at its time, so a habit lines up as a spoke ("usually
-7:55, 12 of 14 days"); a strip of what came before; and which buttons
-tend to come before one, against the days it didn't happen. The glance
-shows the newest entry and how long ago. Optionally every entry also
-goes to a Google Sheet of your own, with a summary for sharing (setup
-guide: github.com/AllenBW/garmin-widgets/tree/main/apps/tally/sheet).
-The entries stay on your watch and in your own sheet; nothing else is
-collected. It shows what happened together, not what caused what, and is
-not a medical device.
+shows, so the morning's buttons give way to the evening's. Buttons can
+be added, renamed, recoloured, resized and removed on the watch too
+(All, then Buttons). On the watch they sit in a ring; a tap logs the
+moment with a buzz, and a tap in the middle within six seconds takes it
+back. The All list has every button, every name used in the last 90
+days, and Other for anything unexpected, typed on the watch; add an
+entry you missed earlier, or open History to change or delete one. Swipe
+for the last two weeks: a ring per day with each entry a dot at its
+time, so a habit lines up as a spoke ("usually 7:55, 12 of 14 days"); a
+strip of what came before; and which buttons tend to come before one,
+against the days it didn't happen. The glance shows the newest entry and
+how long ago. Optionally every entry also goes to a Google Sheet of your
+own, with a summary for sharing (setup guide: github.com/AllenBW/garmin-
+widgets/tree/main/apps/tally/sheet). The entries stay on your watch and
+in your own sheet; nothing else is collected. It shows what happened
+together, not what caused what, and is not a medical device.
 
 **Sound Level** (Tools). Experimental. An approximate sound level meter
 from the watch microphone: the level in decibels coloured by how loud it
