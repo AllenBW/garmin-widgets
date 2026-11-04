@@ -83,7 +83,7 @@ data collected.
 sunset, and a row that lights up only for rain ahead, a falling
 barometer, a disconnected phone or do not disturb. Press and hold a
 reading to open it. Press and hold the time to switch looks: high
-visibility (the ring fluorescent orange, the text white), low light
+visibility (the ring fluorescent orange, blue or green, the text white), low light
 (ember and cream) or a new accent each day. The Look setting in the
 phone app picks one too. Built for the fēnix 8's AMOLED screen, with a
 dim always-on mode that shifts each minute.
@@ -124,16 +124,16 @@ cut cleanly out of the layers, a stone turns up for every quarter mile
 walked, and the moon sits at the foot. Choose the colours and what each
 of the four readings shows (temperature, rain, heart rate, distance,
 Body Battery, elevation, humidity, wind, battery or steps). Press and
-hold the time to switch looks: high visibility (the layers dimmed, the
-time fluorescent orange, the text white), low light (soil, ember and
+hold the time to switch looks: high visibility in orange, blue or green
+(the layers dimmed, the time fluorescent, the text white), low light (soil, ember and
 sandstone) or a new look each day. The Look setting in the phone app
 picks one too.
 
 **Rings** (Watch face). Three goal rings open to the right (steps,
 floors and Body Battery) with their numbers written along the curves,
 and the day's readings down the right side. Three colour sets. Press and
-hold the time to switch looks: high visibility (fluorescent rings, the
-time orange, the text white), low light (ember and cream) or a new
+hold the time to switch looks: high visibility in orange, blue or green
+(fluorescent rings, the text white), low light (ember and cream) or a new
 colour set each day. The Look setting in the phone app picks one too.
 
 **Vessel** (Watch face). The time as two glasses that fill to your
@@ -145,7 +145,8 @@ accent colour, a data colour and one of three typefaces, in the watch's
 own face editor or the phone app. Press and hold a reading to open it. A
 dim always-on mode keeps the waterlines, and a red bedside clock takes
 over during your sleep hours. Press and hold the time to switch looks:
-high visibility (white and fluorescent orange, the readings larger), low
+high visibility (white and fluorescent orange, blue or green, the
+readings larger), low
 light (the same in warm cream) or a new look each day. The Look setting
 in the phone app picks one too.
 
@@ -157,8 +158,8 @@ from other apps too), any accent colour, a data colour and the typeface
 (a serif by default), in the watch's own face editor or the phone app.
 Press and hold a reading to open it. A dim always-on mode and a red
 bedside clock during your sleep hours. Press and hold the time to switch
-looks: high visibility (white and fluorescent orange, the legend
-larger), low light (the same in warm cream) or a new look each day. The
+looks: high visibility (white and fluorescent orange, blue or green, the
+legend larger), low light (the same in warm cream) or a new look each day. The
 Look setting in the phone app picks one too.
 
 **Overlap** (Watch face). A poster for your wrist: the hours enormous
@@ -169,8 +170,8 @@ the readings (complications from other apps too), any accent colour, a
 data colour and one of three typefaces, in the watch's own face editor
 or the phone app. A dim always-on mode and a red bedside clock during
 your sleep hours. Press and hold the time to switch looks: high
-visibility (white and fluorescent orange, the first reading alone and
-larger), low light (the same in warm cream) or a new look each day. The
+visibility (white and fluorescent orange, blue or green, the first
+reading alone and larger), low light (the same in warm cream) or a new look each day. The
 Look setting in the phone app picks one too.
 
 **Battery Planner** (Widget). Tells you when to charge. It records the

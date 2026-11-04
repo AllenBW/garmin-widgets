@@ -126,8 +126,8 @@ class FieldView extends WatchUi.WatchFace {
         _time = WHITE;
         _text = GRAY;
         _label = DIM;
-        if (_look == Lib.Look.BRIGHT) {
-            _accent = Lib.Look.BLAZE;
+        if (Lib.Look.bright(_look)) {
+            _accent = Lib.Look.blaze(_look);
             _time = Lib.Look.WHITE;
             _text = Lib.Look.WHITE;
             _label = GRAY;

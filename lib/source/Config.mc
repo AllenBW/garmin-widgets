@@ -85,8 +85,8 @@ module Lib {
         // light in the first typeface, a persona in the face's own choice
         // (`styles`, one per persona); the readings and bedside clock as set
         function look(s as Settings, mode as Number, styles as Array<Number>) as Settings {
-            if (mode == Look.BRIGHT) {
-                return [0, Look.BLAZE, Look.WHITE, s[3], s[4]];
+            if (Look.bright(mode)) {
+                return [0, Look.blaze(mode), Look.WHITE, s[3], s[4]];
             }
             if (mode == Look.LOW) {
                 return [0, Look.GLOW, Look.CREAM, s[3], s[4]];
@@ -100,7 +100,7 @@ module Lib {
 
         // Icons' and quiet text's share of the data colour in a look
         function quiet(mode as Number) as Float {
-            return (mode == Look.BRIGHT) ? 1.0 : ((mode == Look.LOW) ? 0.85 : QUIET);
+            return Look.bright(mode) ? 1.0 : ((mode == Look.LOW) ? 0.85 : QUIET);
         }
 
         function changedOnPhone() as Void {

@@ -228,6 +228,8 @@ function testLooks(logger as Logger) as Boolean {
     Test.assertMessage(!Lib.Look.shown(), "no name yet");
     Test.assertEqualMessage(Lib.Look.next(), Lib.Look.BRIGHT, "a hold: high visibility");
     Test.assertMessage(Lib.Look.shown(), "its name shows");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.BRIGHT_BLUE, "then in blue");
+    Test.assertEqualMessage(Lib.Look.next(), Lib.Look.BRIGHT_GREEN, "and green");
     Test.assertEqualMessage(Lib.Look.next(), Lib.Look.LOW, "then low light");
     Test.assertEqualMessage(Lib.Look.next(), Lib.Look.DAILY, "then the day's persona");
     Test.assertEqualMessage(Lib.Look.next(), Lib.Look.YOURS, "and round");
@@ -247,7 +249,7 @@ function testLooks(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Look.dayOf(0, 7), 0, "day 0");
     Test.assertEqualMessage(Lib.Look.dayOf(20398, 7) == Lib.Look.dayOf(20399, 7), false, "the next day, the next persona");
     Test.assertEqualMessage(Lib.Look.dayOf(-1, 7), 6, "never negative");
-    Test.assertEqualMessage(Lib.Look.title(Lib.Look.BRIGHT, Lib.Config.NAMES), "HIGH VIS", "high visibility's name");
+    Test.assertEqualMessage(Lib.Look.title(Lib.Look.BRIGHT, Lib.Config.NAMES), "HI-VIS ORANGE", "high visibility's name");
     var today = Lib.Look.title(Lib.Look.DAILY, Lib.Config.NAMES);
     Test.assertMessage(Lib.Config.NAMES.indexOf(today) >= 0, "the day's persona by name: " + today);
 
@@ -261,6 +263,10 @@ function testLooks(logger as Logger) as Boolean {
     Test.assertMessage(d[0] == 2 && d[1] == Lib.Config.PERSONAS[p][0] && d[2] == Lib.Config.PERSONAS[p][1], "the day's persona");
     Test.assertEqualMessage(Lib.Config.look(s, Lib.Look.YOURS, [] as Array<Number>), s, "yours as set");
     Test.assertEqualMessage(Lib.Config.quiet(Lib.Look.BRIGHT), 1.0, "icons at full in high visibility");
+    var blue = Lib.Config.look(s, Lib.Look.BRIGHT_BLUE, [1, 1, 1, 1, 1, 1, 1] as Array<Number>);
+    var green = Lib.Config.look(s, Lib.Look.BRIGHT_GREEN, [1, 1, 1, 1, 1, 1, 1] as Array<Number>);
+    Test.assertMessage(blue[1] == Lib.Look.ARC && green[1] == Lib.Look.VOLT && green[2] == Lib.Look.WHITE, "high visibility in blue and green");
+    Test.assertMessage(!Lib.Look.bright(Lib.Look.LOW) && Lib.Look.bright(Lib.Look.BRIGHT_GREEN), "which looks are high visibility");
 
     // the face in each look, with the look's name over the time
     var settings = System.getDeviceSettings();

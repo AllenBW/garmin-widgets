@@ -124,7 +124,7 @@ class VesselView extends WatchUi.WatchFace {
     function reloadSettings() as Void {
         var look = Lib.Look.mode();
         var s = Lib.Config.look(Lib.Config.read(FACES.size(), DEFAULTS), look, STYLES);
-        var big = look == Lib.Look.BRIGHT || look == Lib.Look.LOW;
+        var big = Lib.Look.bright(look) || look == Lib.Look.LOW;
         var restyled = s[0] != _style || big != _big;
         _look = look;
         _big = big;

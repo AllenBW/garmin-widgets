@@ -243,7 +243,7 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
     // Each look, the hold stepping from one to the next, the layers redrawn in its colours
     Application.Storage.deleteValue(Lib.Look.KEY);
     for (var m = 0; m < Lib.Look.MODES; m++) {
-        Test.assertEqualMessage(Lib.Look.next(), (m + 1) % Lib.Look.MODES, "the next look");
+        Test.assertEqualMessage(Lib.Look.next(), Lib.Look.ORDER[(m + 1) % Lib.Look.MODES], "the next look");
         view.reloadSettings();
         for (var f = 0; f < 7; f++) {
             view.onUpdate(dc);

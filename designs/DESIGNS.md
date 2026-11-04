@@ -1301,7 +1301,7 @@ personas, the next each day, so a set of seven comes round once a week).
 Press and hold the time to step through them in that order (the only
 in-face gesture: a tap reaches a face only in the editor); the date shows
 the look's name for 2.5 s. The phone app's settings gain a Look list at
-the top with the same four; whichever was changed last wins (a change to
+the top with the same looks; whichever was changed last wins (a change to
 another setting leaves a held look alone). The watch's face editor has no
 place for it. On Vessel the digits are the hold (each glass's number
 still opens its reading), and in the editor they still pick the slot.
@@ -1314,6 +1314,15 @@ still opens its reading), and in the editor they still pick the slot.
   corner being tight; Strata's layers dimmed to 55 % and the time orange
   (its clearings are generated for fixed sizes, so nothing grows); Rings'
   rings fluorescent; Field's ring orange and its text white.
+- **High visibility in blue and green** (owner, 2026-11-04: "add a few
+  different high-vis settings, like blue and green, in addition to
+  orange"): the same look with electric blue (`#2EA8FF`, `Lib.Look.ARC`)
+  or fluorescent green (`#5CFF2E`, VOLT) in place of the orange. They
+  are modes 4 and 5 (the numbers are stored on watches, so they go at
+  the end), held and listed after orange: yours, orange, blue, green,
+  low light, daily (`Lib.Look.ORDER`). The name shown after a hold is
+  HI-VIS ORANGE, BLUE or GREEN. Rings takes three hues per look so its
+  rings stay apart: cyan, blue and violet; yellow-green, green and mint.
 - **Low light:** the same sizes in warm cream (`#F0D2A8`) and a soft
   orange (`#FF9A3C`). Dimming everything was tried first and read muddy.
 - **Personas:** bold typefaces only (the thin ones are hard at a

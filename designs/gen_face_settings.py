@@ -10,9 +10,10 @@ the ones Lib.Config.read expects:
 - Reading1..ReadingN: any complication in the editor; on the phone, the Garmin
   readings Lib.Slots has an icon and a word for
 - Bedside: the dim red bedside clock in standby during sleep hours
-- Look (first on the phone): your settings, high visibility, low light or
-  a new persona each day (Lib.Look); holding the time on the watch steps
-  through the same four, and the editor has no place for it
+- Look (first on the phone): your settings, high visibility in orange,
+  blue or green, low light or a new persona each day (Lib.Look); holding
+  the time on the watch steps through the same six, and the editor has no
+  place for it
 
     python3 designs/gen_face_settings.py vessel|inscription|overlap
 
@@ -29,9 +30,10 @@ ROOT = Path(__file__).resolve().parent.parent
 ACCENTS = [("Amber", "0xFFB020"), ("Lime", "0x8CE03C"), ("Sky", "0x38A8FF"), ("Flame", "0xFF5A36"),
            ("Mint", "0x2EE6B0"), ("Violet", "0xA77BFF"), ("Rose", "0xFF5C9E"), ("Gold", "0xE8D44A")]
 DATA = [("Bone", "0xF2ECE2"), ("Silver", "0xB4BAC2"), ("Sand", "0xE6CFA0"), ("Ice", "0xCFE6FF"), ("Blush", "0xF8D2D8")]
-# Lib.Look's modes, in its order
-LOOKS = [("Yours", "Your settings below"), ("Bright", "High visibility"), ("Low", "Low light"),
-         ("Daily", "A new look each day")]
+# Lib.Look's modes in its ORDER, with their numbers (new looks take new numbers)
+LOOKS = [("Yours", "Your settings below", 0), ("Bright", "High visibility, orange", 1),
+         ("BrightBlue", "High visibility, blue", 4), ("BrightGreen", "High visibility, green", 5),
+         ("Low", "Low light", 2), ("Daily", "A new look each day", 3)]
 
 # Complications.Type numbers (the SDK's api.mir) and their names, in the
 # phone list's order. Sunrise stands for both sun events: Lib.Slots.SUN
@@ -110,7 +112,7 @@ def main(face):
     (res / "configs/watchface.xml").write_text(cfg)
 
     p = HEAD.format("properties") + NOTE
-    p += f"    <!-- Lib.Look: {', '.join(f'{i} {n}' for i, (_, n) in enumerate(LOOKS))} -->\n"
+    p += f"    <!-- Lib.Look: {', '.join(f'{i} {n}' for _, n, i in sorted(LOOKS, key=lambda look: look[2]))} -->\n"
     p += '    <property id="Look" type="number">0</property>\n'
     p += f"    <!-- The style: {', '.join(f'{i} {s}' for i, s in enumerate(f['styles']))} -->\n"
     p += '    <property id="Style" type="number">0</property>\n'
@@ -134,7 +136,7 @@ def main(face):
     s = HEAD.format("settings") + NOTE
     s += '    <setting propertyKey="@Properties.Look" title="@Strings.LookTitle" prompt="@Strings.LookPrompt">\n'
     s += '        <settingConfig type="list">\n'
-    s += "".join(f'            <listEntry value="{i}">@Strings.Look{k}</listEntry>\n' for i, (k, _) in enumerate(LOOKS))
+    s += "".join(f'            <listEntry value="{i}">@Strings.Look{k}</listEntry>\n' for k, _, i in LOOKS)
     s += "        </settingConfig>\n    </setting>\n"
     s += lst("Style", "StyleTitle", [(i, "Style" + key(n)) for i, n in enumerate(f["styles"])])
     s += lst("Accent", "AccentTitle", [(i, "Accent" + n) for i, (n, _) in enumerate(ACCENTS)])
@@ -149,7 +151,7 @@ def main(face):
     st += f'    <string id="AppName">{f["name"]}</string>\n'
     st += '    <string id="LookTitle">Look</string>\n'
     st += '    <string id="LookPrompt">Or press and hold the time on the watch to step through the looks.</string>\n'
-    st += "".join(f'    <string id="Look{k}">{n}</string>\n' for k, n in LOOKS)
+    st += "".join(f'    <string id="Look{k}">{n}</string>\n' for k, n, _ in LOOKS)
     st += '    <string id="StyleTitle">Typeface</string>\n'
     st += "".join(f'    <string id="Style{key(n)}">{n}</string>\n' for n in f["styles"])
     st += '    <string id="AccentTitle">Accent color</string>\n'

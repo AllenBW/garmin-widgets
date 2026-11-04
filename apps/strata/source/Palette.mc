@@ -20,17 +20,18 @@ module Palette {
 
     // Every fourth layer, per Accent setting: the outside temperature,
     // tone on tone (a paler strata), or Ochre, Lichen or Ember; then the
-    // looks' fluorescent orange, green and yellow-green (Lib.Look), which
-    // no setting offers
+    // looks' fluorescent orange, green and yellow-green and electric blue
+    // (Lib.Look), which no setting offers
     const ACCENT_TEMPERATURE = 0;
     const ACCENT_TONE = 1;
-    const ACCENTS = [0, 0, 0xE0B050, 0x6FA8A0, 0xC8703E, Lib.Look.BLAZE, Lib.Look.VOLT, Lib.Look.FLARE] as Array<Number>;
+    const ACCENTS = [0, 0, 0xE0B050, 0x6FA8A0, 0xC8703E, Lib.Look.BLAZE, Lib.Look.VOLT, Lib.Look.FLARE, Lib.Look.ARC] as Array<Number>;
     const OCHRE = 2;
     const LICHEN = 3;
     const EMBER = 4;
     const BLAZE = 5;
     const VOLT = 6;
     const FLARE = 7;
+    const ARC = 8;
     const MOONLIGHT = 0x9FB4C8;              // the temperature's layers at night: the strata half way to this
 
     // The time, per TimeColor setting: Bone, the accent, Sandstone

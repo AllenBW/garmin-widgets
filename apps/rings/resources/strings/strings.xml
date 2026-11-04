@@ -3,7 +3,9 @@
     <string id="LookTitle">Look</string>
     <string id="LookPrompt">Or press and hold the time on the watch to step through the looks.</string>
     <string id="LookYours">Your colors below</string>
-    <string id="LookBright">High visibility</string>
+    <string id="LookBright">High visibility, orange</string>
+    <string id="LookBrightBlue">High visibility, blue</string>
+    <string id="LookBrightGreen">High visibility, green</string>
     <string id="LookLow">Low light</string>
     <string id="LookDaily">A new look each day</string>
     <string id="ThemeTitle">Colors</string>
