@@ -90,7 +90,7 @@ module StretchPlan {
         if (sport == Activity.SPORT_HIKING) {
             return "HIKE";
         }
-        return "WORKOUT";
+        return "LIFT";
     }
 
     // [routine, why, sport] for this moment on this watch

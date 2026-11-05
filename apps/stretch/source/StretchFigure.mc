@@ -23,7 +23,7 @@ module StretchFigure {
     const HIP_W = 0.05;
     const FRONT_FOOT = 0.35;
     const EYE_AT = 0.5;      // head radii
-    const R_EYE = 0.22;
+    const R_EYE = 0.28;
     const SEAT_DROP = 0.035;
     const SEAT_BACK = 0.075;
     const SEAT_FRONT = 0.13;
@@ -194,6 +194,10 @@ module StretchFigure {
             dc.setClip(0, 0, dc.getWidth(), ground + pen);
         }
         var ghost = accent == null;
+        if (ghost) {
+            // a thin guide, told from the far limbs by shape as well as shade
+            pen = pen * 6 / 10;
+        }
         if (front) {
             far = near;
         }
@@ -203,21 +207,25 @@ module StretchFigure {
             // the wall stands just past the hands at full stretch, ahead or behind
             var wx = (flags & F_WALL_BACK) != 0 ? x0 - 0.03 : x1 + 0.03;
             var sx = (cx + (wx - mid) * dir).toNumber();
-            dc.setPenWidth(2);
-            dc.drawLine(sx, ground, sx, ground - (0.95 * s).toNumber());
+            dc.setPenWidth(pen / 2 < 2 ? 2 : pen / 2);
+            // no higher than the figure's own box, so it never reaches the words above
+            dc.drawLine(sx, ground, sx, ground - ((top < 0.95 ? top : 0.95) * s).toNumber());
         }
         if ((flags & F_CHAIR) != 0) {
             chair(dc, pts[2 * J_HIP], pts[2 * J_HIP + 1] - lift, cx, ground, mid, dir, s, pen / 2);
         }
-        limbs(dc, xy, J_F, 4, targets, far, acc, pen);
+        // the muscle being stretched is thicker too, not told by colour alone
+        var tgt = ghost ? 0 : targets;
+        limbs(dc, xy, J_F, 4, tgt, far, acc, pen);
         if (front) {
             seg(dc, xy, J_N + SO, J_F + SO, near, pen);
             seg(dc, xy, J_N + HO, J_F + HO, near, pen);
         }
         var back = (targets & 1) != 0 ? acc : near;
-        seg(dc, xy, J_HIP, J_MID, back, pen * 13 / 10);
-        seg(dc, xy, J_MID, J_SH, back, pen * 13 / 10);
-        seg(dc, xy, J_SH, J_HEAD, (targets & 2) != 0 ? acc : near, pen * 8 / 10);
+        var backPen = (targets & 1) != 0 && !ghost ? pen * 16 / 10 : pen * 13 / 10;
+        seg(dc, xy, J_HIP, J_MID, back, backPen);
+        seg(dc, xy, J_MID, J_SH, back, backPen);
+        seg(dc, xy, J_SH, J_HEAD, (targets & 2) != 0 ? acc : near, (targets & 2) != 0 && !ghost ? pen : pen * 8 / 10);
         dc.setColor(near, Graphics.COLOR_TRANSPARENT);
         var r = (R_HEAD * s).toNumber();
         dc.fillCircle(xy[2 * J_HEAD], xy[2 * J_HEAD + 1], r);
@@ -228,7 +236,7 @@ module StretchFigure {
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(xy[2 * J_EYE], xy[2 * J_EYE + 1], (R_HEAD * R_EYE * s).toNumber() + 1);
         }
-        limbs(dc, xy, J_N, 2, targets, near, acc, pen);
+        limbs(dc, xy, J_N, 2, tgt, near, acc, pen);
         if (lift > 0.0) {
             dc.clearClip();
         }
@@ -252,15 +260,21 @@ module StretchFigure {
                    colour as Number, accent as Number, pen as Number) as Void {
         // slots: ua fa (bit, bit+1), th sh (bit+4, bit+5), foot (10 or 11)
         var footBit = j == J_N ? 10 : 11;
-        seg(dc, xy, j + HO, j + KN, pick(targets, bit + 4, colour, accent), pen);
-        seg(dc, xy, j + KN, j + AN, pick(targets, bit + 5, colour, accent), pen);
-        seg(dc, xy, j + AN, j + TO, pick(targets, footBit, colour, accent), pen * 8 / 10);
-        seg(dc, xy, j + SO, j + EL, pick(targets, bit, colour, accent), pen);
-        seg(dc, xy, j + EL, j + HA, pick(targets, bit + 1, colour, accent), pen);
+        part(dc, xy, j + HO, j + KN, targets, bit + 4, colour, accent, pen);
+        part(dc, xy, j + KN, j + AN, targets, bit + 5, colour, accent, pen);
+        part(dc, xy, j + AN, j + TO, targets, footBit, colour, accent, pen * 8 / 10);
+        part(dc, xy, j + SO, j + EL, targets, bit, colour, accent, pen);
+        part(dc, xy, j + EL, j + HA, targets, bit + 1, colour, accent, pen);
     }
 
-    function pick(targets as Number, bit as Number, colour as Number, accent as Number) as Number {
-        return (targets & (1 << bit)) != 0 ? accent : colour;
+    // A limb segment, in the accent and a quarter thicker when it is the target
+    function part(dc as Dc, xy as Array<Number>, a as Number, b as Number, targets as Number, bit as Number,
+                  colour as Number, accent as Number, pen as Number) as Void {
+        if ((targets & (1 << bit)) != 0) {
+            seg(dc, xy, a, b, accent, pen * 5 / 4);
+        } else {
+            seg(dc, xy, a, b, colour, pen);
+        }
     }
 
     // A thick line with round ends

@@ -12,7 +12,7 @@ import stretch_catalogue as C
 FONT = os.path.expanduser("~/Library/Application Support/Garmin/ConnectIQ/Fonts/RobotoCondensed-Bold.ttf")
 SS = 4
 SIZE = 454
-WHITE, FAR, GHOST, ACCENT, GRAY = (235, 235, 230), (110, 110, 110), (52, 52, 52), (255, 138, 76), (138, 138, 138)
+WHITE, FAR, GHOST, ACCENT, GRAY = (235, 235, 230), (122, 122, 122), (80, 80, 80), (255, 138, 76), (158, 158, 158)
 LIMBS = [("ho", "kn", "th"), ("kn", "an", "sh"), ("an", "to", "foot"), ("so", "el", "ua"), ("el", "ha", "fa")]
 
 
@@ -29,10 +29,12 @@ def figure(d, st, t, near, far, accent, cx, ground, bw, bh, mirror=False):
     dirn = -s if mirror else s
     xy = {k: (cx + (x - mid) * dirn, ground - (y - lift) * s) for k, (x, y) in j.items()}
     pen = max(3 * SS, 0.052 * s)
+    ghost = accent is None
+    if ghost:
+        pen *= 0.6   # a thin guide, as StretchFigure draws it
     if front:
         far = near
-    tg = set(st["targets"])
-    ghost = accent is None
+    tg = set() if ghost else set(st["targets"])
     accent = accent or near
 
     def seg(a, b, c, w):
@@ -43,7 +45,7 @@ def figure(d, st, t, near, far, accent, cx, ground, bw, bh, mirror=False):
 
     if st["flags"] & G.F_WALL and not ghost:
         wx = cx + ((x0 - 0.03 if G.wall_back(st) else x1 + 0.03) - mid) * dirn
-        d.line([(wx, ground), (wx, ground - 0.95 * s)], fill=far, width=2 * SS)
+        d.line([(wx, ground), (wx, ground - 0.95 * s)], fill=far, width=int(max(2 * SS, pen / 2)))
     if st["flags"] & G.F_CHAIR:
         for (ax, ay), (bx, by) in G.chair(j):
             d.line([(cx + (ax - mid) * dirn, ground - (ay - lift) * s), (cx + (bx - mid) * dirn, ground - (by - lift) * s)],
@@ -51,17 +53,17 @@ def figure(d, st, t, near, far, accent, cx, ground, bw, bh, mirror=False):
 
     def limbs(side, col):
         for a, b, name in LIMBS:
-            c = accent if side + name in tg else col
-            seg(side + a, side + b, c, pen * (0.8 if name == "foot" else 1))
+            hit = side + name in tg
+            seg(side + a, side + b, accent if hit else col, pen * (0.8 if name == "foot" else 1) * (1.25 if hit else 1))
 
     limbs("f", far)
     if front:
         seg("nso", "fso", near, pen)
         seg("nho", "fho", near, pen)
     tc = accent if "torso" in tg else near
-    seg("hip", "mid", tc, pen * 1.3)
-    seg("mid", "sh", tc, pen * 1.3)
-    seg("sh", "head", accent if "neck" in tg else near, pen * 0.8)
+    seg("hip", "mid", tc, pen * (1.6 if "torso" in tg else 1.3))
+    seg("mid", "sh", tc, pen * (1.6 if "torso" in tg else 1.3))
+    seg("sh", "head", accent if "neck" in tg else near, pen * (1.0 if "neck" in tg else 0.8))
     hx, hy = xy["head"]
     r = G.R_HEAD * s
     d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=near)

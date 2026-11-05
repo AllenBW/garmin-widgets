@@ -1,6 +1,7 @@
 import Toybox.Attention;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 import Toybox.Time;
 import Toybox.Timer;
@@ -23,9 +24,10 @@ class StretchView extends WatchUi.View {
     private const ACCENT = 0xFF8A4C;   // the muscle being stretched, the hold
     private const SWITCH = 0x6EAAE6;   // other side
     private const WHITE = 0xEBEBE6;
-    private const GRAY = 0x8A8A8A;
-    private const FAR = 0x6E6E6E;      // the far limbs
-    private const GHOST = 0x343434;    // where the stretch is going
+    private const GRAY = 0x9E9E9E;     // 7.8:1 on black, readable in sunlight
+    private const FAR = 0x7A7A7A;      // the far limbs, and quiet cue arcs
+    private const GHOST = 0x505050;    // where the stretch is going, drawn thin
+    private const THROB = 0xE85A1C;    // the push's beat: darker, so it never merges with white
     private const TRACK = 0x1E1E1E;
     private const FRAME_MS = 100;
 
@@ -44,14 +46,17 @@ class StretchView extends WatchUi.View {
     private var _stepsDone as Number = 0;
     private var _playedMs as Number = 0;
 
+    private var _ringR as Number = 213;
+    private var _ringPen as Number = 10;
     private var _w as Number = 454;
     private var _h as Number = 454;
     private var _bandFont as FontType = Graphics.FONT_SMALL;
     private var _bigFont as FontType = Graphics.FONT_NUMBER_MEDIUM;
     private var _nameFont as FontType = Graphics.FONT_MEDIUM;
     private var _lineFont as FontType = Graphics.FONT_SMALL;
-    private var _lineSmall as FontType = Graphics.FONT_XTINY;
     private var _labelFont as FontType = Graphics.FONT_XTINY;
+    private var _wrapped as String = "";                  // the coach line last wrapped,
+    private var _lines as Array<String> = [] as Array<String>;   // and its lines
 
     function initialize() {
         View.initialize();
@@ -61,12 +66,17 @@ class StretchView extends WatchUi.View {
         var h = dc.getHeight();
         _w = dc.getWidth();
         _h = h;
-        _bandFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.058).toNumber(), Graphics.FONT_SMALL);
-        _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.15).toNumber(), Graphics.FONT_NUMBER_MEDIUM);
+        // nothing smaller than the watch's own smallest font (37 px on 454)
+        var small = (h * 0.083).toNumber();
+        var floor = Graphics.getFontHeight(Graphics.FONT_XTINY);
+        if (small < floor) {
+            small = floor;
+        }
+        _bandFont = Lib.Fmt.vectorFont("RobotoCondensedBold", small, Graphics.FONT_SMALL);
+        _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.13).toNumber(), Graphics.FONT_NUMBER_MEDIUM);
         _nameFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.10).toNumber(), Graphics.FONT_MEDIUM);
-        _lineFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.062).toNumber(), Graphics.FONT_SMALL);
-        _lineSmall = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.052).toNumber(), Graphics.FONT_XTINY);
-        _labelFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.046).toNumber(), Graphics.FONT_XTINY);
+        _lineFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", small, Graphics.FONT_SMALL);
+        _labelFont = Lib.Fmt.vectorFont("RobotoCondensedBold", small, Graphics.FONT_XTINY);
     }
 
     function onShow() as Void {
@@ -321,139 +331,193 @@ class StretchView extends WatchUi.View {
         dc.drawText(_w / 2, (_h * y).toNumber(), font, t, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
+    // A line too wide for one row, split at the space that balances it best
+    // (a "·" at the split goes); kept for the next frame
+    private function wrap(dc as Dc, t as String, font as FontType, max as Number) as Array<String> {
+        if (t.equals(_wrapped)) {
+            return _lines;
+        }
+        _wrapped = t;
+        _lines = [t] as Array<String>;
+        if (dc.getTextWidthInPixels(t, font) <= max) {
+            return _lines;
+        }
+        var chars = t.toCharArray();
+        var best = 99999;
+        for (var i = 1; i < chars.size() - 1; i++) {
+            if (chars[i] != ' ') {
+                continue;
+            }
+            var a = t.substring(0, i) as String;
+            var b = t.substring(i + 1, chars.size()) as String;
+            if (a.length() > 2 && (a.substring(a.length() - 2, a.length()) as String).equals(" ·")) {
+                a = a.substring(0, a.length() - 2) as String;
+            }
+            if (b.length() > 2 && (b.substring(0, 2) as String).equals("· ")) {
+                b = b.substring(2, b.length()) as String;
+            }
+            var wa = dc.getTextWidthInPixels(a, font);
+            var wb = dc.getTextWidthInPixels(b, font);
+            var wide = wa > wb ? wa : wb;
+            if (wide < best) {
+                best = wide;
+                _lines = [a, b] as Array<String>;
+            }
+        }
+        return _lines;
+    }
+
+    // A button cue: its arc at Garmin's hint angle (with a black gap in the
+    // bezel ring under it, so it never reads as progress) and its word,
+    // large, running inwards from the edge
+    private function cue(dc as Dc, angle as Number, label as String, arc as Number, word as Number) as Void {
+        if (_ringPen > 0) {
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+            Lib.Arcs.drawClockwise(dc, _w / 2, _h / 2, _ringR, angle - Lib.Cues.SPAN - 3, 2 * Lib.Cues.SPAN + 6, _ringPen + 4);
+        }
+        Lib.Cues.draw(dc, angle, "", _labelFont, arc, word);
+        var r = _w / 2 - (_h * 0.06).toNumber();
+        var rad = Math.toRadians(angle);
+        var x = _w / 2 + (r * Math.sin(rad)).toNumber();
+        var y = _h / 2 - (r * Math.cos(rad)).toNumber();
+        dc.setColor(word, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, y, _labelFont, label,
+                    (angle < 180 ? Graphics.TEXT_JUSTIFY_RIGHT : Graphics.TEXT_JUSTIFY_LEFT) | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // The opening card: why, the routine, its length, its first stretch, what it is for, the streak
     private function drawIdle(dc as Dc) as Void {
+        _ringPen = 0;
         var r = _routine;
         var why = r == _suggest[0] ? StretchPlan.why(_suggest) : "YOUR PICK";
         text(dc, 0.13, _bandFont, ACCENT, why);
         text(dc, 0.235, _nameFont, WHITE, StretchRoutines.NAMES[r]);
         var steps = StretchData.STEPS[r].size() / 3;
-        text(dc, 0.32, _lineSmall, GRAY, StretchPlan.minutes(r) + " · " + StretchText.stretches(steps));
+        text(dc, 0.33, _lineFont, GRAY, StretchPlan.minutes(r) + " · " + StretchText.stretches(steps));
         var first = StretchData.STEPS[r][0];
-        StretchFigure.draw(dc, first, 1.0, false, _w / 2, (_h * 0.66).toNumber(),
-                           (_w * 0.42).toNumber(), (_h * 0.27).toNumber(), WHITE, FAR, ACCENT);
-        text(dc, 0.75, _lineSmall, GRAY, StretchRoutines.ABOUT[r]);
-        text(dc, 0.83, _labelFont, GRAY, StretchText.streakLine(Time.now().value()));
-        Lib.Cues.draw(dc, Lib.Cues.START, "GO", _labelFont, ACCENT, WHITE);
-        Lib.Cues.draw(dc, Lib.Cues.DOWN, "MORE", _labelFont, FAR, GRAY);
+        StretchFigure.draw(dc, first, 1.0, false, _w / 2, (_h * 0.635).toNumber(),
+                           (_w * 0.40).toNumber(), (_h * 0.25).toNumber(), WHITE, FAR, ACCENT);
+        text(dc, 0.72, _lineFont, WHITE, StretchRoutines.ABOUT[r]);
+        text(dc, 0.81, _lineFont, GRAY, StretchText.streakLine(Time.now().value()));
+        cue(dc, Lib.Cues.START, "GO", ACCENT, WHITE);
+        cue(dc, Lib.Cues.UP, "MORE", FAR, GRAY);
     }
 
+    // Running: the stretch's name and the side across the top, the figure,
+    // the coach (two lines at most), the time left at the foot, the hold
+    // round the bezel
     private function drawRun(dc as Dc, s as StretchSession) as Void {
         var p = s.phase();
         var st = s.stretch();
-        var side = s.side();
-        var name = StretchData.NAMES[st].toUpper();
-        if (s.sided()) {
-            name += side == 0 ? " · LEFT" : " · RIGHT";
-        }
+        var sideWord = s.sided() ? (s.side() == 0 ? "LEFT" : "RIGHT") : "";
 
-        // the bezel: the hold (ease-in included), the reps or the push filling in the accent, a setup in grey
+        // the bezel: the hold (ease-in included), the reps or the push in
+        // the accent, a setup in grey; the slow breath fills and empties it
         var pen = (_h * 0.022).toNumber();
-        var ringColour = p == PH_SETUP ? GHOST : (p == PH_RELEASE || p == PH_RELAX ? FAR : ACCENT);
-        Lib.Arcs.drawGauge(dc, _w / 2, _h / 2, _w / 2 - pen / 2 - 2, 0, 360,
-                           p == PH_RELEASE ? 0.0 : s.holdDone(), pen, TRACK, ringColour);
+        _ringR = _w / 2 - pen / 2 - 2;
+        _ringPen = pen;
+        var ringColour = p == PH_SETUP ? GRAY : (p == PH_RELEASE || p == PH_RELAX ? FAR : ACCENT);
+        var fill = p == PH_RELEASE ? 0.0 : (p == PH_BREATHE ? s.blend() : s.holdDone());
+        Lib.Arcs.drawGauge(dc, _w / 2, _h / 2, _ringR, 0, 360, fill, pen, TRACK, ringColour);
 
-        // the band: what, which side, and the round
-        var band = name;
-        var bandColour = ACCENT;
-        var sub = "";
+        // the top: the name, then the side (or what the setup leads to, or the breath)
         var set = s.setKind();
+        var nameColour = p == PH_SETUP ? WHITE : ACCENT;
+        var sub = sideWord;
+        var subColour = ACCENT;
         if (p == PH_SETUP) {
             if (set == SET_SIDE) {
-                band = "SWITCH SIDES";
-                bandColour = SWITCH;
-                sub = name;
+                sub = "SWITCH · " + sideWord;
+                subColour = SWITCH;
             } else if (set == SET_ROUND) {
-                band = "AGAIN · " + name;
-                sub = "round " + (s.round() + 1) + " of " + s.rounds();
+                sub = sideWord.equals("") ? "AGAIN" : "AGAIN · " + sideWord;
+                subColour = SWITCH;
             } else {
-                band = (set == SET_FIRST ? "FIRST · " : "NEXT · ") + name;
-                bandColour = WHITE;
-                sub = (s.stepIndex() + 1) + " of " + s.steps + doseWords(s);
+                sub = sideWord.equals("") ? "NEXT" : "NEXT · " + sideWord;
+                subColour = GRAY;
             }
-        } else if (p == PH_REPS) {
-            sub = "rep " + s.rep() + " of " + s.repCount();
         } else if (p == PH_BREATHE) {
-            sub = "six slow breaths a minute";
-        } else if (p == PH_PUSH || p == PH_RELAX || p == PH_DEEPEN) {
-            sub = "contract-relax";
-        } else if (s.rounds() > 1) {
-            sub = "round " + (s.round() + 1) + " of " + s.rounds();
+            sub = s.breathingIn() ? "BREATHE IN" : "BREATHE OUT";
+        } else if (s.rounds() > 1 && p != PH_REPS) {
+            sub = (sideWord.equals("") ? "ROUND " : sideWord + " · ") + (s.round() + 1) + " OF " + s.rounds();
         }
-        text(dc, 0.13, _bandFont, bandColour, band);
+        text(dc, 0.12, Lib.Fmt.fitFont(dc, StretchData.NAMES[st].toUpper(), [_bandFont] as Array<FontType>, _w),
+             nameColour, StretchData.NAMES[st].toUpper());
         if (!sub.equals("")) {
-            text(dc, 0.19, _labelFont, GRAY, sub);
+            text(dc, 0.20, _bandFont, subColour, sub);
         }
 
-        // the figure: the start pose with the stretch as a ghost while setting up
+        // the figure: the start pose with the stretch as a thin ghost while setting up
         var cx = _w / 2;
-        var ground = (_h * 0.60).toNumber();
-        var bw = (_w * 0.50).toNumber();
-        var bh = (_h * 0.34).toNumber();
-        var mirror = side == 1;
+        var ground = (_h * 0.515).toNumber();
+        var bw = (_w * 0.48).toNumber();
+        var bh = (_h * 0.27).toNumber();
+        var mirror = s.side() == 1;
         if (p == PH_SETUP) {
             StretchFigure.draw(dc, st, 1.0, mirror, cx, ground, bw, bh, GHOST, GHOST, null);
         }
         var accent = ACCENT;
         if (p == PH_PUSH && (s.phaseMs() / 500) % 2 == 1) {
-            accent = 0xFFC2A0;   // the push throbs
+            accent = THROB;   // the push throbs
         }
         StretchFigure.draw(dc, st, s.blend(), mirror, cx, ground, bw, bh, WHITE, FAR, accent);
 
-        // the time left, the coach, what is next
+        // the coach
+        var lines = wrap(dc, s.line(), _lineFont, (_w * 0.80).toNumber());
+        if (lines.size() == 1) {
+            text(dc, 0.62, _lineFont, WHITE, lines[0]);
+        } else {
+            text(dc, 0.585, _lineFont, WHITE, lines[0]);
+            text(dc, 0.66, _lineFont, WHITE, lines[1]);
+        }
+
+        // the time left (or the rep), below the button words
         var big = p == PH_REPS ? s.rep() + "/" + s.repCount()
                                : StretchText.clock(p == PH_EASE || p == PH_HOLD ? s.holdLeft() : s.remaining());
-        text(dc, 0.70, _bigFont, p == PH_SETUP || p == PH_RELEASE ? GRAY : WHITE, big);
-        var line = s.line();
-        text(dc, 0.80, Lib.Fmt.fitFont(dc, line, [_lineFont, _lineSmall] as Array<FontType>, (_w * 0.78).toNumber()), WHITE, line);
-        var next = s.nextStretch();
-        var foot = next < 0 ? "last stretch · " + StretchText.clock(s.left()) + " left"
-                            : "next " + StretchData.NAMES[next] + " · " + StretchText.clock(s.left()) + " left";
-        text(dc, 0.875, _labelFont, GRAY, foot);
+        text(dc, 0.85, _bigFont, p == PH_SETUP || p == PH_RELEASE ? GRAY : WHITE, big);
 
-        Lib.Cues.draw(dc, Lib.Cues.START, "PAUSE", _labelFont, WHITE, WHITE);
-        Lib.Cues.draw(dc, Lib.Cues.BACK, p == PH_SETUP ? "GO NOW" : "SKIP", _labelFont, FAR, GRAY);
+        cue(dc, Lib.Cues.START, "PAUSE", WHITE, WHITE);
+        cue(dc, Lib.Cues.BACK, p == PH_SETUP ? "GO" : "SKIP", FAR, GRAY);
         if (p == PH_HOLD || p == PH_DEEPEN || p == PH_REPS || p == PH_BREATHE) {
-            Lib.Cues.draw(dc, Lib.Cues.UP, "+10 s", _labelFont, FAR, GRAY);
+            cue(dc, Lib.Cues.UP, "+10", FAR, GRAY);
         }
         if (p == PH_EASE || p == PH_HOLD || p == PH_PUSH || p == PH_RELAX || p == PH_DEEPEN) {
             // it hurts: out of the stretch, gently
-            Lib.Cues.draw(dc, Lib.Cues.DOWN, "EASE OFF", _labelFont, FAR, GRAY);
+            cue(dc, Lib.Cues.DOWN, "EASE OFF", GRAY, WHITE);
         }
     }
 
-    // " · hold 30 s" or " · 10 reps"
-    private function doseWords(s as StretchSession) as String {
-        var kind = s.kind();
-        if (kind == StretchSession.KIND_REPS) {
-            return " · " + s.repCount() + " reps";
+    // For the pause menu: "5:03 left · 4 of 8"
+    function progress() as String {
+        var s = _session;
+        if (s == null) {
+            return "";
         }
-        if (kind == StretchSession.KIND_BREATH) {
-            return " · breathe " + s.holdMs() / 1000 + " s";
-        }
-        return " · hold " + s.holdMs() / 1000 + " s";
+        return StretchText.clock(s.left()) + " left · " + (s.stepIndex() + 1) + " of " + s.steps;
     }
 
     private function drawDone(dc as Dc) as Void {
+        _ringPen = 0;
         text(dc, 0.15, _bandFont, ACCENT, _complete ? "WELL STRETCHED" : "STOPPED");
-        text(dc, 0.27, _nameFont, WHITE, StretchRoutines.NAMES[_routine]);
+        text(dc, 0.255, _nameFont, WHITE, StretchRoutines.NAMES[_routine]);
         var steps = StretchData.STEPS[_routine].size() / 3;
-        var what = _complete ? StretchText.stretches(steps) : _stepsDone + " of " + steps + " stretches";
-        text(dc, 0.36, _lineSmall, GRAY, StretchText.clock(_playedMs) + " · " + what);
+        var what = _complete ? StretchText.stretches(steps) : _stepsDone + " of " + steps;
+        text(dc, 0.35, _lineFont, GRAY, StretchText.clock(_playedMs) + " · " + what);
         var r = StretchHistory.rows();
         var now = Time.now().value();
         var streak = StretchHistory.streak(now, r);
-        text(dc, 0.52, _bigFont, ACCENT, streak.toString());
-        text(dc, 0.63, _lineSmall, WHITE, streak == 1 ? "day of stretching" : "days in a row");
-        text(dc, 0.72, _labelFont, GRAY, StretchHistory.week(now, r) + " this week");
-        var note = _saved ? "Saved to Garmin Connect" : "Not recorded";
+        text(dc, 0.49, _bigFont, ACCENT, streak.toString());
+        text(dc, 0.60, _lineFont, WHITE, streak == 1 ? "day of stretching" : "days in a row");
+        text(dc, 0.69, _lineFont, GRAY, StretchHistory.week(now, r) + " this week");
+        var note = _saved ? "Saved to Connect" : "Not recorded";
         if (_complete && (StretchRoutines.FLAGS[_routine] & StretchSession.RF_PRE) != 0) {
-            note = "Now start easy, then build";
+            note = "Start easy, then build";
         } else if (_complete && StretchHistory.readyForMore(now, r, StretchSettings.levelIndex())) {
-            note = "Ready for longer holds: try Deep";
+            note = "Try Deep holds next";
         }
-        text(dc, 0.81, _labelFont, GRAY, note);
-        Lib.Cues.draw(dc, Lib.Cues.START, "OK", _labelFont, ACCENT, WHITE);
-        Lib.Cues.draw(dc, Lib.Cues.BACK, "EXIT", _labelFont, FAR, GRAY);
+        text(dc, 0.82, _lineFont, WHITE, note);
+        cue(dc, Lib.Cues.START, "OK", ACCENT, WHITE);
+        cue(dc, Lib.Cues.BACK, "EXIT", FAR, GRAY);
     }
 }
 
@@ -544,7 +608,7 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
         } else {
             _view.pause();
             var menu = new WatchUi.Menu2({:title => "Paused"});
-            menu.addItem(new WatchUi.MenuItem("Resume", null, :resume, null));
+            menu.addItem(new WatchUi.MenuItem("Resume", _view.progress(), :resume, null));
             menu.addItem(new WatchUi.MenuItem("Skip stretch", "on to the next one", :skip, null));
             menu.addItem(new WatchUi.MenuItem("Finish", "save what you did", :finish, null));
             menu.addItem(new WatchUi.MenuItem("Discard", "keep nothing", :discard, null));

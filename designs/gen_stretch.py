@@ -29,7 +29,7 @@ NSLOT = len(SLOTS)
 # Target bits: the segments drawn in the accent
 TARGET_BITS = {s: i for i, s in enumerate(SLOTS[:12])}
 TARGET_BITS["neck"] = TARGET_BITS.pop("head")
-NOSE_AT, R_NOSE = 0.5, 0.22   # the eye, a dark dot inside the head, in head radii
+NOSE_AT, R_NOSE = 0.5, 0.28   # the eye, a dark dot inside the head, in head radii
 # Joints an anchor can name (its x stays put while the figure moves)
 ANCHORS = ["hip", "nan", "fan", "nha", "fha", "nkn", "fkn", "nto", "fto"]
 # Starting positions

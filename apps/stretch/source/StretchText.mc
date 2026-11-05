@@ -10,13 +10,12 @@ module StretchText {
         var streak = StretchHistory.streak(now, r);
         var week = StretchHistory.week(now, r);
         if (week == 0) {
-            return "No stretching this week yet";
+            return "None yet this week";
         }
-        var w = week + " this week";
         if (streak >= 2) {
-            return streak + "-day streak · " + w;
+            return streak + "-day streak";
         }
-        return w;
+        return week + " this week";
     }
 
     // 462000 ms as "7:42"

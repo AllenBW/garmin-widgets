@@ -27,17 +27,17 @@ module StretchRoutines {
     ] as Array<String>;
 
     const ABOUT = [
-        "Gentle wake-up, no forward bends",
+        "Gentle, no forward bends",
         "Hips, legs, chest and neck",
         "Undo sitting, no floor",
-        "Long soft holds, slow breathing",
-        "A minute a muscle, best when warm",
+        "Long holds, slow breaths",
+        "60 s a muscle, when warm",
         "Moving warm-up, no holds",
-        "Calves, quads, hamstrings, hips",
-        "Hips, back and neck, moving",
+        "Calves, quads and hips",
+        "Hips, back and neck",
         "Open the hips and chest",
-        "Warm up and wake the glutes",
-        "Every big muscle, one hold each",
+        "Warm up, wake the glutes",
+        "One hold a big muscle",
         "Ankles, calves and hips"
     ] as Array<String>;
 
