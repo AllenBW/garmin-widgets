@@ -1,0 +1,15 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Stretching God</string>
+
+    <string id="LevelTitle">How long to hold</string>
+    <string id="LevelPrompt">Every routine's holds are set from the guidance. Gentle shortens them, deep makes them half as long again. Before an activity they stay short whatever you pick.</string>
+    <string id="LevelGentle">Gentle</string>
+    <string id="LevelStandard">Standard</string>
+    <string id="LevelDeep">Deep</string>
+    <string id="PnfTitle">Contract-relax</string>
+    <string id="PnfPrompt">In the flexibility and after-activity routines: push gently against the stretch for six seconds, relax, then sink deeper. Gains range faster than holding alone.</string>
+    <string id="RecordTitle">Save to Garmin Connect</string>
+    <string id="RecordPrompt">Each routine is saved as Flexibility Training, with a lap per stretch.</string>
+    <string id="TonesTitle">Tones</string>
+    <string id="TonesPrompt">A tone with each buzz, for stretching with the watch out of sight.</string>
+</strings>

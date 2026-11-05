@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 65 65" width="65" height="65">
+  <!-- Stretching God launcher icon: black disc, a figure reaching up and over in a side bend, the stretched side in orange -->
+  <circle cx="32.5" cy="32.5" r="31.5" fill="#000000"/>
+  <g stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M27 54 L29 40 M37 54 L34 40" stroke="#EBEBE6" stroke-width="4"/>
+    <path d="M31.5 40 L35 25" stroke="#FF8A4C" stroke-width="5"/>
+    <path d="M34 26 L44 33" stroke="#EBEBE6" stroke-width="4"/>
+    <path d="M35 25 L30 15 L19 13" stroke="#EBEBE6" stroke-width="4"/>
+  </g>
+  <circle cx="38.5" cy="18.5" r="4.5" fill="#EBEBE6"/>
+</svg>

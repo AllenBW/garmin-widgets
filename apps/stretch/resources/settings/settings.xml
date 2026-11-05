@@ -1,0 +1,18 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <setting propertyKey="@Properties.Level" title="@Strings.LevelTitle" prompt="@Strings.LevelPrompt">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.LevelGentle</listEntry>
+            <listEntry value="1">@Strings.LevelStandard</listEntry>
+            <listEntry value="2">@Strings.LevelDeep</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.ContractRelax" title="@Strings.PnfTitle" prompt="@Strings.PnfPrompt">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.Record" title="@Strings.RecordTitle" prompt="@Strings.RecordPrompt">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.Tones" title="@Strings.TonesTitle" prompt="@Strings.TonesPrompt">
+        <settingConfig type="boolean"/>
+    </setting>
+</settings>
