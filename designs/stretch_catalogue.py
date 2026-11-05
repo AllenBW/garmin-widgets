@@ -8,10 +8,12 @@ from gen_stretch import (Pose, pt, KIND_HOLD, KIND_REPS, KIND_BREATH, F_FRONT, F
                          F_SIDED, F_WALL, F_PNF, F_CHAIR, RF_PRE, RF_PNF, SEAT_BACK)
 
 # Phase lengths in seconds; StretchSession.mc uses the same numbers
-SETUP_FIRST, SETUP_FIRST_DOWN = 8, 10          # the first stretch, standing or on the floor
-SETUP_SAME, SETUP_STEP = 5, 7                  # the next stretch: same position, or another
-SETUP_GET_DOWN, SETUP_GET_UP = 10, 8           # down to the floor, back up
-SETUP_SIDE, SETUP_ROUND = 4, 3
+# A setup shows the stretch on a loop (in, hold, out) until its last 3 s,
+# long enough to see the whole movement at least once
+SETUP_FIRST, SETUP_FIRST_DOWN = 14, 16         # the first stretch, standing or on the floor
+SETUP_SAME, SETUP_STEP = 10, 12                # the next stretch: same position, or another
+SETUP_GET_DOWN, SETUP_GET_UP = 15, 12          # down to the floor, back up
+SETUP_SIDE, SETUP_ROUND = 6, 4
 EASE, RELEASE = 4, 3                           # the ease-in counts toward the hold
 PNF_HOLD, PNF_PUSH, PNF_RELAX, PNF_DEEPEN = 10, 5, 3, 20
 LEVELS = (75, 100, 150)   # gentle, standard, deep: percent of each hold
@@ -397,10 +399,9 @@ ROUTINES = [
                 ("chin_tuck", 6, 1), ("arm_circles", 12, 1), ("cat_cow", 6, 1),
                 ("side_bend", 15, 1), ("torso_rotation", 8, 1), ("hip_circles", 16, 1),
                 ("kneeling_hip_flexor", 30, 1), ("wall_calf", 30, 1)]),
-    dict(const="R_QUICK", name="Quick 5", about="Hips, legs, chest and neck", flags=0,
+    dict(const="R_QUICK", name="Quick 5", about="Hips, legs and chest", flags=0,
          steps=[("march", 8, 1), ("cat_cow", 6, 1), ("worlds_greatest", 3, 1),
-                ("standing_quad", 15, 1), ("wall_calf", 15, 1), ("wall_pec", 15, 1),
-                ("neck_side_tilt", 15, 1)]),
+                ("standing_quad", 15, 1), ("wall_calf", 15, 1), ("wall_pec", 15, 1)]),
     dict(const="R_DESK", name="Desk break", about="Undo sitting, no floor", flags=0,
          steps=[("chin_tuck", 6, 1), ("neck_side_tilt", 15, 1), ("chest_opener", 20, 1),
                 ("chair_extension", 4, 1), ("seated_twist", 15, 1), ("chair_figure_four", 15, 1),

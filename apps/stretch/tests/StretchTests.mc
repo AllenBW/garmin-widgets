@@ -28,7 +28,10 @@ function testPlay(logger as Logger) as Boolean {
     Test.assertEqualMessage(s.phase(), PH_SETUP, "starts setting up");
     Test.assertEqualMessage(s.setKind(), SET_FIRST, "the first stretch");
     Test.assertEqualMessage(s.blend(), 0.0, "in the start pose");
-    var buzzes = [0, 0, 0, 0, 0, 0] as Array<Number>;
+    var buzzes = new Array<Number>[BUZZ_COUNT];
+    for (var b = 0; b < BUZZ_COUNT; b++) {
+        buzzes[b] = 0;
+    }
     var sawRight = false;
     var sawHold = false;
     var steps = 0;
@@ -59,7 +62,33 @@ function testPlay(logger as Logger) as Boolean {
     Test.assertEqualMessage(buzzes[BUZZ_DONE], 1, "one done buzz");
     Test.assertEqualMessage(buzzes[BUZZ_NEXT], s.steps - 1, "a next buzz per new stretch");
     Test.assertMessage(buzzes[BUZZ_SWITCH] > 0 && buzzes[BUZZ_GO] > 0 && buzzes[BUZZ_RELEASE] > 0, "switch, go, release");
+    Test.assertMessage(buzzes[BUZZ_TICK] >= 3 * s.steps, "3, 2, 1 before every stretch: " + buzzes[BUZZ_TICK]);
+    Test.assertMessage(buzzes[BUZZ_TEN] > 0, "ten seconds left in the long holds");
     Test.assertEqualMessage(s.line(), "Done · nice work", "the last word");
+    return true;
+}
+
+// Every buzz has a pattern the watch can play, a name and a meaning, and
+// the setup shows the stretch before settling in the start pose
+(:test)
+function testBuzzes(logger as Logger) as Boolean {
+    for (var i = 0; i < StretchBuzz.GUIDE.size(); i++) {
+        var b = StretchBuzz.GUIDE[i];
+        var pat = StretchBuzz.pattern(b);
+        Test.assertMessage(pat.size() >= 2 && pat.size() % 2 == 0 && pat.size() <= 16, StretchBuzz.name(b) + " pattern");
+        for (var k = 1; k < pat.size(); k += 2) {
+            Test.assertMessage(pat[k] > 0 && pat[k - 1] >= 0 && pat[k - 1] <= 100, StretchBuzz.name(b) + " step");
+        }
+        Test.assertMessage(StretchBuzz.meaning(b).length() > 0, "meaning");
+    }
+    Test.assertEqualMessage(StretchBuzz.GUIDE.size(), BUZZ_COUNT - 1, "the guide plays every buzz");
+    var s = new StretchSession(StretchRoutines.R_AFTER_RUN, 100, false);
+    Test.assertMessage(s.demoing(), "a setup shows the stretch");
+    s.tick(2500);
+    Test.assertMessage(s.blend() > 0.99, "at full stretch in the demo");
+    s.tick(s.remaining() - 2500);
+    Test.assertMessage(!s.demoing(), "then the start pose");
+    Test.assertEqualMessage(s.blend(), 0.0, "for the last seconds");
     return true;
 }
 

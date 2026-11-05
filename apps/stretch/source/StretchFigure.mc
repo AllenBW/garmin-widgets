@@ -22,8 +22,8 @@ module StretchFigure {
     const SH_W = 0.085;
     const HIP_W = 0.05;
     const FRONT_FOOT = 0.35;
-    const EYE_AT = 0.5;      // head radii
-    const R_EYE = 0.28;
+    const NOSE_AT = 0.95;    // head radii
+    const R_NOSE = 0.32;
     const SEAT_DROP = 0.035;
     const SEAT_BACK = 0.075;
     const SEAT_FRONT = 0.13;
@@ -46,7 +46,7 @@ module StretchFigure {
     const J_MID = 1;
     const J_SH = 2;
     const J_HEAD = 3;
-    const J_EYE = 4;
+    const J_NOSE = 4;
     const J_N = 5;   // near: so, ho, el, ha, kn, an, to
     const J_F = 12;  // far: the same seven
     const JOINTS = 19;
@@ -110,11 +110,11 @@ module StretchFigure {
         var hx = (sx + L_HEAD_AT * Math.cos(head)).toFloat();
         var hy = (sy + L_HEAD_AT * Math.sin(head)).toFloat();
         set(pts, J_HEAD, hx, hy);
-        // the eye: ahead seen from the side, turned to a side seen from the front
+        // the nose: ahead seen from the side, turned to a side seen from the front
         var yaw = Math.toRadians(ang[13]);
-        var k = R_HEAD * EYE_AT * (front ? Math.sin(yaw) : Math.cos(yaw));
+        var k = R_HEAD * NOSE_AT * (front ? Math.sin(yaw) : Math.cos(yaw));
         var face = head - Math.PI / 2;
-        set(pts, J_EYE, (hx + k * Math.cos(face)).toFloat(), (hy + k * Math.sin(face)).toFloat());
+        set(pts, J_NOSE, (hx + k * Math.cos(face)).toFloat(), (hy + k * Math.sin(face)).toFloat());
         // shoulders and hips sit apart only seen from the front
         var spx = Math.cos(upper - Math.PI / 2).toFloat();
         var spy = Math.sin(upper - Math.PI / 2).toFloat();
@@ -229,17 +229,28 @@ module StretchFigure {
         dc.setColor(near, Graphics.COLOR_TRANSPARENT);
         var r = (R_HEAD * s).toNumber();
         dc.fillCircle(xy[2 * J_HEAD], xy[2 * J_HEAD + 1], r);
-        var ex = xy[2 * J_EYE] - xy[2 * J_HEAD];
-        var ey = xy[2 * J_EYE + 1] - xy[2 * J_HEAD + 1];
-        if ((ex * ex + ey * ey) * 10000 > r * r * 225) {
-            // shown unless the face is turned nearly square to us (or, side on, away)
-            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xy[2 * J_EYE], xy[2 * J_EYE + 1], (R_HEAD * R_EYE * s).toNumber() + 1);
+        if (turned(i, t, front)) {
+            // a turned head gets a nose, in the head's own colour
+            dc.fillCircle(xy[2 * J_NOSE], xy[2 * J_NOSE + 1], (R_HEAD * R_NOSE * s).toNumber() + 1);
         }
         limbs(dc, xy, J_N, 2, tgt, near, acc, pen);
         if (lift > 0.0) {
             dc.clearClip();
         }
+    }
+
+    // Whether the head is turned enough to mark: to a side, or back over a shoulder
+    function turned(i as Number, t as Float, front as Boolean) as Boolean {
+        var yaw = angles(i, t)[13];
+        while (yaw > 180.0) {
+            yaw -= 360.0;
+        }
+        while (yaw < -180.0) {
+            yaw += 360.0;
+        }
+        var rad = Math.toRadians(yaw);
+        var k = front ? Math.sin(rad) : Math.cos(rad);
+        return yaw.abs() > 5.0 && k.abs() > 0.3;
     }
 
     // Seat, legs and back under a seated hip, in the far colour

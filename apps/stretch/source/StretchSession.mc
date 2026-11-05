@@ -30,14 +30,20 @@ enum {
     MOVE_UP       // back up
 }
 
-// The buzz as a phase begins
+// The buzzes, each its own feel (StretchView.vibe): what is happening
+// should be told without looking
 enum {
     BUZZ_NONE,
-    BUZZ_GO,        // ease in, start the reps, push
-    BUZZ_RELEASE,   // the hold is over
-    BUZZ_SWITCH,    // other side, or again
-    BUZZ_NEXT,      // a new stretch
-    BUZZ_DONE
+    BUZZ_GO,        // ease in, start the reps, breathe: one firm buzz
+    BUZZ_RELEASE,   // the hold is over: a long buzz fading away
+    BUZZ_SWITCH,    // other side, or again: two sharp taps
+    BUZZ_NEXT,      // a new stretch: three taps, rising
+    BUZZ_DONE,      // the routine is over: two taps and a long one, strong
+    BUZZ_TICK,      // 3, 2, 1 before the start: a light tap
+    BUZZ_TEN,       // ten seconds left in a hold: a light flutter
+    BUZZ_PUSH,      // contract-relax, push: strong and long
+    BUZZ_RELAX,     // and let go: a short fade
+    BUZZ_COUNT
 }
 
 // A routine laid out as a timeline of phases, then played by tick(). Pure
@@ -46,14 +52,17 @@ enum {
 // glance's minutes.
 class StretchSession {
 
-    static const SETUP_FIRST = 8000;
-    static const SETUP_FIRST_DOWN = 10000;
-    static const SETUP_SAME = 5000;
-    static const SETUP_STEP = 7000;
-    static const SETUP_GET_DOWN = 10000;
-    static const SETUP_GET_UP = 8000;
-    static const SETUP_SIDE = 4000;
-    static const SETUP_ROUND = 3000;
+    static const SETUP_FIRST = 14000;
+    static const SETUP_FIRST_DOWN = 16000;
+    static const SETUP_SAME = 10000;
+    static const SETUP_STEP = 12000;
+    static const SETUP_GET_DOWN = 15000;
+    static const SETUP_GET_UP = 12000;
+    static const SETUP_SIDE = 6000;
+    static const SETUP_ROUND = 4000;
+    static const READY = 3000;        // a setup's last seconds: the start pose, 3, 2, 1
+    static const DEMO = 6000;         // the stretch shown on a loop: in, hold, out, rest
+    static const TEN_LEFT = 10000;
     static const EASE = 4000;
     static const RELEASE = 3000;
     static const PNF_HOLD = 10000;
@@ -177,28 +186,59 @@ class StretchSession {
         total += ms;
     }
 
-    // Move on by ms; the buzz for the last phase begun, if any
+    // Move on by ms; the last buzz due on the way (a phase begun, a count
+    // before the start, ten seconds left), if any
     function tick(ms as Number) as Number {
         if (done()) {
             return BUZZ_NONE;
         }
         elapsed += ms;
-        _in += ms;
         var buzz = BUZZ_NONE;
-        while (!done() && _in >= _durs[_cursor]) {
-            _in -= _durs[_cursor];
+        var left = ms;
+        while (!done()) {
+            var room = _durs[_cursor] - _in;
+            if (left < room) {
+                var b = crossing(_in, _in + left);
+                if (b != BUZZ_NONE) {
+                    buzz = b;
+                }
+                _in += left;
+                break;
+            }
+            var c = crossing(_in, _durs[_cursor]);
+            if (c != BUZZ_NONE) {
+                buzz = c;
+            }
+            left -= room;
             _before += _durs[_cursor];
             _cursor++;
+            _in = 0;
             _eased = false;
-            var b = buzzFor(_cursor);
-            if (b != BUZZ_NONE) {
-                buzz = b;
+            var e = buzzFor(_cursor);
+            if (e != BUZZ_NONE) {
+                buzz = e;
             }
         }
-        if (done()) {
-            _in = 0;
-        }
         return buzz;
+    }
+
+    // A buzz due inside the current phase between from (excluded) and to (included)
+    private function crossing(from as Number, to as Number) as Number {
+        var p = phase();
+        var len = _durs[_cursor];
+        if (p == PH_SETUP && len > READY) {
+            for (var t = len - READY; t < len; t += 1000) {
+                if (from < t && t <= to) {
+                    return BUZZ_TICK;
+                }
+            }
+        } else if ((p == PH_HOLD || p == PH_DEEPEN) && len >= TEN_LEFT + 5000) {
+            var t = len - TEN_LEFT;
+            if (from < t && t <= to) {
+                return BUZZ_TEN;
+            }
+        }
+        return BUZZ_NONE;
     }
 
     // End the current phase now: "go now" during a setup
@@ -272,10 +312,16 @@ class StretchSession {
             var set = (seg >> 4) & 3;
             return set == SET_STEP ? BUZZ_NEXT : (set == SET_FIRST ? BUZZ_NONE : BUZZ_SWITCH);
         }
-        if (p == PH_EASE || p == PH_REPS || p == PH_PUSH || p == PH_BREATHE) {
+        if (p == PH_EASE || p == PH_REPS || p == PH_BREATHE) {
             return BUZZ_GO;
         }
-        if (p == PH_RELEASE || p == PH_RELAX) {
+        if (p == PH_PUSH) {
+            return BUZZ_PUSH;
+        }
+        if (p == PH_RELAX) {
+            return BUZZ_RELAX;
+        }
+        if (p == PH_RELEASE) {
             return BUZZ_RELEASE;
         }
         return p == PH_DONE ? BUZZ_DONE : BUZZ_NONE;
@@ -440,7 +486,25 @@ class StretchSession {
         if (p == PH_PUSH || p == PH_RELAX) {
             return 1.0;
         }
+        if (p == PH_SETUP && demoing()) {
+            // the stretch shown on a loop: in, hold, out, rest
+            var m = _in % DEMO;
+            if (m < 1800) {
+                return smooth(m / 1800.0);
+            }
+            if (m < 3300) {
+                return 1.0;
+            }
+            if (m < 5100) {
+                return 1.0 - smooth((m - 3300) / 1800.0);
+            }
+        }
         return 0.0;
+    }
+
+    // A setup shows the stretch until its last seconds, then the start pose
+    function demoing() as Boolean {
+        return phase() == PH_SETUP && remaining() > READY;
     }
 
     function smooth(x as Float) as Float {

@@ -70,7 +70,7 @@ def figure(d, st, t, near, far, accent, cx, ground, bw, bh, mirror=False):
     if G.nose_shows(ang, front):
         nx, ny = xy["nose"]
         rn = r * G.R_NOSE
-        d.ellipse([nx - rn, ny - rn, nx + rn, ny + rn], fill=(0, 0, 0))
+        d.ellipse([nx - rn, ny - rn, nx + rn, ny + rn], fill=near)
     limbs("n", near)
     return lift > 0, pen
 

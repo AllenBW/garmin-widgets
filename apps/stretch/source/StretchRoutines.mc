@@ -28,7 +28,7 @@ module StretchRoutines {
 
     const ABOUT = [
         "Gentle, no forward bends",
-        "Hips, legs, chest and neck",
+        "Hips, legs and chest",
         "Undo sitting, no floor",
         "Long holds, slow breaths",
         "60 s a muscle, when warm",
@@ -46,17 +46,17 @@ module StretchRoutines {
 
     // Seconds at each level (75, 100, 150 %), without contract-relax
     const SECONDS = [
-        [455, 500, 590],
-        [296, 326, 386],
-        [236, 271, 341],
-        [533, 634, 837],
-        [884, 1101, 1536],
-        [388, 388, 388],
-        [436, 533, 728],
-        [344, 344, 344],
-        [436, 533, 728],
-        [414, 414, 414],
-        [444, 549, 759],
-        [327, 327, 327]
+        [517, 562, 652],
+        [295, 317, 362],
+        [280, 315, 385],
+        [586, 687, 890],
+        [961, 1178, 1613],
+        [444, 444, 444],
+        [489, 586, 781],
+        [393, 393, 393],
+        [483, 580, 775],
+        [465, 465, 465],
+        [495, 600, 810],
+        [376, 376, 376]
     ] as Array<Array<Number> >;
 }

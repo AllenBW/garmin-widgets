@@ -10,7 +10,8 @@ import Toybox.WatchUi;
 enum {
     STATE_IDLE,     // the routine that suits now, START to go
     STATE_RUN,      // a routine playing
-    STATE_DONE      // the summary
+    STATE_DONE,     // the summary
+    STATE_GUIDE     // what the buzzes mean, each played in turn
 }
 
 // One view for the whole app. Idle: why, the routine, its length and its
@@ -197,24 +198,55 @@ class StretchView extends WatchUi.View {
             return;
         }
         if (Attention has :vibrate) {
-            var p;
-            if (buzz == BUZZ_GO) {
-                p = [new Attention.VibeProfile(50, 150)];
-            } else if (buzz == BUZZ_RELEASE) {
-                p = [new Attention.VibeProfile(35, 450)];
-            } else if (buzz == BUZZ_SWITCH) {
-                p = [new Attention.VibeProfile(70, 120), new Attention.VibeProfile(0, 120), new Attention.VibeProfile(70, 120)];
-            } else if (buzz == BUZZ_NEXT) {
-                p = [new Attention.VibeProfile(70, 110), new Attention.VibeProfile(0, 100), new Attention.VibeProfile(70, 110),
-                     new Attention.VibeProfile(0, 100), new Attention.VibeProfile(70, 110)];
-            } else {
-                p = [new Attention.VibeProfile(80, 300), new Attention.VibeProfile(0, 150), new Attention.VibeProfile(80, 600)];
+            var pat = StretchBuzz.pattern(buzz);
+            var p = [] as Array<Attention.VibeProfile>;
+            for (var i = 0; i + 1 < pat.size(); i += 2) {
+                p.add(new Attention.VibeProfile(pat[i], pat[i + 1]));
             }
-            Attention.vibrate(p as Array<Attention.VibeProfile>);
+            Attention.vibrate(p);
         }
         if (StretchSettings.tones() && (Attention has :playTone)) {
-            Attention.playTone(buzz == BUZZ_DONE ? Attention.TONE_SUCCESS : Attention.TONE_KEY);
+            Attention.playTone(buzz == BUZZ_DONE ? Attention.TONE_SUCCESS
+                               : (buzz == BUZZ_GO || buzz == BUZZ_PUSH ? Attention.TONE_START : Attention.TONE_KEY));
         }
+    }
+
+    // The buzz guide: each buzz with its name, three seconds apart
+    private var _guide as Number = 0;
+
+    function guide() as Void {
+        _state = STATE_GUIDE;
+        _guide = 0;
+        stopTimer();
+        var t = new Timer.Timer();
+        t.start(method(:onGuide), 3000, true);
+        _timer = t;
+        signal(StretchBuzz.GUIDE[0]);
+        WatchUi.requestUpdate();
+    }
+
+    function onGuide() as Void {
+        _guide++;
+        if (_guide >= StretchBuzz.GUIDE.size()) {
+            stopTimer();
+            toIdle();
+            return;
+        }
+        signal(StretchBuzz.GUIDE[_guide]);
+        WatchUi.requestUpdate();
+    }
+
+    private function drawGuide(dc as Dc) as Void {
+        _ringPen = 0;
+        var b = StretchBuzz.GUIDE[_guide];
+        text(dc, 0.18, _bandFont, GRAY, "THE BUZZES · " + (_guide + 1) + " OF " + StretchBuzz.GUIDE.size());
+        text(dc, 0.42, _nameFont, b == BUZZ_SWITCH ? SWITCH : ACCENT, StretchBuzz.name(b));
+        var lines = wrap(dc, StretchBuzz.meaning(b), _lineFont, (_w * 0.78).toNumber());
+        text(dc, 0.58, _lineFont, WHITE, lines[0]);
+        if (lines.size() > 1) {
+            text(dc, 0.66, _lineFont, WHITE, lines[1]);
+        }
+        cue(dc, Lib.Cues.BACK, "STOP", FAR, GRAY);
     }
 
     // BACK while running: "go now" in a setup, else on to the next side or stretch
@@ -294,6 +326,11 @@ class StretchView extends WatchUi.View {
         toIdle();
     }
 
+    function endGuide() as Void {
+        stopTimer();
+        toIdle();
+    }
+
     function toIdle() as Void {
         _state = STATE_IDLE;
         _suggest = StretchPlan.now();
@@ -321,6 +358,8 @@ class StretchView extends WatchUi.View {
             drawRun(dc, s);
         } else if (_state == STATE_DONE) {
             drawDone(dc);
+        } else if (_state == STATE_GUIDE) {
+            drawGuide(dc);
         } else {
             drawIdle(dc);
         }
@@ -453,7 +492,8 @@ class StretchView extends WatchUi.View {
         var bw = (_w * 0.48).toNumber();
         var bh = (_h * 0.27).toNumber();
         var mirror = s.side() == 1;
-        if (p == PH_SETUP) {
+        if (p == PH_SETUP && !s.demoing()) {
+            // the last seconds before the start: where the stretch is going
             StretchFigure.draw(dc, st, 1.0, mirror, cx, ground, bw, bh, GHOST, GHOST, null);
         }
         var accent = ACCENT;
@@ -569,6 +609,10 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
             _view.skip();
             return true;
         }
+        if (_view.state() == STATE_GUIDE) {
+            _view.endGuide();
+            return true;
+        }
         return false;
     }
 
@@ -623,6 +667,7 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
             menu.addItem(new WatchUi.MenuItem(StretchRoutines.NAMES[i],
                          StretchPlan.minutes(i) + " · " + StretchRoutines.ABOUT[i], i, null));
         }
+        menu.addItem(new WatchUi.MenuItem("The buzzes", "feel what each one means", :buzzes, null));
         menu.addItem(new WatchUi.MenuItem("Clear history", "forget past sessions", :clear, null));
         WatchUi.pushView(menu, new StretchMenuDelegate(_view), WatchUi.SLIDE_UP);
     }
@@ -649,6 +694,8 @@ class StretchMenuDelegate extends WatchUi.Menu2InputDelegate {
             _view.finish(false);
         } else if (id == :discard) {
             _view.discard();
+        } else if (id == :buzzes) {
+            _view.guide();
         } else if (id == :clear) {
             StretchHistory.clear();
             WatchUi.requestUpdate();
