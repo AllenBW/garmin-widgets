@@ -9,4 +9,4 @@ base.Lib.annotations = fmt;arcs;cues
 base.barrelPath = ../../lib/monkey.jungle
 
 # The live build: no sample screens (sample.jungle opens on one)
-base.excludeAnnotations = shotidle;shothold;shotsetup;shotreps;shotpush;shotbreathe;shotdone
+base.excludeAnnotations = shotidle;shothold;shotsetup;shotreps;shotpush;shotbreathe;shotdone;shotguide

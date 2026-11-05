@@ -1,4 +1,4 @@
 # Captures: opening on the idle card without the glance, so the simulator
 # opens straight on the app (see StretchShot.mc). For another screen,
 # CIQ_SHOT_JUNGLE="monkey.jungle;shot-<screen>.jungle".
-base.excludeAnnotations = live;glanceview;shothold;shotsetup;shotreps;shotpush;shotbreathe;shotdone
+base.excludeAnnotations = live;glanceview;shothold;shotsetup;shotreps;shotpush;shotbreathe;shotdone;shotguide

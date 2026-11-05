@@ -1,4 +1,5 @@
 import Toybox.Application.Properties;
+import Toybox.Application.Storage;
 import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -82,6 +83,8 @@ function testBuzzes(logger as Logger) as Boolean {
         Test.assertMessage(StretchBuzz.meaning(b).length() > 0, "meaning");
     }
     Test.assertEqualMessage(StretchBuzz.GUIDE.size(), BUZZ_COUNT - 1, "the guide plays every buzz");
+    Test.assertEqualMessage(StretchBuzz.BASIC.size(), BUZZ_COUNT - 3, "without contract-relax, all but push and relax");
+    Test.assertEqualMessage(StretchBuzz.length(BUZZ_DONE), 1040, "the longest buzz sets the tutorial's scale");
     var s = new StretchSession(StretchRoutines.R_AFTER_RUN, 100, false);
     Test.assertMessage(s.demoing(), "a setup shows the stretch");
     s.tick(2500);
@@ -281,6 +284,27 @@ function testDrawEveryMode(logger as Logger) as Boolean {
         view.onUpdate(dc);
         view.toIdle();
     }
+    // the tutorial: before the first routine, every page, then the routine
+    Storage.deleteValue(StretchBuzz.SEEN);
+    view.go(0);
+    Test.assertEqualMessage(view.state(), STATE_GUIDE, "the first GO teaches the buzzes");
+    for (var k = 0; k < 20 && view.state() == STATE_GUIDE; k++) {
+        view.onUpdate(dc);
+        view.guideAgain();
+        view.onUpdate(dc);
+        view.guideBack();
+        view.guideNext();
+        view.guideNext();
+    }
+    Test.assertEqualMessage(view.state(), STATE_RUN, "then the routine");
+    view.discard();
+    view.go(0);
+    Test.assertEqualMessage(view.state(), STATE_RUN, "once only");
+    view.discard();
+    view.guide(-1, 0);
+    view.leaveGuide();
+    Test.assertEqualMessage(view.state(), STATE_IDLE, "from the list, BACK goes home");
+    Storage.deleteValue(StretchBuzz.SEEN);
     Properties.setValue("Record", true);
     StretchHistory.clear();   // the routines skipped to the end counted as done
     return true;

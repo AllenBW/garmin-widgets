@@ -2,12 +2,26 @@ import Toybox.Lang;
 
 // The buzz vocabulary: each meaning its own rhythm and strength, so the
 // routine can be followed with the watch out of sight. Patterns are
-// (duty %, milliseconds) pairs, a duty of 0 a pause; the guide in the
-// routines menu plays each one with its name.
+// (duty %, milliseconds) pairs, a duty of 0 a pause. The tutorial plays
+// each one with its name and what to do, before the first routine and from
+// the routines list.
 module StretchBuzz {
 
-    // In the order the guide plays them: how a stretch goes
+    // In the order the tutorial plays them: how a stretch goes
     const GUIDE = [BUZZ_TICK, BUZZ_GO, BUZZ_TEN, BUZZ_RELEASE, BUZZ_SWITCH, BUZZ_NEXT, BUZZ_PUSH, BUZZ_RELAX, BUZZ_DONE] as Array<Number>;
+    // the same without contract-relax's push and relax, when that's off
+    const BASIC = [BUZZ_TICK, BUZZ_GO, BUZZ_TEN, BUZZ_RELEASE, BUZZ_SWITCH, BUZZ_NEXT, BUZZ_DONE] as Array<Number>;
+    const SEEN = "b";   // in storage once the tutorial has been seen or skipped
+
+    // How long a buzz lasts, in milliseconds
+    function length(buzz as Number) as Number {
+        var pat = pattern(buzz);
+        var ms = 0;
+        for (var i = 1; i < pat.size(); i += 2) {
+            ms += pat[i];
+        }
+        return ms;
+    }
 
     function pattern(buzz as Number) as Array<Number> {
         if (buzz == BUZZ_TICK) {
@@ -68,31 +82,32 @@ module StretchBuzz {
         return "DONE";
     }
 
+    // What to do when it comes, short enough for one line
     function meaning(buzz as Number) as String {
         if (buzz == BUZZ_TICK) {
-            return "Light taps: about to start";
+            return "Counting you in";
         }
         if (buzz == BUZZ_GO) {
-            return "One firm buzz: ease in";
+            return "Ease into the stretch";
         }
         if (buzz == BUZZ_TEN) {
-            return "A flutter: nearly there";
+            return "Ten seconds to go";
         }
         if (buzz == BUZZ_RELEASE) {
-            return "A long fade: come out slowly";
+            return "Come out of it slowly";
         }
         if (buzz == BUZZ_SWITCH) {
-            return "Two sharp taps: other side";
+            return "Change to the other side";
         }
         if (buzz == BUZZ_NEXT) {
-            return "Three rising: next stretch";
+            return "On to the next stretch";
         }
         if (buzz == BUZZ_PUSH) {
-            return "Strong and long: push gently";
+            return "Push gently against it";
         }
         if (buzz == BUZZ_RELAX) {
-            return "A short fade: let go";
+            return "Let go, then sink deeper";
         }
-        return "Two taps and a long one: done";
+        return "All done. Well stretched";
     }
 }

@@ -4,7 +4,8 @@ import Toybox.Lang;
 // beside it, through CIQ_SHOT_JUNGLE): open straight on a screen, without
 // the glance. start() gives [routine, contract-relax (0 or 1), the phase
 // to stop at, how many of that phase to pass first, milliseconds into
-// it], or null for the opening card. The live build never starts anything
+// it], or null for the opening card. A phase of -1 opens the tutorial on
+// the page given fourth. The live build never starts anything
 // by itself.
 (:live)
 module StretchShot {
@@ -66,5 +67,13 @@ module StretchShot {
 module StretchShot {
     function start() as Array<Number>? {
         return [StretchRoutines.R_DESK, 0, PH_DONE, 0, 0] as Array<Number>;
+    }
+}
+
+// The tutorial: the switch-sides buzz
+(:shotguide)
+module StretchShot {
+    function start() as Array<Number>? {
+        return [0, 0, -1, 5, 0] as Array<Number>;
     }
 }

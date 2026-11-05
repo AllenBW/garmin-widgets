@@ -1,3 +1,4 @@
+import Toybox.Application;
 import Toybox.Attention;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -11,7 +12,7 @@ enum {
     STATE_IDLE,     // the routine that suits now, START to go
     STATE_RUN,      // a routine playing
     STATE_DONE,     // the summary
-    STATE_GUIDE     // what the buzzes mean, each played in turn
+    STATE_GUIDE     // the tutorial: what each buzz means
 }
 
 // One view for the whole app. Idle: why, the routine, its length and its
@@ -85,7 +86,9 @@ class StretchView extends WatchUi.View {
             _suggest = StretchPlan.now();
             _routine = _suggest[0];
             var shot = StretchShot.start();
-            if (shot != null && _startUnix == 0) {
+            if (shot != null && shot[2] < 0) {
+                guide(-1, shot[3]);   // the tutorial, on a page
+            } else if (shot != null && _startUnix == 0) {
                 // a sample build opens part-way through a routine
                 begin(shot[0], false, shot[1] == 1);
                 var s = _session;
@@ -211,42 +214,177 @@ class StretchView extends WatchUi.View {
         }
     }
 
-    // The buzz guide: each buzz with its name, three seconds apart
-    private var _guide as Number = 0;
+    // The tutorial: a page to say why, a page for each buzz (played on
+    // arrival and drawn as its pattern, which fills as it plays) and a last
+    // page. Before the first routine ever, and from the routines list.
+    private var _guide as Number = 0;                         // 0 why, then each buzz, then the end
+    private var _buzzes as Array<Number> = StretchBuzz.GUIDE;
+    private var _then as Number = -1;                         // the routine waiting, or -1
+    private var _played as Number = 0;                        // System.getTimer() when the page's buzz began
 
-    function guide() as Void {
-        _state = STATE_GUIDE;
-        _guide = 0;
+    // GO, or a routine from the list: the tutorial first, the first time
+    function go(routine as Number) as Void {
+        if (Application.Storage.getValue(StretchBuzz.SEEN) == null) {
+            guide(routine, 0);
+        } else {
+            start(routine);
+        }
+    }
+
+    function guide(then as Number, page as Number) as Void {
         stopTimer();
-        var t = new Timer.Timer();
-        t.start(method(:onGuide), 3000, true);
-        _timer = t;
-        signal(StretchBuzz.GUIDE[0]);
+        _state = STATE_GUIDE;
+        _then = then;
+        _buzzes = StretchSettings.contractRelax() ? StretchBuzz.GUIDE : StretchBuzz.BASIC;
+        toPage(page);
+    }
+
+    private function toPage(page as Number) as Void {
+        _guide = page;
+        if (page > 0 && page <= _buzzes.size()) {
+            playPage();
+        } else {
+            stopTimer();
+            if (page > 0) {
+                Application.Storage.setValue(StretchBuzz.SEEN, 1);
+            }
+        }
         WatchUi.requestUpdate();
     }
 
-    function onGuide() as Void {
-        _guide++;
-        if (_guide >= StretchBuzz.GUIDE.size()) {
-            stopTimer();
-            toIdle();
-            return;
+    private function playPage() as Void {
+        signal(_buzzes[_guide - 1]);
+        _played = System.getTimer();
+        if (_timer == null) {
+            var t = new Timer.Timer();
+            t.start(method(:onGuide), 50, true);
+            _timer = t;
         }
-        signal(StretchBuzz.GUIDE[_guide]);
+    }
+
+    // While a buzz plays: its picture fills
+    function onGuide() as Void {
+        if (_guide < 1 || _guide > _buzzes.size()
+            || System.getTimer() - _played > StretchBuzz.length(_buzzes[_guide - 1]) + 150) {
+            stopTimer();
+        }
         WatchUi.requestUpdate();
+    }
+
+    // START: the next page; at the end, the routine waiting or the card
+    function guideNext() as Void {
+        if (_guide > _buzzes.size()) {
+            endGuide();
+        } else {
+            toPage(_guide + 1);
+        }
+    }
+
+    // DOWN, or a touch: that buzz again
+    function guideAgain() as Void {
+        if (_guide > 0 && _guide <= _buzzes.size()) {
+            playPage();
+            WatchUi.requestUpdate();
+        }
+    }
+
+    // UP: the page before
+    function guideBack() as Void {
+        if (_guide > 0) {
+            toPage(_guide - 1);
+        }
+    }
+
+    // BACK: skipped (on to the routine waiting); on the last page, the card
+    function leaveGuide() as Void {
+        if (_guide > _buzzes.size()) {
+            _then = -1;
+        }
+        endGuide();
+    }
+
+    private function endGuide() as Void {
+        stopTimer();
+        Application.Storage.setValue(StretchBuzz.SEEN, 1);
+        if (_then >= 0) {
+            start(_then);
+        } else {
+            toIdle();
+        }
     }
 
     private function drawGuide(dc as Dc) as Void {
         _ringPen = 0;
-        var b = StretchBuzz.GUIDE[_guide];
-        text(dc, 0.18, _bandFont, GRAY, "THE BUZZES · " + (_guide + 1) + " OF " + StretchBuzz.GUIDE.size());
-        text(dc, 0.42, _nameFont, b == BUZZ_SWITCH ? SWITCH : ACCENT, StretchBuzz.name(b));
-        var lines = wrap(dc, StretchBuzz.meaning(b), _lineFont, (_w * 0.78).toNumber());
-        text(dc, 0.58, _lineFont, WHITE, lines[0]);
-        if (lines.size() > 1) {
-            text(dc, 0.66, _lineFont, WHITE, lines[1]);
+        var n = _buzzes.size();
+        var last = _guide > n;
+        if (_guide == 0) {
+            text(dc, 0.14, _bandFont, ACCENT, _then >= 0 ? "BEFORE YOU START" : "REFRESHER");
+            text(dc, 0.355, _nameFont, WHITE, "Learn the buzzes");
+            text(dc, 0.475, _lineFont, WHITE, "Each buzz means");
+            text(dc, 0.55, _lineFont, WHITE, "one thing, so you can");
+            text(dc, 0.625, _lineFont, WHITE, "stretch eyes closed");
+        } else if (last) {
+            text(dc, 0.14, _bandFont, ACCENT, "READY");
+            text(dc, 0.355, _nameFont, WHITE, _then >= 0 ? StretchRoutines.NAMES[_then] : "That's all of them");
+            text(dc, 0.49, _lineFont, WHITE, "Feel them again");
+            text(dc, 0.565, _lineFont, WHITE, "any time under MORE");
+        } else {
+            // the name below START's word, the picture where UP's would be
+            var b = _buzzes[_guide - 1];
+            var colour = b == BUZZ_SWITCH ? SWITCH : ACCENT;
+            text(dc, 0.14, _bandFont, GRAY, "BUZZ " + _guide + " OF " + n);
+            text(dc, 0.355, _nameFont, colour, StretchBuzz.name(b));
+            wave(dc, b, colour);
+            var lines = wrap(dc, StretchBuzz.meaning(b), _lineFont, (_w * 0.80).toNumber());
+            text(dc, lines.size() > 1 ? 0.575 : 0.605, _lineFont, WHITE, lines[0]);
+            if (lines.size() > 1) {
+                text(dc, 0.65, _lineFont, WHITE, lines[1]);
+            }
+            cue(dc, Lib.Cues.DOWN, "AGAIN", FAR, GRAY);
         }
-        cue(dc, Lib.Cues.BACK, "STOP", FAR, GRAY);
+
+        // where you are: a dot a page
+        var gap = (_w * 0.04).toNumber();
+        var x = _w / 2 - (n + 1) * gap / 2;
+        var y = (_h * 0.84).toNumber();
+        for (var i = 0; i <= n + 1; i++) {
+            dc.setColor(i == _guide ? ACCENT : FAR, Graphics.COLOR_TRANSPARENT);
+            dc.fillCircle(x + i * gap, y, i == _guide ? (_w * 0.014).toNumber() : (_w * 0.008).toNumber());
+        }
+
+        cue(dc, Lib.Cues.START, last ? (_then >= 0 ? "GO" : "DONE") : "NEXT", ACCENT, WHITE);
+        cue(dc, Lib.Cues.BACK, last || _then < 0 ? "EXIT" : "SKIP", FAR, GRAY);
+    }
+
+    // A buzz as a picture: each pulse a bar as tall as it is strong and as
+    // wide as it is long, on one scale for every buzz; dim until played
+    private function wave(dc as Dc, b as Number, colour as Number) as Void {
+        var pat = StretchBuzz.pattern(b);
+        var unit = _w * 0.62 / 1100.0;   // pixels a millisecond: the longest buzz is 1,040
+        var x = _w / 2 - (StretchBuzz.length(b) * unit / 2).toNumber();
+        var cy = (_h * 0.47).toNumber();
+        var half = _h * 0.055;
+        var head = _timer != null ? x + ((System.getTimer() - _played) * unit).toNumber() : _w;
+        for (var i = 0; i + 1 < pat.size(); i += 2) {
+            var len = (pat[i + 1] * unit).toNumber();
+            if (pat[i] > 0) {
+                var bh = (half * pat[i] / 100).toNumber();
+                if (bh < 3) {
+                    bh = 3;
+                }
+                var lit = head - x;
+                lit = lit < 0 ? 0 : (lit > len ? len : lit);
+                if (lit < len) {
+                    dc.setColor(FAR, Graphics.COLOR_TRANSPARENT);
+                    dc.fillRoundedRectangle(x, cy - bh, len, 2 * bh, 3);
+                }
+                if (lit > 0) {
+                    dc.setColor(colour, Graphics.COLOR_TRANSPARENT);
+                    dc.fillRoundedRectangle(x, cy - bh, lit, 2 * bh, 3);
+                }
+            }
+            x += len;
+        }
     }
 
     // BACK while running: "go now" in a setup, else on to the next side or stretch
@@ -323,11 +461,6 @@ class StretchView extends WatchUi.View {
         _recorder.discard();
         _session = null;
         _paused = false;
-        toIdle();
-    }
-
-    function endGuide() as Void {
-        stopTimer();
         toIdle();
     }
 
@@ -561,7 +694,9 @@ class StretchView extends WatchUi.View {
     }
 }
 
-// Buttons. Idle: START goes, UP or DOWN lists every routine, BACK leaves.
+// Buttons. Idle: START goes (the tutorial first, the first time), UP or
+// DOWN lists every routine, BACK leaves. Tutorial: START on, DOWN (or a
+// touch) the buzz again, UP a page back, BACK skips.
 // Running: START pauses (the menu), BACK goes now or skips, UP adds ten
 // seconds to a hold. Done: START back to the start, BACK leaves. A touch
 // near a cue does what that button does.
@@ -600,6 +735,8 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
             onPreviousPage();
         } else if (tap == Lib.Cues.TAP_DOWN) {
             onNextPage();
+        } else if (_view.state() == STATE_GUIDE) {
+            _view.guideAgain();
         }
         return true;
     }
@@ -610,14 +747,16 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
             return true;
         }
         if (_view.state() == STATE_GUIDE) {
-            _view.endGuide();
+            _view.leaveGuide();
             return true;
         }
         return false;
     }
 
     function onPreviousPage() as Boolean {
-        if (_view.running()) {
+        if (_view.state() == STATE_GUIDE) {
+            _view.guideBack();
+        } else if (_view.running()) {
             _view.extend();
         } else if (_view.state() == STATE_IDLE) {
             routines();
@@ -626,7 +765,9 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onNextPage() as Boolean {
-        if (_view.running()) {
+        if (_view.state() == STATE_GUIDE) {
+            _view.guideAgain();
+        } else if (_view.running()) {
             _view.easeOff();
         } else if (_view.state() == STATE_IDLE) {
             routines();
@@ -637,7 +778,7 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     function onMenu() as Boolean {
         if (_view.running()) {
             pressStart();
-        } else {
+        } else if (_view.state() != STATE_GUIDE) {
             routines();
         }
         return true;
@@ -646,9 +787,11 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     function pressStart() as Void {
         var st = _view.state();
         if (st == STATE_IDLE) {
-            _view.start(_view.routine());
+            _view.go(_view.routine());
         } else if (st == STATE_DONE) {
             _view.toIdle();
+        } else if (st == STATE_GUIDE) {
+            _view.guideNext();
         } else {
             _view.pause();
             var menu = new WatchUi.Menu2({:title => "Paused"});
@@ -686,7 +829,7 @@ class StretchMenuDelegate extends WatchUi.Menu2InputDelegate {
         var id = item.getId();
         WatchUi.popView(WatchUi.SLIDE_DOWN);
         if (id instanceof Number) {
-            _view.start(id);
+            _view.go(id);
         } else if (id == :skip) {
             _view.skipStretch();
             _view.resume();
@@ -695,7 +838,7 @@ class StretchMenuDelegate extends WatchUi.Menu2InputDelegate {
         } else if (id == :discard) {
             _view.discard();
         } else if (id == :buzzes) {
-            _view.guide();
+            _view.guide(-1, 0);
         } else if (id == :clear) {
             StretchHistory.clear();
             WatchUi.requestUpdate();
