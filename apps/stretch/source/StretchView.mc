@@ -76,11 +76,25 @@ class StretchView extends WatchUi.View {
             var shot = StretchShot.start();
             if (shot != null && _startUnix == 0) {
                 // a sample build opens part-way through a routine
-                begin(shot[0], false);
+                begin(shot[0], false, shot[1] == 1);
                 var s = _session;
+                var seen = -1;
+                var was = -1;
+                // a phase at a time: ticking through minutes would trip the watchdog
+                while (s != null && !s.done() && seen < shot[3]) {
+                    s.tick(s.remaining());
+                    var p = s.phase();
+                    if (p == shot[2] && was != p) {
+                        seen++;
+                    }
+                    was = p;
+                }
                 if (s != null) {
-                    s.tick(shot[1]);
+                    s.tick(shot[4]);
                     _step = s.stepIndex();
+                    if (s.done()) {
+                        finish(true);
+                    }
                 }
             }
         }
@@ -124,12 +138,12 @@ class StretchView extends WatchUi.View {
 
     // Begin a routine now
     function start(routine as Number) as Void {
-        begin(routine, StretchSettings.record());
+        begin(routine, StretchSettings.record(), StretchSettings.contractRelax());
     }
 
-    private function begin(routine as Number, record as Boolean) as Void {
+    private function begin(routine as Number, record as Boolean, pnf as Boolean) as Void {
         _routine = routine;
-        _session = new StretchSession(routine, StretchSettings.level(), StretchSettings.contractRelax());
+        _session = new StretchSession(routine, StretchSettings.level(), pnf);
         _state = STATE_RUN;
         _paused = false;
         _step = 0;

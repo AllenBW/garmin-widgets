@@ -1,1 +1,1 @@
-base.excludeAnnotations = live;glanceview;shotidle;shotsetup
+base.excludeAnnotations = live;glanceview;shotidle;shotsetup;shotreps;shotpush;shotbreathe;shotdone
