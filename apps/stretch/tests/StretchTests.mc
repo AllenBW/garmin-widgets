@@ -118,10 +118,13 @@ function testControls(logger as Logger) as Boolean {
     s.tick(1000);
     Test.assertEqualMessage(s.easeOff(), BUZZ_RELEASE, "ease off releases");
     Test.assertEqualMessage(s.phase(), PH_RELEASE, "out of the stretch");
-    Test.assertEqualMessage(s.line(), "Ease off · smaller range", "and says why");
+    Test.assertEqualMessage(s.line(), "Sharp pain or tingling? Stop", "and says when to stop");
     Test.assertEqualMessage(s.easeOff(), BUZZ_NONE, "nothing to ease off in a release");
-    s.tick(StretchSession.RELEASE);
-    Test.assertEqualMessage(s.phase(), PH_SETUP, "then on as usual");
+    step = s.stepIndex();
+    Test.assertEqualMessage(s.tick(StretchSession.EASED), BUZZ_NEXT, "then the next stretch");
+    Test.assertEqualMessage(s.phase(), PH_SETUP, "setting up");
+    Test.assertEqualMessage(s.stepIndex(), step + 1, "not the other side of the one that hurt");
+    Test.assertEqualMessage(s.side(), 0, "from the left");
     while (!s.done()) {
         s.skipStretch();
     }
@@ -264,6 +267,7 @@ function testFigures(logger as Logger) as Boolean {
 (:test)
 function testDrawEveryMode(logger as Logger) as Boolean {
     Properties.setValue("Record", false);
+    Storage.setValue(StretchText.SAFETY_SEEN, 1);
     var w = 454;
     var h = 454;
     var dc = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
@@ -284,10 +288,20 @@ function testDrawEveryMode(logger as Logger) as Boolean {
         view.onUpdate(dc);
         view.toIdle();
     }
-    // the tutorial: before the first routine, every page, then the routine
+    // first the safety pages (BACK doesn't count as reading them), then
+    // the tutorial, every page, then the routine
     Storage.deleteValue(StretchBuzz.SEEN);
+    Storage.deleteValue(StretchText.SAFETY_SEEN);
     view.go(0);
-    Test.assertEqualMessage(view.state(), STATE_GUIDE, "the first GO teaches the buzzes");
+    Test.assertEqualMessage(view.state(), STATE_SAFETY, "the first GO says when to stop");
+    view.onUpdate(dc);
+    view.toIdle();
+    view.go(0);
+    Test.assertEqualMessage(view.state(), STATE_SAFETY, "until it's been read");
+    view.safetyNext();
+    view.onUpdate(dc);
+    view.safetyNext();
+    Test.assertEqualMessage(view.state(), STATE_GUIDE, "then the first GO teaches the buzzes");
     for (var k = 0; k < 20 && view.state() == STATE_GUIDE; k++) {
         view.onUpdate(dc);
         view.guideAgain();
@@ -304,7 +318,12 @@ function testDrawEveryMode(logger as Logger) as Boolean {
     view.guide(-1, 0);
     view.leaveGuide();
     Test.assertEqualMessage(view.state(), STATE_IDLE, "from the list, BACK goes home");
+    view.safety(-1);
+    view.safetyNext();
+    view.safetyNext();
+    Test.assertEqualMessage(view.state(), STATE_IDLE, "from the list, back home");
     Storage.deleteValue(StretchBuzz.SEEN);
+    Storage.deleteValue(StretchText.SAFETY_SEEN);
     Properties.setValue("Record", true);
     StretchHistory.clear();   // the routines skipped to the end counted as done
     return true;

@@ -29,6 +29,8 @@ module StretchPlan {
     const WAKE_DEFAULT = 7 * 3600;
     const SLEEP_DEFAULT = 22 * 3600 + 1800;
     const MOVE_BAR_DESK = 3;     // of five: about an hour sitting
+    const HISTORY_MAX = 100;     // activities looked through, so a long history can't trip the watchdog
+    const OWN_WITHIN = 120;      // seconds between a routine's start and its saved activity's
 
     // [routine, why]. clock, wake and sleep in seconds since midnight; sport
     // the last activity's (or -1) and ago the seconds since it ended; move
@@ -90,7 +92,21 @@ module StretchPlan {
         if (sport == Activity.SPORT_HIKING) {
             return "HIKE";
         }
-        return "LIFT";
+        return "TRAINING";
+    }
+
+    // One of this app's own routines, saved as Training: not an activity to cool down from
+    function own(start as Number, type as Number, rows as Array<Array<Number> >) as Boolean {
+        if (type != Activity.SPORT_TRAINING) {
+            return false;
+        }
+        for (var i = 0; i < rows.size(); i++) {
+            var d = rows[i][StretchHistory.UNIX] - start;
+            if (d >= -OWN_WITHIN && d <= OWN_WITHIN) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // [routine, why, sport] for this moment on this watch
@@ -101,16 +117,17 @@ module StretchPlan {
         var sport = -1;
         var ago = -1;
         var lastEnd = 0;
+        var rows = StretchHistory.rows();
         if (UserProfile has :getUserActivityHistory) {
             try {
                 var it = UserProfile.getUserActivityHistory();
                 var a = it.next();
                 // the newest is not promised to come first: take the latest end
-                while (a != null) {
+                for (var seen = 0; a != null && seen < HISTORY_MAX; seen++) {
                     var start = a.startTime;
                     var dur = a.duration;
                     var type = a.type;
-                    if (start != null && type != null) {
+                    if (start != null && type != null && !own(start.value(), type as Number, rows)) {
                         var end = start.value() + (dur != null ? dur.value() : 0);
                         if (end > lastEnd) {
                             lastEnd = end;
@@ -145,7 +162,6 @@ module StretchPlan {
             }
         } catch (e) {
         }
-        var rows = StretchHistory.rows();
         var restDays = 99;
         for (var i = rows.size() - 1; i >= 0; i--) {
             if (rows[i][StretchHistory.ROUTINE] == StretchRoutines.R_FULL) {
@@ -159,6 +175,9 @@ module StretchPlan {
     }
 
     function why(s as Array<Number>) as String {
+        if (s[1] == WHY_AFTER && s[2] == Activity.SPORT_TRAINING) {
+            return "AFTER TRAINING";   // anything Training: strength, but yoga too
+        }
         return s[1] == WHY_AFTER ? WHY_TEXT[WHY_AFTER] + sportWord(s[2]) : WHY_TEXT[s[1]];
     }
 

@@ -106,7 +106,7 @@ module StretchBuzz {
             return "Push gently against it";
         }
         if (buzz == BUZZ_RELAX) {
-            return "Let go, then sink deeper";
+            return "Let go, then ease further";
         }
         return "All done. Well stretched";
     }

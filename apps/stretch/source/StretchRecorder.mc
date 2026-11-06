@@ -38,45 +38,62 @@ class StretchRecorder {
 
     function lap() as Void {
         var s = _session;
-        if (s != null && s.isRecording()) {
-            s.addLap();
+        try {
+            if (s != null && s.isRecording()) {
+                s.addLap();
+            }
+        } catch (e) {
         }
     }
 
     function pause() as Void {
         var s = _session;
-        if (s != null && s.isRecording()) {
-            s.stop();
+        try {
+            if (s != null && s.isRecording()) {
+                s.stop();
+            }
+        } catch (e) {
         }
     }
 
     function resume() as Void {
         var s = _session;
-        if (s != null && !s.isRecording()) {
-            s.start();
+        try {
+            if (s != null && !s.isRecording()) {
+                s.start();
+            }
+        } catch (e) {
         }
     }
 
+    // false when it didn't reach the watch's activities
     function save() as Boolean {
         var s = _session;
         _session = null;
         if (s == null) {
             return false;
         }
-        if (s.isRecording()) {
-            s.stop();
+        try {
+            if (s.isRecording()) {
+                s.stop();
+            }
+            return s.save();
+        } catch (e) {
         }
-        return s.save();
+        return false;
     }
 
     function discard() as Void {
         var s = _session;
         _session = null;
-        if (s != null) {
-            if (s.isRecording()) {
-                s.stop();
+        try {
+            if (s != null) {
+                if (s.isRecording()) {
+                    s.stop();
+                }
+                s.discard();
             }
-            s.discard();
+        } catch (e) {
         }
     }
 }

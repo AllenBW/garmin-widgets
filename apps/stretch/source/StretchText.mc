@@ -4,6 +4,8 @@ import Toybox.Lang;
 (:glance)
 module StretchText {
 
+    const SAFETY_SEEN = "s";   // in storage once the safety pages have been read
+
     // "3-day streak · 5 this week", or a nudge when there is none
     function streakLine(now as Number) as String {
         var r = StretchHistory.rows();

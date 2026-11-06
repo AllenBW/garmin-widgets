@@ -65,6 +65,7 @@ class StretchSession {
     static const TEN_LEFT = 10000;
     static const EASE = 4000;
     static const RELEASE = 3000;
+    static const EASED = 5000;        // the release after "ease off": time to read why
     static const PNF_HOLD = 10000;
     static const PNF_PUSH = 5000;
     static const PNF_RELAX = 3000;
@@ -246,7 +247,10 @@ class StretchSession {
         if (done()) {
             return BUZZ_NONE;
         }
-        return tick(_durs[_cursor] - _in);
+        var rest = _durs[_cursor] - _in;
+        var buzz = tick(rest);
+        elapsed -= rest;   // skipped, not played
+        return buzz;
     }
 
     // Straight to the next setup (the other side, again, or the next stretch)
@@ -279,16 +283,25 @@ class StretchSession {
         return buzzFor(_cursor);
     }
 
-    // It hurts: out of the stretch now, gently, and on
+    // It hurts: out of the stretch now, gently, and on to the next one. The
+    // rest of this stretch goes (its other side, its other rounds), so it
+    // isn't asked for again a few seconds later.
     function easeOff() as Number {
         var p = phase();
-        if (p != PH_EASE && p != PH_HOLD && p != PH_PUSH && p != PH_RELAX && p != PH_DEEPEN) {
+        if (p != PH_EASE && p != PH_HOLD && p != PH_PUSH && p != PH_RELAX && p != PH_DEEPEN && p != PH_REPS) {
             return BUZZ_NONE;
         }
-        while ((_segs[_cursor] & 15) != PH_RELEASE) {
-            _before += _durs[_cursor];
-            _cursor++;
+        var step = stepIndex();
+        var end = _cursor;
+        while (end < _segs.size() - 1 && ((_segs[end] >> 10) & 63) == step) {
+            total -= _durs[end];
+            end++;
         }
+        _segs[_cursor] = (_segs[_cursor] & ~15) | PH_RELEASE;
+        _durs[_cursor] = EASED;
+        total += EASED;
+        _segs = _segs.slice(0, _cursor + 1).addAll(_segs.slice(end, null));
+        _durs = _durs.slice(0, _cursor + 1).addAll(_durs.slice(end, null));
         _in = 0;
         _eased = true;
         return BUZZ_RELEASE;
@@ -361,6 +374,15 @@ class StretchSession {
 
     function rounds() as Number {
         return StretchData.STEPS[routine][3 * stepIndex() + 2];
+    }
+
+    // What LEFT or RIGHT means here ("TILT LEFT", "LEFT LEG BACK"), or "" with no sides
+    function sideWord() as String {
+        if (!sided()) {
+            return "";
+        }
+        var form = StretchData.META[stretch() * StretchFigure.META + 13];
+        return StretchData.SIDE_PRE[form] + (side() == 0 ? "LEFT" : "RIGHT") + StretchData.SIDE_POST[form];
     }
 
     function sided() as Boolean {
@@ -538,7 +560,7 @@ class StretchSession {
             return "Ease in · find mild tension";
         }
         if (p == PH_RELEASE) {
-            return _eased ? "Ease off · smaller range" : "Slowly release";
+            return _eased ? "Sharp pain or tingling? Stop" : "Slowly release";
         }
         if (p == PH_PUSH) {
             return cues.size() > 4 ? cues[4] : "Push gently · quarter effort";
@@ -573,7 +595,7 @@ class StretchSession {
         }
         var w = _in / BREATH;
         if (p == PH_DEEPEN && w == 0) {
-            return "Now sink a bit deeper";
+            return "Ease a little further";
         }
         if (w % 2 == 1) {
             return breathingIn() ? "Breathe in · stay tall" : "Breathe out · let go";

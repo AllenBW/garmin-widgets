@@ -2,8 +2,11 @@
 # research in designs/stretch_research.md. Read by
 # designs/gen_stretch.py (the watch's tables) and designs/preview_stretch.py
 # (the contact sheet). Poses are joint angles, with two-bone IK where a hand
-# or foot must land on something. Facing right, y up; near is the side
-# being stretched (the figure's left; mirrored for the right).
+# or foot must land on something. Facing right, y up; near is the side the
+# watch names. SIDE_WORDS says what LEFT and RIGHT mean for each stretch.
+# Seen from the side the figure faces left for LEFT, so the near limb is
+# the left one; seen from the front the figure's left is on the screen's
+# right.
 from gen_stretch import (Pose, pt, KIND_HOLD, KIND_REPS, KIND_BREATH, F_FRONT, F_CLOSEUP,
                          F_SIDED, F_WALL, F_PNF, F_CHAIR, RF_PRE, RF_PNF, SEAT_BACK)
 
@@ -113,7 +116,7 @@ reps("chin_tuck", "Chin tuck", seated(head=-14), seated(head=8), ["neck"], 8, 40
 b = stand(torso=86, bend=-6, nua=180, nfa=181)
 stretch("wall_pec", "Wall chest", stand(nua=-150, nfa=-160), b, ["nua"], 30,
         ["Side to a wall, palm on it", "Hand just below shoulder", "Turn chest away slowly",
-         "Shoulder stays down", "Press palm into the wall"], "wall",
+         "Shoulder stays down", "Gently press palm into wall"], "wall",
         flags=F_SIDED | F_WALL | F_PNF | F_CLOSEUP)
 
 b = front()
@@ -134,7 +137,7 @@ reps("arm_circles", "Arm circles", stand(nua=-80, nfa=-78, fua=-76, ffa=-74),
      ["Stand tall, arms loose", "Start small, grow bigger", "Big slow circles",
       "Keep ribs down"], "stand")
 
-reps("shoulder_rolls", "Shoulder rolls", stand(head=-6, nua=-80, nfa=-84),
+reps("shoulder_rolls", "Shoulder roll", stand(head=-6, nua=-80, nfa=-84),
      stand(bend=-8, head=4, nua=-112, nfa=-100, fua=-110, ffa=-98), ["neck"], 10, 30,
      ["Arms loose at your sides", "Lift, roll back, drop", "Slow full circles",
       "Finish back and down"], "stand", flags=F_CLOSEUP)
@@ -212,7 +215,7 @@ stretch("child_pose", "Child's pose",
 stretch("kneeling_hip_flexor", "Hip flexor", kneel_lunge(),
         kneel_lunge(torso=95, bend=-4, nth=-128, fth=-18, fsh=-95), ["nth"], 30,
         ["Half kneel, front knee at 90°", "Tuck your tailbone under", "Squeeze the back glute",
-         "Shift hips forward", "Press back knee into floor"], "kneel",
+         "Shift hips forward", "Gently pull back knee forward"], "kneel",
         flags=F_SIDED | F_PNF, anchor="nkn")
 
 a = supine()
@@ -224,7 +227,7 @@ for p in (a, b):
     p.reach("f", "arm", pt(p.joints()["fkn"], 190, 0.08), -1)
 stretch("figure_four", "Figure four", a, b, ["nth"], 30,
         ["On your back, ankle over knee", "Pull thigh toward chest", "Knee opens out",
-         "Head stays down", "Press knee out into hand"], "floor", flags=F_SIDED | F_PNF)
+         "Head stays down", "Hand on knee, press out gently"], "floor", flags=F_SIDED | F_PNF)
 
 a = seated()
 a.reach("n", "leg", pt(a.joints()["fkn"], 95, 0.03), +1)
@@ -251,7 +254,7 @@ def butterfly(knees):
 
 stretch("butterfly", "Butterfly", butterfly(30), butterfly(12), ["nth", "fth"], 30,
         ["Sit, soles of feet together", "Sit tall on your sit bones", "Let your knees fall open",
-         "Hold feet, don't push", "Lift knees into elbows"], "floor", flags=F_FRONT | F_PNF)
+         "Hold feet, don't push", "Gently lift knees into elbows"], "floor", flags=F_FRONT | F_PNF)
 
 reps("hip_circles", "Hip circles",
      wide(torso=84).plant(wide(), (-0.05, 0)), wide(torso=96).plant(wide(), (0.05, 0)),
@@ -285,13 +288,13 @@ b.reach("n", "arm", pt(b.joints()["nkn"], -90, 0.0), -1)
 b.reach("f", "arm", pt(b.joints()["nkn"], -90, 0.02), -1)
 stretch("supine_hamstring", "Hamstring", a, b, ["nth"], 30,
         ["On your back, hold your thigh", "Straighten the knee slowly", "Other leg stays bent",
-         "Hips stay down", "Press heel away into hands"], "floor", flags=F_SIDED | F_PNF)
+         "Hips stay down", "Gently press thigh into hands"], "floor", flags=F_SIDED | F_PNF)
 
 s = stand(nth=-108, nsh=88, nfoot=178, fua=-20, ffa=-5)
 s.reach("n", "arm", s.joints()["nan"], -1)
 stretch("standing_quad", "Standing quad", stand(fua=-20, ffa=-5), s, ["nth"], 30,
         ["Hand on a wall, hold one foot", "Knees side by side", "Tuck your tailbone a little",
-         "Stand tall", "Press foot back into hand"], "wall",
+         "Stand tall", "Gently press foot into hand"], "wall",
         flags=F_SIDED | F_WALL | F_PNF, anchor="fan")
 
 # ---- Calves and ankles
@@ -301,7 +304,7 @@ stretch("wall_calf", "Wall calf",
         Pose(torso=74, nth=-128, nsh=-128, nfoot=-5, fth=-55, fsh=-110, nua=5, nfa=10, fua=-2, ffa=5),
         ["nsh"], 30,
         ["Hands on a wall, one leg back", "Back heel stays down", "Back knee straight",
-         "Toes point forward", "Press the ball of the foot"], "wall",
+         "Toes point forward", "Gently press ball of foot down"], "wall",
         flags=F_SIDED | F_WALL | F_PNF, anchor="nan")
 
 stretch("soleus_calf", "Soleus calf",
@@ -359,8 +362,8 @@ a.reach("f", "arm", pt(a.joints()["fan"], 180, 0.06), -1)
 b = Pose(torso=34, head=30, yaw=90, nth=-125, nsh=-128, nfoot=-60, fth=-30, fsh=-95, fua=92, ffa=92)
 b.reach("n", "arm", pt(b.joints()["fan"], 180, 0.09), -1)
 reps("worlds_greatest", "World's best", a, b, ["nth", "torso"], 3, 80,
-     ["Step into a long lunge", "Elbow to your front instep", "Turn, reach the arm high",
-      "Back knee off the floor"], "stand", flags=F_SIDED, anchor="fan")
+     ["Step into a long lunge", "Hand to floor inside front foot", "Turn, reach the arm high",
+      "Back knee down if you need it"], "stand", flags=F_SIDED, anchor="fan")
 
 reps("air_squat", "Air squat", stand(nua=-80, nfa=-80, fua=-78, ffa=-78),
      stand(torso=62, bend=-4, nth=-10, nsh=-118, fth=-12, fsh=-116, nua=4, nfa=4, fua=6, ffa=6),
@@ -391,6 +394,19 @@ stretch("belly_breath", "Slow breath", a, b, ["torso"], 60,
          "Shoulders stay soft"], "floor", kind=KIND_BREATH)
 
 
+# ---- What LEFT and RIGHT mean: the sub-line while a sided stretch plays
+
+SIDE_WORDS = {
+    "neck_side_tilt": "TILT %", "neck_rotation": "TURN %", "seated_twist": "TURN %",
+    "supine_twist": "KNEES %", "side_bend": "% ARM UP", "side_lunge": "% KNEE BENT",
+    "kneeling_hip_flexor": "% KNEE DOWN", "lunge_reach": "% LEG BACK",
+    "worlds_greatest": "% LEG BACK", "wall_calf": "% LEG BACK", "soleus_calf": "% LEG BACK",
+    "wall_pec": "% ARM", "cross_arm": "% ARM", "wrist_flexor": "% ARM",
+    "figure_four": "% LEG", "chair_figure_four": "% LEG", "supine_hamstring": "% LEG",
+    "standing_quad": "% LEG", "leg_swing_fb": "% LEG", "leg_swing_side": "% LEG",
+    "ankle_rocks": "% ANKLE",
+}
+
 # ---- Routines: (stretch, hold seconds or reps, rounds); see DESIGNS.md #20
 
 ROUTINES = [
@@ -410,8 +426,8 @@ ROUTINES = [
          steps=[("belly_breath", 60, 1), ("wall_calf", 30, 1), ("child_pose", 45, 1),
                 ("supine_hamstring", 40, 1), ("figure_four", 40, 1), ("butterfly", 40, 1),
                 ("supine_twist", 30, 1), ("knees_to_chest", 40, 1), ("belly_breath", 60, 1)]),
-    dict(const="R_FULL", name="Full body", about="60 s a muscle, when warm", flags=RF_PNF,
-         steps=[("wall_pec", 30, 2), ("cross_arm", 30, 1), ("kneeling_hip_flexor", 30, 2),
+    dict(const="R_FULL", name="Full body", about="Warm-up, then long holds", flags=RF_PNF,
+         steps=[("march", 22, 1), ("wall_pec", 30, 2), ("cross_arm", 30, 1), ("kneeling_hip_flexor", 30, 2),
                 ("standing_quad", 30, 2), ("supine_hamstring", 30, 2), ("figure_four", 30, 2),
                 ("butterfly", 30, 2), ("wall_calf", 30, 2), ("child_pose", 30, 1)]),
     dict(const="R_BEFORE_RUN", name="Before a run", about="Moving warm-up, no holds", flags=RF_PRE,

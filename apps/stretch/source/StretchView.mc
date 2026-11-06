@@ -12,7 +12,8 @@ enum {
     STATE_IDLE,     // the routine that suits now, START to go
     STATE_RUN,      // a routine playing
     STATE_DONE,     // the summary
-    STATE_GUIDE     // the tutorial: what each buzz means
+    STATE_GUIDE,    // the tutorial: what each buzz means
+    STATE_SAFETY    // when to stop and who should ask first: read before the first routine
 }
 
 // One view for the whole app. Idle: why, the routine, its length and its
@@ -32,6 +33,7 @@ class StretchView extends WatchUi.View {
     private const THROB = 0xE85A1C;    // the push's beat: darker, so it never merges with white
     private const TRACK = 0x1E1E1E;
     private const FRAME_MS = 100;
+    private const SAVE_MIN = 60000;    // less than a minute isn't saved or counted
 
     private var _state as Number = STATE_IDLE;
     private var _session as StretchSession? = null;
@@ -43,7 +45,9 @@ class StretchView extends WatchUi.View {
     private var _suggest as Array<Number> = [0, 0, -1] as Array<Number>;
     private var _routine as Number = 0;
     private var _startUnix as Number = 0;
-    private var _saved as Boolean = false;
+    private var _note as String = "";         // the done screen's word on saving
+    private var _saveFailed as Boolean = false;
+    private var _recordFailed as Boolean = false;
     private var _complete as Boolean = false;
     private var _stepsDone as Number = 0;
     private var _playedMs as Number = 0;
@@ -86,7 +90,10 @@ class StretchView extends WatchUi.View {
             _suggest = StretchPlan.now();
             _routine = _suggest[0];
             var shot = StretchShot.start();
-            if (shot != null && shot[2] < 0) {
+            if (shot != null && shot[2] == -2) {
+                safety(-1);           // the safety pages
+                _page = shot[3];
+            } else if (shot != null && shot[2] < 0) {
                 guide(-1, shot[3]);   // the tutorial, on a page
             } else if (shot != null && _startUnix == 0) {
                 // a sample build opens part-way through a routine
@@ -156,15 +163,16 @@ class StretchView extends WatchUi.View {
     }
 
     private function begin(routine as Number, record as Boolean, pnf as Boolean) as Void {
+        if (_state == STATE_RUN) {
+            return;   // two menus' worth of presses never start a second routine
+        }
         _routine = routine;
         _session = new StretchSession(routine, StretchSettings.level(), pnf);
         _state = STATE_RUN;
         _paused = false;
         _step = 0;
         _startUnix = Time.now().value();
-        if (record) {
-            _recorder.start(StretchRoutines.NAMES[routine]);
-        }
+        _recordFailed = record && !_recorder.start(StretchRoutines.NAMES[routine]);
         startTimer();
         WatchUi.requestUpdate();
     }
@@ -184,7 +192,7 @@ class StretchView extends WatchUi.View {
     }
 
     // After the session moved: a lap at a new stretch, the buzz, the end
-    private function played(s as StretchSession, buzz as Number) as Void {
+    function played(s as StretchSession, buzz as Number) as Void {
         if (s.stepIndex() != _step) {
             _step = s.stepIndex();
             _recorder.lap();
@@ -222,13 +230,59 @@ class StretchView extends WatchUi.View {
     private var _then as Number = -1;                         // the routine waiting, or -1
     private var _played as Number = 0;                        // System.getTimer() when the page's buzz began
 
-    // GO, or a routine from the list: the tutorial first, the first time
+    // GO, or a routine from the list: the safety pages and the tutorial first, the first time
     function go(routine as Number) as Void {
-        if (Application.Storage.getValue(StretchBuzz.SEEN) == null) {
+        if (Application.Storage.getValue(StretchText.SAFETY_SEEN) == null) {
+            safety(routine);
+        } else if (Application.Storage.getValue(StretchBuzz.SEEN) == null) {
             guide(routine, 0);
         } else {
             start(routine);
         }
+    }
+
+    // Two pages to read, before the first routine and from the routines list.
+    // START reads on; BACK leaves without counting them as read.
+    private var _page as Number = 0;
+
+    function safety(then as Number) as Void {
+        stopTimer();
+        _state = STATE_SAFETY;
+        _then = then;
+        _page = 0;
+        WatchUi.requestUpdate();
+    }
+
+    function safetyNext() as Void {
+        if (_page == 0) {
+            _page = 1;
+            WatchUi.requestUpdate();
+            return;
+        }
+        Application.Storage.setValue(StretchText.SAFETY_SEEN, 1);
+        if (_then >= 0) {
+            go(_then);
+        } else {
+            toIdle();
+        }
+    }
+
+    private function drawSafety(dc as Dc) as Void {
+        _ringPen = 0;
+        text(dc, 0.14, _bandFont, ACCENT, "STRETCH SAFELY");
+        if (_page == 0) {
+            text(dc, 0.355, _nameFont, WHITE, "Never into pain");
+            text(dc, 0.475, _lineFont, WHITE, "Mild tension only. Stop");
+            text(dc, 0.55, _lineFont, WHITE, "for sharp pain, dizziness,");
+            text(dc, 0.625, _lineFont, WHITE, "numbness or tingling");
+        } else {
+            text(dc, 0.355, _nameFont, WHITE, "Ask first");
+            text(dc, 0.475, _lineFont, WHITE, "Injured, pregnant or");
+            text(dc, 0.55, _lineFont, WHITE, "after surgery? Check");
+            text(dc, 0.625, _lineFont, WHITE, "with a clinician");
+        }
+        cue(dc, Lib.Cues.START, _page == 0 ? "NEXT" : "OK", ACCENT, WHITE);
+        cue(dc, Lib.Cues.BACK, "EXIT", FAR, GRAY);
     }
 
     function guide(then as Number, page as Number) as Void {
@@ -322,7 +376,7 @@ class StretchView extends WatchUi.View {
             text(dc, 0.355, _nameFont, WHITE, "Learn the buzzes");
             text(dc, 0.475, _lineFont, WHITE, "Each buzz means");
             text(dc, 0.55, _lineFont, WHITE, "one thing, so you can");
-            text(dc, 0.625, _lineFont, WHITE, "stretch eyes closed");
+            text(dc, 0.625, _lineFont, WHITE, "stretch without looking");
         } else if (last) {
             text(dc, 0.14, _bandFont, ACCENT, "READY");
             text(dc, 0.355, _nameFont, WHITE, _then >= 0 ? StretchRoutines.NAMES[_then] : "That's all of them");
@@ -443,12 +497,22 @@ class StretchView extends WatchUi.View {
             return;
         }
         stopTimer();
-        _complete = complete;
         _playedMs = s.elapsed;
-        _stepsDone = complete ? s.steps : s.stepIndex();
-        _saved = _recorder.save();
-        if (complete || _playedMs >= 60000) {
-            StretchHistory.add(_startUnix, _routine, _playedMs / 1000, complete);
+        // skipping to the end isn't doing it: at least half of it, played
+        _complete = complete && _playedMs * 2 >= s.total;
+        _stepsDone = _complete ? s.steps : (complete ? -1 : s.stepIndex());
+        var wanted = _recorder.active() || _recordFailed;
+        var shortOne = _playedMs < SAVE_MIN;
+        var saved = false;
+        if (shortOne) {
+            _recorder.discard();
+        } else {
+            saved = _recorder.save();
+        }
+        _saveFailed = wanted && !shortOne && !saved;
+        _note = !wanted ? "Not recorded" : (shortOne ? "Too short to save" : (saved ? "Saved to Connect" : "Not saved to Connect"));
+        if (!shortOne) {
+            StretchHistory.add(_startUnix, _routine, _playedMs / 1000, _complete);
         }
         _session = null;
         _paused = false;
@@ -493,6 +557,8 @@ class StretchView extends WatchUi.View {
             drawDone(dc);
         } else if (_state == STATE_GUIDE) {
             drawGuide(dc);
+        } else if (_state == STATE_SAFETY) {
+            drawSafety(dc);
         } else {
             drawIdle(dc);
         }
@@ -505,7 +571,7 @@ class StretchView extends WatchUi.View {
 
     // A line too wide for one row, split at the space that balances it best
     // (a "·" at the split goes); kept for the next frame
-    private function wrap(dc as Dc, t as String, font as FontType, max as Number) as Array<String> {
+    function wrap(dc as Dc, t as String, font as FontType, max as Number) as Array<String> {
         if (t.equals(_wrapped)) {
             return _lines;
         }
@@ -565,7 +631,7 @@ class StretchView extends WatchUi.View {
         text(dc, 0.13, _bandFont, ACCENT, why);
         text(dc, 0.235, _nameFont, WHITE, StretchRoutines.NAMES[r]);
         var steps = StretchData.STEPS[r].size() / 3;
-        text(dc, 0.33, _lineFont, GRAY, StretchPlan.minutes(r) + " · " + StretchText.stretches(steps));
+        text(dc, 0.34, _lineFont, GRAY, StretchPlan.minutes(r) + " · " + StretchText.stretches(steps));
         var first = StretchData.STEPS[r][0];
         StretchFigure.draw(dc, first, 1.0, false, _w / 2, (_h * 0.635).toNumber(),
                            (_w * 0.40).toNumber(), (_h * 0.25).toNumber(), WHITE, FAR, ACCENT);
@@ -581,7 +647,7 @@ class StretchView extends WatchUi.View {
     private function drawRun(dc as Dc, s as StretchSession) as Void {
         var p = s.phase();
         var st = s.stretch();
-        var sideWord = s.sided() ? (s.side() == 0 ? "LEFT" : "RIGHT") : "";
+        var sideWord = s.sideWord();
 
         // the bezel: the hold (ease-in included), the reps or the push in
         // the accent, a setup in grey; the slow breath fills and empties it
@@ -599,32 +665,33 @@ class StretchView extends WatchUi.View {
         var subColour = ACCENT;
         if (p == PH_SETUP) {
             if (set == SET_SIDE) {
-                sub = "SWITCH · " + sideWord;
+                sub = sideLine(dc, "SWITCH · ", sideWord, "");
                 subColour = SWITCH;
             } else if (set == SET_ROUND) {
-                sub = sideWord.equals("") ? "AGAIN" : "AGAIN · " + sideWord;
+                sub = sideWord.equals("") ? "AGAIN" : sideLine(dc, "AGAIN · ", sideWord, "");
                 subColour = SWITCH;
             } else {
-                sub = sideWord.equals("") ? "NEXT" : "NEXT · " + sideWord;
+                sub = sideWord.equals("") ? "NEXT" : sideLine(dc, "NEXT · ", sideWord, "");
                 subColour = GRAY;
             }
         } else if (p == PH_BREATHE) {
             sub = s.breathingIn() ? "BREATHE IN" : "BREATHE OUT";
         } else if (s.rounds() > 1 && p != PH_REPS) {
-            sub = (sideWord.equals("") ? "ROUND " : sideWord + " · ") + (s.round() + 1) + " OF " + s.rounds();
+            var count = (s.round() + 1) + " OF " + s.rounds();
+            sub = sideWord.equals("") ? "ROUND " + count : sideLine(dc, "", sideWord, " · " + count);
         }
-        text(dc, 0.12, Lib.Fmt.fitFont(dc, StretchData.NAMES[st].toUpper(), [_bandFont] as Array<FontType>, _w),
+        text(dc, 0.135, Lib.Fmt.fitFont(dc, StretchData.NAMES[st].toUpper(), [_bandFont] as Array<FontType>, _w),
              nameColour, StretchData.NAMES[st].toUpper());
         if (!sub.equals("")) {
-            text(dc, 0.20, _bandFont, subColour, sub);
+            text(dc, 0.205, _bandFont, subColour, sub);
         }
 
         // the figure: the start pose with the stretch as a thin ghost while setting up
         var cx = _w / 2;
-        var ground = (_h * 0.515).toNumber();
+        var ground = (_h * 0.525).toNumber();
         var bw = (_w * 0.48).toNumber();
         var bh = (_h * 0.27).toNumber();
-        var mirror = s.side() == 1;
+        var mirror = StretchFigure.mirrored(st, s.side());
         if (p == PH_SETUP && !s.demoing()) {
             // the last seconds before the start: where the stretch is going
             StretchFigure.draw(dc, st, 1.0, mirror, cx, ground, bw, bh, GHOST, GHOST, null);
@@ -636,7 +703,9 @@ class StretchView extends WatchUi.View {
         StretchFigure.draw(dc, st, s.blend(), mirror, cx, ground, bw, bh, WHITE, FAR, accent);
 
         // the coach
-        var lines = wrap(dc, s.line(), _lineFont, (_w * 0.80).toNumber());
+        // (saving refused at the start: said once, while there's time to do something about it)
+        var said = _recordFailed && s.elapsed < 4000 ? "Not saving to Connect" : s.line();
+        var lines = wrap(dc, said, _lineFont, (_w * 0.80).toNumber());
         if (lines.size() == 1) {
             text(dc, 0.62, _lineFont, WHITE, lines[0]);
         } else {
@@ -654,10 +723,28 @@ class StretchView extends WatchUi.View {
         if (p == PH_HOLD || p == PH_DEEPEN || p == PH_REPS || p == PH_BREATHE) {
             cue(dc, Lib.Cues.UP, "+10", FAR, GRAY);
         }
-        if (p == PH_EASE || p == PH_HOLD || p == PH_PUSH || p == PH_RELAX || p == PH_DEEPEN) {
+        if (p == PH_EASE || p == PH_HOLD || p == PH_PUSH || p == PH_RELAX || p == PH_DEEPEN || p == PH_REPS) {
             // it hurts: out of the stretch, gently
             cue(dc, Lib.Cues.DOWN, "EASE OFF", GRAY, WHITE);
         }
+    }
+
+    // The side's meaning with the extra words round it, or alone when they won't fit
+    function sideLine(dc as Dc, pre as String, word as String, post as String) as String {
+        var t = pre + word + post;
+        return dc.getTextWidthInPixels(t, _bandFont) <= (_w * 0.62).toNumber() ? t : word;
+    }
+
+    function complete() as Boolean {
+        return _complete;
+    }
+
+    function session() as StretchSession? {
+        return _session;
+    }
+
+    function paused() as Boolean {
+        return _paused;
     }
 
     // For the pause menu: "5:03 left · 4 of 8"
@@ -674,7 +761,7 @@ class StretchView extends WatchUi.View {
         text(dc, 0.15, _bandFont, ACCENT, _complete ? "WELL STRETCHED" : "STOPPED");
         text(dc, 0.255, _nameFont, WHITE, StretchRoutines.NAMES[_routine]);
         var steps = StretchData.STEPS[_routine].size() / 3;
-        var what = _complete ? StretchText.stretches(steps) : _stepsDone + " of " + steps;
+        var what = _complete ? StretchText.stretches(steps) : (_stepsDone < 0 ? "skipped ahead" : _stepsDone + " of " + steps);
         text(dc, 0.35, _lineFont, GRAY, StretchText.clock(_playedMs) + " · " + what);
         var r = StretchHistory.rows();
         var now = Time.now().value();
@@ -682,10 +769,11 @@ class StretchView extends WatchUi.View {
         text(dc, 0.49, _bigFont, ACCENT, streak.toString());
         text(dc, 0.60, _lineFont, WHITE, streak == 1 ? "day of stretching" : "days in a row");
         text(dc, 0.69, _lineFont, GRAY, StretchHistory.week(now, r) + " this week");
-        var note = _saved ? "Saved to Connect" : "Not recorded";
-        if (_complete && (StretchRoutines.FLAGS[_routine] & StretchSession.RF_PRE) != 0) {
+        // a save that failed is never hidden behind a tip
+        var note = _note;
+        if (!_saveFailed && _complete && (StretchRoutines.FLAGS[_routine] & StretchSession.RF_PRE) != 0) {
             note = "Start easy, then build";
-        } else if (_complete && StretchHistory.readyForMore(now, r, StretchSettings.levelIndex())) {
+        } else if (!_saveFailed && _complete && StretchHistory.readyForMore(now, r, StretchSettings.levelIndex())) {
             note = "Try Deep holds next";
         }
         text(dc, 0.82, _lineFont, WHITE, note);
@@ -698,8 +786,10 @@ class StretchView extends WatchUi.View {
 // DOWN lists every routine, BACK leaves. Tutorial: START on, DOWN (or a
 // touch) the buzz again, UP a page back, BACK skips.
 // Running: START pauses (the menu), BACK goes now or skips, UP adds ten
-// seconds to a hold. Done: START back to the start, BACK leaves. A touch
-// near a cue does what that button does.
+// seconds to a hold, DOWN eases off, by button only: on the floor a wrist
+// bends into the screen, so swipes and touches do nothing. Done: START back
+// to the start, BACK leaves. Otherwise a touch near a cue does what that
+// button does.
 class StretchDelegate extends WatchUi.BehaviorDelegate {
 
     private var _view as StretchView;
@@ -710,12 +800,35 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onKey(evt as WatchUi.KeyEvent) as Boolean {
-        var key = evt.getKey();
+        return press(evt.getKey());
+    }
+
+    // A real button. While running, the behaviours below decline, so only
+    // a press reaches here and a swipe stops at onSwipe.
+    function press(key as Number) as Boolean {
         if (key == WatchUi.KEY_ENTER || key == WatchUi.KEY_START) {
             pressStart();
             return true;
         }
+        if (_view.running()) {
+            if (key == WatchUi.KEY_ESC) {
+                _view.skip();
+                return true;
+            }
+            if (key == WatchUi.KEY_UP) {
+                _view.extend();
+                return true;
+            }
+            if (key == WatchUi.KEY_DOWN) {
+                _view.easeOff();
+                return true;
+            }
+        }
         return false;
+    }
+
+    function onSwipe(evt as WatchUi.SwipeEvent) as Boolean {
+        return _view.running();
     }
 
     function onSelect() as Boolean {
@@ -723,6 +836,9 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
+        if (_view.running()) {
+            return true;
+        }
         var c = evt.getCoordinates();
         var tap = _view.cueAt(c[0], c[1]);
         if (tap == Lib.Cues.TAP_START) {
@@ -743,21 +859,25 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
 
     function onBack() as Boolean {
         if (_view.running()) {
-            _view.skip();
-            return true;
+            return false;
         }
         if (_view.state() == STATE_GUIDE) {
             _view.leaveGuide();
+            return true;
+        }
+        if (_view.state() == STATE_SAFETY) {
+            _view.toIdle();
             return true;
         }
         return false;
     }
 
     function onPreviousPage() as Boolean {
+        if (_view.running()) {
+            return false;
+        }
         if (_view.state() == STATE_GUIDE) {
             _view.guideBack();
-        } else if (_view.running()) {
-            _view.extend();
         } else if (_view.state() == STATE_IDLE) {
             routines();
         }
@@ -765,10 +885,11 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onNextPage() as Boolean {
+        if (_view.running()) {
+            return false;
+        }
         if (_view.state() == STATE_GUIDE) {
             _view.guideAgain();
-        } else if (_view.running()) {
-            _view.easeOff();
         } else if (_view.state() == STATE_IDLE) {
             routines();
         }
@@ -778,7 +899,7 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     function onMenu() as Boolean {
         if (_view.running()) {
             pressStart();
-        } else if (_view.state() != STATE_GUIDE) {
+        } else if (_view.state() == STATE_IDLE || _view.state() == STATE_DONE) {
             routines();
         }
         return true;
@@ -786,13 +907,15 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
 
     function pressStart() as Void {
         var st = _view.state();
-        if (st == STATE_IDLE) {
+        if (st == STATE_SAFETY) {
+            _view.safetyNext();
+        } else if (st == STATE_IDLE) {
             _view.go(_view.routine());
         } else if (st == STATE_DONE) {
             _view.toIdle();
         } else if (st == STATE_GUIDE) {
             _view.guideNext();
-        } else {
+        } else if (!_view.paused()) {
             _view.pause();
             var menu = new WatchUi.Menu2({:title => "Paused"});
             menu.addItem(new WatchUi.MenuItem("Resume", _view.progress(), :resume, null));
@@ -811,6 +934,7 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
                          StretchPlan.minutes(i) + " · " + StretchRoutines.ABOUT[i], i, null));
         }
         menu.addItem(new WatchUi.MenuItem("The buzzes", "feel what each one means", :buzzes, null));
+        menu.addItem(new WatchUi.MenuItem("Stretch safely", "when to stop", :safety, null));
         menu.addItem(new WatchUi.MenuItem("Clear history", "forget past sessions", :clear, null));
         WatchUi.pushView(menu, new StretchMenuDelegate(_view), WatchUi.SLIDE_UP);
     }
@@ -831,14 +955,16 @@ class StretchMenuDelegate extends WatchUi.Menu2InputDelegate {
         if (id instanceof Number) {
             _view.go(id);
         } else if (id == :skip) {
+            _view.resume();          // first, so the recording is running to take the lap
             _view.skipStretch();
-            _view.resume();
         } else if (id == :finish) {
             _view.finish(false);
         } else if (id == :discard) {
             _view.discard();
         } else if (id == :buzzes) {
             _view.guide(-1, 0);
+        } else if (id == :safety) {
+            _view.safety(-1);
         } else if (id == :clear) {
             StretchHistory.clear();
             WatchUi.requestUpdate();

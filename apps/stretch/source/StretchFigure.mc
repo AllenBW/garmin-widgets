@@ -30,7 +30,7 @@ module StretchFigure {
     const CHAIR_BACK_H = 0.26;
 
     const SLOTS = 14;
-    const META = 13;         // bytes a stretch in StretchData.META
+    const META = 14;         // bytes a stretch in StretchData.META
 
     // Flags in StretchData.META
     const F_FRONT = 1;
@@ -159,6 +159,17 @@ module StretchFigure {
     // Draw stretch i at blend t, mirrored for the right side, standing on
     // `ground` and filling at most w by h centred on cx. A ghost (accent
     // null) is drawn all in `near`, with no props.
+    // Which way a stretch is drawn for a side. Seen from the side, a figure
+    // facing left shows its left limbs nearest, so LEFT is mirrored; seen
+    // from the front its left is already on the screen's right.
+    function mirrored(i as Number, side as Number) as Boolean {
+        var flags = StretchData.META[i * META + 1];
+        if ((flags & F_SIDED) == 0) {
+            return false;
+        }
+        return (flags & F_FRONT) != 0 ? side == 1 : side == 0;
+    }
+
     function draw(dc as Dc, i as Number, t as Float, mirror as Boolean, cx as Number, ground as Number,
                   w as Number, h as Number, near as Number, far as Number, accent as Number?) as Void {
         var m = StretchData.META;

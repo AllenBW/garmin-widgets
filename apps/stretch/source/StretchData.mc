@@ -68,39 +68,45 @@ module StretchData {
         0
     ]b;
 
-    // Per stretch, thirteen bytes: kind, flags, target bits (low, high),
+    // Per stretch, fourteen bytes: kind, flags, target bits (low, high),
     // hold seconds or reps, tenths of a second a rep, the box both poses
     // fill (x0 and x1 + 128, top, in hundredths of a body height), the
     // lift a close-up is cut at, the joint held in place and its x in pose
-    // A (+ 128), and the starting position.
+    // A (+ 128), the starting position, and what LEFT and RIGHT mean (an
+    // index into SIDE_PRE and SIDE_POST, the words either side of it).
     const META = [
-        0, 7, 2, 0, 20, 0, 116, 140, 51, 47, 0, 128, 2, 0, 7, 2, 0, 5, 0, 116, 140, 51, 47, 0,
-        128, 2, 1, 66, 2, 0, 8, 40, 120, 152, 51, 21, 0, 128, 2, 0, 62, 4, 0, 30, 0, 98, 136,
-        51, 44, 0, 128, 1, 0, 7, 4, 0, 30, 0, 106, 140, 51, 47, 0, 128, 0, 0, 64, 4, 0, 20, 0,
-        110, 160, 72, 0, 0, 128, 2, 1, 0, 20, 0, 12, 20, 117, 136, 110, 0, 0, 128, 0, 1, 2, 2,
-        0, 10, 30, 119, 135, 51, 44, 0, 128, 0, 1, 0, 1, 0, 6, 80, 95, 171, 45, 0, 0, 128, 5,
-        1, 64, 1, 0, 6, 60, 110, 160, 72, 0, 0, 128, 2, 0, 7, 1, 0, 15, 0, 103, 137, 59, 47, 0,
-        128, 0, 1, 1, 1, 0, 10, 30, 88, 168, 97, 0, 0, 128, 0, 0, 68, 1, 0, 15, 0, 119, 160,
-        72, 0, 0, 128, 2, 0, 0, 1, 0, 30, 0, 82, 163, 28, 0, 0, 128, 3, 0, 5, 1, 0, 30, 0, 82,
-        180, 81, 0, 0, 128, 3, 0, 0, 1, 0, 30, 0, 72, 190, 26, 0, 0, 128, 3, 0, 0, 1, 0, 45, 0,
-        117, 189, 51, 0, 0, 128, 4, 0, 20, 64, 0, 30, 0, 87, 162, 78, 0, 5, 119, 4, 0, 20, 64,
-        0, 30, 0, 82, 163, 42, 0, 0, 128, 3, 0, 68, 64, 0, 20, 0, 120, 159, 72, 0, 0, 128, 2,
-        0, 17, 64, 1, 30, 0, 101, 155, 57, 0, 0, 128, 3, 1, 1, 1, 0, 16, 20, 114, 152, 97, 0,
-        1, 141, 0, 1, 0, 64, 1, 10, 40, 82, 163, 35, 0, 1, 155, 3, 1, 5, 0, 1, 6, 40, 111, 159,
-        95, 0, 1, 145, 0, 0, 20, 64, 0, 30, 0, 82, 163, 55, 0, 0, 128, 3, 0, 28, 64, 0, 30, 0,
-        114, 159, 95, 0, 2, 128, 1, 0, 28, 128, 0, 30, 0, 102, 172, 93, 0, 1, 102, 1, 0, 12,
-        128, 0, 30, 0, 110, 164, 94, 0, 1, 110, 1, 1, 12, 128, 0, 10, 20, 112, 167, 95, 0, 1,
-        131, 1, 1, 8, 128, 2, 12, 20, 122, 160, 100, 0, 7, 135, 1, 0, 6, 8, 0, 20, 0, 122, 160,
-        51, 44, 0, 128, 0, 1, 0, 64, 1, 20, 20, 116, 159, 95, 0, 0, 128, 0, 1, 12, 64, 0, 10,
-        15, 89, 169, 95, 0, 2, 128, 1, 1, 5, 64, 0, 10, 15, 111, 171, 97, 0, 2, 121, 1, 1, 4,
-        64, 0, 5, 40, 122, 199, 97, 0, 7, 135, 0, 1, 4, 65, 0, 3, 80, 99, 170, 95, 0, 2, 147,
-        0, 1, 0, 64, 1, 8, 30, 115, 161, 95, 0, 1, 128, 0, 1, 0, 64, 1, 4, 100, 126, 232, 49,
-        0, 7, 136, 0, 2, 0, 1, 0, 60, 0, 82, 163, 27, 0, 0, 128, 3
+        0, 7, 2, 0, 20, 0, 116, 140, 51, 47, 0, 128, 2, 1, 0, 7, 2, 0, 5, 0, 116, 140, 51, 47,
+        0, 128, 2, 2, 1, 66, 2, 0, 8, 40, 120, 152, 51, 21, 0, 128, 2, 0, 0, 62, 4, 0, 30, 0,
+        98, 136, 51, 44, 0, 128, 1, 3, 0, 7, 4, 0, 30, 0, 106, 140, 51, 47, 0, 128, 0, 3, 0,
+        64, 4, 0, 20, 0, 110, 160, 72, 0, 0, 128, 2, 0, 1, 0, 20, 0, 12, 20, 117, 136, 110, 0,
+        0, 128, 0, 0, 1, 2, 2, 0, 10, 30, 119, 135, 51, 44, 0, 128, 0, 0, 1, 0, 1, 0, 6, 80,
+        95, 171, 45, 0, 0, 128, 5, 0, 1, 64, 1, 0, 6, 60, 110, 160, 72, 0, 0, 128, 2, 0, 0, 7,
+        1, 0, 15, 0, 103, 137, 59, 47, 0, 128, 0, 4, 1, 1, 1, 0, 10, 30, 88, 168, 97, 0, 0,
+        128, 0, 0, 0, 68, 1, 0, 15, 0, 119, 160, 72, 0, 0, 128, 2, 2, 0, 0, 1, 0, 30, 0, 82,
+        163, 28, 0, 0, 128, 3, 0, 0, 5, 1, 0, 30, 0, 82, 180, 81, 0, 0, 128, 3, 5, 0, 0, 1, 0,
+        30, 0, 72, 190, 26, 0, 0, 128, 3, 0, 0, 0, 1, 0, 45, 0, 117, 189, 51, 0, 0, 128, 4, 0,
+        0, 20, 64, 0, 30, 0, 87, 162, 78, 0, 5, 119, 4, 6, 0, 20, 64, 0, 30, 0, 82, 163, 42, 0,
+        0, 128, 3, 7, 0, 68, 64, 0, 20, 0, 120, 159, 72, 0, 0, 128, 2, 7, 0, 17, 64, 1, 30, 0,
+        101, 155, 57, 0, 0, 128, 3, 0, 1, 1, 1, 0, 16, 20, 114, 152, 97, 0, 1, 141, 0, 0, 1, 0,
+        64, 1, 10, 40, 82, 163, 35, 0, 1, 155, 3, 0, 1, 5, 0, 1, 6, 40, 111, 159, 95, 0, 1,
+        145, 0, 8, 0, 20, 64, 0, 30, 0, 82, 163, 55, 0, 0, 128, 3, 7, 0, 28, 64, 0, 30, 0, 114,
+        159, 95, 0, 2, 128, 1, 7, 0, 28, 128, 0, 30, 0, 102, 172, 93, 0, 1, 102, 1, 9, 0, 12,
+        128, 0, 30, 0, 110, 164, 94, 0, 1, 110, 1, 9, 1, 12, 128, 0, 10, 20, 112, 167, 95, 0,
+        1, 131, 1, 10, 1, 8, 128, 2, 12, 20, 122, 160, 100, 0, 7, 135, 1, 0, 0, 6, 8, 0, 20, 0,
+        122, 160, 51, 44, 0, 128, 0, 3, 1, 0, 64, 1, 20, 20, 116, 159, 95, 0, 0, 128, 0, 0, 1,
+        12, 64, 0, 10, 15, 89, 169, 95, 0, 2, 128, 1, 7, 1, 5, 64, 0, 10, 15, 111, 171, 97, 0,
+        2, 121, 1, 7, 1, 4, 64, 0, 5, 40, 122, 199, 97, 0, 7, 135, 0, 9, 1, 4, 65, 0, 3, 80,
+        99, 170, 95, 0, 2, 147, 0, 9, 1, 0, 64, 1, 8, 30, 115, 161, 95, 0, 1, 128, 0, 0, 1, 0,
+        64, 1, 4, 100, 126, 232, 49, 0, 7, 136, 0, 0, 2, 0, 1, 0, 60, 0, 82, 163, 27, 0, 0,
+        128, 3, 0
     ]b;
+
+    const SIDE_PRE = ["", "TILT ", "TURN ", "", "", "KNEES ", "", "", "", "", ""] as Array<String>;
+    const SIDE_POST = ["", "", "", " ARM", " ARM UP", "", " KNEE DOWN", " LEG", " KNEE BENT", " LEG BACK", " ANKLE"] as Array<String>;
 
     const NAMES = [
         "Neck tilt", "Neck turn", "Chin tuck", "Wall chest", "Cross arm", "Chest opener",
-        "Arm circles", "Shoulder rolls", "Cat-cow", "Chair arch", "Side bend", "Torso twist",
+        "Arm circles", "Shoulder roll", "Cat-cow", "Chair arch", "Side bend", "Torso twist",
         "Seated twist", "Knees to chest", "Lying twist", "Sphinx", "Child's pose",
         "Hip flexor", "Figure four", "Chair figure 4", "Butterfly", "Hip circles",
         "Glute bridge", "Side lunge", "Hamstring", "Standing quad", "Wall calf", "Soleus calf",
@@ -113,7 +119,7 @@ module StretchData {
         ["Sit tall, shoulders down", "Ear toward shoulder", "Keep other shoulder low", "Chin stays level"],
         ["Sit tall, look ahead", "Turn head as far as easy", "Shoulders stay still", "Return slowly to centre"],
         ["Sit tall, eyes level", "Slide chin straight back", "Eyes stay level", "Grow tall through the crown"],
-        ["Side to a wall, palm on it", "Hand just below shoulder", "Turn chest away slowly", "Shoulder stays down", "Press palm into the wall"],
+        ["Side to a wall, palm on it", "Hand just below shoulder", "Turn chest away slowly", "Shoulder stays down", "Gently press palm into wall"],
         ["Stand tall, arm across chest", "Pull elbow across chest", "Shoulder stays down", "Torso faces forward"],
         ["Sit forward, hands behind", "Push chest forward and up", "Squeeze shoulder blades", "Neck stays long"],
         ["Stand tall, arms loose", "Start small, grow bigger", "Big slow circles", "Keep ribs down"],
@@ -127,16 +133,16 @@ module StretchData {
         ["Lie on your back, knees bent", "Knees fall to one side", "Both shoulders stay down", "Breathe and let go"],
         ["Lie face down on forearms", "Elbows under shoulders", "Hips stay on the floor", "Relax your low back"],
         ["Kneel, sit back to your heels", "Reach your arms forward", "Sink hips to heels", "Breathe into your back"],
-        ["Half kneel, front knee at 90°", "Tuck your tailbone under", "Squeeze the back glute", "Shift hips forward", "Press back knee into floor"],
-        ["On your back, ankle over knee", "Pull thigh toward chest", "Knee opens out", "Head stays down", "Press knee out into hand"],
+        ["Half kneel, front knee at 90°", "Tuck your tailbone under", "Squeeze the back glute", "Shift hips forward", "Gently pull back knee forward"],
+        ["On your back, ankle over knee", "Pull thigh toward chest", "Knee opens out", "Head stays down", "Hand on knee, press out gently"],
         ["Sit tall, ankle on knee", "Hinge forward from hips", "Keep your spine long", "Let the knee relax down"],
-        ["Sit, soles of feet together", "Sit tall on your sit bones", "Let your knees fall open", "Hold feet, don't push", "Lift knees into elbows"],
+        ["Sit, soles of feet together", "Sit tall on your sit bones", "Let your knees fall open", "Hold feet, don't push", "Gently lift knees into elbows"],
         ["Hands on hips, knees soft", "Draw big slow circles", "Change direction halfway", "Head stays still"],
         ["On your back, feet hip-width", "Press heels, lift hips", "Squeeze glutes at the top", "Ribs stay down"],
         ["Feet wide, toes forward", "Sit back into one hip", "Other leg stays straight", "Chest stays up"],
-        ["On your back, hold your thigh", "Straighten the knee slowly", "Other leg stays bent", "Hips stay down", "Press heel away into hands"],
-        ["Hand on a wall, hold one foot", "Knees side by side", "Tuck your tailbone a little", "Stand tall", "Press foot back into hand"],
-        ["Hands on a wall, one leg back", "Back heel stays down", "Back knee straight", "Toes point forward", "Press the ball of the foot"],
+        ["On your back, hold your thigh", "Straighten the knee slowly", "Other leg stays bent", "Hips stay down", "Gently press thigh into hands"],
+        ["Hand on a wall, hold one foot", "Knees side by side", "Tuck your tailbone a little", "Stand tall", "Gently press foot into hand"],
+        ["Hands on a wall, one leg back", "Back heel stays down", "Back knee straight", "Toes point forward", "Gently press ball of foot down"],
         ["Like the wall calf, step closer", "Bend the back knee", "Heel stays down", "Sink your hips down"],
         ["Foot near a wall, knee forward", "Knee toward the wall", "Heel stays down", "Knee tracks over your toes"],
         ["Stand tall, fingers on a wall", "Rise onto the balls of your feet", "Pause at the top", "Lower slowly"],
@@ -145,7 +151,7 @@ module StretchData {
         ["Hand on a wall, stand tall", "Swing forward and back", "Grow the range each swing", "Trunk stays upright"],
         ["Face a wall, hands on it", "Swing across and out", "Hips face the wall", "Grow the range each swing"],
         ["Stand tall, then step forward", "Lunge, reach your arms up", "Front knee over ankle", "Push back to stand"],
-        ["Step into a long lunge", "Elbow to your front instep", "Turn, reach the arm high", "Back knee off the floor"],
+        ["Step into a long lunge", "Hand to floor inside front foot", "Turn, reach the arm high", "Back knee down if you need it"],
         ["Feet shoulder-width", "Sit hips back and down", "Knees follow your toes", "Chest stays up"],
         ["Stand, hands to the floor", "Walk your hands to a plank", "Hips stay level", "Walk your feet up to your hands"],
         ["Lie down, a hand on your belly", "In for five, belly rises", "Out for five, let go", "Shoulders stay soft"]
@@ -157,7 +163,7 @@ module StretchData {
         [31, 8, 1, 8, 6, 1, 35, 3, 1, 25, 15, 1, 26, 15, 1, 3, 15, 1]b,
         [2, 6, 1, 0, 15, 1, 5, 20, 1, 9, 4, 1, 12, 15, 1, 19, 15, 1, 30, 15, 1]b,
         [38, 60, 1, 26, 30, 1, 16, 45, 1, 24, 40, 1, 18, 40, 1, 20, 40, 1, 14, 30, 1, 13, 40, 1, 38, 60, 1]b,
-        [3, 30, 2, 4, 30, 1, 17, 30, 2, 25, 30, 2, 24, 30, 2, 18, 30, 2, 20, 30, 2, 26, 30, 2, 16, 30, 1]b,
+        [31, 22, 1, 3, 30, 2, 4, 30, 1, 17, 30, 2, 25, 30, 2, 24, 30, 2, 18, 30, 2, 20, 30, 2, 26, 30, 2, 16, 30, 1]b,
         [31, 22, 1, 32, 10, 1, 33, 10, 1, 21, 16, 1, 28, 10, 1, 29, 12, 1, 34, 5, 1, 35, 3, 1, 36, 8, 1]b,
         [26, 30, 1, 27, 30, 1, 25, 30, 1, 17, 30, 1, 24, 30, 1, 18, 30, 1, 20, 30, 1, 38, 30, 1]b,
         [31, 15, 1, 8, 6, 1, 21, 16, 1, 32, 10, 1, 36, 8, 1, 35, 3, 1, 11, 8, 1, 1, 5, 2]b,

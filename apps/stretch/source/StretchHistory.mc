@@ -18,7 +18,18 @@ module StretchHistory {
 
     function rows() as Array<Array<Number> > {
         var v = Application.Storage.getValue(KEY);
-        return v instanceof Array ? v as Array<Array<Number> > : [] as Array<Array<Number> >;
+        var good = [] as Array<Array<Number> >;
+        if (v instanceof Array) {
+            // a row no version of the app would read is left out, never a crash on every open
+            for (var i = 0; i < v.size(); i++) {
+                var row = v[i];
+                if (row instanceof Array && row.size() > COMPLETE && row[UNIX] instanceof Number
+                    && row[ROUTINE] instanceof Number && row[SECONDS] instanceof Number) {
+                    good.add(row as Array<Number>);
+                }
+            }
+        }
+        return good;
     }
 
     function add(unix as Number, routine as Number, seconds as Number, complete as Boolean) as Void {

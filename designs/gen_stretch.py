@@ -306,8 +306,14 @@ def main():
     src = os.path.join(root, "apps", "stretch", "source")
 
     poses, meta, names, cues = [], [], [], []
+    forms = [""]   # what LEFT and RIGHT mean: index 0 for a stretch with no sides
     for sid in order:
         st = cat[sid]
+        word = C.SIDE_WORDS.get(sid, "")
+        if bool(word) != bool(st["flags"] & F_SIDED):
+            raise SystemExit(sid + ": every sided stretch, and only those, needs a SIDE_WORDS entry")
+        if word not in forms:
+            forms.append(word)
         poses += quant(st["a"].angles())[0] + quant(st["b"].angles())[0]
         if wall_back(st):
             st["flags"] |= F_WALL_BACK
@@ -323,7 +329,7 @@ def main():
                  byte(int(round(lift * 100)), 0, 255, sid + " lift"),
                  ANCHORS.index(st.get("anchor", "hip")),
                  byte(int(round(anchor_x(st) * 100)) + 128, 0, 255, sid + " anchor"),
-                 POS[st["pos"]]]
+                 POS[st["pos"]], forms.index(word)]
         names.append(mc_string(st["name"]))
         if len(st["cues"]) != (5 if st["flags"] & F_PNF else 4):
             raise SystemExit(sid + ": setup, three cues in the stretch, and the push for contract-relax")
@@ -365,14 +371,18 @@ module StretchData {{
 {wrap([str(x) for x in poses], "        ")}
     ]b;
 
-    // Per stretch, thirteen bytes: kind, flags, target bits (low, high),
+    // Per stretch, fourteen bytes: kind, flags, target bits (low, high),
     // hold seconds or reps, tenths of a second a rep, the box both poses
     // fill (x0 and x1 + 128, top, in hundredths of a body height), the
     // lift a close-up is cut at, the joint held in place and its x in pose
-    // A (+ 128), and the starting position.
+    // A (+ 128), the starting position, and what LEFT and RIGHT mean (an
+    // index into SIDE_PRE and SIDE_POST, the words either side of it).
     const META = [
 {wrap([str(x) for x in meta], "        ")}
     ]b;
+
+    const SIDE_PRE = [{", ".join(mc_string(f.split("%")[0]) for f in forms)}] as Array<String>;
+    const SIDE_POST = [{", ".join(mc_string(f.split("%")[-1] if "%" in f else "") for f in forms)}] as Array<String>;
 
     const NAMES = [
 {wrap(names, "        ")}
