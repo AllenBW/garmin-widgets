@@ -24,6 +24,7 @@ family, written in Monkey C for Connect IQ.
 | [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it |
 | [Sauna and Steam](apps/sauna/) | Glance + app | Times a sauna or steam visit round by round, coaches it against the published guidance, saves it to Garmin Connect |
 | [Tally](apps/tally/) | Glance + app | Buttons you make (on the phone, with the hours each shows), one tap to log, and the pattern over two weeks: a ring per day and what came before; every entry also goes to your own Google Sheet |
+| [Stretching God](apps/stretch/) | Glance + app | Guided stretching: 39 stretches drawn as a figure that eases in and holds, strung into 12 routines (morning, desk, bed, before and after a run, ride, hike or lifting), coached with a buzz for each turn, saved to Garmin Connect |
 | [Sound Level](apps/sound/) | Glance + app | **Experimental.** An approximate sound level meter from the watch microphone, with the NIOSH safe-exposure range |
 
 > **Sound Level is experimental.** Earlier builds that started and stopped
@@ -44,6 +45,15 @@ listing's cover and screenshots are in [`docs/store/`](docs/store/).
 <tr><td align="center"><img src="docs/store/strata-screen.jpg" width="200" alt="Strata"><br>Strata</td><td align="center"><img src="docs/store/rings-screen.jpg" width="200" alt="Rings"><br>Rings</td><td align="center"><img src="docs/store/forage-screen.jpg" width="200" alt="Forage"><br>Forage</td><td align="center"><img src="docs/store/daylight-screen.jpg" width="200" alt="Daylight"><br>Daylight</td></tr>
 <tr><td align="center"><img src="docs/store/horizon-screen.jpg" width="200" alt="Horizon"><br>Horizon</td><td align="center"><img src="docs/store/nightsky-screen.jpg" width="200" alt="Night Sky"><br>Night Sky</td><td align="center"><img src="docs/store/sunmoon-screen.jpg" width="200" alt="Sun and Moon"><br>Sun and Moon</td><td align="center"><img src="docs/store/suncompass-screen.jpg" width="200" alt="Sun Compass"><br>Sun Compass</td></tr>
 <tr><td align="center"><img src="docs/store/sauna-1-round.jpg" width="200" alt="Sauna and Steam"><br>Sauna and Steam</td><td align="center"><img src="docs/store/sound-screen.jpg" width="200" alt="Sound Level"><br>Sound Level</td><td align="center"><img src="docs/store/field-screen.jpg" width="200" alt="Field"><br>Field</td></tr>
+<tr><td align="center"><img src="docs/store/stretch-1-hold.jpg" width="200" alt="Stretching God"><br>Stretching God</td></tr>
+</table>
+
+**More of Stretching God:** the opening card with the routine that suits
+now, a stretch shown whole before it starts, a moving warm-up counting
+its reps, and the slow breath before bed.
+
+<table>
+<tr><td align="center"><img src="docs/store/stretch-2-card.jpg" width="160" alt="Stretching God: the opening card"><br>the card</td><td align="center"><img src="docs/store/stretch-3-setup.jpg" width="160" alt="Stretching God: a stretch shown before it starts"><br>before it starts</td><td align="center"><img src="docs/store/stretch-4-reps.jpg" width="160" alt="Stretching God: a warm-up counting reps"><br>counting reps</td><td align="center"><img src="docs/store/stretch-5-breathe.jpg" width="160" alt="Stretching God: the slow breath"><br>the slow breath</td></tr>
 </table>
 
 **More of Sauna and Steam:** a visit's break, its rounds, the heart-rate
