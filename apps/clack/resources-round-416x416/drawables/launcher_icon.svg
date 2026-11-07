@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
+  <!-- Clack launcher icon: a black disc, two dark leaves with amber digits split by the hinge -->
+  <circle cx="32" cy="32" r="31" fill="#000000"/>
+  <rect x="9" y="14" width="21" height="36" rx="3" fill="#1C1C1C"/>
+  <rect x="34" y="14" width="21" height="36" rx="3" fill="#1C1C1C"/>
+  <text x="19.5" y="43" font-family="Arial Narrow, Arial, sans-serif" font-weight="bold" font-size="30" text-anchor="middle" fill="#FFB020">2</text>
+  <text x="44.5" y="43" font-family="Arial Narrow, Arial, sans-serif" font-weight="bold" font-size="30" text-anchor="middle" fill="#FFB020">1</text>
+  <rect x="4" y="31" width="56" height="2" fill="#000000"/>
+</svg>

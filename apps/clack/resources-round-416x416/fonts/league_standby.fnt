@@ -1,0 +1,14 @@
+info face="league_standby" size=208 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=208 base=208 scaleW=800 scaleH=208 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="league_standby.png"
+chars count=10
+char id=48 x=2 y=2 width=80 height=204 xoffset=0 yoffset=0 xadvance=80 page=0 chnl=15
+char id=49 x=84 y=2 width=52 height=204 xoffset=0 yoffset=0 xadvance=52 page=0 chnl=15
+char id=50 x=138 y=2 width=82 height=204 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=51 x=222 y=2 width=82 height=204 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=52 x=306 y=2 width=88 height=204 xoffset=0 yoffset=0 xadvance=88 page=0 chnl=15
+char id=53 x=396 y=2 width=79 height=204 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15
+char id=54 x=477 y=2 width=79 height=204 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15
+char id=55 x=558 y=2 width=76 height=204 xoffset=0 yoffset=0 xadvance=76 page=0 chnl=15
+char id=56 x=636 y=2 width=81 height=204 xoffset=0 yoffset=0 xadvance=81 page=0 chnl=15
+char id=57 x=719 y=2 width=79 height=204 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15

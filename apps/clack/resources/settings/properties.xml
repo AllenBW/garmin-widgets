@@ -1,0 +1,8 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- The view (Layout.STYLES): 0 original, Roboto; 1 zoomed in, League Gothic; 2 zoomed in, Antonio;
+         3 zoomed in, Bebas Neue; 4 zoomed in, Roboto. The watch face editor offers the same list;
+         whichever was changed last wins (Lib.Config). -->
+    <property id="Style" type="number">1</property>
+    <!-- The date slip: under the minute leaves (original) or printed on the minute tens leaf (zoomed) -->
+    <property id="Date" type="boolean">true</property>
+</properties>

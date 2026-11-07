@@ -1,0 +1,14 @@
+info face="antonio_digits" size=214 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=214 base=214 scaleW=902 scaleH=214 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="antonio_digits.png"
+chars count=10
+char id=48 x=2 y=2 width=95 height=210 xoffset=0 yoffset=0 xadvance=95 page=0 chnl=15
+char id=49 x=99 y=2 width=60 height=210 xoffset=0 yoffset=0 xadvance=60 page=0 chnl=15
+char id=50 x=161 y=2 width=86 height=210 xoffset=0 yoffset=0 xadvance=86 page=0 chnl=15
+char id=51 x=249 y=2 width=91 height=210 xoffset=0 yoffset=0 xadvance=91 page=0 chnl=15
+char id=52 x=342 y=2 width=96 height=210 xoffset=0 yoffset=0 xadvance=96 page=0 chnl=15
+char id=53 x=440 y=2 width=85 height=210 xoffset=0 yoffset=0 xadvance=85 page=0 chnl=15
+char id=54 x=527 y=2 width=93 height=210 xoffset=0 yoffset=0 xadvance=93 page=0 chnl=15
+char id=55 x=622 y=2 width=93 height=210 xoffset=0 yoffset=0 xadvance=93 page=0 chnl=15
+char id=56 x=717 y=2 width=91 height=210 xoffset=0 yoffset=0 xadvance=91 page=0 chnl=15
+char id=57 x=810 y=2 width=90 height=210 xoffset=0 yoffset=0 xadvance=90 page=0 chnl=15

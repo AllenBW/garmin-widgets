@@ -1,0 +1,2 @@
+# The day sample in place of the live clock (see monkey.jungle)
+base.excludeAnnotations = live;night
