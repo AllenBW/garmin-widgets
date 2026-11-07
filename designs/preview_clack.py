@@ -3,7 +3,7 @@
 will draw, from the same layout fractions, with Pillow and the watch's own
 Roboto Condensed Bold.
 
-    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416] [hours=21 minutes=05 format=24|12 date=1|0 roll=1:120:06 minute=5]
+    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416] [hours=21 minutes=05 format=24|12 date=1|0 zoom=0|1 roll=1:120:06 minute=5]
 
 Modes: day (awake, plain cards), night (awake, the lamp on after sunset),
 aod_day / aod_night (sleeping: always-on, under 10 % lit, shifted each
@@ -12,14 +12,16 @@ two-digit hour and an AM/PM flag under it. Each digit is its own leaf:
 four cards, hour tens, hour units, minute tens, minute units.
 roll=<card>:<angle>:<next>[,<card>:<angle>:<next>] draws those cards
 mid-roll (card 0..3; angle 0..180, 0 up, 180 down) falling to <next>, a
-digit or "" for a blank leaf. Prints the share of the round screen lit.
+digit or "" for a blank leaf. zoom=1 is the zoomed-in variant: the
+numbers as large as the circle allows without clipping, the spacing
+tightened (ZOOM). Prints the share of the round screen lit.
 Approximate to a pixel or two: check the real face with scripts/sim.sh.
 """
 import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from preview_faces import SS, FONTS, FILES, Face, digit_font, glyph_mask, ink_box, outline_of  # noqa: E402
@@ -39,7 +41,14 @@ L = dict(
     lamp=(0.04, -0.06, 0.95),         # the lamp after sunset: centre and radius, out of frame upper left
     spill=0.17, spill_r=0.75,         # its pool on the black
     aod_step=4,                       # Lib.Aod.offset step, device px
+    aod_erode=0,                      # standby: device px taken off the digits' strokes before filling and outlining them
 )
+# the zoomed-in variant (zoom=1): the numbers as large as the circle allows
+# without clipping any digit, so the spacing gives way: the leaves nearly
+# touch, the digits nearly touch their leaves' edges, and the outer digits'
+# corners come to within a few pixels of the bezel
+ZOOM = dict(gap=0.028, inner=0.012, pad=0.006, margin=0.004,
+            aod_erode=3)              # the bigger digits would light 11 % in standby; eroded 3 px they light 9.5 % (9.8 % on 416)
 # a leaf is black plastic lit from above: the upper half brightest at its top, the lower half in the
 # upper half's shadow just under the slot, each half's lower edge catching a line of light
 DAY = dict(leaf_top=(44, 44, 44), leaf_mid=(26, 26, 26), leaf_shade=(14, 14, 14), leaf_bot=(32, 32, 32), edge=(78, 78, 78), pin=(60, 60, 60), pin_hl=(120, 120, 120),
@@ -121,7 +130,7 @@ def roll_summary(frames):
     land = next((t for th, t in frames if th >= 179.5), frames[-1][1])
     return dict(creep=round(rel, 2), fall=round(land - rel, 2), total=round(frames[-1][1], 2), frames=len(frames))
 
-DEFAULTS = dict(hours="14", minutes="38", format="24", date="1", minute=None, roll=None, pm=None, dateText="SAT 31")
+DEFAULTS = dict(hours="14", minutes="38", format="24", date="1", minute=None, roll=None, pm=None, dateText="SAT 31", zoom="0")
 SAMPLES = {"day": dict(hours="14", minutes="38"), "night": dict(hours="21", minutes="05")}
 
 
@@ -159,33 +168,34 @@ class Clack:
         self.face = Face(size)
         self.S = self.face.px
         self.st = st
+        self.L = {**L, **(ZOOM if st.get("zoom") == "1" else {})}
         self.H, self.font, self.cell = self.digit_height()
         S = self.S
-        G, g = L["gap"], L["inner"]
+        G, g = self.L["gap"], self.L["inner"]
         cw = int(S(self.cell))
-        self.ch = int(S(self.H * L["leaf_h"]))
-        self.y0 = S(L["cy"]) - self.ch / 2
+        self.ch = int(S(self.H * self.L["leaf_h"]))
+        self.y0 = S(self.L["cy"]) - self.ch / 2
         # (x0, width) of the four leaves, left to right, and the x of each digit's centre
         self.cards = [(S(0.5 - G / 2 - g - 2 * self.cell), cw), (S(0.5 - G / 2 - self.cell), cw),
                       (S(0.5 + G / 2), cw), (S(0.5 + G / 2 + self.cell + g), cw)]
         self.centres = [0.5 - G / 2 - g - 1.5 * self.cell, 0.5 - G / 2 - 0.5 * self.cell, 0.5 + G / 2 + 0.5 * self.cell, 0.5 + G / 2 + g + 1.5 * self.cell]
-        self.small = ImageFont.truetype(str(FONTS / FILES["RobotoCondensedRegular"]), int(self.S(L["date_em"])))
+        self.small = ImageFont.truetype(str(FONTS / FILES["RobotoCondensedRegular"]), int(self.S(self.L["date_em"])))
 
     def digit_height(self):
         """The largest digit height whose widest digit, in its own card, still
         clears the bezel at the outer cards (ClackView.layout). Returns the
         height, the font and a card's cell width, fractions of the width."""
         S = self.S
-        G, g = L["gap"], L["inner"]
+        G, g = self.L["gap"], self.L["inner"]
         for H in [x / 1000 for x in range(420, 200, -2)]:
             f = digit_font(self.face, "RobotoCondensedBold", S(H))
             d = ink_box(f, "0123456789")
             h = (d[3] - d[1]) / S(1)
             w1 = max((ink_box(f, t)[2] - ink_box(f, t)[0]) / S(1) for t in "0123456789")
-            cell = w1 + 2 * L["pad"]
+            cell = w1 + 2 * self.L["pad"]
             cx = 0.5 + G / 2 + g + 1.5 * cell                     # the outer card's digit centre
             corners = ((cx + w1 / 2, 0.5 - h / 2), (cx + w1 / 2, 0.5 + h / 2))
-            if all(math.hypot(px - 0.5, py - 0.5) <= 0.5 - L["margin"] for px, py in corners):
+            if all(math.hypot(px - 0.5, py - 0.5) <= 0.5 - self.L["margin"] for px, py in corners):
                 return H, f, cell
         raise SystemExit("no digit size fits")
 
@@ -210,8 +220,8 @@ class Clack:
     def halves(self, cw, ch):
         """The two halves of a leaf as masks: rounded rectangles either side of the slot."""
         S = self.S
-        slot = int(S(L["slot"]) / 2)
-        r = int(S(L["corner"]))
+        slot = int(S(self.L["slot"]) / 2)
+        r = int(S(self.L["corner"]))
         top = Image.new("L", (cw, ch), 0)
         ImageDraw.Draw(top).rounded_rectangle((0, 0, cw - 1, ch // 2 - slot - 1), r, fill=255)
         bot = Image.new("L", (cw, ch), 0)
@@ -248,10 +258,10 @@ class Clack:
                 ink = Image.composite(Image.new("RGB", (cw, ch), pal["ink_lit"]), ink, lamp_mask(self.face, (cw, ch), ox, oy))
             im.paste(ink, (0, 0), m)
         d = ImageDraw.Draw(im)
-        slot = int(S(L["slot"]) / 2)
+        slot = int(S(self.L["slot"]) / 2)
         # the upper half's lower edge catches the light; the lower half's top sits in shadow; both lower edges show their thickness
-        d.line((int(S(L["corner"]) * 0.5), h - slot - 1, cw - int(S(L["corner"]) * 0.5), h - slot - 1), fill=pal["edge"], width=SS)
-        d.line((int(S(L["corner"]) * 0.5), ch - 1, cw - int(S(L["corner"]) * 0.5), ch - 1), fill=pal["edge"], width=SS // 2)
+        d.line((int(S(self.L["corner"]) * 0.5), h - slot - 1, cw - int(S(self.L["corner"]) * 0.5), h - slot - 1), fill=pal["edge"], width=SS)
+        d.line((int(S(self.L["corner"]) * 0.5), ch - 1, cw - int(S(self.L["corner"]) * 0.5), ch - 1), fill=pal["edge"], width=SS // 2)
         mask = Image.new("L", (cw, ch), 0)
         mask.paste(top, (0, 0), top)
         mask.paste(bot, (0, 0), bot)
@@ -261,8 +271,8 @@ class Clack:
         """The pivot pins at both ends of leaf i's slot, drawn on the face."""
         ox, cw = self.cards[i]
         S = self.S
-        y = S(L["cy"])
-        r = S(L["pin"])
+        y = S(self.L["cy"])
+        r = S(self.L["pin"])
         d = ImageDraw.Draw(self.face.img)
         for x in (ox + r * 1.2, ox + cw - r * 1.2):
             d.ellipse((x - r, y - r, x + r, y + r), fill=pal["pin"])
@@ -274,9 +284,9 @@ class Clack:
         ox, cw = self.cards[i]
         S = self.S
         d = ImageDraw.Draw(self.face.img)
-        inset, step = S(L["stack_inset"]), S(L["stack_step"])
-        for k in range(1, L["stack"] + 1):
-            x0, x1 = ox + inset * k + S(L["corner"]) * 0.4, ox + cw - inset * k - S(L["corner"]) * 0.4
+        inset, step = S(self.L["stack_inset"]), S(self.L["stack_step"])
+        for k in range(1, self.L["stack"] + 1):
+            x0, x1 = ox + inset * k + S(self.L["corner"]) * 0.4, ox + cw - inset * k - S(self.L["corner"]) * 0.4
             d.line((x0, self.y0 + self.ch + step * k, x1, self.y0 + self.ch + step * k), fill=pal["stack"], width=max(SS // 2, 1))
             if k <= 2:
                 d.line((x0, self.y0 - step * k, x1, self.y0 - step * k), fill=pal["stack"], width=max(SS // 2, 1))
@@ -322,8 +332,8 @@ class Clack:
         if not pal["spill"]:
             return
         S = self.face.img.size[0]
-        lx, ly, _ = L["lamp"]
-        m = radial((S, S), lx * S, ly * S, L["spill_r"] * S, power=2.2).point(lambda v: int(v * L["spill"]))
+        lx, ly, _ = self.L["lamp"]
+        m = radial((S, S), lx * S, ly * S, self.L["spill_r"] * S, power=2.2).point(lambda v: int(v * self.L["spill"]))
         self.face.img.paste(Image.new("RGB", (S, S), pal["spill"]), (0, 0), m)
 
     def caption(self, text, cx, pal):
@@ -333,7 +343,7 @@ class Clack:
         tw = sum(d.textlength(c, font=self.small) for c in text) + gap * (len(text) - 1)
         x = self.S(cx) - tw / 2
         for c in text:
-            d.text((x, self.S(L["date_y"])), c, font=self.small, fill=pal["date"], anchor="lm")
+            d.text((x, self.S(self.L["date_y"])), c, font=self.small, fill=pal["date"], anchor="lm")
             x += d.textlength(c, font=self.small) + gap
 
     def awake(self, night):
@@ -387,11 +397,11 @@ class Clack:
         col = AOD["night" if night else "day"]
         dim = tuple(int(v * 0.8) for v in col)
         minute = self.st["minute"] if self.st["minute"] is not None else int(self.st["minutes"])
-        dx = ((minute % 5) - 2) * L["aod_step"] * SS
-        dy = (((2 * minute + minute // 5 + 1) % 5) - 2) * L["aod_step"] * SS
+        dx = ((minute % 5) - 2) * self.L["aod_step"] * SS
+        dy = (((2 * minute + minute // 5 + 1) % 5) - 2) * self.L["aod_step"] * SS
         texts = self.texts()
         S = self.S
-        ymid = S(L["cy"]) + dy
+        ymid = S(self.L["cy"]) + dy
         for i in range(4):
             if not texts[i]:
                 continue
@@ -400,6 +410,8 @@ class Clack:
             x = S(self.centres[i]) + dx - (b[0] + b[2]) / 2
             basey = ymid - (d[1] + d[3]) / 2
             m = glyph_mask(self.face, self.font, texts[i], x, basey)
+            if self.L["aod_erode"]:
+                m = m.filter(ImageFilter.MinFilter(2 * int(round(self.L["aod_erode"] * SS)) + 1))
             if i < 2:
                 top = Image.new("L", m.size, 0)
                 ImageDraw.Draw(top).rectangle((0, 0, m.size[0], ymid - SS), fill=255)
