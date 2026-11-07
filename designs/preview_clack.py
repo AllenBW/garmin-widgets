@@ -3,7 +3,7 @@
 will draw, from the same layout fractions, with Pillow and the watch's own
 Roboto Condensed Bold.
 
-    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416] [hours=21 minutes=05 format=24|12 date=1|0 zoom=0|1 roll=1:120:06 minute=5]
+    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416] [hours=21 minutes=05 format=24|12 date=1|0 zoom=0|1 font=roboto|bebas|antonio|league roll=1:120:06 minute=5]
 
 Modes: day (awake, plain cards), night (awake, the lamp on after sunset),
 aod_day / aod_night (sleeping: always-on, under 10 % lit, shifted each
@@ -14,7 +14,8 @@ roll=<card>:<angle>:<next>[,<card>:<angle>:<next>] draws those cards
 mid-roll (card 0..3; angle 0..180, 0 up, 180 down) falling to <next>, a
 digit or "" for a blank leaf. zoom=1 is the zoomed-in variant: the
 numbers as large as the circle allows without clipping, the spacing
-tightened (ZOOM). Prints the share of the round screen lit.
+tightened (ZOOM); font= picks the digits' face (FONT), a narrower one
+letting them stand taller. Prints the share of the round screen lit.
 Approximate to a pixel or two: check the real face with scripts/sim.sh.
 """
 import math
@@ -24,7 +25,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
-from preview_faces import SS, FONTS, FILES, Face, digit_font, glyph_mask, ink_box, outline_of  # noqa: E402
+from preview_faces import SS, FONTS, FILES, Face, glyph_mask, ink_box, outline_of  # noqa: E402
 
 L = dict(
     gap=0.040,                        # the black gap between the hour pair and the minute pair
@@ -41,14 +42,45 @@ L = dict(
     lamp=(0.04, -0.06, 0.95),         # the lamp after sunset: centre and radius, out of frame upper left
     spill=0.17, spill_r=0.75,         # its pool on the black
     aod_step=4,                       # Lib.Aod.offset step, device px
-    aod_erode=0,                      # standby: device px taken off the digits' strokes before filling and outlining them
+    aod_erode=3.0,                    # standby: device px taken off the digits' strokes before filling and outlining them, at a digit height of AOD_H0; scales with the ink (height squared)
 )
+AOD_H0 = 0.348                        # the zoomed Roboto digit: 3 px off its strokes keeps 08:08 under ten percent; digits of 0.312 w or less need none
+# the digits' font (font=...): the watch's own Roboto Condensed Bold, or a
+# condensed open-licence face from designs/fonts/ (SIL OFL, licences beside
+# them) that the port ships as a bitmap font. A narrower digit lets four of
+# them stand taller across the circle: the heights are what each allows in
+# the zoomed-in layout on 454 px.
+# The last field is the standby treatment: "fill", the hour digits' upper
+# flaps filled (eroded, aod_erode) with everything else as edges, which
+# fits the ten percent only for Roboto; "outline", every digit as edges,
+# the hours bright and the minutes dim, for the taller faces (the eroded
+# fill would sit at ten to eleven percent on 416).
+FONT = {
+    "roboto": (FONTS / FILES["RobotoCondensedBold"], None, "Roboto Condensed Bold", "158 px", "fill"),
+    "bebas": (Path(__file__).resolve().parent / "fonts/BebasNeue-Regular.ttf", None, "Bebas Neue", "180 px", "outline"),
+    "antonio": (Path(__file__).resolve().parent / "fonts/Antonio[wght].ttf", "Bold", "Antonio Bold", "202 px", "outline"),
+    "league": (Path(__file__).resolve().parent / "fonts/LeagueGothic[wdth].ttf", None, "League Gothic", "212 px", "outline"),
+}
+
+
+def digit_font(face, name, h):
+    """The font whose digits' ink is h tall (supersampled px), as Lib.Ink.em."""
+    path, variation = FONT[name][:2]
+    def load(size):
+        f = ImageFont.truetype(str(path), size)
+        if variation:
+            f.set_variation_by_name(variation)
+        return f
+    probe = load(1000)
+    b = face.d.textbbox((0, 0), "0123456789", font=probe, anchor="ls")
+    return load(int(1000 * h / (b[3] - b[1])))
+
+
 # the zoomed-in variant (zoom=1): the numbers as large as the circle allows
 # without clipping any digit, so the spacing gives way: the leaves nearly
 # touch, the digits nearly touch their leaves' edges, and the outer digits'
 # corners come to within a few pixels of the bezel
-ZOOM = dict(gap=0.028, inner=0.012, pad=0.006, margin=0.004,
-            aod_erode=3)              # the bigger digits would light 11 % in standby; eroded 3 px they light 9.5 % (9.8 % on 416)
+ZOOM = dict(gap=0.028, inner=0.012, pad=0.006, margin=0.004)   # the bigger digits would light 11 % in standby; eroded (aod_erode) they light 9.5 % (9.8 % on 416)
 # a leaf is black plastic lit from above: the upper half brightest at its top, the lower half in the
 # upper half's shadow just under the slot, each half's lower edge catching a line of light
 DAY = dict(leaf_top=(44, 44, 44), leaf_mid=(26, 26, 26), leaf_shade=(14, 14, 14), leaf_bot=(32, 32, 32), edge=(78, 78, 78), pin=(60, 60, 60), pin_hl=(120, 120, 120),
@@ -130,7 +162,7 @@ def roll_summary(frames):
     land = next((t for th, t in frames if th >= 179.5), frames[-1][1])
     return dict(creep=round(rel, 2), fall=round(land - rel, 2), total=round(frames[-1][1], 2), frames=len(frames))
 
-DEFAULTS = dict(hours="14", minutes="38", format="24", date="1", minute=None, roll=None, pm=None, dateText="SAT 31", zoom="0")
+DEFAULTS = dict(hours="14", minutes="38", format="24", date="1", minute=None, roll=None, pm=None, dateText="SAT 31", zoom="0", font="roboto")
 SAMPLES = {"day": dict(hours="14", minutes="38"), "night": dict(hours="21", minutes="05")}
 
 
@@ -180,6 +212,8 @@ class Clack:
                       (S(0.5 + G / 2), cw), (S(0.5 + G / 2 + self.cell + g), cw)]
         self.centres = [0.5 - G / 2 - g - 1.5 * self.cell, 0.5 - G / 2 - 0.5 * self.cell, 0.5 + G / 2 + 0.5 * self.cell, 0.5 + G / 2 + g + 1.5 * self.cell]
         self.small = ImageFont.truetype(str(FONTS / FILES["RobotoCondensedRegular"]), int(self.S(self.L["date_em"])))
+        # the date and the AM/PM flag sit under the leaves: at date_y, or lower when taller leaves reach it
+        self.date_y = max(self.L["date_y"], (self.y0 + self.ch) / S(1) + 3 * self.L["stack_step"] + 0.045)
 
     def digit_height(self):
         """The largest digit height whose widest digit, in its own card, still
@@ -188,7 +222,7 @@ class Clack:
         S = self.S
         G, g = self.L["gap"], self.L["inner"]
         for H in [x / 1000 for x in range(420, 200, -2)]:
-            f = digit_font(self.face, "RobotoCondensedBold", S(H))
+            f = digit_font(self.face, self.st.get("font", "roboto"), S(H))
             d = ink_box(f, "0123456789")
             h = (d[3] - d[1]) / S(1)
             w1 = max((ink_box(f, t)[2] - ink_box(f, t)[0]) / S(1) for t in "0123456789")
@@ -343,7 +377,7 @@ class Clack:
         tw = sum(d.textlength(c, font=self.small) for c in text) + gap * (len(text) - 1)
         x = self.S(cx) - tw / 2
         for c in text:
-            d.text((x, self.S(self.L["date_y"])), c, font=self.small, fill=pal["date"], anchor="lm")
+            d.text((x, self.S(self.date_y)), c, font=self.small, fill=pal["date"], anchor="lm")
             x += d.textlength(c, font=self.small) + gap
 
     def awake(self, night):
@@ -390,6 +424,12 @@ class Clack:
         return out
 
     # ---- sleeping
+    def aod_erode(self):
+        """Device px taken off the digits' strokes in standby: none for digits
+        up to 0.32 w, then aod_erode scaled with the ink (height squared), so
+        every font and layout lands near the same lit share."""
+        return 0 if self.H <= 0.32 else self.L["aod_erode"] * (self.H / AOD_H0) ** 2
+
     def sleeping(self, night):
         """Always-on: the lamp turned down. The hour card's upper flaps stay
         lit, its lower flaps and the minute card's digits are edges, the
@@ -410,13 +450,16 @@ class Clack:
             x = S(self.centres[i]) + dx - (b[0] + b[2]) / 2
             basey = ymid - (d[1] + d[3]) / 2
             m = glyph_mask(self.face, self.font, texts[i], x, basey)
-            if self.L["aod_erode"]:
-                m = m.filter(ImageFilter.MinFilter(2 * int(round(self.L["aod_erode"] * SS)) + 1))
-            if i < 2:
+            erode = self.aod_erode() if FONT[self.st.get("font", "roboto")][4] == "fill" else 0
+            if erode:
+                m = m.filter(ImageFilter.MinFilter(2 * int(round(erode * SS)) + 1))
+            if i < 2 and FONT[self.st.get("font", "roboto")][4] == "fill":
                 top = Image.new("L", m.size, 0)
                 ImageDraw.Draw(top).rectangle((0, 0, m.size[0], ymid - SS), fill=255)
                 self.face.img.paste(Image.new("RGB", m.size, col), (0, 0), Image.composite(m, Image.new("L", m.size, 0), top))
                 self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), Image.composite(outline_of(m, 2), Image.new("L", m.size, 0), ImageOps.invert(top)))
+            elif i < 2:
+                self.face.img.paste(Image.new("RGB", m.size, col), (0, 0), outline_of(m, 2))
             else:
                 self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), outline_of(m, 2))
         ImageDraw.Draw(self.face.img).line((0, ymid + SS, S(1), ymid + SS), fill=tuple(int(v * 0.5) for v in col), width=SS)
