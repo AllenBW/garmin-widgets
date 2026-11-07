@@ -22,7 +22,7 @@ import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from preview_faces import SS, FONTS, FILES, Face, glyph_mask, ink_box, outline_of  # noqa: E402
@@ -42,7 +42,10 @@ L = dict(
     lamp=(0.04, -0.06, 0.95),         # the lamp after sunset: centre and radius, out of frame upper left
     spill=0.17, spill_r=0.75,         # its pool on the black
     aod_step=4,                       # Lib.Aod.offset step, device px
-    aod_erode=3.0,                    # standby: device px taken off the digits' strokes before filling and outlining them, at a digit height of AOD_H0; scales with the ink (height squared)
+    aod_erode=4.0,                    # standby: device px taken off the digits' strokes before filling and outlining them, at a digit height of AOD_H0; scales with the ink (height squared)
+    fit="box",                        # how a digit must clear the bezel: its box ("box") or its actual ink ("ink")
+    caption="below",                  # where the date and the AM/PM flag go: under the leaves ("below") or printed on the lower flaps ("leaf")
+    caption_y=0.86,                   # the captions' centre line when printed on the flaps
 )
 AOD_H0 = 0.348                        # the zoomed Roboto digit: 3 px off its strokes keeps 08:08 under ten percent; digits of 0.312 w or less need none
 # the digits' font (font=...): the watch's own Roboto Condensed Bold, or a
@@ -56,10 +59,10 @@ AOD_H0 = 0.348                        # the zoomed Roboto digit: 3 px off its st
 # the hours bright and the minutes dim, for the taller faces (the eroded
 # fill would sit at ten to eleven percent on 416).
 FONT = {
-    "roboto": (FONTS / FILES["RobotoCondensedBold"], None, "Roboto Condensed Bold", "158 px", "fill"),
-    "bebas": (Path(__file__).resolve().parent / "fonts/BebasNeue-Regular.ttf", None, "Bebas Neue", "180 px", "outline"),
-    "antonio": (Path(__file__).resolve().parent / "fonts/Antonio[wght].ttf", "Bold", "Antonio Bold", "202 px", "outline"),
-    "league": (Path(__file__).resolve().parent / "fonts/LeagueGothic[wdth].ttf", None, "League Gothic", "212 px", "outline"),
+    "roboto": (FONTS / FILES["RobotoCondensedBold"], None, "Roboto Condensed Bold", "161 px", "fill"),
+    "bebas": (Path(__file__).resolve().parent / "fonts/BebasNeue-Regular.ttf", None, "Bebas Neue", "187 px", "outline"),
+    "antonio": (Path(__file__).resolve().parent / "fonts/Antonio[wght].ttf", "Bold", "Antonio Bold", "206 px", "outline"),
+    "league": (Path(__file__).resolve().parent / "fonts/LeagueGothic[wdth].ttf", None, "League Gothic", "218 px", "outline"),
 }
 
 
@@ -80,7 +83,8 @@ def digit_font(face, name, h):
 # without clipping any digit, so the spacing gives way: the leaves nearly
 # touch, the digits nearly touch their leaves' edges, and the outer digits'
 # corners come to within a few pixels of the bezel
-ZOOM = dict(gap=0.028, inner=0.012, pad=0.006, margin=0.004)   # the bigger digits would light 11 % in standby; eroded (aod_erode) they light 9.5 % (9.8 % on 416)
+ZOOM = dict(gap=0.028, inner=0.012, pad=0.006, margin=0.0, fit="ink",   # the digits' ink to the bezel; in standby eroded (aod_erode) to stay under ten percent
+            leaf_h=2.2, caption="leaf")                                      # the leaves run off the screen top and bottom (at least 1.03 w tall), the bezel cuts them; the date is printed on a flap
 # a leaf is black plastic lit from above: the upper half brightest at its top, the lower half in the
 # upper half's shadow just under the slot, each half's lower edge catching a line of light
 DAY = dict(leaf_top=(44, 44, 44), leaf_mid=(26, 26, 26), leaf_shade=(14, 14, 14), leaf_bot=(32, 32, 32), edge=(78, 78, 78), pin=(60, 60, 60), pin_hl=(120, 120, 120),
@@ -205,7 +209,7 @@ class Clack:
         S = self.S
         G, g = self.L["gap"], self.L["inner"]
         cw = int(S(self.cell))
-        self.ch = int(S(self.H * self.L["leaf_h"]))
+        self.ch = int(S(max(self.H * self.L["leaf_h"], 1.03 if self.L["caption"] == "leaf" else 0)))   # leaves printed with the captions run off the screen
         self.y0 = S(self.L["cy"]) - self.ch / 2
         # (x0, width) of the four leaves, left to right, and the x of each digit's centre
         self.cards = [(S(0.5 - G / 2 - g - 2 * self.cell), cw), (S(0.5 - G / 2 - self.cell), cw),
@@ -221,15 +225,36 @@ class Clack:
         height, the font and a card's cell width, fractions of the width."""
         S = self.S
         G, g = self.L["gap"], self.L["inner"]
-        for H in [x / 1000 for x in range(420, 200, -2)]:
+        outside = None
+        if self.L["fit"] == "ink":                                # the pixels the bezel takes: ink there is cut off
+            outside = Image.new("L", self.face.img.size, 255)
+            r = S(0.5 - self.L["margin"])
+            ImageDraw.Draw(outside).ellipse((S(0.5) - r, S(0.5) - r, S(0.5) + r, S(0.5) + r), fill=0)
+        for H in [x / 1000 for x in range(600, 200, -2)]:
             f = digit_font(self.face, self.st.get("font", "roboto"), S(H))
             d = ink_box(f, "0123456789")
             h = (d[3] - d[1]) / S(1)
             w1 = max((ink_box(f, t)[2] - ink_box(f, t)[0]) / S(1) for t in "0123456789")
             cell = w1 + 2 * self.L["pad"]
             cx = 0.5 + G / 2 + g + 1.5 * cell                     # the outer card's digit centre
-            corners = ((cx + w1 / 2, 0.5 - h / 2), (cx + w1 / 2, 0.5 + h / 2))
-            if all(math.hypot(px - 0.5, py - 0.5) <= 0.5 - self.L["margin"] for px, py in corners):
+            if outside is None:
+                corners = ((cx + w1 / 2, 0.5 - h / 2), (cx + w1 / 2, 0.5 + h / 2))
+                if all(math.hypot(px - 0.5, py - 0.5) <= 0.5 - self.L["margin"] for px, py in corners):
+                    return H, f, cell
+                continue
+            # every digit the outer leaves can show, drawn where it would be, must keep its ink inside the circle
+            basey = S(0.5) - (d[1] + d[3]) / 2
+            fits = True
+            for c, digits in ((cx, "0123456789"), (1 - cx, "012")):   # the minute units leaf shows them all, the hour tens 0 to 2
+                for t in digits:
+                    b = ink_box(f, t)
+                    m = glyph_mask(self.face, f, t, S(c) - (b[0] + b[2]) / 2, basey)
+                    if ImageChops.multiply(m, outside).getbbox():
+                        fits = False
+                        break
+                if not fits:
+                    break
+            if fits:
                 return H, f, cell
         raise SystemExit("no digit size fits")
 
@@ -291,6 +316,8 @@ class Clack:
             if night:
                 ink = Image.composite(Image.new("RGB", (cw, ch), pal["ink_lit"]), ink, lamp_mask(self.face, (cw, ch), ox, oy))
             im.paste(ink, (0, 0), m)
+        if self.leaf_caption(i):
+            self.caption(self.leaf_caption(i), S(self.centres[i]) - ox, pal, im, S(self.L["caption_y"]) - oy)
         d = ImageDraw.Draw(im)
         slot = int(S(self.L["slot"]) / 2)
         # the upper half's lower edge catches the light; the lower half's top sits in shadow; both lower edges show their thickness
@@ -370,15 +397,27 @@ class Clack:
         m = radial((S, S), lx * S, ly * S, self.L["spill_r"] * S, power=2.2).point(lambda v: int(v * self.L["spill"]))
         self.face.img.paste(Image.new("RGB", (S, S), pal["spill"]), (0, 0), m)
 
-    def caption(self, text, cx, pal):
-        """Small spaced capitals on a lower flap: the date, the AM/PM flag."""
-        d = ImageDraw.Draw(self.face.img)
+    def caption(self, text, cx, pal, im=None, y=None):
+        """Small spaced capitals: the date, the AM/PM flag. Under the leaves on
+        the face, or on a leaf image (im) at y when they are printed on the flap."""
+        d = ImageDraw.Draw(im if im is not None else self.face.img)
         gap = 0.10 * self.small.size
         tw = sum(d.textlength(c, font=self.small) for c in text) + gap * (len(text) - 1)
-        x = self.S(cx) - tw / 2
+        x = cx - tw / 2
         for c in text:
-            d.text((x, self.S(self.date_y)), c, font=self.small, fill=pal["date"], anchor="lm")
+            d.text((x, self.S(self.date_y) if y is None else y), c, font=self.small, fill=pal["date"], anchor="lm")
             x += d.textlength(c, font=self.small) + gap
+
+    def leaf_caption(self, i):
+        """The caption printed on leaf i's lower flap, if any: the date on the
+        minute tens leaf, the AM/PM flag on the hour units leaf."""
+        if self.L["caption"] != "leaf":
+            return None
+        if i == 2 and self.st["date"] == "1":
+            return self.st["dateText"]
+        if i == 1 and self.pm():
+            return self.pm()
+        return None
 
     def awake(self, night):
         pal = NIGHT if night else DAY
@@ -396,10 +435,11 @@ class Clack:
             ox, cw = self.cards[i]
             self.face.img.paste(im, (int(ox), int(self.y0)), mask)
             self.pins(i, pal)
-        if self.st["date"] == "1":
-            self.caption(self.st["dateText"], (self.centres[2] + self.centres[3]) / 2, pal)
-        if self.pm():
-            self.caption(self.pm(), (self.centres[0] + self.centres[1]) / 2, pal)
+        if self.L["caption"] == "below":
+            if self.st["date"] == "1":
+                self.caption(self.st["dateText"], self.S((self.centres[2] + self.centres[3]) / 2), pal)
+            if self.pm():
+                self.caption(self.pm(), self.S((self.centres[0] + self.centres[1]) / 2), pal)
 
     def flap_mask(self, mask, theta):
         """While a flap is mid-fall the leaf's silhouette barely changes: the
