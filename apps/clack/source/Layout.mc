@@ -31,12 +31,21 @@ module Layout {
     ] as Array<Array<Number>>;
     // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)
     const LAMP416 = [[0.252, 0.174, 0.057, 0.003] as Array<Float>, [0.292, 0.197, 0.083, 0.014] as Array<Float>] as Array<Array<Float>>;
+    const W390 = [
+        [122, 85, 160, 115, 195, 9, 102, 203, 296, 52, 145, 245, 338, 2, 12, 4, 2, 318, 17, 0, 0, 1] as Array<Number>,
+        [187, 83, 412, -11, 195, 18, 106, 200, 289, 60, 148, 242, 330, 2, 12, 4, 2, 335, 17, 1, 1, 0] as Array<Number>,
+        [177, 84, 402, -6, 195, 16, 105, 200, 289, 59, 147, 243, 331, 2, 12, 4, 2, 335, 17, 1, 2, 0] as Array<Number>,
+        [161, 88, 402, -6, 195, 9, 102, 200, 293, 53, 146, 244, 337, 2, 12, 4, 2, 335, 17, 1, 3, 0] as Array<Number>,
+        [138, 88, 402, -6, 195, 9, 102, 200, 293, 53, 146, 244, 337, 2, 12, 4, 2, 335, 17, 1, 0, 1] as Array<Number>,
+    ] as Array<Array<Number>>;
+    // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)
+    const LAMP390 = [[0.252, 0.173, 0.057, 0.003] as Array<Float>, [0.292, 0.197, 0.083, 0.014] as Array<Float>] as Array<Array<Float>>;
 
     function table(w as Number, style as Number) as Array<Number> {
-        return ((w >= 440) ? W454 : W416)[style];
+        return ((w >= 440) ? W454 : ((w >= 400) ? W416 : W390))[style];
     }
 
     function lamp(w as Number, zoomed as Boolean) as Array<Float> {
-        return ((w >= 440) ? LAMP454 : LAMP416)[zoomed ? 1 : 0];
+        return ((w >= 440) ? LAMP454 : ((w >= 400) ? LAMP416 : LAMP390))[zoomed ? 1 : 0];
     }
 }

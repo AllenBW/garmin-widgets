@@ -52,6 +52,16 @@ module ClackSettings {
         Storage.setValue(SOURCE, PHONE);
     }
 
+    // A touch and hold on the face: the next style, round. It is kept as
+    // the phone's setting (the property), which wins over the editor's
+    // until the editor is next used, as a change on the phone does
+    function nextStyle() as Number {
+        var next = (style() + 1) % Layout.STYLES;
+        Application.Properties.setValue("Style", next);
+        changedOnPhone();
+        return next;
+    }
+
     function changedInEditor() as Void {
         Storage.setValue(SOURCE, EDITOR);
     }

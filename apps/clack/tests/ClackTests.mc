@@ -80,6 +80,7 @@ function testClackDrawsEveryMode(logger as Logger) as Boolean {
     var dc = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
 
     var view = new ClackView();
+    view.setStill();
     view.onLayout(dc);
     view.onUpdate(dc);                            // whatever the simulator's clock says
 
@@ -141,6 +142,7 @@ function testClackRollsOnWake(logger as Logger) as Boolean {
     var h = settings.screenHeight;
     var dc = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
     var view = new ClackView();
+    view.setStill();
     view.onLayout(dc);
     view.setState(7, 58, true, true);
     view.onUpdate(dc);

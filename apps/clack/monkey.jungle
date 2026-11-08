@@ -8,8 +8,8 @@ base.sourcePath = source;tests
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = aod;sun;ink;fmt
 
-# A build with a sample time for screenshots, the lamp on (sample.jungle)
-# or by day (sample-day.jungle):
+# A build with a sample time for screenshots, the lamp on (sample.jungle),
+# by day (sample-day.jungle) or held in standby (sample-standby.jungle):
 #   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh clack <device>
 # Normal builds leave the samples out.
-base.excludeAnnotations = sample;night;day
+base.excludeAnnotations = sample;night;day;standby;lit

@@ -1,0 +1,2 @@
+# The day sample held in low power mode: the standby look (see monkey.jungle)
+base.excludeAnnotations = live;night;lit

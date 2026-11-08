@@ -17,11 +17,15 @@ import Toybox.WatchUi;
 // lamp from the upper left lights the hour leaves and leaves the minutes in
 // shadow.
 //
-// The roll: after a wake the face draws at twenty frames a second (a timer)
-// and the leaves flip as the mechanism does (Roll, Drops): the push off the
-// stop, the fall, the bounce; the next leaf in view behind the falling flap
-// from the moment it lifts, the flap's back bringing the new lower half
-// down. A wake rolls every missed minute up to four. Standby cannot animate:
+// The roll: awake, the face draws at twenty frames a second (a timer, started
+// only once the watch has shown it is in high power mode: onExitSleep, or the
+// system's own once-a-second updates; Timer.start in low power mode kills a
+// face) and the leaves flip as the mechanism does (Roll, Drops): the push off
+// the stop, the fall, the bounce; the next leaf in view behind the falling
+// flap from the moment it lifts, the flap's back bringing the new lower half
+// down. The flips keep the clock's time, not the frame count, so a slow frame
+// skips motion rather than stretching it. A wake rolls every missed minute up
+// to four. Standby cannot animate:
 // the digits as edges (the hour leaves' upper flaps filled in the original
 // view and in zoomed Roboto, eroded), the hinge across the face, shifted
 // each minute (Lib.Aod), under ten percent lit (designs/preview_clack.py).
@@ -46,6 +50,10 @@ class ClackView extends WatchUi.WatchFace {
     private const EM_HEIGHT = 1.173;             // Roboto Condensed's height per em (Lib.Ink.HEIGHT)
     private const TRACK = 0.10;                  // the captions' letter spacing, of their em
     private const PERIOD = 1000 / Roll.FPS;      // ms between frames
+    private const MOST_FRAMES = 4;               // frames one drawn frame may move the flips: a stall skips, never stretches
+    private const QUICK = 1500;                  // ms: an update this soon after the last is the system's once-a-second one
+    private const QUICK_RUN = 2;                 // quick gaps in a row that prove high power mode
+    private const ASLEEP_GAP = 5000;             // ms without an update: low power mode, when nothing has said otherwise
 
     // Settings
     private var _style as Number = 1;
@@ -63,6 +71,12 @@ class ClackView extends WatchUi.WatchFace {
     private var _cx as Array<Number> = [69, 172, 282, 385] as Array<Number>;
     private var _zoomed as Boolean = true;
     private var _lamp as Array<Float> = [0.3, 0.2, 0.08, 0.01] as Array<Float>;
+    // The stacks' edges on the screen, per leaf, as [x0, y, x1] triples
+    // (none in the zoomed view, where they fall off the screen)
+    private var _stackLines as Array<Array<Number>> = [[], [], [], []] as Array<Array<Number>>;
+    private var _stacks as Boolean = false;
+    private var _tint as Boolean = false;        // drawBitmap2 (its tint darkens the falling flap)
+    private var _xf as Graphics.AffineTransform? = null;   // the flap's foreshortening, one object reused
 
     // Fonts
     private var _digitFont as FontType = Graphics.FONT_NUMBER_HOT;
@@ -72,7 +86,11 @@ class ClackView extends WatchUi.WatchFace {
     private var _em as Float = 0.0;              // Roboto's em, when the digits are the vector font
     private var _laidOut as Boolean = false;
 
+    // Awake or in low power mode: told by onExitSleep and onEnterSleep; until
+    // the first of those, inferred from the updates' cadence (every second
+    // awake, every minute asleep)
     private var _awake as Boolean = true;
+    private var _powerKnown as Boolean = false;
     private var _burnIn as Boolean = false;
 
     // The once-a-minute state
@@ -91,6 +109,8 @@ class ClackView extends WatchUi.WatchFace {
     private var _dirty as Boolean = true;        // the bitmaps need remaking (style, lamp or format changed)
     private var _spill as BufferedBitmapReference? = null; // the lamp's pool on the black, drawn once
     private const DEPTH = 16;                    // bits a pixel in the graphics pool: the fenix 8's own
+    private const BAND = 8;                      // rows a band of a half's gradient covers (half)
+    private const NEXT_BOT_AT = 2;               // frames into a push when the next lower half is built (advance)
 
     // The schedule: the minute the leaves show or roll toward, the missed
     // minutes still to roll, the next minute's push once drawn, frames of
@@ -102,8 +122,17 @@ class ClackView extends WatchUi.WatchFace {
     private var _hold as Number = 0;
     private var _timer as Timer.Timer? = null;
     private var _running as Boolean = false;
+    private var _still as Boolean = false;       // the tests: no timer, no frames from onUpdate
     private var _lastSec as Number = -1;
     private var _secStart as Number = 0;
+    // The frames' clock: the last frame's time and the milliseconds not yet
+    // turned into frames; the updates' cadence (quick ones in a row prove
+    // high power mode)
+    private var _lastFrame as Number = 0;
+    private var _carry as Number = 0;
+    private var _lastUpdate as Number = 0;
+    private var _quick as Number = 0;
+    private var _noSpill as Boolean = false;     // the pool had no room for the lamp's pool
 
     function initialize() {
         WatchFace.initialize();
@@ -129,6 +158,7 @@ class ClackView extends WatchUi.WatchFace {
     function onLayout(dc as Dc) as Void {
         _w = dc.getWidth();
         _h = dc.getHeight();
+        _tint = dc has :drawBitmap2;
         relayout();
         _laidOut = true;
     }
@@ -144,8 +174,37 @@ class ClackView extends WatchUi.WatchFace {
         _cx = [t[Layout.CX0], t[Layout.CX1], t[Layout.CX2], t[Layout.CX3]] as Array<Number>;
         _zoomed = t[Layout.ZOOMED] == 1;
         _lamp = Layout.lamp(_w, _zoomed);
+        _stackLines = stackLines();
+        _stacks = _stackLines[0].size() > 0;
         makeFonts();
         _dirty = true;
+    }
+
+    // The leaves yet to fall and the fallen ones: their edges above and
+    // below each leaf, those on the screen (off it in the zoomed view),
+    // worked out once so a frame only draws them
+    private function stackLines() as Array<Array<Number>> {
+        var step = _t[Layout.STEP];
+        var inset = _w * 4 / 1000;
+        var r = _t[Layout.CORNER];
+        var all = [] as Array<Array<Number>>;
+        for (var i = 0; i < 4; i++) {
+            var lines = [] as Array<Number>;
+            for (var k = 1; k <= 3; k++) {
+                var x0 = _x[i] + inset * k + r * 2 / 5;
+                var x1 = _x[i] + _leafW - inset * k - r * 2 / 5;
+                var below = _y0 + _leafH + step * k;
+                if (below < _h) {
+                    lines.addAll([x0, below, x1] as Array<Number>);
+                }
+                var above = _y0 - step * k;
+                if (k <= 2 && above >= 0) {
+                    lines.addAll([x0, above, x1] as Array<Number>);
+                }
+            }
+            all.add(lines);
+        }
+        return all;
     }
 
     private function makeFonts() as Void {
@@ -230,6 +289,20 @@ class ClackView extends WatchUi.WatchFace {
         _leaves = Roll.digits(_shownMinute, _is24);
         _queue = [] as Array<Number>;
         _flips = [null, null, null, null] as Array<Roll.Flip?>;
+        standbySample();
+    }
+
+    // The standby screenshot (sample-standby.jungle): low power mode held,
+    // which the simulator cannot be put into from a script
+    (:sample, :standby)
+    private function standbySample() as Void {
+        _awake = false;
+        _powerKnown = true;
+        _burnIn = true;
+    }
+
+    (:sample, :lit)
+    private function standbySample() as Void {
     }
 
     (:live)
@@ -316,8 +389,8 @@ class ClackView extends WatchUi.WatchFace {
         enqueue(minute);
         var frames = 0;
         while ((_queue.size() > 0 || busy() || _hold > 0) && frames < 400) {
-            schedule();
-            advance();
+            schedule(1);
+            advance(1);
             frames++;
         }
         return frames;
@@ -329,33 +402,53 @@ class ClackView extends WatchUi.WatchFace {
 
     function setAwake(awake as Boolean) as Void {
         _awake = awake;
+        _powerKnown = true;
         _burnIn = true;
+    }
+
+    // For the tests: no timer, and no frames from onUpdate, so a state set
+    // stays as set while it is drawn
+    function setStill() as Void {
+        _still = true;
     }
 
     // ------------------------------------------------------------ the roll
 
+    // Shown: in either power mode (the watch has shown the face in low power
+    // mode, CIQ_LOG.YML 2026-11-07), so no timer yet; the updates' cadence
+    // decides (cadence)
     function onShow() as Void {
-        start();
+        _minute = -1;
+        _quick = 0;
+        _lastUpdate = 0;
+        WatchUi.requestUpdate();
     }
 
     function onHide() as Void {
         stop();
     }
 
+    // A wake: high power mode for certain, the timer may run
     function onExitSleep() as Void {
         _awake = true;
+        _powerKnown = true;
         _minute = -1;
-        start();
+        start("wake");
     }
 
     function onEnterSleep() as Void {
         _awake = false;
+        _powerKnown = true;
         stop();
         WatchUi.requestUpdate();
     }
 
-    private function start() as Void {
-        if (_running) {
+    // The frames' timer. Timer.start kills a watch face in low power mode
+    // ("Permission Required: Symbol 'start' not available to 'Watch Face'"),
+    // so it is called only from onExitSleep, or once the system's own
+    // once-a-second updates have shown the face awake (cadence)
+    private function start(why as String) as Void {
+        if (_running || _still) {
             return;
         }
         var timer = _timer;
@@ -365,6 +458,9 @@ class ClackView extends WatchUi.WatchFace {
         }
         timer.start(method(:tick), PERIOD, true);
         _running = true;
+        _lastFrame = System.getTimer();
+        _carry = 0;
+        log("timer on: " + why);
         WatchUi.requestUpdate();
     }
 
@@ -372,9 +468,15 @@ class ClackView extends WatchUi.WatchFace {
         var timer = _timer;
         if (timer != null && _running) {
             timer.stop();
+            log("timer off");
         }
         _running = false;
-        // a leaf caught mid-flip lands
+        _quick = 0;
+        settle();
+    }
+
+    // A leaf caught mid-flip lands
+    private function settle() as Void {
         for (var i = 0; i < 4; i++) {
             var flip = _flips[i];
             if (flip != null) {
@@ -384,9 +486,30 @@ class ClackView extends WatchUi.WatchFace {
         _hold = 0;
     }
 
-    // A frame: the clock, the schedule, the flips a step on, then a redraw
+    // The timer's tick: a redraw. The frame itself happens in onUpdate, so
+    // the flips move only when the watch draws: after a wake it draws
+    // nothing for a moment, and a roll that ran on the clock alone went by
+    // unseen (the watch's log, 2026-11-07)
     function tick() as Void {
-        refresh();
+        WatchUi.requestUpdate();
+    }
+
+    // A frame: the clock, the schedule, the flips on by the frames the clock
+    // has passed since the last drawn frame (none when it came early, four
+    // at most: a stall skips motion rather than stretching the roll)
+    private function frame() as Void {
+        var now = System.getTimer();
+        var gap = now - _lastFrame;
+        if (_lastFrame == 0 || gap < 0 || gap > 2000) {
+            gap = PERIOD;
+        }
+        _lastFrame = now;
+        _carry += gap;
+        var frames = _carry / PERIOD;
+        _carry -= frames * PERIOD;
+        if (frames > MOST_FRAMES) {
+            frames = MOST_FRAMES;
+        }
         var m = nowMinute();
         if (_shownMinute < 0) {
             _shownMinute = m;                  // the first frame ever: show now, no roll
@@ -394,7 +517,7 @@ class ClackView extends WatchUi.WatchFace {
             _dirty = true;
         }
         enqueue(m);
-        schedule();
+        schedule(frames);
         if (!busy() && _queue.size() == 0 && _hold == 0) {
             // arm the next minute: its push must end on the minute, so it starts a push's length before
             var next = (m + 1) % Roll.MINUTES;
@@ -408,8 +531,7 @@ class ClackView extends WatchUi.WatchFace {
                 _armed = -1;
             }
         }
-        advance();
-        WatchUi.requestUpdate();
+        advance(frames);
     }
 
     // The minutes the clock passed that the leaves have not shown or been
@@ -428,12 +550,12 @@ class ClackView extends WatchUi.WatchFace {
     }
 
     // The next queued step starts when the leaves are idle and rested
-    private function schedule() as Void {
+    private function schedule(frames as Number) as Void {
         if (busy()) {
             return;
         }
         if (_hold > 0) {
-            _hold--;
+            _hold = (_hold > frames) ? _hold - frames : 0;
             return;
         }
         if (_queue.size() > 0) {
@@ -452,6 +574,11 @@ class ClackView extends WatchUi.WatchFace {
 
     (:sample)
     private function note(s as String) as Void {
+        System.println("clack: " + s);
+    }
+
+    // Both builds: the watch writes it to GARMIN/Apps/LOGS/CLACK.TXT
+    private function log(s as String) as Void {
         System.println("clack: " + s);
     }
 
@@ -490,17 +617,25 @@ class ClackView extends WatchUi.WatchFace {
         _nextBot[i] = null;                     // of four leaves spreads its bitmaps over the frames
     }
 
-    // The flips a frame on; a flip that is over lands
-    private function advance() as Void {
+    // The flips `frames` on; a flip that is over lands
+    private function advance(frames as Number) as Void {
         for (var i = 0; i < 4; i++) {
             var f = _flips[i];
             if (f == null) {
                 continue;
             }
-            f.k++;
+            f.k += frames;
+            // the next leaf's halves, one a frame: the upper as the push
+            // begins (in view behind the flap from the moment it lifts),
+            // the lower a frame later (in view once the flap passes flat)
             if (f.k >= 0 && _nextTop[i] == null) {
+                var t0 = System.getTimer();
                 _nextTop[i] = half(i, f.to, true);
+                built(System.getTimer() - t0);
+            } else if (f.k >= NEXT_BOT_AT && _nextBot[i] == null) {
+                var t0 = System.getTimer();
                 _nextBot[i] = half(i, f.to, false);
+                built(System.getTimer() - t0);
             }
             if (f.done()) {
                 land(i, f);
@@ -544,11 +679,14 @@ class ClackView extends WatchUi.WatchFace {
     // hinge, so each half shows its share; the lit edge where the upper half
     // ends; zoomed, the caption printed on the lower flap. Under the lamp the
     // plastic and the ink warm by how much of the lamp reaches the leaf.
-    private function half(i as Number, digit as String, top as Boolean) as BufferedBitmapReference {
+    private function half(i as Number, digit as String, top as Boolean) as BufferedBitmapReference? {
         var w = _leafW;
         var hh = top ? _hinge - _y0 : _y0 + _leafH - _hinge;
         var ref = Graphics.createBufferedBitmap({:width => w, :height => hh, :colorDepth => DEPTH});
-        var b = ref.get() as BufferedBitmap;
+        var b = pool(ref);
+        if (b == null) {
+            return null;
+        }
         var d = b.getDc();
         d.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         d.clear();
@@ -568,19 +706,30 @@ class ClackView extends WatchUi.WatchFace {
         var y0 = top ? 0 : slot;
         var y1 = top ? hh - slot : hh;
         var n = y1 - y0;
-        for (var y = y0; y < y1; y += 2) {
+        // the gradient in bands: the plastic's shades are a few levels apart
+        // over the whole half, so a band of BAND rows shows no step; the
+        // rounded corners in rows of two. Each band is a handful of calls,
+        // and a frame that remakes every half (the first, sunset) has only
+        // a few thousand before the watchdog (CLAUDE.md)
+        var y = y0;
+        while (y < y1) {
+            var step = (y < y0 + r || y + BAND > y1 - r) ? 2 : BAND;
+            if (y + step > y1) {
+                step = y1 - y;
+            }
             var t = (y - y0).toFloat() / n;
             if (!top) {
                 t = Math.pow(t, 0.6).toFloat();
             }
             var dy = (y < y0 + r) ? (y0 + r - y) : ((y >= y1 - r) ? (y + 1 - (y1 - r)) : 0);
             var inset = (dy > 0) ? (r - Math.sqrt((r * r - dy * dy).toFloat())).toNumber() : 0;
-            d.setColor(mix(c0, c1, t), Graphics.COLOR_TRANSPARENT);
-            d.fillRectangle(inset, y, w - 2 * inset, 2);
+            ink(d, mix(c0, c1, t));
+            d.fillRectangle(inset, y, w - 2 * inset, step);
+            y += step;
         }
         var ink = _night ? mix(pal[INK], pal[INK_LIT], f) : pal[INK];
         drawDigit(d, digit, w / 2, top ? hh : 0, ink);
-        d.setColor(pal[EDGE], Graphics.COLOR_TRANSPARENT);
+        ink(d, pal[EDGE]);
         d.fillRectangle(r / 2, (top ? hh - slot : hh) - 1, w - r, 1);
         if (!top && _zoomed) {
             var text = leafCaption(i);
@@ -588,6 +737,10 @@ class ClackView extends WatchUi.WatchFace {
                 spaced(d, text, (w / 2).toFloat(), (_t[Layout.CAPTION_Y] - _hinge).toFloat(), pal[DATE]);
             }
         }
+        // the pivot pins, half in each half: a falling flap carries its
+        // squashed share over the next leaf's whole one, so they look
+        // fixed, and a frame draws no circles
+        pinsOn(d, 0, top ? hh : 0, pal);
         return ref;
     }
 
@@ -609,7 +762,7 @@ class ClackView extends WatchUi.WatchFace {
         if (digit.equals("")) {
             return;
         }
-        d.setColor(color, Graphics.COLOR_TRANSPARENT);
+        ink(d, color);
         if (_bitmapDigits) {
             d.drawText(cx, hingeY, _digitFont, digit, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
@@ -627,7 +780,7 @@ class ClackView extends WatchUi.WatchFace {
         var chars = text.toCharArray();
         var width = d.getTextWidthInPixels(text, _small) + track * ((chars.size() > 1) ? chars.size() - 1 : 0);
         var x = cx - width / 2;
-        d.setColor(color, Graphics.COLOR_TRANSPARENT);
+        ink(d, color);
         for (var i = 0; i < chars.size(); i++) {
             var ch = chars[i].toString();
             d.drawText(x, y, _small, ch, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
@@ -639,6 +792,7 @@ class ClackView extends WatchUi.WatchFace {
 
     function onUpdate(dc as Dc) as Void {
         var started = System.getTimer();
+        cadence(started);
         refresh();
         if (_shownMinute < 0) {
             _shownMinute = nowMinute();
@@ -648,18 +802,88 @@ class ClackView extends WatchUi.WatchFace {
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
+        paint(dc, 0x000000);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
         if (!_awake && _burnIn) {
             drawStandby(dc);
         } else {
+            if (!_still) {
+                frame();
+            }
             drawAwake(dc);
         }
         measure(started);
     }
 
+    // The updates' cadence tells the power mode when onEnterSleep and
+    // onExitSleep have not: awake, the system redraws the face every second;
+    // asleep, once a minute. Three updates in quick succession prove the face
+    // awake, when the timer may start; a long gap, before either call has
+    // spoken, means asleep
+    private function cadence(now as Number) as Void {
+        var gap = (_lastUpdate > 0) ? now - _lastUpdate : -1;
+        _lastUpdate = now;
+        if (gap < 0) {
+            return;
+        }
+        if (gap <= QUICK) {
+            if (_quick < QUICK_RUN) {
+                _quick++;
+            }
+        } else {
+            _quick = 0;
+            if (gap > ASLEEP_GAP && !_powerKnown) {
+                _awake = false;
+            }
+        }
+        if (_quick >= QUICK_RUN && !_running) {
+            if (!_powerKnown) {
+                _awake = true;
+            }
+            if (_awake) {
+                start("cadence");
+            }
+        }
+    }
+
+    // The live build reports each roll to the log: the frames drawn while a
+    // leaf moved, the time they took, the longest draw, the longest build of
+    // a leaf's next halves
+    (:live) private var _rollFrames as Number = 0;
+    (:live) private var _rollStart as Number = 0;
+    (:live) private var _rollDrawMax as Number = 0;
+    (:live) private var _rollBuildMax as Number = 0;
+
     (:live)
     private function measure(started as Number) as Void {
+        var draw = System.getTimer() - started;
+        if (busy()) {
+            if (_rollFrames == 0) {
+                _rollStart = started;
+                _rollDrawMax = 0;
+            }
+            _rollFrames++;
+            if (draw > _rollDrawMax) {
+                _rollDrawMax = draw;
+            }
+        } else if (_rollFrames > 0) {
+            log("roll: " + _rollFrames + " frames in " + (started - _rollStart) + " ms, draw max " + _rollDrawMax
+                + " ms, halves max " + _rollBuildMax + " ms");
+            _rollFrames = 0;
+            _rollBuildMax = 0;
+        }
+    }
+
+    (:live)
+    private function built(ms as Number) as Void {
+        if (ms > _rollBuildMax) {
+            _rollBuildMax = ms;
+        }
+    }
+
+    (:sample)
+    private function built(ms as Number) as Void {
     }
 
     // The screenshot build reports the frame rate and the draw time every
@@ -708,39 +932,51 @@ class ClackView extends WatchUi.WatchFace {
         makeLeaves();
         var pal = _night ? NIGHT : DAY;
         if (_night) {
+            if (_spill == null && !_noSpill) {
+                var ref = Graphics.createBufferedBitmap({:width => _w, :height => _h, :colorDepth => DEPTH});
+                var fresh = pool(ref);
+                if (fresh != null) {
+                    spill(fresh.getDc());
+                    _spill = ref;
+                } else {
+                    _noSpill = true;
+                }
+            }
             var spill = _spill;
-            if (spill == null) {
-                spill = Graphics.createBufferedBitmap({:width => _w, :height => _h, :colorDepth => DEPTH});
-                spill((spill.get() as BufferedBitmap).getDc());
-                _spill = spill;
+            var glow = (spill != null) ? pool(spill) : null;
+            if (glow != null) {
+                dc.drawBitmap(0, 0, glow);
             }
-            dc.drawBitmap(0, 0, spill.get() as BufferedBitmap);
-        }
-        for (var i = 0; i < 4; i++) {
-            stack(dc, i, pal);
-            var f = _flips[i];
-            var topRef = _top[i];
-            var botRef = _bot[i];
-            if (topRef == null || botRef == null) {
-                continue;
-            }
-            var top = topRef.get() as BufferedBitmap;
-            var bot = botRef.get() as BufferedBitmap;
-            if (f == null || f.angle() <= 0.0) {
-                dc.drawBitmap(_x[i], _y0, top);
-                dc.drawBitmap(_x[i], _hinge, bot);
-            } else {
-                flapFrame(dc, i, f, top, bot, pal);
-            }
-            pins(dc, i, pal);
         }
         if (!_zoomed) {
+            // the captions under the leaves, before any fill tool is set
             var y = _t[Layout.CAPTION_Y].toFloat();
             if (_date) {
                 spaced(dc, _dateText, ((_cx[2] + _cx[3]) / 2).toFloat(), y, pal[DATE]);
             }
             if (!_is24) {
                 spaced(dc, Roll.flag(_shownMinute, false), ((_cx[0] + _cx[1]) / 2).toFloat(), y, pal[DATE]);
+            }
+        }
+        if (_stacks) {
+            ink(dc, pal[STACK]);
+            for (var i = 0; i < 4; i++) {
+                stack(dc, i);
+            }
+        }
+        for (var i = 0; i < 4; i++) {
+            var f = _flips[i];
+            var topRef = _top[i];
+            var botRef = _bot[i];
+            var top = (topRef != null) ? pool(topRef) : null;
+            var bot = (botRef != null) ? pool(botRef) : null;
+            if (top == null || bot == null) {
+                flatLeaf(dc, i, pal);              // the pool is short: the leaf plain, no flip
+            } else if (f == null || f.angle() <= 0.0) {
+                dc.drawBitmap(_x[i], _y0, top);
+                dc.drawBitmap(_x[i], _hinge, bot);
+            } else {
+                flapFrame(dc, i, f, top, bot, pal);
             }
         }
     }
@@ -753,34 +989,65 @@ class ClackView extends WatchUi.WatchFace {
     private function flapFrame(dc as Dc, i as Number, f as Roll.Flip, top as BufferedBitmap, bot as BufferedBitmap,
                                pal as Array<Number>) as Void {
         var nextTopRef = _nextTop[i];
-        var nextBotRef = _nextBot[i];
-        if (nextTopRef == null || nextBotRef == null) {
+        var nextTop = (nextTopRef != null) ? pool(nextTopRef) : null;
+        if (nextTop == null) {
             dc.drawBitmap(_x[i], _y0, top);
             dc.drawBitmap(_x[i], _hinge, bot);
             return;
         }
-        var nextTop = nextTopRef.get() as BufferedBitmap;
-        var nextBot = nextBotRef.get() as BufferedBitmap;
+        var theta = f.angle();
+        // the next lower half is under the current one until the flap
+        // passes flat; built a frame after the upper (advance), or here
+        // when a stall skipped that frame
+        var nextBot = null as BufferedBitmap?;
+        if (theta > 90.0) {
+            var nextBotRef = _nextBot[i];
+            if (nextBotRef == null) {
+                nextBotRef = half(i, f.to, false);
+                _nextBot[i] = nextBotRef;
+            }
+            nextBot = (nextBotRef != null) ? pool(nextBotRef) : null;
+            if (nextBot == null) {
+                dc.drawBitmap(_x[i], _y0, top);
+                dc.drawBitmap(_x[i], _hinge, bot);
+                return;
+            }
+        }
         var x = _x[i];
         var w = _leafW;
-        var theta = f.angle();
         var rad = Math.toRadians(theta);
         var c = Math.cos(rad);
         var s = Math.sin(rad);
         var hT = _hinge - _y0;
         var hB = _y0 + _leafH - _hinge;
         dc.drawBitmap(x, _y0, nextTop);
-        dc.drawBitmap(x, _hinge, nextBot);
         dc.drawBitmap(x, _hinge, bot);
+        // the darkening: drawBitmap2's tint multiplies the bitmap as it is
+        // drawn, in the one call that also foreshortens it; without
+        // drawBitmap2, a translucent fill over the flap by the fill tool
+        var tint = _tint;
         if (theta < 90.0) {
             var fh = (hT * c).toNumber();
             if (fh < 1) {
                 fh = 1;
             }
-            dc.drawScaledBitmap(x, _hinge - fh, w, fh, top);
-            var alpha = ((_night ? DARK_NIGHT : DARK_DAY) * s * 255).toNumber();
-            dc.setColor(Graphics.createColor(alpha, 0, 0, 0), Graphics.COLOR_TRANSPARENT);
-            dc.fillRectangle(x, _hinge - fh, w, fh);
+            var dark = ((_night ? DARK_NIGHT : DARK_DAY) * s).toFloat();
+            if (tint) {
+                var xf = _xf;
+                if (xf == null) {
+                    xf = new Graphics.AffineTransform();
+                    _xf = xf;
+                }
+                xf.setToScale(1.0, fh.toFloat() / hT);
+                dc.drawBitmap2(x, _hinge - fh, top, {:tintColor => grey(1.0 - dark), :transform => xf});
+            } else {
+                dc.drawScaledBitmap(x, _hinge - fh, w, fh, top);
+                var alpha = (dark * 255).toNumber();
+                if (alpha > 0) {
+                    shade(dc, alpha);
+                    dc.fillRectangle(x, _hinge - fh, w, fh);
+                }
+            }
             if (theta > 15.0) {
                 dc.setColor(scale(pal[EDGE], s.toFloat()), Graphics.COLOR_TRANSPARENT);
                 dc.drawLine(x, _hinge - fh, x + w, _hinge - fh);
@@ -791,7 +1058,7 @@ class ClackView extends WatchUi.WatchFace {
                 fh = 1;
             }
             var t = (theta - 90.0) / 90.0;
-            dc.drawScaledBitmap(x, _hinge, w, fh, nextBot);
+            dc.drawScaledBitmap(x, _hinge, w, fh, nextBot as BufferedBitmap);
             if (_hinge + fh + 1 < _y0 + _leafH) {
                 var sh = (0.12 * _leafH * (1.0 - t) + 0.01 * _leafH).toNumber();
                 var a0 = 0.7 * (1.0 - t) + 0.1;
@@ -801,50 +1068,110 @@ class ClackView extends WatchUi.WatchFace {
                     band = 1;
                 }
                 for (var k = 0; k < bands; k++) {
-                    var alpha = (a0 * (1.0 - k.toFloat() / bands) * 255).toNumber();
-                    dc.setColor(Graphics.createColor(alpha, 0, 0, 0), Graphics.COLOR_TRANSPARENT);
-                    dc.fillRectangle(x, _hinge + fh + k * band, w, band);
+                    var a = (a0 * (1.0 - k.toFloat() / bands)).toFloat();
+                    var by = fh + k * band;            // the band's top in the lower half
+                    if (tint) {
+                        var bh = (by + band > hB) ? hB - by : band;
+                        if (bh > 0) {
+                            dc.drawBitmap2(x, _hinge + by, bot, {:bitmapY => by, :bitmapHeight => bh, :tintColor => grey(1.0 - a)});
+                        }
+                    } else {
+                        shade(dc, (a * 255).toNumber());
+                        dc.fillRectangle(x, _hinge + by, w, band);
+                    }
                 }
             }
             dc.setColor(pal[EDGE], Graphics.COLOR_TRANSPARENT);
             dc.drawLine(x, _hinge + fh, x + w, _hinge + fh);
         } else {
-            dc.setColor(pal[EDGE], Graphics.COLOR_TRANSPARENT);
+            paint(dc, pal[EDGE]);
             dc.fillRectangle(x, _hinge - 1, w, 2);
         }
     }
 
-    // The pivot pins at the slot's ends, with a highlight
-    private function pins(dc as Dc, i as Number, pal as Array<Number>) as Void {
+    // The pivot pins at the slot's ends, with a highlight, on a leaf whose
+    // left edge is x and hinge y: a half's bitmap (half) or the screen
+    // (flatLeaf)
+    private function pinsOn(d as Dc, x as Number, y as Number, pal as Array<Number>) as Void {
         var r = _t[Layout.PIN];
-        var y = _hinge;
-        var xs = [_x[i] + r * 6 / 5, _x[i] + _leafW - r * 6 / 5] as Array<Number>;
+        var xs = [x + r * 6 / 5, x + _leafW - r * 6 / 5] as Array<Number>;
         for (var k = 0; k < 2; k++) {
-            dc.setColor(pal[PIN], Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xs[k], y, r);
-            dc.setColor(pal[PIN_HL], Graphics.COLOR_TRANSPARENT);
-            dc.fillCircle(xs[k] - r * 15 / 100, y - r * 40 / 100, r * 40 / 100);
+            paint(d, pal[PIN]);
+            d.fillCircle(xs[k], y, r);
+            paint(d, pal[PIN_HL]);
+            d.fillCircle(xs[k] - r * 15 / 100, y - r * 40 / 100, r * 40 / 100);
         }
     }
 
-    // The leaves yet to fall and the fallen ones: their edges above and
-    // below the leaf (off the screen in the zoomed view)
-    private function stack(dc as Dc, i as Number, pal as Array<Number>) as Void {
-        var step = _t[Layout.STEP];
-        var inset = _w * 4 / 1000;
-        var r = _t[Layout.CORNER];
-        dc.setColor(pal[STACK], Graphics.COLOR_TRANSPARENT);
-        for (var k = 1; k <= 3; k++) {
-            var x0 = _x[i] + inset * k + r * 2 / 5;
-            var x1 = _x[i] + _leafW - inset * k - r * 2 / 5;
-            var below = _y0 + _leafH + step * k;
-            if (below < _h) {
-                dc.drawLine(x0, below, x1, below);
+    // Leaf i with no bitmaps (the graphics pool short): plain plastic, the
+    // digit on it, the slot; it changes with the minute but cannot flip
+    private function flatLeaf(dc as Dc, i as Number, pal as Array<Number>) as Void {
+        var x = _x[i];
+        var w = _leafW;
+        var f = _lamp[i];
+        var up = _night ? mix(pal[MID], LIT, LIT_SHARE * f) : pal[MID];
+        var down = _night ? mix(pal[BOT], LIT, LIT_SHARE * f) : pal[BOT];
+        paint(dc, up);
+        dc.fillRectangle(x, _y0, w, _hinge - _y0);
+        paint(dc, down);
+        dc.fillRectangle(x, _hinge, w, _y0 + _leafH - _hinge);
+        var ink = _night ? mix(pal[INK], pal[INK_LIT], f) : pal[INK];
+        drawDigit(dc, _leaves[i], x + w / 2, _hinge, ink);
+        paint(dc, pal[EDGE]);
+        dc.fillRectangle(x, _hinge - 1, w, 2);
+        pinsOn(dc, x, _hinge, pal);
+    }
+
+    // The bitmap a reference holds, allocated in the graphics pool on the
+    // first get(): null when the pool has no room for it
+    private function pool(ref as BufferedBitmapReference) as BufferedBitmap? {
+        try {
+            var b = ref.get();
+            if (b instanceof BufferedBitmap) {
+                return b;
             }
-            var above = _y0 - step * k;
-            if (k <= 2 && above >= 0) {
-                dc.drawLine(x0, above, x1, above);
-            }
+        } catch (e instanceof Lang.Exception) {
+            log("graphics pool: " + e.getErrorMessage());
+        }
+        return null;
+    }
+
+    // The colour for the next fills and text: setColor, the watch's fast
+    // path (24-bit colours; its alpha the watch draws opaque)
+    private function ink(d as Dc, color as Number) as Void {
+        d.setColor(color, Graphics.COLOR_TRANSPARENT);
+    }
+
+    // An opaque colour for the next fills on the screen: the fill tool too,
+    // which once set (shade) takes precedence over setColor
+    // for every fill. The screen's opaque fills are small (the pins, the
+    // slot); the leaves' own fills happen on their bitmaps, through ink
+    private function paint(dc as Dc, color as Number) as Void {
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        if (dc has :setFill) {
+            dc.setFill(Graphics.createColor(255, (color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF));
+        }
+    }
+
+    // Translucent black for the next fills: the fill tool (setFill takes
+    // 0xAARRGGBB, the documented translucent fill). Costly on the watch, so
+    // only where drawBitmap2's tint cannot darken instead
+    private function shade(dc as Dc, alpha as Number) as Void {
+        dc.setFill(Graphics.createColor(alpha, 0, 0, 0));
+    }
+
+    // Grey at f of white, opaque, as drawBitmap2's tint: it multiplies the
+    // bitmap's colours, so this darkens a flap by 1 - f
+    private function grey(f as Float) as Number {
+        var g = clamp((f * 255.0).toNumber());
+        return Graphics.createColor(255, g, g, g);
+    }
+
+    // Leaf i's stack edges (stackLines), in the colour set
+    private function stack(dc as Dc, i as Number) as Void {
+        var lines = _stackLines[i];
+        for (var j = 0; j < lines.size(); j += 3) {
+            dc.drawLine(lines[j], lines[j + 1], lines[j + 2], lines[j + 1]);
         }
     }
 
@@ -860,7 +1187,7 @@ class ClackView extends WatchUi.WatchFace {
             var r = radius * k / SPILL_RINGS;
             var t = 1.0 - k.toFloat() / SPILL_RINGS;
             var share = Math.pow(t, 2.2).toFloat() * SPILL_SHARE;
-            dc.setColor(scale(SPILL, share), Graphics.COLOR_TRANSPARENT);
+            ink(dc, scale(SPILL, share));
             dc.fillCircle(cx, cy, r);
         }
     }
@@ -877,8 +1204,9 @@ class ClackView extends WatchUi.WatchFace {
         var dim = scale(col, 0.8);
         var fill = _t[Layout.AOD_FILL] == 1;
         var standby = _standbyFont;
+        var digits = Roll.digits(nowMinute(), _is24);     // the clock's, not the leaves': those roll to it on the wake
         for (var i = 0; i < 4; i++) {
-            var digit = _leaves[i];
+            var digit = digits[i];
             if (digit.equals("")) {
                 continue;
             }
@@ -891,7 +1219,7 @@ class ClackView extends WatchUi.WatchFace {
                     var n = digit.toNumber();
                     text = (65 + ((n != null) ? n : 0)).toChar().toString();   // 'A' to 'J': the filled upper flap
                 }
-                dc.setColor(hours ? col : dim, Graphics.COLOR_TRANSPARENT);
+                ink(dc, hours ? col : dim);
                 dc.drawText(x, y, standby, text, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
                 continue;
             }

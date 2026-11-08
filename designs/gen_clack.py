@@ -3,7 +3,7 @@
 preview (designs/preview_clack.py), so the watch draws the same geometry
 the owner saw on the states page:
 
-- apps/clack/source/Layout.mc: per device width (454, 416) and style, the
+- apps/clack/source/Layout.mc: per device width (454, 416, 390) and style, the
   leaves' geometry in pixels (digit height, leaf width and height, the
   hinge, each leaf's x, the slot, corners, pins, stack step, the captions'
   lines), and the lamp's brightness at each leaf
@@ -25,7 +25,7 @@ import math
 import sys
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFilter, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageOps
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 import preview_clack as pc  # noqa: E402
@@ -36,7 +36,7 @@ APP = ROOT / "apps" / "clack"
 STYLES = [("original", "0", "roboto"), ("league", "1", "league"), ("antonio", "1", "antonio"),
           ("bebas", "1", "bebas"), ("robotozoom", "1", "roboto")]
 FONT_INDEX = {"roboto": 0, "league": 1, "antonio": 2, "bebas": 3}
-WIDTHS = [454, 416]
+WIDTHS = [454, 416, 390]      # the fenix 8 47/51 mm, the fenix 8 43 mm, the Venu 4 41 mm
 FPS = 20
 DROPS = 12          # drop tables; each flip picks one and draws its own push
 PAD = 2             # px round each glyph in the bitmap fonts, room for the outlines
@@ -117,9 +117,9 @@ def write_layout():
         lines.append("    // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)")
         lines.append("    const LAMP%d = [%s, %s] as Array<Array<Float>>;" % (w, mc_list(lamps[0], "Float"), mc_list(lamps[1], "Float")))
     lines += ["", "    function table(w as Number, style as Number) as Array<Number> {",
-              "        return ((w >= 440) ? W454 : W416)[style];", "    }", "",
+              "        return ((w >= 440) ? W454 : ((w >= 400) ? W416 : W390))[style];", "    }", "",
               "    function lamp(w as Number, zoomed as Boolean) as Array<Float> {",
-              "        return ((w >= 440) ? LAMP454 : LAMP416)[zoomed ? 1 : 0];", "    }", "}", ""]
+              "        return ((w >= 440) ? LAMP454 : ((w >= 400) ? LAMP416 : LAMP390))[zoomed ? 1 : 0];", "    }", "}", ""]
     (APP / "source" / "Layout.mc").write_text("\n".join(lines))
 
 
@@ -158,32 +158,58 @@ def glyphs(c, standby):
         x0 = S(0.5)                                         # draw at the face's centre, then crop
         basey = S(0.5) - (top + bottom) / 2
         m = glyph_mask(c.face, c.font, t, x0 - (b[0] + b[2]) / 2, basey)
-        if standby:
-            erode = c.aod_erode() if pc.FONT[c.st["font"]][4] == "fill" else 0
-            if erode:
-                m = m.filter(ImageFilter.MinFilter(2 * int(round(erode * SS)) + 1))
-            edge = outline_of(m, 2)
-            if hours:
-                mid = int(S(0.5))
-                above = Image.new("L", m.size, 0)
-                ImageDraw.Draw(above).rectangle((0, 0, m.size[0], mid - SS), fill=255)
-                m = Image.composite(m, Image.composite(edge, Image.new("L", m.size, 0), ImageOps.invert(above)), above)
-            else:
-                m = edge
+        erode = c.aod_erode() if standby and pc.FONT[c.st["font"]][4] == "fill" else 0
+        if erode:
+            m = m.filter(ImageFilter.MinFilter(2 * int(round(erode * SS)) + 1))
         cx = S(0.5)
         half = (b[2] - b[0]) / 2
         cell = (int(cx - half) - PAD * SS, int(basey + top) - PAD * SS, int(cx + half) + PAD * SS, int(basey + bottom) + PAD * SS)
         g = m.crop(cell)
         g = g.resize((max(1, round(g.width / SS)), max(1, round(g.height / SS))), Image.LANCZOS)
+        if standby:
+            # the outline cut at the device's scale, AOD_OUTLINE px wide: cut at the
+            # supersampled scale it came out a quarter of a pixel and the watch showed nothing
+            edge = outline_of(g, 2 * pc.AOD_OUTLINE + 1)
+            if hours:
+                mid = round((S(0.5) - cell[1]) / SS)             # the hinge in the cell
+                above = Image.new("L", g.size, 0)
+                ImageDraw.Draw(above).rectangle((0, 0, g.width, mid - 1), fill=255)
+                g = Image.composite(g, edge, above)
+            else:
+                g = edge
         out.append((ch, g))
     return out
 
 
-def write_font(w, name, c, standby):
+def standby_share(w, style, gs):
+    """The share of the disc lit by the worst standby time of this style:
+    each leaf's digits as the font's masks (gs, from glyphs) at their
+    centres on the hinge, pixels over a quarter brightness counted, the
+    worst digit per leaf (hour tens 0 to 2, minute tens 0 to 5)."""
+    t = geometry(w, style)
+    gs = dict(gs)
+    r = w / 2.0
+    disc = Image.new("L", (w, w), 0)
+    ImageDraw.Draw(disc).ellipse((0, 0, w - 1, w - 1), fill=255)
+    worst = 0
+    for i, choices in enumerate(("012", "0123456789", "012345", "0123456789")):
+        best = 0
+        for d in choices:
+            ch = chr(ord("A") + int(d)) if i < 2 and ("A" in gs) else d
+            g = gs[ch]
+            scene = Image.new("L", (w, w), 0)
+            scene.paste(g, (round(t["cx"][i] - g.width / 2), round(t["hinge"] - g.height / 2)))
+            scene = ImageChops.multiply(scene, disc).point(lambda v: 255 if v > 64 else 0)
+            best = max(best, scene.histogram()[255])
+        worst += best
+    return worst / (3.14159265 * r * r)
+
+
+def write_font(w, name, c, standby, gs=None):
     """One BMFont: the glyphs side by side in a grey mask PNG, each cell
     the digit's ink box plus PAD, so TEXT_JUSTIFY_CENTER | VCENTER centres
     the ink as the preview does."""
-    gs = glyphs(c, standby)
+    gs = gs if gs is not None else glyphs(c, standby)
     gap = 2
     width = sum(g.width for _, g in gs) + gap * (len(gs) + 1)
     height = max(g.height for _, g in gs) + 2 * gap
@@ -215,7 +241,9 @@ def write_fonts():
             if font != "roboto":
                 made.append(write_font(w, key + "_digits", c, False))
             if zoom == "1":
-                made.append(write_font(w, key + "_standby", c, True))
+                gs = glyphs(c, True)
+                made.append(write_font(w, key + "_standby", c, True, gs))
+                print("%d %-8s standby lit at the worst time: %.1f%% of the disc" % (w, key, 100 * standby_share(w, style, gs)))
         folder = APP / ("resources-round-%dx%d" % (w, w)) / "fonts"
         xml = ["<fonts xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"https://developer.garmin.com/downloads/connect-iq/resources.xsd\">",
                "    <!-- Generated by designs/gen_clack.py; regenerate, don't edit. The digits of the condensed faces",

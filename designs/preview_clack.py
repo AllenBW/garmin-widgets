@@ -3,7 +3,7 @@
 will draw, from the same layout fractions, with Pillow and the watch's own
 Roboto Condensed Bold.
 
-    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416] [hours=21 minutes=05 format=24|12 date=1|0 zoom=0|1 font=roboto|bebas|antonio|league roll=1:120:06 minute=5]
+    python3 -I designs/preview_clack.py out.png [day|night|aod_day|aod_night] [454|416|390] [hours=21 minutes=05 format=24|12 date=1|0 zoom=0|1 font=roboto|bebas|antonio|league roll=1:120:06 minute=5]
 
 Modes: day (awake, plain cards), night (awake, the lamp on after sunset),
 aod_day / aod_night (sleeping: always-on, under 10 % lit, shifted each
@@ -47,6 +47,7 @@ L = dict(
     caption="below",                  # where the date and the AM/PM flag go: under the leaves ("below") or printed on the lower flaps ("leaf")
     caption_y=0.86,                   # the captions' centre line when printed on the flaps
 )
+AOD_OUTLINE = 2                       # standby: the digits' edges, device px wide, cut at the device's scale (a quarter pixel showed nothing on the watch)
 AOD_H0 = 0.348                        # the zoomed Roboto digit: 3 px off its strokes keeps 08:08 under ten percent; digits of 0.312 w or less need none
 # the digits' font (font=...): the watch's own Roboto Condensed Bold, or a
 # condensed open-licence face from designs/fonts/ (SIL OFL, licences beside
@@ -497,11 +498,11 @@ class Clack:
                 top = Image.new("L", m.size, 0)
                 ImageDraw.Draw(top).rectangle((0, 0, m.size[0], ymid - SS), fill=255)
                 self.face.img.paste(Image.new("RGB", m.size, col), (0, 0), Image.composite(m, Image.new("L", m.size, 0), top))
-                self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), Image.composite(outline_of(m, 2), Image.new("L", m.size, 0), ImageOps.invert(top)))
+                self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), Image.composite(outline_of(m, 2 * AOD_OUTLINE * SS + 1), Image.new("L", m.size, 0), ImageOps.invert(top)))
             elif i < 2:
-                self.face.img.paste(Image.new("RGB", m.size, col), (0, 0), outline_of(m, 2))
+                self.face.img.paste(Image.new("RGB", m.size, col), (0, 0), outline_of(m, 2 * AOD_OUTLINE * SS + 1))
             else:
-                self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), outline_of(m, 2))
+                self.face.img.paste(Image.new("RGB", m.size, dim), (0, 0), outline_of(m, 2 * AOD_OUTLINE * SS + 1))
         ImageDraw.Draw(self.face.img).line((0, ymid + SS, S(1), ymid + SS), fill=tuple(int(v * 0.5) for v in col), width=SS)
 
 
@@ -539,7 +540,7 @@ if __name__ == "__main__":
     for a in sys.argv[2:]:
         if a in ("day", "night", "aod_day", "aod_night"):
             mode = a
-        elif a in ("454", "416"):
+        elif a in ("454", "416", "390"):
             size = int(a)
         else:
             rest.append(a)

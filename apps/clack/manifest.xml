@@ -7,6 +7,8 @@
             <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
             <iq:product id="fenix843mm"/>
             <iq:product id="fenix847mm"/>
+            <!-- Venu 4 41 mm (390x390 AMOLED) -->
+            <iq:product id="venu441mm"/>
         </iq:products>
         <iq:permissions>
             <!-- the sunrise and sunset complications: the lamp comes on after sunset -->
