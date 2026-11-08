@@ -147,3 +147,19 @@ function testNumbersColors(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Numbers.scale(0xFF8040, 0.5), 0x7F4020, "half");
     return true;
 }
+
+// Every face these faces draw with is a vector font on this watch: a missing
+// one (Bionic Medium on the Venu 4) gives way to its sibling, never to the
+// watch's own number font
+(:test)
+function testInkUsable(logger as Logger) as Boolean {
+    var faces = [Lib.Ink.BIONIC_BOLD, Lib.Ink.BIONIC_MEDIUM, Lib.Ink.CONDENSED_BOLD, Lib.Ink.CONDENSED_REGULAR] as Array<Number>;
+    for (var i = 0; i < faces.size(); i++) {
+        var face = Lib.Ink.usable(faces[i]);
+        logger.debug(Lib.Ink.NAMES[faces[i]] + " -> " + Lib.Ink.NAMES[face]);
+        Test.assertMessage(face == faces[i] || face == Lib.Ink.SUBSTITUTE[faces[i]], "itself or its sibling");
+        Test.assertMessage(Lib.Ink.font(face, 60.0, Graphics.FONT_XTINY) instanceof Graphics.VectorFont, Lib.Ink.NAMES[face] + " is a vector font");
+    }
+    Test.assertEqualMessage(Lib.Ink.usable(Lib.Ink.BIONIC_BOLD), Lib.Ink.BIONIC_BOLD, "Bionic Bold has no stand-in");
+    return true;
+}

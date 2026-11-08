@@ -418,7 +418,7 @@ class WallView extends WatchUi.WatchFace {
     // Where the band's readings go
     private function layoutBand(dc as Dc, thin as Boolean) as Void {
         var bold = Lib.Ink.BIONIC_BOLD;
-        var medium = Lib.Ink.BIONIC_MEDIUM;
+        var medium = Lib.Ink.usable(Lib.Ink.BIONIC_MEDIUM);    // Bold where a watch lacks it
         var c = _colors;
         var pieces = [] as Array<Lib.Numbers.Piece>;
         var targets = [] as Array<Lib.Numbers.Target>;

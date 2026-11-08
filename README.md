@@ -19,6 +19,7 @@ family, written in Monkey C for Connect IQ.
 | [Vessel](apps/vessel/) | Watch face | The time as two glasses that fill to your readings (the temperature and heart rate by default), the next sunrise or sunset at the foot |
 | [Inscription](apps/inscription/) | Watch face | A coin: the time in the middle, the date and five readings set round the rim (the weather, the barometer and its trend, heart rate, steps, the next sunrise or sunset) |
 | [Overlap](apps/overlap/) | Watch face | The hours enormous and quiet behind bright minutes, cropped by the bezel, the date and two readings (the next sunrise or sunset and the temperature) |
+| [Lockup](apps/lockup/) | Watch face | Rows of numbers reaching the bezel all the way round, in numerals of its own, coloured by family |
 | [Blocks](apps/blocks/) | Watch face | The screen full of numbers, sized by importance and coloured by family: hours and minutes on a diagonal, the sun, weather and body readings around them, no labels |
 | [Wall](apps/wall/) | Watch face | A wall of small digits from your readings, where the time is the part that lights up, with a band of readings across the middle |
 | [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain |

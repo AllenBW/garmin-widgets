@@ -7,6 +7,7 @@
             <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
             <iq:product id="fenix843mm"/>
             <iq:product id="fenix847mm"/>
+            <iq:product id="venu441mm"/>
         </iq:products>
         <iq:permissions>
             <!-- the sun's times and Body Battery; press-and-hold opens a reading's widget -->

@@ -185,7 +185,7 @@ class BlocksView extends WatchUi.WatchFace {
     // Where each number goes, once a change of a reading or a mode asks for it
     private function layout(dc as Dc, thin as Boolean) as Void {
         var bold = Lib.Ink.BIONIC_BOLD;
-        var medium = Lib.Ink.BIONIC_MEDIUM;
+        var medium = Lib.Ink.usable(Lib.Ink.BIONIC_MEDIUM);    // Bold where a watch lacks it
         var c = _colors;
         var neutral = c.neutral;
         var sun = c.sun;
