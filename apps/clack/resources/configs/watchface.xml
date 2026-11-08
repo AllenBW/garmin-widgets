@@ -1,0 +1,14 @@
+<resources xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- The fēnix 8's own watch face editor (Watch Face > Clack > Customize): the view, which is the
+         layout and the digits' face (Layout.STYLES). The phone app's settings list has the same five
+         (resources/settings) and the date switch; whichever was changed last wins (Lib.Config). -->
+    <watchface-config>
+        <styles>
+            <style id="0" label="@Strings.StyleOriginal"/>
+            <style id="1" label="@Strings.StyleLeague" default="true"/>
+            <style id="2" label="@Strings.StyleAntonio"/>
+            <style id="3" label="@Strings.StyleBebas"/>
+            <style id="4" label="@Strings.StyleRobotoZoom"/>
+        </styles>
+    </watchface-config>
+</resources>

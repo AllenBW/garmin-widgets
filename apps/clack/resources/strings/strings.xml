@@ -1,0 +1,10 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">Clack</string>
+    <string id="StyleTitle">View</string>
+    <string id="StyleOriginal">Original, Roboto</string>
+    <string id="StyleLeague">Zoomed in, League Gothic</string>
+    <string id="StyleAntonio">Zoomed in, Antonio</string>
+    <string id="StyleBebas">Zoomed in, Bebas Neue</string>
+    <string id="StyleRobotoZoom">Zoomed in, Roboto</string>
+    <string id="DateTitle">Show the date</string>
+</strings>

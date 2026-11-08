@@ -73,6 +73,7 @@
             <iq:annotation>icons</iq:annotation>
             <iq:annotation>config</iq:annotation>
             <iq:annotation>ink</iq:annotation>
+            <iq:annotation>numbers</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>

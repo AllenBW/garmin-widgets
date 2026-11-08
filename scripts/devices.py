@@ -41,7 +41,11 @@ ALL = FENIX8 + FULL + TWO_BUTTON + FORERUNNER_6 + FIVE_BUTTON_5 + THREE_BUTTON_5
 # Toybox.Audio's supported devices among ALL (SDK 9.3 doc: Toybox.Audio)
 MICROPHONE = FENIX8 + FULL + TWO_BUTTON + FORERUNNER_6
 
-PER_APP = {"sound": MICROPHONE}
+# The faces made on 2026-11-08 (Blocks, Wall, Lockup, Clack) were built and
+# submitted for the fenix 8 and the Venu 4 41 mm; they get the wider list
+# once they have been through the same checks as the others.
+NEW_FACES = FENIX8 + ["venu441mm"]
+PER_APP = {"sound": MICROPHONE, "blocks": NEW_FACES, "wall": NEW_FACES, "lockup": NEW_FACES, "clack": NEW_FACES}
 
 
 def products(app):

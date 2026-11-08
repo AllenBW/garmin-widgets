@@ -1,0 +1,14 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <setting propertyKey="@Properties.Style" title="@Strings.StyleTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.StyleOriginal</listEntry>
+            <listEntry value="1">@Strings.StyleLeague</listEntry>
+            <listEntry value="2">@Strings.StyleAntonio</listEntry>
+            <listEntry value="3">@Strings.StyleBebas</listEntry>
+            <listEntry value="4">@Strings.StyleRobotoZoom</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.Date" title="@Strings.DateTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+</settings>

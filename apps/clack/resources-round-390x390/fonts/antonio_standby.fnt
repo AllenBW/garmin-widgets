@@ -1,0 +1,14 @@
+info face="antonio_standby" size=185 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=185 base=185 scaleW=784 scaleH=185 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="antonio_standby.png"
+chars count=10
+char id=48 x=2 y=2 width=82 height=181 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=49 x=86 y=2 width=52 height=181 xoffset=0 yoffset=0 xadvance=52 page=0 chnl=15
+char id=50 x=140 y=2 width=74 height=181 xoffset=0 yoffset=0 xadvance=74 page=0 chnl=15
+char id=51 x=216 y=2 width=79 height=181 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15
+char id=52 x=297 y=2 width=84 height=181 xoffset=0 yoffset=0 xadvance=84 page=0 chnl=15
+char id=53 x=383 y=2 width=74 height=181 xoffset=0 yoffset=0 xadvance=74 page=0 chnl=15
+char id=54 x=459 y=2 width=80 height=181 xoffset=0 yoffset=0 xadvance=80 page=0 chnl=15
+char id=55 x=541 y=2 width=80 height=181 xoffset=0 yoffset=0 xadvance=80 page=0 chnl=15
+char id=56 x=623 y=2 width=79 height=181 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15
+char id=57 x=704 y=2 width=78 height=181 xoffset=0 yoffset=0 xadvance=78 page=0 chnl=15
