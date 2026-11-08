@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <!-- A widget: a row in the glance loop that opens into the buttons -->
-    <iq:application id="439b7bc52a9746dca7c1dab14f5f29e1" type="widget" name="@Strings.AppName" entry="TallyApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
+    <iq:application id="a8234cafd33641b09d4e8e4d54739195" type="widget" name="@Strings.AppName" entry="TallyApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.0.0">
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
             <iq:product id="fenix843mm"/>

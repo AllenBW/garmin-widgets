@@ -4,7 +4,7 @@
          for device apps and audio providers only, not widgets. The glance
          row shows the last reading and opens the meter. Audio arrived with
          API 6.0.3, which every fēnix 8 runs. -->
-    <iq:application id="b22fbd9e33eb4a3eb8c51d5f1cd3b4a8" type="watch-app" name="@Strings.AppName" entry="SoundApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="6.0.3">
+    <iq:application id="5168981eb4e944afb95753c7370de47e" type="watch-app" name="@Strings.AppName" entry="SoundApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="6.0.3">
         <iq:products>
             <iq:product id="fenix8pro47mm"/>
             <iq:product id="fenix843mm"/>
