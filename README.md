@@ -71,15 +71,26 @@ recovery after the last round, and past visits.
 
 ## Supported watches
 
-| Device ID | Watches |
-|---|---|
-| `fenix8pro47mm` | fēnix 8 Pro 47 mm and 51 mm, fēnix 8 Pro MicroLED (454 × 454) |
-| `fenix847mm` | fēnix 8 47 mm and 51 mm AMOLED, tactix 8 and quatix 8 47/51 mm (454 × 454) |
-| `fenix843mm` | fēnix 8 43 mm AMOLED (416 × 416) |
+Built on the fēnix 8, and built for every round AMOLED Garmin watch on
+Connect IQ 5.1 or later that has vector fonts (`scripts/devices.py` is
+the list, and writes it into each manifest):
 
-Everything lays out relative to the screen size, so another round
-Connect IQ 5+ watch may only need its device ID added to an app's
-`manifest.xml`. That is untested; pull requests are welcome.
+| Family | Watches |
+|---|---|
+| fēnix 8 (the ones on the desk) | fēnix 8 43 mm, 47/51 mm and Pro, tactix 8, quatix 8 (416 and 454 px) |
+| fēnix 9 | fēnix 9 43 mm, 47/51 mm, Pro 43/47/51 mm, fēnix E (416, 454 and 466 px) |
+| Forerunner | 165, 170, 265, 265S, 570, 70, 965, 970 (360 to 454 px) |
+| Venu and vívoactive | Venu 3, 3S, 4 41 mm, 4 45 mm, vívoactive 6 (390 and 454 px) |
+| epix, MARQ, Descent, D2, Approach | epix (Gen 2) and Pro, MARQ Gen 2 and 3, Descent Mk3, D2 Mach 1 and 2, D2 Air X15, Approach S70 and S72 |
+
+Everything lays out relative to the screen size. Where a watch lacks a
+font the faces use, the nearest it has stands in (the Venu 3's
+Yantramanav for Roboto Condensed, for instance), and where it lacks a
+button, a tap on that button's cue or a hold on the screen does its job.
+Sound Level needs a microphone, so it is built for the API 6 watches
+only. Not built for: the Venu 2 family, vívoactive 5, Approach S50,
+Descent G2 and the Instinct 3 AMOLEDs (no vector fonts), the Venu X1
+(rectangular) and the MIP watches.
 
 ## Get them on your watch
 

@@ -209,7 +209,7 @@ class VesselView extends WatchUi.WatchFace {
     }
 
     private function makeFonts() as Void {
-        var face = FACES[_style];
+        var face = Lib.Ink.resolve(FACES[_style]);   // the nearest face a watch without this one has
         _em = Lib.Ink.em(face, _w * DIGITS);
         _aodEm = Lib.Ink.em(face, _w * AOD_DIGITS);
         _timeFont = Lib.Ink.font(face, _em, Graphics.FONT_NUMBER_HOT);
@@ -434,7 +434,10 @@ class VesselView extends WatchUi.WatchFace {
         }
         var font = thin ? _aodValueFont : _valueFont;
         var vx = x + w * VALUE_X;
-        var top = at - Graphics.getFontAscent(font) + Lib.Ink.TOP[Lib.Ink.CONDENSED_BOLD] * w * (thin ? AOD_VALUE_EM : (_big ? BIG_VALUE_EM : VALUE_EM)) / 2000.0;
+        // the digits' ink top in the face drawn: Roboto Condensed, or what the watch has in its place (a different height per em, so a different em for the same :size)
+        var res = Lib.Ink.resolve(Lib.Ink.CONDENSED_BOLD);
+        var top = at - Graphics.getFontAscent(font) + Lib.Ink.TOP[res] * w * (thin ? AOD_VALUE_EM : (_big ? BIG_VALUE_EM : VALUE_EM))
+                  * Lib.Ink.HEIGHT[Lib.Ink.CONDENSED_BOLD] / Lib.Ink.HEIGHT[res] / 2000.0;
         dc.setColor(c, Graphics.COLOR_TRANSPARENT);
         dc.drawText(vx, top, font, reading[0], Graphics.TEXT_JUSTIFY_LEFT);
         var end = vx + dc.getTextWidthInPixels(reading[0], font);

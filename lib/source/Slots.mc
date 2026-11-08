@@ -39,6 +39,11 @@ module Lib {
             if (type == null) {
                 return OTHER;
             }
+            // an API 6.0.2 value: the API 5 watches (Venu 3, Forerunner 265,
+            // epix 2) have no symbol for it, so it can't be a case below
+            if ((Complications has :COMPLICATION_TYPE_SLEEP_SCORE) && type == Complications.COMPLICATION_TYPE_SLEEP_SCORE) {
+                return SLEEP;
+            }
             switch (type as Complications.Type) {
                 case Complications.COMPLICATION_TYPE_HEART_RATE:          return HEART;
                 case Complications.COMPLICATION_TYPE_STEPS:               return STEPS;
@@ -59,7 +64,6 @@ module Lib {
                 case Complications.COMPLICATION_TYPE_RECOVERY_TIME:       return RECOVERY;
                 case Complications.COMPLICATION_TYPE_VO2MAX_RUN:
                 case Complications.COMPLICATION_TYPE_VO2MAX_BIKE:         return VO2;
-                case Complications.COMPLICATION_TYPE_SLEEP_SCORE:         return SLEEP;
                 case Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE:  return PRESSURE;
                 case Complications.COMPLICATION_TYPE_CALENDAR_EVENTS:     return CALENDAR;
             }
@@ -89,7 +93,8 @@ module Lib {
                     return [dashes(body), "", fraction(body, 100), null, 0];
                 }
                 case STRESS: {
-                    var stress = ActivityMonitor.getInfo().stressScore;
+                    var info = ActivityMonitor.getInfo();
+                    var stress = (info has :stressScore) ? info.stressScore : null;
                     if (stress == null) {
                         stress = number(id);
                     }
@@ -101,13 +106,16 @@ module Lib {
                     return [dashes(ActivityMonitor.getInfo().calories), "", null, null, 0];
                 case FLOORS: {
                     var info = ActivityMonitor.getInfo();
-                    return [dashes(info.floorsClimbed), "", fraction(info.floorsClimbed, info.floorsClimbedGoal), null, 0];
+                    var floors = (info has :floorsClimbed) ? info.floorsClimbed : null;
+                    var goal = (info has :floorsClimbedGoal) ? info.floorsClimbedGoal : null;
+                    return [dashes(floors), "", fraction(floors, goal), null, 0];
                 }
                 case INTENSITY: {
                     var info = ActivityMonitor.getInfo();
-                    var week = info.activeMinutesWeek;
+                    var week = (info has :activeMinutesWeek) ? info.activeMinutesWeek : null;
                     var total = (week != null) ? week.total : null;
-                    return [dashes(total), "", fraction(total, info.activeMinutesWeekGoal), null, 0];
+                    var goal = (info has :activeMinutesWeekGoal) ? info.activeMinutesWeekGoal : null;
+                    return [dashes(total), "", fraction(total, goal), null, 0];
                 }
                 case ALTITUDE:
                     return altitude();
@@ -116,7 +124,8 @@ module Lib {
                     return [dashes(spo2), (spo2 != null) ? "%" : "", fraction(spo2, 100), null, 0];
                 }
                 case BREATH: {
-                    var rate = ActivityMonitor.getInfo().respirationRate;
+                    var info = ActivityMonitor.getInfo();
+                    var rate = (info has :respirationRate) ? info.respirationRate : null;
                     return [dashes((rate != null) ? rate : number(id)), "", null, null, 0];
                 }
                 case SUN:
@@ -124,7 +133,9 @@ module Lib {
                 case NOTIFICATIONS:
                     return [System.getDeviceSettings().notificationCount.toString(), "", null, null, 0];
                 case RECOVERY: {
-                    var hours = ActivityMonitor.getInfo().timeToRecovery;
+                    // a field the Venu 3 has no symbol for: `has`, or a crash
+                    var info = ActivityMonitor.getInfo();
+                    var hours = (info has :timeToRecovery) ? info.timeToRecovery : null;
                     return [dashes(hours), (hours != null) ? "H" : "", null, null, 0];
                 }
                 case PRESSURE:

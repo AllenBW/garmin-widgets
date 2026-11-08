@@ -725,6 +725,16 @@ class SoundDelegate extends WatchUi.BehaviorDelegate {
         return true;
     }
 
+    // A watch without a MENU button (Venu 4, vivoactive 6): a hold on the
+    // screen stands in for it
+    function onHold(evt as WatchUi.ClickEvent) as Boolean {
+        if (Lib.Cues.hasMenu()) {
+            return false;
+        }
+        openMenu();
+        return true;
+    }
+
     function onBack() as Boolean {
         if (_view.calibrating()) {
             _view.finishCalibrate();

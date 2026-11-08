@@ -6,11 +6,29 @@
          API 6.0.3, which every fēnix 8 runs. -->
     <iq:application id="b22fbd9e33eb4a3eb8c51d5f1cd3b4a8" type="watch-app" name="@Strings.AppName" entry="SoundApp" launcherIcon="@Drawables.LauncherIcon" minApiLevel="6.0.3">
         <iq:products>
-            <!-- fenix 8 Pro: one ID covers 47 mm, 51 mm and MicroLED (454x454) -->
             <iq:product id="fenix8pro47mm"/>
-            <!-- fenix 8 AMOLED: 43 mm, and one ID for 47 mm / 51 mm -->
             <iq:product id="fenix843mm"/>
             <iq:product id="fenix847mm"/>
+            <iq:product id="fenix943mm"/>
+            <iq:product id="fenix947mm"/>
+            <iq:product id="fenix9pro43mm"/>
+            <iq:product id="fenix9pro47mm"/>
+            <iq:product id="fenix9pro51mm"/>
+            <iq:product id="fenixe"/>
+            <iq:product id="marq3"/>
+            <iq:product id="d2mach2"/>
+            <iq:product id="d2mach2pro"/>
+            <iq:product id="venu445mm"/>
+            <iq:product id="venu441mm"/>
+            <iq:product id="vivoactive6"/>
+            <iq:product id="approachs7243mm"/>
+            <iq:product id="approachs7247mm"/>
+            <iq:product id="fr57042mm"/>
+            <iq:product id="fr57047mm"/>
+            <iq:product id="fr970"/>
+            <iq:product id="fr170"/>
+            <iq:product id="fr170m"/>
+            <iq:product id="fr70"/>
         </iq:products>
         <iq:permissions>
             <!-- the microphone, while the app is open; nothing is kept -->

@@ -163,11 +163,32 @@ module Lib {
                 return fallback;
             }
             try {
-                var font = Graphics.getVectorFont({:face => face, :size => size});
+                var font = Graphics.getVectorFont({:face => faces(face), :size => size});
                 return (font != null) ? font : fallback;
             } catch (e) {
                 return fallback;
             }
+        }
+
+        // The face, then the faces other watches have in its place, nearest
+        // width first: getVectorFont takes the first the watch has. The
+        // fenix 8 family has every face the apps ask for; the Forerunner
+        // 570 and 970 have no Bionic, the Venu 3 only Roboto Regular,
+        // Yantramanav (within 3 % of Roboto Condensed's width) and Pridi.
+        function faces(face as String) as Array<String> {
+            if (face.equals("RobotoCondensedBold") || face.equals("RobotoCondensedRegular")) {
+                return [face, "YantramanavRegular", "RobotoRegular"] as Array<String>;
+            }
+            if (face.equals("BionicBold") || face.equals("BionicMedium")) {
+                return [face, "BionicBold", "RobotoCondensedBold", "YantramanavRegular", "RobotoRegular"] as Array<String>;
+            }
+            if (face.equals("RobotoMedium")) {
+                return [face, "RobotoRegular", "RobotoCondensedBold", "YantramanavRegular"] as Array<String>;
+            }
+            if (face.equals("PridiRegular")) {
+                return [face, "PridiRegularGarmin", "YantramanavRegular", "RobotoRegular"] as Array<String>;
+            }
+            return [face] as Array<String>;
         }
 
         // The first font in `fonts` that fits `text` within maxWidth pixels,

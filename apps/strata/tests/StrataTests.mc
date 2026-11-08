@@ -155,8 +155,12 @@ function testEditorChoices(logger as Logger) as Boolean {
     Test.assertMessage(view.slotAt((w * 0.186).toNumber(), (h * 0.70).toNumber()) == 1, "the first reading");
     Test.assertMessage(view.slotAt((w * 0.801).toNumber(), (h * 0.70).toNumber()) == 4, "the fourth reading");
     Test.assertMessage(view.slotAt(w / 2, h / 2) == null, "the time is no slot");
-    var config = WatchFaceConfig.getSettings(null);
-    logger.debug("the simulator's editor config: " + ((config != null) ? "style " + config.styleId : "none"));
+    if (Application has :WatchFaceConfig) {   // the on-watch editor exists on the API 6 watches only
+        var config = WatchFaceConfig.getSettings(null);
+        logger.debug("the simulator's editor config: " + ((config != null) ? "style " + config.styleId : "none"));
+    } else {
+        logger.debug("no watch face editor on this watch");
+    }
     return true;
 }
 

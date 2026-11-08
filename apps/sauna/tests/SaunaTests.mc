@@ -535,6 +535,17 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var settings = System.getDeviceSettings();
     var w = settings.screenWidth;
     var h = settings.screenHeight;
+
+    // The cues know this watch's buttons: UP and DOWN on the fenix family,
+    // START and BACK only on the Venu 4, a MENU wherever the watch has one
+    var buttons = settings.inputButtons;
+    var upDown = System.BUTTON_INPUT_UP | System.BUTTON_INPUT_DOWN;
+    Test.assertEqualMessage(Lib.Cues.hasUpDown(), (buttons & upDown) == upDown, "UP and DOWN as the watch reports them");
+    Test.assertEqualMessage(Lib.Cues.hasMenu(), (buttons & System.BUTTON_INPUT_MENU) != 0, "MENU as the watch reports it");
+    logger.debug("buttons " + buttons + (Lib.Cues.hasUpDown() ? ", up/down" : ", no up/down") + (Lib.Cues.hasMenu() ? ", menu" : ", no menu"));
+    // a tap beside each cue's angle lands on it whatever the buttons: the cues double as tap targets
+    Test.assertEqualMessage(Lib.Cues.at(w - w / 20, (h * 0.25).toNumber(), w, h), Lib.Cues.TAP_START, "a tap at START's angle");
+    Test.assertEqualMessage(Lib.Cues.at(w / 20, (h * 0.5).toNumber(), w, h), Lib.Cues.TAP_UP, "a tap at UP's angle");
     var screen = (Graphics.createBufferedBitmap({:width => w, :height => h}).get() as Graphics.BufferedBitmap).getDc();
     var glanceDc = (Graphics.createBufferedBitmap({:width => (w * 0.77).toNumber(), :height => (h * 0.29).toNumber()}).get() as Graphics.BufferedBitmap).getDc();
 

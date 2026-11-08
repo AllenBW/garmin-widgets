@@ -1,6 +1,7 @@
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.Math;
+import Toybox.System;
 
 module Lib {
 
@@ -26,6 +27,30 @@ module Lib {
         const TAP_BACK = 2;
         const TAP_UP = 3;
         const TAP_DOWN = 4;
+
+        var _buttons as Number? = null;
+
+        // The watch's buttons (System.BUTTON_INPUT_*), read once
+        function buttons() as Number {
+            if (_buttons == null) {
+                var settings = System.getDeviceSettings();
+                _buttons = (settings has :inputButtons && settings.inputButtons != null) ? settings.inputButtons : 0xFFFF;
+            }
+            return _buttons as Number;
+        }
+
+        // True on the fenix family, with UP and DOWN on the left. The Venu
+        // and vivoactive have two or three buttons on the right only, so
+        // their UP and DOWN cues are tap targets and nothing else.
+        function hasUpDown() as Boolean {
+            var both = System.BUTTON_INPUT_UP | System.BUTTON_INPUT_DOWN;
+            return (buttons() & both) == both;
+        }
+
+        // False on the Venu 4 and vivoactive 6, whose menu is a hold on the screen
+        function hasMenu() as Boolean {
+            return (buttons() & System.BUTTON_INPUT_MENU) != 0;
+        }
 
         // Which cue a touch at (x, y) on a w by h screen landed on: near the
         // bezel and within thirty degrees of a cue's angle, else TAP_NONE

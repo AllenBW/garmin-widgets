@@ -46,9 +46,16 @@ function testKinds(logger as Logger) as Boolean {
                  Complications.COMPLICATION_TYPE_PULSE_OX, Complications.COMPLICATION_TYPE_RESPIRATION_RATE,
                  Complications.COMPLICATION_TYPE_SUNRISE, Complications.COMPLICATION_TYPE_NOTIFICATION_COUNT,
                  Complications.COMPLICATION_TYPE_RECOVERY_TIME, Complications.COMPLICATION_TYPE_VO2MAX_RUN,
-                 Complications.COMPLICATION_TYPE_SLEEP_SCORE, Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE,
+                 Complications.COMPLICATION_TYPE_SEA_LEVEL_PRESSURE,
                  Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, Complications.COMPLICATION_TYPE_FORECAST_WEATHER_1DAY]
                 as Array<Complications.Type>;
+    // the sleep score is an API 6.0.2 value: the API 5 watches have no symbol for it
+    if (Complications has :COMPLICATION_TYPE_SLEEP_SCORE) {
+        types.add(Complications.COMPLICATION_TYPE_SLEEP_SCORE);
+        Test.assertEqualMessage(Lib.Slots.kindOf(Complications.COMPLICATION_TYPE_SLEEP_SCORE), Lib.Slots.SLEEP, "sleep score where the watch has it");
+    } else {
+        logger.debug("no sleep score complication on this watch");
+    }
     for (var i = 0; i < types.size(); i++) {
         var kind = Lib.Slots.kindOf(types[i]);
         var r = Lib.Slots.read(kind, new Complications.Id(types[i]));
@@ -109,6 +116,22 @@ function testColorsAndInk(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Ink.left(Lib.Ink.CONDENSED_BOLD, "", em), 0.0, "no text, no bearing");
     Test.assertEqualMessage(Lib.Ink.height(Lib.Ink.BIONIC_BOLD, Lib.Ink.em(Lib.Ink.BIONIC_BOLD, 120.0)), 120.0,
                             "the height an em was made for");
+    // Faces other watches lack: resolve gives a face this watch has, and the face itself where it has it
+    for (var face = 0; face < Lib.Ink.NAMES.size(); face++) {
+        var got = Lib.Ink.resolve(face);
+        Test.assertMessage(got >= 0 && got < Lib.Ink.NAMES.size(), "a face index");
+        if (Lib.Ink.present(face)) {
+            Test.assertEqualMessage(got, face, Lib.Ink.NAMES[face] + " kept where the watch has it");
+        } else {
+            Test.assertMessage(Lib.Ink.present(got) || got == face, Lib.Ink.NAMES[face] + " stood in for by a face the watch has");
+            logger.debug(Lib.Ink.NAMES[face] + " -> " + Lib.Ink.NAMES[got] + " on this watch");
+        }
+        var font = Lib.Ink.font(got, 100.0, Graphics.FONT_NUMBER_HOT);
+        Test.assertMessage(font != Graphics.FONT_NUMBER_HOT || !Lib.Ink.present(got), "the resolved face makes a vector font");
+    }
+    Test.assertEqualMessage(Lib.Fmt.faces("RobotoCondensedBold")[0], "RobotoCondensedBold", "the face asked for comes first");
+    Test.assertMessage(Lib.Fmt.faces("RobotoCondensedBold").size() > 1, "with what other watches have in its place after it");
+    Test.assertEqualMessage(Lib.Fmt.faces("NoSuchFace").size(), 1, "an unknown face stands alone");
     return true;
 }
 

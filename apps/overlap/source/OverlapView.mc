@@ -236,7 +236,7 @@ class OverlapView extends WatchUi.WatchFace {
     }
 
     private function makeFonts() as Void {
-        var face = FACES[_style];
+        var face = Lib.Ink.resolve(FACES[_style]);   // the nearest face a watch without this one has
         _hoursEm = Lib.Ink.em(face, _w * HOURS_DIGITS);
         _minutesEm = Lib.Ink.em(face, _w * MINUTES_DIGITS);
         _hoursFont = Lib.Ink.font(face, _hoursEm, Graphics.FONT_NUMBER_HOT);
@@ -535,7 +535,9 @@ class OverlapView extends WatchUi.WatchFace {
         // the value's digits centred on y
         var font = small ? _smallFont : _readingFont;
         var em = small ? _smallEm : _readingEm;
-        var top = y - Graphics.getFontAscent(font) + Lib.Ink.TOP[Lib.Ink.CONDENSED_BOLD] * w * em / 2000.0;
+        // the digits' ink top in the face drawn: Roboto Condensed, or what the watch has in its place (a different height per em, so a different em for the same :size)
+        var res = Lib.Ink.resolve(Lib.Ink.CONDENSED_BOLD);
+        var top = y - Graphics.getFontAscent(font) + Lib.Ink.TOP[res] * w * em * Lib.Ink.HEIGHT[Lib.Ink.CONDENSED_BOLD] / Lib.Ink.HEIGHT[res] / 2000.0;
         dc.setColor(Lib.Config.scale(_data, (_big ? 1.0 : READING_DIM) * dim), Graphics.COLOR_TRANSPARENT);
         dc.drawText(vx, top, font, reading[0], Graphics.TEXT_JUSTIFY_LEFT);
         var end = vx + dc.getTextWidthInPixels(reading[0], font);

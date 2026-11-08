@@ -836,11 +836,22 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
     }
 
     function onTap(evt as WatchUi.ClickEvent) as Boolean {
-        if (_view.running()) {
-            return true;
-        }
         var c = evt.getCoordinates();
         var tap = _view.cueAt(c[0], c[1]);
+        if (_view.running()) {
+            // buttons only while a routine runs: a bent wrist touches the
+            // screen. A watch without UP and DOWN buttons (Venu, vivoactive)
+            // takes a tap on those two cues instead, on the far side from
+            // the hand.
+            if (!Lib.Cues.hasUpDown()) {
+                if (tap == Lib.Cues.TAP_UP) {
+                    _view.extend();
+                } else if (tap == Lib.Cues.TAP_DOWN) {
+                    _view.easeOff();
+                }
+            }
+            return true;
+        }
         if (tap == Lib.Cues.TAP_START) {
             pressStart();
         } else if (tap == Lib.Cues.TAP_BACK) {
@@ -903,6 +914,15 @@ class StretchDelegate extends WatchUi.BehaviorDelegate {
             routines();
         }
         return true;
+    }
+
+    // A watch without a MENU button (Venu 4, vivoactive 6): a hold on the
+    // screen stands in for it
+    function onHold(evt as WatchUi.ClickEvent) as Boolean {
+        if (Lib.Cues.hasMenu()) {
+            return false;
+        }
+        return onMenu();
     }
 
     function pressStart() as Void {

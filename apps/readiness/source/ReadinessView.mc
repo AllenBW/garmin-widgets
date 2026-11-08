@@ -154,7 +154,7 @@ class ReadinessView extends WatchUi.WatchFace {
 
         // Tiles: value over label
         var tiles = [
-            [Complications.COMPLICATION_TYPE_SLEEP_SCORE, ReadinessText.score(r.sleepScore), "SLEEP"],
+            [Metrics.sleepType(), ReadinessText.score(r.sleepScore), "SLEEP"],
             [Complications.COMPLICATION_TYPE_RECOVERY_TIME, ReadinessText.recovery(r.recoveryMinutes), "RECOVERY"],
             [Complications.COMPLICATION_TYPE_HEART_RATE, ReadinessText.score(r.restingHr), "RHR"]
         ];
@@ -167,7 +167,9 @@ class ReadinessView extends WatchUi.WatchFace {
             dc.drawText(x, tileValueY, _valueFont, tiles[i][1] as String, center);
             dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, tileLabelY, _labelFont, tiles[i][2] as String, center);
-            targets.add([tiles[i][0] as Number, x, (tileValueY + tileLabelY) / 2, (w * 0.1).toNumber(), (h * 0.07).toNumber()]);
+            if (tiles[i][0] != null) {   // no sleep score complication on the API 5 watches
+                targets.add([tiles[i][0] as Number, x, (tileValueY + tileLabelY) / 2, (w * 0.1).toNumber(), (h * 0.07).toNumber()]);
+            }
         }
 
         // Footer: the training status

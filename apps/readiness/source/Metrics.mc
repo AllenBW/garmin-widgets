@@ -29,13 +29,24 @@ module Metrics {
         r.bodyBattery = newestSample(:getBodyBatteryHistory);
         r.stress = newestSample(:getStressHistory);
         if (r.stress == null) {
-            r.stress = ActivityMonitor.getInfo().stressScore;
+            var info = ActivityMonitor.getInfo();
+            r.stress = (info has :stressScore) ? info.stressScore : null;   // not every watch has the field
         }
-        r.sleepScore = complicationNumber(Complications.COMPLICATION_TYPE_SLEEP_SCORE);
+        var sleep = sleepType();
+        r.sleepScore = (sleep != null) ? complicationNumber(sleep) : null;
         r.recoveryMinutes = recoveryMinutes();
         r.restingHr = UserProfile.getProfile().restingHeartRate;
         r.trainingStatus = complicationString(Complications.COMPLICATION_TYPE_TRAINING_STATUS);
         return r;
+    }
+
+    // The sleep score complication, or null on the API 5 watches (Venu 3,
+    // Forerunner 265, epix 2), which have no symbol for this 6.0.2 value
+    function sleepType() as Complications.Type? {
+        if (Complications has :COMPLICATION_TYPE_SLEEP_SCORE) {
+            return Complications.COMPLICATION_TYPE_SLEEP_SCORE;
+        }
+        return null;
     }
 
     // Minutes left to recover: the complication, else the activity

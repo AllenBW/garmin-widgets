@@ -226,12 +226,12 @@ class InscriptionView extends WatchUi.WatchFace {
     }
 
     private function makeFonts() as Void {
-        var face = FACES[_style];
+        var face = Lib.Ink.resolve(FACES[_style]);   // the nearest face a watch without this one has
         _em = Lib.Ink.em(face, _w * DIGITS);
         _aodEm = Lib.Ink.em(face, _w * AOD_DIGITS);
         _timeFont = Lib.Ink.font(face, _em, Graphics.FONT_NUMBER_HOT);
         _aodTimeFont = Lib.Ink.font(face, _aodEm, Graphics.FONT_NUMBER_MEDIUM);
-        var legend = (_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_BOLD;
+        var legend = Lib.Ink.resolve((_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_BOLD);
         _legendFont = Lib.Ink.font(legend, _w * (_big ? BIG_LEGEND_EM : LEGEND_EM), Graphics.FONT_XTINY);
         _aodLegendFont = Lib.Ink.font(legend, _w * AOD_LEGEND_EM, Graphics.FONT_XTINY);
     }

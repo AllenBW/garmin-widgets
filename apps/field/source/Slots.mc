@@ -68,7 +68,7 @@ module Slots {
             case SUNSET:       return sunTime(1);
             case CALENDAR:     return complicationText(Complications.COMPLICATION_TYPE_CALENDAR_EVENTS);
             case RECOVERY:     return recovery();
-            case SLEEP:        return complicationText(Complications.COMPLICATION_TYPE_SLEEP_SCORE);
+            case SLEEP:        return complicationText(sleepType());
             case HIGH_LOW:     return highLow();
         }
         return "--";
@@ -88,8 +88,17 @@ module Slots {
             case SUNSET:       return Complications.COMPLICATION_TYPE_SUNSET;
             case CALENDAR:     return Complications.COMPLICATION_TYPE_CALENDAR_EVENTS;
             case RECOVERY:     return Complications.COMPLICATION_TYPE_RECOVERY_TIME;
-            case SLEEP:        return Complications.COMPLICATION_TYPE_SLEEP_SCORE;
+            case SLEEP:        return sleepType();
             case HIGH_LOW:     return Complications.COMPLICATION_TYPE_HIGH_LOW_TEMPERATURE;
+        }
+        return null;
+    }
+
+    // The sleep score complication, or null on the API 5 watches (Venu 3,
+    // Forerunner 265, epix 2), which have no symbol for this 6.0.2 value
+    function sleepType() as Complications.Type? {
+        if (Complications has :COMPLICATION_TYPE_SLEEP_SCORE) {
+            return Complications.COMPLICATION_TYPE_SLEEP_SCORE;
         }
         return null;
     }
@@ -113,7 +122,8 @@ module Slots {
     }
 
     function floors() as String {
-        var floors = ActivityMonitor.getInfo().floorsClimbed;
+        var info = ActivityMonitor.getInfo();
+        var floors = (info has :floorsClimbed) ? info.floorsClimbed : null;   // not every watch has the field
         return (floors != null) ? floors.toString() : "--";
     }
 
@@ -153,12 +163,12 @@ module Slots {
     }
 
     // A complication's value as text (a Number or a String), or "--".
-    function complicationText(type as Complications.Type) as String {
-        if (!(Toybox has :Complications)) {
+    function complicationText(type as Complications.Type?) as String {
+        if (type == null || !(Toybox has :Complications)) {
             return "--";
         }
         try {
-            var value = Complications.getComplication(new Complications.Id(type)).value;
+            var value = Complications.getComplication(new Complications.Id(type as Complications.Type)).value;
             if (value instanceof Number || value instanceof String) {
                 return value.toString();
             }

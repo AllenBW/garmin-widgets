@@ -29,7 +29,27 @@ FACES = [
     ("CONDENSED_REGULAR", "RobotoCondensedRegular", "RobotoCondensed-Regular.ttf"),
     ("ROBOTO_MEDIUM", "RobotoMedium", "Roboto-Medium.ttf"),
     ("PRIDI", "PridiRegular", "Pridi-Regular.ttf"),
+    # What other watches have in their place: the Venu 3 only Roboto
+    # Regular, Yantramanav and Pridi; the epix 2 family Garmin's own Pridi
+    ("ROBOTO_REGULAR", "RobotoRegular", "Roboto-Regular.ttf"),
+    ("YANTRAMANAV", "YantramanavRegular", "Yantramanav-Regular.ttf"),
+    ("PRIDI_GARMIN", "PridiRegularGarmin", "Pridi-Regular_Garmin.ttf"),
 ]
+# For each face, the faces to try in its place on a watch that lacks it,
+# nearest width first. Measured at one em against Roboto Condensed Bold:
+# Yantramanav is within 3 %, Roboto Regular and Medium 10 % wider, Bionic
+# within 5 %; Pridi's Garmin cut has the same widths and a shorter box.
+CHAIN = {
+    "BIONIC_BOLD": ["CONDENSED_BOLD", "YANTRAMANAV", "ROBOTO_REGULAR"],
+    "BIONIC_MEDIUM": ["BIONIC_BOLD", "CONDENSED_BOLD", "YANTRAMANAV", "ROBOTO_REGULAR"],
+    "CONDENSED_BOLD": ["YANTRAMANAV", "ROBOTO_REGULAR"],
+    "CONDENSED_REGULAR": ["YANTRAMANAV", "ROBOTO_REGULAR"],
+    "ROBOTO_MEDIUM": ["ROBOTO_REGULAR", "CONDENSED_BOLD", "YANTRAMANAV"],
+    "PRIDI": ["PRIDI_GARMIN", "YANTRAMANAV", "ROBOTO_REGULAR"],
+    "ROBOTO_REGULAR": ["YANTRAMANAV", "CONDENSED_REGULAR"],
+    "YANTRAMANAV": ["CONDENSED_REGULAR", "ROBOTO_REGULAR"],
+    "PRIDI_GARMIN": ["PRIDI", "YANTRAMANAV", "ROBOTO_REGULAR"],
+}
 
 
 def ink(f, s):
@@ -55,6 +75,7 @@ def measure(ttf):
 
 def main():
     rows = [(name, face, *measure(ttf)) for name, face, ttf in FACES]
+    names = [r[0] for r in rows]
     arr = lambda xs: "[" + ", ".join(str(x) for x in xs) + "] as Array<Number>"  # noqa: E731
     out = f'''import Toybox.Graphics;
 import Toybox.Lang;
@@ -80,6 +101,44 @@ module Lib {{
         const BEAR = [
 {chr(10).join("            " + arr(r[5]) + "," for r in rows)}
         ] as Array<Array<Number>>;
+        // For each face, the faces to try in its place on a watch that
+        // lacks it, nearest width first (the fenix 8 family has them all;
+        // the Venu 3 only Roboto Regular, Yantramanav and Pridi)
+        const CHAIN = [
+{chr(10).join("            " + arr(names.index(c) for c in CHAIN[r[0]]) + "," for r in rows)}
+        ] as Array<Array<Number>>;
+
+        var _have as Array<Boolean?>? = null;
+
+        // Whether this watch has the face, asked of the watch once
+        function present(face as Number) as Boolean {{
+            if (_have == null) {{
+                _have = new [NAMES.size()] as Array<Boolean?>;
+            }}
+            var h = (_have as Array<Boolean?>)[face];
+            if (h == null) {{
+                h = (Graphics has :getVectorFont) && Graphics.getVectorFont({{:face => NAMES[face], :size => 20}}) != null;
+                (_have as Array<Boolean?>)[face] = h;
+            }}
+            return h;
+        }}
+
+        // The face where the watch has it, else the nearest in its chain
+        // the watch has; the face itself when it has none of them. Pick
+        // the face with this once, and measure with the same index, so
+        // the metrics match the font drawn.
+        function resolve(face as Number) as Number {{
+            if (present(face)) {{
+                return face;
+            }}
+            var chain = CHAIN[face];
+            for (var i = 0; i < chain.size(); i++) {{
+                if (present(chain[i])) {{
+                    return chain[i];
+                }}
+            }}
+            return face;
+        }}
 
         // The em, in px, that makes the digits `digits` px tall
         function em(face as Number, digits as Float) as Float {{

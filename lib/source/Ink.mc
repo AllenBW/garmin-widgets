@@ -10,14 +10,14 @@ module Lib {
     (:ink)
     module Ink {
 
-        enum Face { BIONIC_BOLD, BIONIC_MEDIUM, CONDENSED_BOLD, CONDENSED_REGULAR, ROBOTO_MEDIUM, PRIDI }
+        enum Face { BIONIC_BOLD, BIONIC_MEDIUM, CONDENSED_BOLD, CONDENSED_REGULAR, ROBOTO_MEDIUM, PRIDI, ROBOTO_REGULAR, YANTRAMANAV, PRIDI_GARMIN }
 
-        const NAMES = ["BionicBold", "BionicMedium", "RobotoCondensedBold", "RobotoCondensedRegular", "RobotoMedium", "PridiRegular"] as Array<String>;
+        const NAMES = ["BionicBold", "BionicMedium", "RobotoCondensedBold", "RobotoCondensedRegular", "RobotoMedium", "PridiRegular", "RobotoRegular", "YantramanavRegular", "PridiRegularGarmin"] as Array<String>;
         // getVectorFont's :size for a one-em font: its ascent plus descent
-        const HEIGHT = [1276, 1276, 1173, 1173, 1173, 1550] as Array<Number>;
+        const HEIGHT = [1276, 1276, 1173, 1173, 1173, 1550, 1173, 1297, 1344] as Array<Number>;
         // The digits' ink top and bottom above the baseline
-        const TOP = [643, 643, 721, 721, 721, 662] as Array<Number>;
-        const BOTTOM = [0, 0, -10, -10, -10, -15] as Array<Number>;
+        const TOP = [643, 643, 721, 721, 721, 662, 721, 648, 662] as Array<Number>;
+        const BOTTOM = [0, 0, -10, -10, -10, -15, -10, -10, -15] as Array<Number>;
         // Each digit's left then right side bearing, 0 to 9, per face
         const BEAR = [
             [40, 40, 103, 167, 40, 40, 40, 40, 31, 31, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40] as Array<Number>,
@@ -26,7 +26,56 @@ module Lib {
             [56, 57, 78, 180, 46, 39, 48, 66, 29, 30, 71, 42, 64, 49, 41, 44, 57, 57, 51, 66] as Array<Number>,
             [51, 51, 83, 193, 40, 38, 38, 55, 27, 25, 62, 40, 56, 40, 33, 42, 50, 49, 45, 58] as Array<Number>,
             [33, 33, 33, 33, 43, 43, 43, 43, 23, 23, 43, 43, 43, 23, 23, 23, 43, 43, 43, 43] as Array<Number>,
+            [56, 57, 83, 206, 45, 37, 46, 65, 26, 23, 75, 40, 64, 48, 38, 44, 55, 55, 49, 66] as Array<Number>,
+            [50, 50, 82, 208, 42, 40, 44, 59, 24, 21, 69, 48, 58, 33, 34, 40, 45, 46, 36, 57] as Array<Number>,
+            [33, 33, 33, 33, 43, 43, 43, 43, 23, 23, 43, 43, 43, 23, 23, 23, 43, 43, 43, 43] as Array<Number>,
         ] as Array<Array<Number>>;
+        // For each face, the faces to try in its place on a watch that
+        // lacks it, nearest width first (the fenix 8 family has them all;
+        // the Venu 3 only Roboto Regular, Yantramanav and Pridi)
+        const CHAIN = [
+            [2, 7, 6] as Array<Number>,
+            [0, 2, 7, 6] as Array<Number>,
+            [7, 6] as Array<Number>,
+            [7, 6] as Array<Number>,
+            [6, 2, 7] as Array<Number>,
+            [8, 7, 6] as Array<Number>,
+            [7, 3] as Array<Number>,
+            [3, 6] as Array<Number>,
+            [5, 7, 6] as Array<Number>,
+        ] as Array<Array<Number>>;
+
+        var _have as Array<Boolean?>? = null;
+
+        // Whether this watch has the face, asked of the watch once
+        function present(face as Number) as Boolean {
+            if (_have == null) {
+                _have = new [NAMES.size()] as Array<Boolean?>;
+            }
+            var h = (_have as Array<Boolean?>)[face];
+            if (h == null) {
+                h = (Graphics has :getVectorFont) && Graphics.getVectorFont({:face => NAMES[face], :size => 20}) != null;
+                (_have as Array<Boolean?>)[face] = h;
+            }
+            return h;
+        }
+
+        // The face where the watch has it, else the nearest in its chain
+        // the watch has; the face itself when it has none of them. Pick
+        // the face with this once, and measure with the same index, so
+        // the metrics match the font drawn.
+        function resolve(face as Number) as Number {
+            if (present(face)) {
+                return face;
+            }
+            var chain = CHAIN[face];
+            for (var i = 0; i < chain.size(); i++) {
+                if (present(chain[i])) {
+                    return chain[i];
+                }
+            }
+            return face;
+        }
 
         // The em, in px, that makes the digits `digits` px tall
         function em(face as Number, digits as Float) as Float {
