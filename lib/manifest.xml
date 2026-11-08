@@ -8,7 +8,8 @@
         (fmt, solar and location are also glance-safe: see CLAUDE.md;
         cues draws the button cues at Garmin's hint angles; slots, icons,
         config and ink are the readings, icons, settings and digit ink the
-        Vessel, Inscription and Overlap faces share)
+        Vessel, Inscription and Overlap faces share; numbers is what Blocks
+        and Wall share)
         and declare <iq:depends name="Lib" version="0.1.0"/> in their manifest.
     -->
     <iq:barrel id="01cb49eb9f324410940f13009c6aee5b" module="Lib" version="0.1.0" minApiLevel="5.0.0">
@@ -36,6 +37,7 @@
             <iq:annotation>icons</iq:annotation>
             <iq:annotation>config</iq:annotation>
             <iq:annotation>ink</iq:annotation>
+            <iq:annotation>numbers</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>

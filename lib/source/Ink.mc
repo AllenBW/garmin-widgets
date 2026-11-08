@@ -33,6 +33,33 @@ module Lib {
             return digits * 1000.0 / (TOP[face] - BOTTOM[face]);
         }
 
+        // Faces some watches lack (the Venu 4 has no Bionic Medium or Roboto
+        // Medium) and the sibling with the same digit height to use instead
+        const SUBSTITUTE = [-1, BIONIC_BOLD, -1, -1, CONDENSED_BOLD, -1] as Array<Number>;
+        var usableFaces as Array<Number?> = [null, null, null, null, null, null] as Array<Number?>;
+
+        // `face` where this watch has it, else its sibling: draw and measure
+        // with the same one, so a layout's widths match its digits
+        function usable(face as Number) as Number {
+            var u = usableFaces[face];
+            if (u == null) {
+                u = face;
+                if (SUBSTITUTE[face] >= 0 && (Graphics has :getVectorFont)) {
+                    var f = null;
+                    try {
+                        f = Graphics.getVectorFont({:face => NAMES[face], :size => 40});
+                    } catch (e) {
+                        f = null;
+                    }
+                    if (f == null) {
+                        u = SUBSTITUTE[face];
+                    }
+                }
+                usableFaces[face] = u;
+            }
+            return u;
+        }
+
         // The vector font for that em, or the fallback where there is none
         function font(face as Number, em as Float, fallback as FontType) as FontType {
             if (Graphics has :getVectorFont) {

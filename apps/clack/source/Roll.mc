@@ -2,7 +2,7 @@ import Toybox.Lang;
 import Toybox.Math;
 
 // The roll, as the owner approved it on the states page (designs/DESIGNS.md
-// #20, designs/clack/README.md §9): pure arithmetic fed by ClackView and the
+// #23, designs/clack/README.md §9): pure arithmetic fed by ClackView and the
 // tests. A leaf's flip is a push off the stop (slow, slightly accelerating,
 // to the release angle) and then a drop from the tables Drops.mc holds, the
 // fall under gravity against the air and the leaf beneath, the bounce at the

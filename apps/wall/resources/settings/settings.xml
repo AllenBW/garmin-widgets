@@ -1,0 +1,12 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <setting propertyKey="@Properties.Look" title="@Strings.LookTitle" prompt="@Strings.LookPrompt">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.LookYours</listEntry>
+            <listEntry value="1">@Strings.LookBright</listEntry>
+            <listEntry value="4">@Strings.LookBrightBlue</listEntry>
+            <listEntry value="5">@Strings.LookBrightGreen</listEntry>
+            <listEntry value="2">@Strings.LookLow</listEntry>
+            <listEntry value="3">@Strings.LookDaily</listEntry>
+        </settingConfig>
+    </setting>
+</settings>
