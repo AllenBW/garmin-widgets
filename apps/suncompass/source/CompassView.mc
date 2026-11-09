@@ -88,6 +88,12 @@ class CompassView extends WatchUi.View {
     // Take a compass reading in radians (null when the watch has none).
     // True when the rose needs redrawing.
     function setHeading(radians as Float?) as Boolean {
+        var fixed = sampleHeading();
+        if (fixed != null) {   // the sample build: a still rose
+            var was = _heading;
+            _heading = fixed;
+            return was == null || (was as Float) != fixed;
+        }
         var current = _heading;
         if (radians == null) {
             _heading = null;
@@ -113,7 +119,29 @@ class CompassView extends WatchUi.View {
         }
         _now = now;
         _sky = CompassModel.status(now);
+        sample();
         return true;
+    }
+
+    // The sky the store screenshot shows (sample.jungle); nothing in a normal build
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:live)
+    private function sampleHeading() as Float? {
+        return null;
+    }
+
+    // Saturday 31 October 2026, 14:38 EDT, at 39.1 N 77.6 W, facing north
+    (:sample)
+    private function sample() as Void {
+        _sky = CompassModel.statusAt(39.1, -77.6, 1793471880);
+    }
+
+    (:sample)
+    private function sampleHeading() as Float? {
+        return 0.0;
     }
 
     function onUpdate(dc as Dc) as Void {

@@ -432,6 +432,31 @@ class SoundSession {
         return addSamples((db < top ? db : top) - offset, windowSeconds, db >= top);
     }
 
+    // A made-up two minutes for the store's pictures (sample.jungle): a quiet
+    // room filling with talk to a 71 dB peak, settling to about 62. Normal
+    // builds leave it out.
+    (:sample)
+    function seedSample() as Void {
+        reset();
+        warmupLeft = 0.0;
+        for (var t = 0; t < SoundMeter.TREND_POINTS; t++) {
+            addWindow(sampleLevel(t) - offset, 1.0);
+            tick();
+        }
+    }
+
+    (:sample)
+    function sampleLevel(t as Number) as Float {
+        var wobble = ((t * 7) % 5 - 2) * 0.4;
+        if (t < 30) {
+            return 48.0 + t * 0.2 + wobble;              // 48 to 54
+        }
+        if (t < 70) {
+            return 54.0 + (t - 30) * 0.425 + wobble;     // up to 71
+        }
+        return 71.0 - (t - 70) * 0.18 + wobble;          // down to about 62
+    }
+
     // The demo's level at second t, cycling every two minutes
     function demoLevel(t as Number) as Float {
         var s = t % SoundMeter.TREND_POINTS;

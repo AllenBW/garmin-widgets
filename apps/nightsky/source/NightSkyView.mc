@@ -108,20 +108,21 @@ class NightSkyView extends WatchUi.WatchFace {
     // Once a minute: where everything is, from the last known location.
     // `full` places every star; always-on only needs the brightest.
     function refresh(w as Number, h as Number, full as Boolean) as Void {
-        var minute = Time.now().value() / 60;
+        var nowUnix = sampleTime(Time.now().value());
+        var minute = nowUnix / 60;
         var sameMinute = (minute == _minute);
         if (sameMinute && (!full || _fullMinute == minute)) {
             return;
         }
         if (!sameMinute) {
             _minute = minute;
-            var where = Lib.Location.get();
+            var where = sampleWhere(Lib.Location.get());
             _located = (where != null);
             if (where == null) {
                 return;
             }
             _lat = where[0];
-            var now = Time.now().value();
+            var now = nowUnix;
             _lst = Lib.Sky.lst(now, where[1]);
             if (minute / 60 != _radecHour) {
                 _radecHour = minute / 60;
@@ -226,7 +227,7 @@ class NightSkyView extends WatchUi.WatchFace {
             drawPlanets(dc, cx, cy, r, w);
             if (_moon[0] > -2.0) {
                 var m = project(_moon[0], _moon[1], cx, cy, r);
-                Lib.Moon.draw(dc, m[0], m[1], (w * 0.028).toNumber(), Lib.Moon.phase(), WHITE, DIM);
+                Lib.Moon.draw(dc, m[0], m[1], (w * 0.028).toNumber(), moonPhase(), WHITE, DIM);
             }
             if (_sun[0] > -1.0) {
                 var s = project(_sun[0], _sun[1], cx, cy, r);
@@ -244,7 +245,7 @@ class NightSkyView extends WatchUi.WatchFace {
         dc.drawText(cx, cy - (h * 0.02).toNumber(), Graphics.FONT_NUMBER_MEDIUM, timeString(), center);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
+        var date = dateText(Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper());
         dc.drawText(cx, cy + (h * 0.105).toNumber(), _dateFont, _located ? date : "no location yet", center);
     }
 
@@ -347,7 +348,62 @@ class NightSkyView extends WatchUi.WatchFace {
     }
 
     private function timeString() as String {
+        return Lib.Fmt.clock(clockSeconds());
+    }
+
+    // ------------------------------------------------------------- samples
+    // The live moment, place, moon and clock, or in a sample build
+    // (sample.jungle) a fixed sky: Friday 31 October 2026, 21:05 at
+    // 39.1 N 77.6 W, so the screenshot is the same every time
+
+    (:live)
+    private function sampleTime(now as Number) as Number {
+        return now;
+    }
+
+    (:sample)
+    private function sampleTime(now as Number) as Number {
+        return 1793495100;   // 2026-10-31 21:05 EDT
+    }
+
+    (:live)
+    private function sampleWhere(where as [Float, Float]?) as [Float, Float]? {
+        return where;
+    }
+
+    (:sample)
+    private function sampleWhere(where as [Float, Float]?) as [Float, Float]? {
+        return [39.1, -77.6] as [Float, Float];
+    }
+
+    (:live)
+    private function moonPhase() as Float {
+        return Lib.Moon.phase();
+    }
+
+    (:sample)
+    private function moonPhase() as Float {
+        return Lib.Moon.phaseAt(1793495100);
+    }
+
+    (:live)
+    private function dateText(live as String) as String {
+        return live;
+    }
+
+    (:sample)
+    private function dateText(live as String) as String {
+        return "FRI 31 OCT";
+    }
+
+    (:live)
+    private function clockSeconds() as Number {
         var clock = System.getClockTime();
-        return Lib.Fmt.clock(clock.hour * 3600 + clock.min * 60);
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function clockSeconds() as Number {
+        return 21 * 3600 + 5 * 60;
     }
 }

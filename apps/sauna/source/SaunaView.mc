@@ -96,6 +96,7 @@ class SaunaView extends WatchUi.View {
         if (!_settingsLoaded) {
             reloadSettings();
         }
+        sample();
         if (Toybox has :Sensor) {
             Sensor.setEnabledSensors([Sensor.SENSOR_HEARTRATE] as Array<Sensor.SensorType>);
             Sensor.enableSensorEvents(method(:onSensor));
@@ -348,6 +349,62 @@ class SaunaView extends WatchUi.View {
 
     function demo() as Boolean {
         return _demo;
+    }
+
+    // The sample build (sample.jungle): the demo's made-up visit from the
+    // first moment, open on one screen for a store picture. Normal builds do
+    // nothing here.
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        if (_tracker != null) {
+            return;
+        }
+        startDemo();
+        var t = _tracker;
+        if (t != null) {
+            _screen = sampleScreen(t);
+            _startUnix = Time.now().value() - t.now;
+        }
+    }
+
+    // Four minutes into a third round, in the heat (sample.jungle)
+    (:sample, :shotlive)
+    private function sampleScreen(t as SaunaTracker) as Number {
+        t.enter();
+        var r = t.current();
+        if (r != null) {
+            r.maxHr = 124;
+            r.hrSum = 112 * 240;
+            r.hrCount = 240;
+            r.maxTemp = 47.1;
+        }
+        t.now += 240;
+        return SCREEN_LIVE;
+    }
+
+    // The demo as seeded: four minutes into the second break (sample-break.jungle)
+    (:sample, :shotbreak)
+    private function sampleScreen(t as SaunaTracker) as Number {
+        return SCREEN_LIVE;
+    }
+
+    (:sample, :shotrounds)
+    private function sampleScreen(t as SaunaTracker) as Number {
+        return SCREEN_ROUNDS;
+    }
+
+    (:sample, :shotrecovery)
+    private function sampleScreen(t as SaunaTracker) as Number {
+        return SCREEN_RECOVERY;
+    }
+
+    (:sample, :shothistory)
+    private function sampleScreen(t as SaunaTracker) as Number {
+        return SCREEN_HISTORY;
     }
 
     // Switch between guided and free in the middle of a visit

@@ -7,3 +7,9 @@ base.sourcePath = source;tests
 # sub-modules listed here are compiled into this app.
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = fmt
+
+# A build with sample readings for screenshots (the simulator has no battery
+# history to project from):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh battery <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample

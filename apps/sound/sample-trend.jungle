@@ -1,0 +1,2 @@
+# The sample build opening on the trend screen (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotlive

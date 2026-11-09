@@ -1,0 +1,3 @@
+# Sample readings in place of the live ones, without the glance so the
+# simulator opens the app (see monkey.jungle)
+base.excludeAnnotations = live;glanceview

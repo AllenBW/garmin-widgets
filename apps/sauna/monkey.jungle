@@ -7,3 +7,9 @@ base.sourcePath = source;tests
 # sub-modules listed here are compiled into this app; fmt is glance-safe.
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = fmt;cues
+
+# A build with the demo's made-up visit for screenshots (the simulator has
+# no sauna):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh sauna <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample

@@ -99,6 +99,35 @@ class SoundView extends WatchUi.View {
                 _mic.show();
             }
         }
+        sample();
+    }
+
+    // The sample build (sample.jungle): the microphone never starts, the
+    // session holds a made-up two minutes at about 62 dB, and the timer is
+    // stopped so the picture stands still. Normal builds do nothing here.
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _mic.hide();
+        _session.seedSample();
+        _captureError = null;
+        _sinceData = 0;
+        _screen = sampleScreen();
+        stopTimer();
+    }
+
+    // The screen the sample build opens on (an extra jungle picks the trend)
+    (:sample, :shotlive)
+    private function sampleScreen() as Number {
+        return SCREEN_LIVE;
+    }
+
+    (:sample, :shottrend)
+    private function sampleScreen() as Number {
+        return SCREEN_TREND;
     }
 
     // Off screen (the menu counts): the microphone stops; the timer keeps

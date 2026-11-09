@@ -214,10 +214,8 @@ class FieldView extends WatchUi.WatchFace {
         }
 
         // Date (TINY: 47 px box, sits above the time box)
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
         dc.setColor(_text, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Lib.Look.title(_look, NAMES) : date, center);
+        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Lib.Look.title(_look, NAMES) : dateText(true), center);
 
         // Time (NUMBER_MEDIUM: 153 px box, ink about 105 px, 264 px wide)
         dc.setColor(_time, Graphics.COLOR_TRANSPARENT);
@@ -235,7 +233,7 @@ class FieldView extends WatchUi.WatchFace {
             dc.setColor(_label, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, labelY, _labelFont, Slots.label(kind), center);
             dc.setColor(Slots.color(kind), Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, valueY, Graphics.FONT_SMALL, Slots.value(kind), center);
+            dc.drawText(x, valueY, Graphics.FONT_SMALL, slotValue(kind), center);
             boxes.add([x, (labelY + valueY) / 2, (w * 0.13).toNumber(), (h * 0.10).toNumber()]);
         }
         _slotBoxes = boxes;
@@ -274,8 +272,7 @@ class FieldView extends WatchUi.WatchFace {
             Lib.Arcs.drawClockwise(dc, cx, cy, r, Lib.Sun.dialDegrees(rise), (set - rise) * 360.0 / 86400.0, width);
         }
 
-        var clock = System.getClockTime();
-        var now = clock.hour * 3600 + clock.min * 60;
+        var now = nowSeconds();
         var sun = Lib.Arcs.point(cx, cy, r, Lib.Sun.dialDegrees(now));
         var markerR = (w * 0.016).toNumber();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
@@ -285,6 +282,7 @@ class FieldView extends WatchUi.WatchFace {
     }
 
     // How much of the bezel ring to fill (0..1), or null when the ring is off.
+    (:live)
     private function ringFraction() as Float? {
         if (_ring == RING_OFF) {
             return null;
@@ -304,12 +302,27 @@ class FieldView extends WatchUi.WatchFace {
         return null;
     }
 
+    (:sample)
+    private function ringFraction() as Float? {
+        if (_ring == RING_OFF) {
+            return null;
+        }
+        if (_ring == RING_BATTERY) {
+            return 0.87;
+        }
+        if (_ring == RING_STEPS) {
+            return 6214.0 / 8000.0;
+        }
+        return null;
+    }
+
     // Today's sunrise and sunset (Lib.Sun.today), refreshed each minute
     private function sunTimes() as [Number?, Number?] {
         var minute = System.getClockTime().min;
         if (minute != _sunMinute) {
             _sunMinute = minute;
             _sunTimes = Lib.Sun.today();
+            sample();
         }
         return _sunTimes;
     }
@@ -324,6 +337,21 @@ class FieldView extends WatchUi.WatchFace {
         _signalMinute = minute;
         _rainChance = rainAhead();
         _pressureFalling = pressureFalling();
+        sample();
+    }
+
+    // The readings of the store screenshot (sunrise 7:12, sunset 19:22, rain
+    // 60 % within three hours); the sample build (sample.jungle) swaps them
+    // in here and in the draw-time getters below
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _sunTimes = [7 * 3600 + 12 * 60, 19 * 3600 + 22 * 60] as [Number?, Number?];
+        _rainChance = 60;
+        _pressureFalling = false;
     }
 
     // Highest precipitation chance in the next few hours, when it is worth
@@ -459,6 +487,12 @@ class FieldView extends WatchUi.WatchFace {
 
     // ---------------------------------------------------------------- footer
 
+    (:sample)
+    private function footerText(withSky as Boolean) as String {
+        return withSky ? "46° Partly cloudy  ·  1 notification" : "46°  ·  1 notif";
+    }
+
+    (:live)
     private function footerText(withSky as Boolean) as String {
         var parts = [] as Array<String>;
         if (Toybox has :Weather) {
@@ -486,7 +520,7 @@ class FieldView extends WatchUi.WatchFace {
     // cx. The triangle is drawn, since the system fonts have no arrow glyphs.
     private function drawSunFooter(dc as Dc, cx as Number, y as Number, w as Number,
                                    textColor as ColorType, riseColor as ColorType, setColor as ColorType) as Void {
-        var next = Lib.Sun.next(sunTimes());
+        var next = nextSun();
         if (next == null) {
             return;
         }
@@ -545,8 +579,7 @@ class FieldView extends WatchUi.WatchFace {
                 dc.setColor(Lib.Aod.dim(_accent), Graphics.COLOR_TRANSPARENT);
                 Lib.Arcs.drawClockwise(dc, cx, cy, ringR, Lib.Sun.dialDegrees(rise), (set - rise) * 360.0 / 86400.0, 2);
             }
-            var clock = System.getClockTime();
-            var sun = Lib.Arcs.point(cx, cy, ringR, Lib.Sun.dialDegrees(clock.hour * 3600 + clock.min * 60));
+            var sun = Lib.Arcs.point(cx, cy, ringR, Lib.Sun.dialDegrees(nowSeconds()));
             dc.setPenWidth(2);
             dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
             dc.drawCircle(sun[0], sun[1], (w * 0.016).toNumber());
@@ -559,17 +592,15 @@ class FieldView extends WatchUi.WatchFace {
         }
 
         // Short date, dim
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = Lang.format("$1$ $2$", [info.day_of_week, info.day]).toUpper();
         dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.29).toNumber() + off[1], Graphics.FONT_XTINY, date, center);
+        dc.drawText(cx, (h * 0.29).toNumber() + off[1], Graphics.FONT_XTINY, dateText(false), center);
 
         // Hollow time: only the glyph outlines are lit
         Lib.Aod.drawHollowText(dc, cx, (h * 0.485).toNumber() + off[1],
             Graphics.FONT_NUMBER_MEDIUM, timeString(), GRAY, center);
 
         // Next sun event, dim
-        var next = Lib.Sun.next(sunTimes());
+        var next = nextSun();
         if (next != null) {
             var font = Graphics.FONT_XTINY;
             var text = Lib.Fmt.clock(next[1]);
@@ -582,9 +613,77 @@ class FieldView extends WatchUi.WatchFace {
 
     // ---------------------------------------------------------------- shared
 
+    (:live)
     private function timeString() as String {
         var clock = System.getClockTime();
         return Lib.Fmt.clock(clock.hour * 3600 + clock.min * 60);
+    }
+
+    (:sample)
+    private function timeString() as String {
+        return Lib.Fmt.clock(14 * 3600 + 38 * 60);
+    }
+
+    // The time of day, the date, a slot's value and the next sun event are
+    // read at draw time; the sample build answers for the screenshot
+    (:live)
+    private function nowSeconds() as Number {
+        var clock = System.getClockTime();
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function nowSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
+    }
+
+    (:live)
+    private function dateText(long as Boolean) as String {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        if (long) {
+            return Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
+        }
+        return Lang.format("$1$ $2$", [info.day_of_week, info.day]).toUpper();
+    }
+
+    (:sample)
+    private function dateText(long as Boolean) as String {
+        return long ? "FRI 31 OCT" : "FRI 31";
+    }
+
+    (:live)
+    private function slotValue(kind as Number) as String {
+        return Slots.value(kind);
+    }
+
+    (:sample)
+    private function slotValue(kind as Number) as String {
+        switch (kind) {
+            case Slots.HEART_RATE:   return "72";
+            case Slots.STEPS:        return "6,214";
+            case Slots.BODY_BATTERY: return "82";
+            case Slots.CALORIES:     return "1,850";
+            case Slots.FLOORS:       return "8";
+            case Slots.DISTANCE:     return "3.4 mi";
+            case Slots.STRESS:       return "28";
+            case Slots.SUNRISE:      return Lib.Fmt.clock(7 * 3600 + 12 * 60);
+            case Slots.SUNSET:       return Lib.Fmt.clock(19 * 3600 + 22 * 60);
+            case Slots.CALENDAR:     return "15:30";
+            case Slots.RECOVERY:     return "14h";
+            case Slots.SLEEP:        return "82";
+            case Slots.HIGH_LOW:     return "52/38°";
+        }
+        return "--";
+    }
+
+    (:live)
+    private function nextSun() as [Boolean, Number]? {
+        return Lib.Sun.next(sunTimes());
+    }
+
+    (:sample)
+    private function nextSun() as [Boolean, Number]? {
+        return [false, 19 * 3600 + 22 * 60] as [Boolean, Number];
     }
 
     private function numberProperty(key as String, fallback as Number) as Number {

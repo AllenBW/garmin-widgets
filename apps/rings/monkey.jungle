@@ -7,3 +7,9 @@ base.sourcePath = source;tests
 # sub-modules listed here are compiled into this app.
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = aod;arcs;fmt;sun;moon;daily;look
+
+# A build with sample readings for screenshots (the simulator has no heart
+# rate history, distance or alarms):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh rings <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample

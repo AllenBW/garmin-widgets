@@ -17,6 +17,7 @@ class SunView extends WatchUi.View {
 
     private var _status as SunStatus?;
     private var _now as Number = 0;
+    private var _phase as Float = 0.0;     // the moon's phase, 0..1, read with the status
     private var _textFont as FontType = Graphics.FONT_XTINY;
     private var _rowFont as FontType = Graphics.FONT_XTINY;
     private var _rowBoldFont as FontType = Graphics.FONT_XTINY;
@@ -35,6 +36,21 @@ class SunView extends WatchUi.View {
     function onShow() as Void {
         _now = Time.now().value();
         _status = SunModel.status(_now);
+        _phase = Lib.Moon.phase();
+        sample();
+    }
+
+    // The readings the store screenshot shows (sample.jungle); nothing in a normal build
+    (:live)
+    private function sample() as Void {
+    }
+
+    // Saturday 31 October 2026, 14:38 EDT, at 39.1 N 77.6 W, the moon waning gibbous
+    (:sample)
+    private function sample() as Void {
+        _now = 1793471880;
+        _status = SunModel.statusAt(39.1, -77.6, _now);
+        _phase = 0.62;
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -83,7 +99,7 @@ class SunView extends WatchUi.View {
             dc.drawText(valueX, y, _rowBoldFont, rows[i][1] as String, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
         var moonR = (w * 0.024).toNumber();
-        Lib.Moon.draw(dc, valueX + moonR + (w * 0.02).toNumber(), rowY + 2 * rowStep, moonR, Lib.Moon.phase(), WHITE, DIM);
+        Lib.Moon.draw(dc, valueX + moonR + (w * 0.02).toNumber(), rowY + 2 * rowStep, moonR, _phase, WHITE, DIM);
     }
 
     // The horizon, a dotted half-ellipse from sunrise to sunset, the sun on
@@ -131,7 +147,7 @@ class SunView extends WatchUi.View {
 
     // "Waxing 78%", "Full", "New"
     private function moonText() as String {
-        var phase = Lib.Moon.phase();
+        var phase = _phase;
         var lit = (Lib.Moon.illumination(phase) * 100 + 0.5).toNumber();
         if (lit >= 99) {
             return "Full";

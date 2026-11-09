@@ -1,0 +1,2 @@
+# The sample build opening on the visits (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotlive;shotbreak;shotrounds;shotrecovery

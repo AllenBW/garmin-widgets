@@ -146,7 +146,7 @@ class ReadinessView extends WatchUi.WatchFace {
 
         // Date and time
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
+        var date = dateText(Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper());
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.255).toNumber(), Graphics.FONT_TINY, date, center);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
@@ -206,7 +206,28 @@ class ReadinessView extends WatchUi.WatchFace {
     }
 
     private function timeString() as String {
+        return Lib.Fmt.clock(clockSeconds());
+    }
+
+    // The clock and the date, or in a sample build (sample.jungle) 14:38 on Friday 31 October
+    (:live)
+    private function clockSeconds() as Number {
         var clock = System.getClockTime();
-        return Lib.Fmt.clock(clock.hour * 3600 + clock.min * 60);
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function clockSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
+    }
+
+    (:live)
+    private function dateText(live as String) as String {
+        return live;
+    }
+
+    (:sample)
+    private function dateText(live as String) as String {
+        return "FRI 31 OCT";
     }
 }

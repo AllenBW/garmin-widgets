@@ -1,0 +1,4 @@
+# Sample readings in place of the live ones, without the glance so the
+# simulator opens the app (see monkey.jungle): the live screen at about
+# 62 dB. sample-trend.jungle opens on the trend instead.
+base.excludeAnnotations = live;glanceview;shottrend

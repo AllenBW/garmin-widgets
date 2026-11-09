@@ -1,0 +1,2 @@
+# The sample build opening on the recovery chart (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotlive;shotbreak;shotrounds;shothistory

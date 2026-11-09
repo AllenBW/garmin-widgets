@@ -7,3 +7,9 @@ base.sourcePath = source;tests
 # fmt are glance-safe; moon is used by the full app only.
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = solar;location;fmt;moon
+
+# A build with sample readings for screenshots (the simulator has no
+# location, so no sun and no moon):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh sunmoon <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample

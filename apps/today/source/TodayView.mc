@@ -74,6 +74,44 @@ class TodayView extends WatchUi.WatchFace {
         _distance = Lib.Daily.distance();
         _alarms = Lib.Daily.alarms();
         _phase = Lib.Moon.phase();
+        sample();
+    }
+
+    // The readings of the store screenshot (designs/preview sample day);
+    // the sample build (sample.jungle) swaps these in for the live ones
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _sun = [false, 19 * 3600 + 22 * 60] as [Boolean, Number];
+        _date = "FRI OCT 31";
+        _temperature = "46°F";
+        _distance = "3.4";
+        _alarms = 1;
+        _phase = 0.62;
+    }
+
+    // The live heart rate and the distance unit are read at draw time
+    (:live)
+    private function heartRate() as String {
+        return Lib.Daily.heartRate();
+    }
+
+    (:sample)
+    private function heartRate() as String {
+        return "72";
+    }
+
+    (:live)
+    private function distanceLabel() as String {
+        return Lib.Daily.distanceLabel();
+    }
+
+    (:sample)
+    private function distanceLabel() as String {
+        return "MILES";
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -151,9 +189,9 @@ class TodayView extends WatchUi.WatchFace {
         // Three columns, label over value: heart rate, outside temperature,
         // distance walked today (the unit is the label)
         var columns = [
-            [Complications.COMPLICATION_TYPE_HEART_RATE, "HR", Lib.Daily.heartRate(), RED],
+            [Complications.COMPLICATION_TYPE_HEART_RATE, "HR", heartRate(), RED],
             [Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE, "OUTSIDE", _temperature, WHITE],
-            [Complications.COMPLICATION_TYPE_STEPS, Lib.Daily.distanceLabel(), _distance, WHITE]
+            [Complications.COMPLICATION_TYPE_STEPS, distanceLabel(), _distance, WHITE]
         ];
         var xs = [w * 0.24, w * 0.5, w * 0.76];
         var labelY = (h * 0.655).toNumber();
@@ -257,8 +295,14 @@ class TodayView extends WatchUi.WatchFace {
 
     // ---------------------------------------------------------------- shared
 
+    (:live)
     private function timeString() as String {
         var clock = System.getClockTime();
         return Lib.Fmt.clock24(clock.hour * 3600 + clock.min * 60);
+    }
+
+    (:sample)
+    private function timeString() as String {
+        return "14:38";
     }
 }

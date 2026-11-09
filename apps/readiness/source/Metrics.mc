@@ -37,6 +37,24 @@ module Metrics {
         r.recoveryMinutes = recoveryMinutes();
         r.restingHr = UserProfile.getProfile().restingHeartRate;
         r.trainingStatus = complicationString(Complications.COMPLICATION_TYPE_TRAINING_STATUS);
+        return sample(r);
+    }
+
+    // The readings as read, or in a sample build (sample.jungle) the ones
+    // the store screenshot shows
+    (:live)
+    function sample(r as Readings) as Readings {
+        return r;
+    }
+
+    (:sample)
+    function sample(r as Readings) as Readings {
+        r.bodyBattery = 74;
+        r.stress = 28;
+        r.sleepScore = 82;
+        r.recoveryMinutes = 14 * 60;
+        r.restingHr = 52;
+        r.trainingStatus = "Productive";
         return r;
     }
 

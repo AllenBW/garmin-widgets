@@ -1,0 +1,2 @@
+# The sample build opening on the rounds table (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotlive;shotbreak;shotrecovery;shothistory

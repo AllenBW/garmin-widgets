@@ -44,8 +44,9 @@ class BatteryApp extends Application.AppBase {
         return [new BatterySampler()];
     }
 
-    // Only the glance calls this (BatteryGlance is not loaded in the background)
-    (:typecheck(disableBackgroundCheck))
+    // Only the glance calls this (BatteryGlance is not loaded in the background).
+    // Left out of the sample build (sample.jungle), so the simulator opens the app
+    (:glanceview, :typecheck(disableBackgroundCheck))
     function getGlanceView() as [GlanceView] or [GlanceView, GlanceViewDelegate] or Null {
         return [new BatteryGlance()];
     }

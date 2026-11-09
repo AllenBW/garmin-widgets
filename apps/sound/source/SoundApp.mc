@@ -15,6 +15,9 @@ class SoundApp extends Application.AppBase {
         AppBase.initialize();
     }
 
+    // Left out of the sample build (the simulator opens an app with a
+    // glance on its glance; sample.jungle)
+    (:glanceview, :typecheck(disableBackgroundCheck))
     function getGlanceView() as [GlanceView] or [GlanceView, GlanceViewDelegate] or Null {
         return [new SoundGlance()];
     }

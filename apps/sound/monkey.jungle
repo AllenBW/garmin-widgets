@@ -8,3 +8,9 @@ base.sourcePath = source;tests
 # cues draws the button cues.
 base.barrelPath = ../../lib/monkey.jungle
 base.Lib.annotations = fmt;cues
+
+# A build with sample readings for screenshots (the simulator's microphone
+# hears the room, not a scene):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh sound <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample

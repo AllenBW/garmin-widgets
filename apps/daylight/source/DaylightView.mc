@@ -118,6 +118,42 @@ class DaylightView extends WatchUi.WatchFace {
         _dayStart = now - (clock.hour * 3600 + clock.min * 60 + clock.sec);
         refreshSun();
         refreshEnvironment();
+        sample();
+    }
+
+    // The readings of the store screenshot: a late-October day at 39 N,
+    // sunrise 7:12, sunset 19:22, golden hours either side, 1,240 ft, a
+    // steady barometer; the sample build (sample.jungle) swaps them in
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _located = true;
+        _polarDay = false;
+        _rise = 7 * 3600 + 12 * 60;
+        _set = 19 * 3600 + 22 * 60;
+        _goldenMorningStart = 6 * 3600 + 48 * 60;
+        _goldenMorningEnd = 8 * 3600 + 4 * 60;
+        _goldenEveningStart = 18 * 3600 + 30 * 60;
+        _goldenEveningEnd = 19 * 3600 + 46 * 60;
+        _tomorrowRise = _dayStart + 86400 + 7 * 3600 + 13 * 60;
+        _altitude = "1,240 ft";
+        _pressure = "1013 hPa";
+        _trend = 0;
+    }
+
+    // The time of day the hand and the time show, read at draw time
+    (:live)
+    private function nowSeconds() as Number {
+        var clock = System.getClockTime();
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function nowSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
     }
 
     private function refreshSun() as Void {
@@ -260,8 +296,7 @@ class DaylightView extends WatchUi.WatchFace {
         }
 
         // The sun hand: a short line and a dot on the ring at the current time
-        var clock = System.getClockTime();
-        var nowSecs = clock.hour * 3600 + clock.min * 60;
+        var nowSecs = nowSeconds();
         var deg = Lib.Sun.dialDegrees(nowSecs);
         var tip = Lib.Arcs.point(cx, cy, ringR, deg);
         var base = Lib.Arcs.point(cx, cy, w * 0.33, deg);
@@ -377,7 +412,7 @@ class DaylightView extends WatchUi.WatchFace {
         }
 
         // Hollow sun marker on the ring
-        var nowSecs = clock.hour * 3600 + clock.min * 60;
+        var nowSecs = nowSeconds();
         var sun = Lib.Arcs.point(cx, cy, w * 0.432, Lib.Sun.dialDegrees(nowSecs));
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(sun[0], sun[1], (w * 0.026).toNumber());

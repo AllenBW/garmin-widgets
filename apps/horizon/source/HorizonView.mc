@@ -119,6 +119,49 @@ class HorizonView extends WatchUi.WatchFace {
                 _temp = Lib.Fmt.temperature(celsius);
             }
         }
+        sample();
+    }
+
+    // The outlook of the store screenshot: 14:38 on a late-October day,
+    // rain building from 17:00 (40 %) to 18:00 (60 %), sunset 19:22, an
+    // event at 15:30, 46°; the sample build (sample.jungle) swaps it in
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        var now = 14 * 3600 + 38 * 60;
+        var chances = [20, 10, 20, 40, 60, 30, 10, 0, 0, 0, 0, 0] as Array<Number>;
+        var hours = [] as Array<[Number, Number]>;
+        for (var k = 0; k < chances.size(); k++) {
+            hours.add([14 * 3600 + k * 3600, chances[k]]);
+        }
+        _outlook = HorizonModel.build(now, hours, 7 * 3600 + 12 * 60, 19 * 3600 + 22 * 60, 86400 + 7 * 3600 + 13 * 60, "15:30");
+        _temp = "46°";
+    }
+
+    // The time of day and the date, read at draw time
+    (:live)
+    private function nowSeconds() as Number {
+        var clock = System.getClockTime();
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function nowSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
+    }
+
+    (:live)
+    private function dateText() as String {
+        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        return Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
+    }
+
+    (:sample)
+    private function dateText() as String {
+        return "FRI 31 OCT";
     }
 
     // Sunrise, sunset and tomorrow's sunrise as seconds after today's
@@ -201,8 +244,7 @@ class HorizonView extends WatchUi.WatchFace {
         }
 
         // The hand: a dot on the ring at now
-        var clock = System.getClockTime();
-        var nowSecs = clock.hour * 3600 + clock.min * 60;
+        var nowSecs = nowSeconds();
         var tip = Lib.Arcs.point(cx, cy, ringR, HorizonModel.dialDegrees(nowSecs));
         var dotR = (w * 0.03).toNumber();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
@@ -211,10 +253,8 @@ class HorizonView extends WatchUi.WatchFace {
         dc.fillCircle(tip[0], tip[1], dotR);
 
         // Centre: date, time, rain, then temperature / sun / event
-        var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
-        var date = Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper();
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.30).toNumber(), Graphics.FONT_TINY, date, center);
+        dc.drawText(cx, (h * 0.30).toNumber(), Graphics.FONT_TINY, dateText(), center);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.47).toNumber(), Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), center);
         dc.setColor((o.rainFrom != null) ? CYAN : GRAY, Graphics.COLOR_TRANSPARENT);
@@ -304,7 +344,7 @@ class HorizonView extends WatchUi.WatchFace {
         }
 
         // Hollow hand
-        var nowSecs = clock.hour * 3600 + clock.min * 60;
+        var nowSecs = nowSeconds();
         var tip = Lib.Arcs.point(cx, cy, ringR, HorizonModel.dialDegrees(nowSecs));
         dc.setPenWidth(2);
         dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);

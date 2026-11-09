@@ -17,12 +17,39 @@ module BatteryLog {
     const SAMPLE_MINUTES = 30;
     const MAX_SAMPLES = 8 * 24 * 60 / SAMPLE_MINUTES;   // 384
 
+    (:live)
     function samples() as Array<Number> {
         var value = Storage.getValue(KEY);
         if (value instanceof Array) {
             return value as Array<Number>;
         }
         return [] as Array<Number>;
+    }
+
+    // The sample build's log (sample.jungle), for the store screenshot: seven
+    // and a half days of readings every half hour, about 12 % a day, a
+    // charge to full three days ago, ending near 58 %. Normal builds leave
+    // it out.
+    (:sample)
+    function samples() as Array<Number> {
+        var now = Time.now().value();
+        var steps = 7 * 48 + 24;
+        var out = new [steps * STRIDE] as Array<Number>;
+        var level = 92.0;
+        for (var i = 0; i < steps; i++) {
+            var t = now - (steps - 1 - i) * SAMPLE_MINUTES * 60;
+            var hour = ((t / 3600) % 24).toNumber();
+            var charging = (i >= 4 * 48 + 20 && i < 4 * 48 + 24);
+            if (charging) {
+                level = (level + 14.0 < 100.0) ? level + 14.0 : 100.0;
+            } else {
+                level -= (hour >= 23 || hour < 7) ? 0.12 : ((hour >= 17 && hour < 19) ? 0.55 : 0.26);
+            }
+            out[i * STRIDE] = t;
+            out[i * STRIDE + 1] = (level + 0.5).toNumber();
+            out[i * STRIDE + 2] = charging ? 1 : 0;
+        }
+        return out;
     }
 
     function count() as Number {

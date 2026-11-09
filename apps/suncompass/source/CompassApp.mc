@@ -12,6 +12,8 @@ class CompassApp extends Application.AppBase {
         AppBase.initialize();
     }
 
+    // Left out of the sample build (sample.jungle), so the simulator opens the app
+    (:glanceview)
     function getGlanceView() as [GlanceView] or [GlanceView, GlanceViewDelegate] or Null {
         return [new CompassGlance()];
     }

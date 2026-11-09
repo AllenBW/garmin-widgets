@@ -1,0 +1,4 @@
+# Sample readings in place of the live ones, without the glance so the
+# simulator opens the app (see monkey.jungle): the demo's visit, open on
+# a round in the heat. The sample-<screen>.jungle files open on the other screens.
+base.excludeAnnotations = live;glanceview;shotbreak;shotrounds;shotrecovery;shothistory

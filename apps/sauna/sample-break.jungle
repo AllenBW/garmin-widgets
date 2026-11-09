@@ -1,0 +1,2 @@
+# The sample build opening on the second break (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotlive;shotrounds;shotrecovery;shothistory

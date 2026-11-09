@@ -153,6 +153,28 @@ class RingsView extends WatchUi.WatchFace {
         _body = Goals.bodyBattery();
         _alarms = Lib.Daily.alarms();
         _phase = Lib.Moon.phase();
+        sample();
+    }
+
+    // Nothing, or in a sample build (sample.jungle) the readings the store
+    // screenshot shows in place of the live ones
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _sun = [false, 19 * 3600 + 22 * 60] as [Boolean, Number];
+        _date = "FRI OCT 31";
+        _temperature = Lib.Fmt.temperatureWithUnit(7.8);
+        _distance = Lib.Fmt.distanceValue(547177);   // 3.4 mi
+        _steps = 6214;
+        _stepGoal = 8000;
+        _floors = 8;
+        _floorGoal = 10;
+        _body = 82;
+        _alarms = 1;
+        _phase = 0.62;
     }
 
     // For the tests: show these goal values until the next read is due
@@ -266,7 +288,7 @@ class RingsView extends WatchUi.WatchFace {
         Lib.Moon.draw(dc, iconX, rows[0], (w * 0.032).toNumber(), _phase, _white, DIM);
 
         dc.setColor(_white, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(valueX, rows[1], _rowFont, Lib.Daily.heartRate(), right);
+        dc.drawText(valueX, rows[1], _rowFont, heartRate(), right);
         drawHeart(dc, iconX, rows[1], icon, _white);
         targets.add([Complications.COMPLICATION_TYPE_HEART_RATE as Number, valueX - (w * 0.06).toNumber(), rows[1], (w * 0.14).toNumber(), (h * 0.035).toNumber()]);
 
@@ -499,7 +521,28 @@ class RingsView extends WatchUi.WatchFace {
     // ---------------------------------------------------------------- shared
 
     private function timeString() as String {
+        return Lib.Fmt.clock24(clockSeconds());
+    }
+
+    // The live heart rate and clock, or in a sample build 72 and 14:38
+    (:live)
+    private function heartRate() as String {
+        return Lib.Daily.heartRate();
+    }
+
+    (:sample)
+    private function heartRate() as String {
+        return "72";
+    }
+
+    (:live)
+    private function clockSeconds() as Number {
         var clock = System.getClockTime();
-        return Lib.Fmt.clock24(clock.hour * 3600 + clock.min * 60);
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function clockSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
     }
 }

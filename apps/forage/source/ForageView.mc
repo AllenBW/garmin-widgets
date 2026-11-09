@@ -158,6 +158,34 @@ class ForageView extends WatchUi.WatchFace {
             ForageModel.winter(short.month as Number));
         _now = _outlook.now;
         _verdict = (_now == BEES_RAIN && snowing) ? "SNOW, BEES HOME" : ForageModel.verdict(_now);
+        sample();
+    }
+
+    // Nothing, or in a sample build (sample.jungle) a mild bright afternoon
+    // in place of the live weather: Friday 31 October, 14:38, 66 °F with a
+    // light breeze and hardly any rain chance, so the bees fly and the hive
+    // can be opened until 16:00; cooling into the evening, night from 19:22
+    (:live)
+    private function sample() as Void {
+    }
+
+    (:sample)
+    private function sample() as Void {
+        _date = "FRI OCT 31";
+        _dayOfYear = 304;
+        var rise = 7 * 3600 + 12 * 60;
+        var set = 19 * 3600 + 22 * 60;
+        var now = 14 * 3600 + 38 * 60;
+        var temps = [18.9, 18.5, 17.0, 15.0, 13.5, 11.0, 9.5, 8.5, 8.0, 7.5, 7.0, 6.5] as Array<Float>;
+        var hours = [] as Array<ForageHour>;
+        for (var k = 0; k < 12; k++) {
+            hours.add(new ForageHour(14 * 3600 + k * 3600, temps[k], 10, 1.3, 30, 0));
+        }
+        _outlook = ForageModel.build(now, new ForageHour(now, 18.9, 10, 1.3, 30, 0), hours, rise, set, 86400 + rise + 60, false);
+        _now = _outlook.now;
+        _verdict = ForageModel.verdict(_now);
+        _temp = Lib.Fmt.temperature(18.9) + (metricTemp() ? "C" : "F");
+        _windText = metricDistance() ? "5 KM/H" : "3 MPH";
     }
 
     // Sunrise, sunset and tomorrow's sunrise as seconds after today's
@@ -183,6 +211,18 @@ class ForageView extends WatchUi.WatchFace {
         _tomorrowRise = t[2];
     }
 
+    // The clock, or in a sample build 14:38
+    (:live)
+    private function clockSeconds() as Number {
+        var clock = System.getClockTime();
+        return clock.hour * 3600 + clock.min * 60;
+    }
+
+    (:sample)
+    private function clockSeconds() as Number {
+        return 14 * 3600 + 38 * 60;
+    }
+
     private function metricTemp() as Boolean {
         return System.getDeviceSettings().temperatureUnits == System.UNIT_METRIC;
     }
@@ -198,12 +238,11 @@ class ForageView extends WatchUi.WatchFace {
         var h = dc.getHeight();
         var cx = w / 2;
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
-        var clock = System.getClockTime();
 
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.176).toNumber(), _labelFont, _date, center);
         dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.335).toNumber(), _timeFont, ForageModel.clock24(clock.hour * 3600 + clock.min * 60), center);
+        dc.drawText(cx, (h * 0.335).toNumber(), _timeFont, ForageModel.clock24(clockSeconds()), center);
 
         drawVerdict(dc, cx, (h * 0.496).toNumber(), w);
         var window = ForageModel.windowText(_outlook);
@@ -358,7 +397,7 @@ class ForageView extends WatchUi.WatchFace {
         var cx = w / 2 + off[0];
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         Lib.Aod.drawHollowText(dc, cx, (h * 0.375).toNumber() + off[1], _timeFont,
-            ForageModel.clock24(clock.hour * 3600 + clock.min * 60), GRAY, center);
+            ForageModel.clock24(clockSeconds()), GRAY, center);
         var line = _verdict;
         if (_temp.length() > 0) {
             line += " · " + _temp;
