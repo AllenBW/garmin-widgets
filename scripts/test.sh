@@ -30,8 +30,17 @@ set -e
 # it by ID for the run (scripts/simlock.sh), and give it back afterwards.
 # A private simulator of this worktree's own (scripts/simprivate.sh) needs
 # no claim.
+# monkeydo's exit code says nothing about the tests: the run passes when
+# the simulator prints a PASSED line, and that is the exit code here.
+run_tests() {
+    local out
+    out=$("$@" 2>&1)
+    printf '%s\n' "$out"
+    grep -q "PASSED" <<< "$out"
+}
 if "$ROOT/scripts/simprivate.sh" port >/dev/null 2>&1; then
-    exec "$ROOT/scripts/simprivate.sh" do "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
+    run_tests "$ROOT/scripts/simprivate.sh" do "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
+    exit $?
 fi
 "$ROOT/scripts/simlock.sh" claim 5
 trap '"$ROOT/scripts/simlock.sh" release >/dev/null 2>&1 || true' EXIT
@@ -40,4 +49,4 @@ if ! pgrep -f "ConnectIQ.app/Contents/MacOS/[s]imulator" >/dev/null 2>&1; then
     "$SDK/bin/connectiq" &
     sleep 14
 fi
-"$SDK/bin/monkeydo" "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
+run_tests "$SDK/bin/monkeydo" "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME

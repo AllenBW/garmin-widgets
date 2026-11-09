@@ -14,7 +14,9 @@ watch-logs/
 watch-queue/
 dist/
 
-# Python caches and the capture helper compiled from scripts/windows.swift
+# Python caches
 __pycache__/
-.claude/skills/watch-face-review/scripts/windows
 .claude/scheduled_tasks.lock
+
+# a machine's own notes for Claude Code, never committed
+CLAUDE.local.md

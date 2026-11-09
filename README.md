@@ -102,7 +102,7 @@ Descent G2 and the Instinct 3 AMOLEDs (no vector fonts), the Venu X1
 
 **From the Connect IQ Store.** The Store column in the table above links
 each approved listing; the rest are in Garmin's review. Install from the
-Connect IQ app on your phone, and updates arrive by themselves. (How they are packaged and submitted:
+Connect IQ app on your phone, and updates arrive by themselves. (The listings and their store descriptions:
 [`docs/STORE.md`](docs/STORE.md).)
 
 **Build and copy them yourself.** You need the free Connect IQ SDK and a
