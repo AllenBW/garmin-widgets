@@ -58,6 +58,11 @@ class WallView extends WatchUi.WatchFace {
     private var _dimFont as FontType = Graphics.FONT_XTINY;
     private var _litFont as FontType = Graphics.FONT_XTINY;
     private var _bigFont as FontType = Graphics.FONT_NUMBER_HOT;
+    // The faces drawn with: Roboto Condensed and Bionic Bold, or where a watch
+    // has none of them (the Venu 3, the Forerunner 570) the nearest it has
+    private var _dimFace as Number = Lib.Ink.CONDENSED_REGULAR;
+    private var _litFace as Number = Lib.Ink.CONDENSED_BOLD;
+    private var _bigFace as Number = Lib.Ink.BIONIC_BOLD;
     private var _dimEm as Float = 0.0;
     private var _litEm as Float = 0.0;
     private var _bigEm as Float = 0.0;
@@ -118,9 +123,12 @@ class WallView extends WatchUi.WatchFace {
         _cellH = CELL_H * _w;
         _ox = (1.0 - COLS * CELL_W) / 2.0 * _w;
         _oy = (1.0 - ROWS * CELL_H) / 2.0 * _w;
-        var dim = Lib.Ink.CONDENSED_REGULAR;
-        var lit = Lib.Ink.CONDENSED_BOLD;
-        var big = Lib.Ink.BIONIC_BOLD;
+        _dimFace = Lib.Ink.resolve(Lib.Ink.CONDENSED_REGULAR);
+        _litFace = Lib.Ink.resolve(Lib.Ink.CONDENSED_BOLD);
+        _bigFace = Lib.Ink.resolve(Lib.Ink.BIONIC_BOLD);
+        var dim = _dimFace;
+        var lit = _litFace;
+        var big = _bigFace;
         var dimSize = Lib.Numbers.fontSize(dim, DIGIT * _w);
         var litSize = Lib.Numbers.fontSize(lit, DIGIT * _w);
         var bigSize = Lib.Numbers.fontSize(big, TALL * _w);
@@ -344,7 +352,7 @@ class WallView extends WatchUi.WatchFace {
                 continue;
             }
             var mid = y + _cellH / 2.0;
-            var top = Lib.Ink.top(Lib.Ink.CONDENSED_REGULAR, _dimFont, mid, _dimEm);
+            var top = Lib.Ink.top(_dimFace, _dimFont, mid, _dimEm);
             var dy = (mid - centre) * (mid - centre);
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             for (var col = 0; col < COLS; col++) {
@@ -363,7 +371,7 @@ class WallView extends WatchUi.WatchFace {
         var solid = _colors.fluorescent;
         var mass = solid ? _colors.sun : Lib.Numbers.scale(_colors.neutral, MASS);
         dc.setColor(mass, Graphics.COLOR_TRANSPARENT);
-        var face = Lib.Ink.BIONIC_BOLD;
+        var face = _bigFace;
         var hours = _values[Lib.Numbers.HOURS];
         var minutes = _values[Lib.Numbers.MINUTES];
         var pen = _w / 2.0 - dc.getTextWidthInPixels(hours, _bigFont) / 2.0;
@@ -376,7 +384,7 @@ class WallView extends WatchUi.WatchFace {
     // The digits a table says light up, for the time on the clock now
     private function drawNumerals(dc as Dc, table as Array<Array<Array<Number>>>, ox as Number, oy as Number, font as FontType,
                                   em as Float, advance as Float, color as Number) as Void {
-        var face = (font == _litFont) ? Lib.Ink.CONDENSED_BOLD : Lib.Ink.CONDENSED_REGULAR;
+        var face = (font == _litFont) ? _litFace : _dimFace;
         var stream = _stream;
         var length = stream.size();
         var left = Graphics.TEXT_JUSTIFY_LEFT;

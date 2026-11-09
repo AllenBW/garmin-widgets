@@ -158,7 +158,9 @@ function testInkUsable(logger as Logger) as Boolean {
         var face = Lib.Ink.usable(faces[i]);
         logger.debug(Lib.Ink.NAMES[faces[i]] + " -> " + Lib.Ink.NAMES[face]);
         Test.assertMessage(face == faces[i] || face == Lib.Ink.SUBSTITUTE[faces[i]], "itself or its sibling");
-        Test.assertMessage(Lib.Ink.font(face, 60.0, Graphics.FONT_XTINY) instanceof Graphics.VectorFont, Lib.Ink.NAMES[face] + " is a vector font");
+        var drawn = Lib.Ink.resolve(face);   // the face Lib.Numbers draws with: this one, or on a watch with no Bionic the nearest it has
+        Test.assertMessage(Lib.Ink.font(drawn, 60.0, Graphics.FONT_XTINY) instanceof Graphics.VectorFont, Lib.Ink.NAMES[drawn] + " is a vector font");
+        Test.assertMessage(Lib.Numbers.ADVANCE[drawn][0] > 0, "its digit advance is known");
     }
     Test.assertEqualMessage(Lib.Ink.usable(Lib.Ink.BIONIC_BOLD), Lib.Ink.BIONIC_BOLD, "Bionic Bold has no stand-in");
     return true;

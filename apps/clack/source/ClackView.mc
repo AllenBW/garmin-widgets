@@ -48,6 +48,9 @@ class ClackView extends WatchUi.WatchFace {
     private const DARK_DAY = 0.35;               // the falling flap's darkening, turned from the lamp
     private const DARK_NIGHT = 0.6;
     private const EM_HEIGHT = 1.173;             // Roboto Condensed's height per em (Lib.Ink.HEIGHT)
+    // The original view's digit face: Roboto Condensed Bold, or where a watch lacks it (the Venu 3)
+    // the nearest it has, set when the fonts are made
+    private var _face as Number = Lib.Ink.CONDENSED_BOLD;
     private const TRACK = 0.10;                  // the captions' letter spacing, of their em
     private const PERIOD = 1000 / Roll.FPS;      // ms between frames
     private const MOST_FRAMES = 4;               // frames one drawn frame may move the flips: a stall skips, never stretches
@@ -211,8 +214,9 @@ class ClackView extends WatchUi.WatchFace {
         var t = _t;
         var font = t[Layout.FONT];
         if (font == Layout.ROBOTO) {
-            _em = Lib.Ink.em(Lib.Ink.CONDENSED_BOLD, t[Layout.DIGIT].toFloat());
-            _digitFont = Lib.Ink.font(Lib.Ink.CONDENSED_BOLD, _em, Graphics.FONT_NUMBER_HOT);
+            _face = Lib.Ink.resolve(Lib.Ink.CONDENSED_BOLD);
+            _em = Lib.Ink.em(_face, t[Layout.DIGIT].toFloat());
+            _digitFont = Lib.Ink.font(_face, _em, Graphics.FONT_NUMBER_HOT);
             _bitmapDigits = false;
         } else {
             _bitmapDigits = true;
@@ -767,7 +771,7 @@ class ClackView extends WatchUi.WatchFace {
             d.drawText(cx, hingeY, _digitFont, digit, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
             return;
         }
-        var face = Lib.Ink.CONDENSED_BOLD;
+        var face = _face;
         var left = Lib.Ink.left(face, digit, _em);
         var ink = d.getTextWidthInPixels(digit, _digitFont) - left - Lib.Ink.right(face, digit, _em);
         d.drawText(cx - ink / 2 - left, Lib.Ink.top(face, _digitFont, hingeY.toFloat(), _em), _digitFont, digit,
@@ -1224,7 +1228,7 @@ class ClackView extends WatchUi.WatchFace {
                 continue;
             }
             // the original view: Roboto, the vector font
-            var face = Lib.Ink.CONDENSED_BOLD;
+            var face = _face;
             var left = Lib.Ink.left(face, digit, _em);
             var ink = dc.getTextWidthInPixels(digit, _digitFont) - left - Lib.Ink.right(face, digit, _em);
             var tx = x - ink / 2 - left;

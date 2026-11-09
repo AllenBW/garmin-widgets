@@ -3,7 +3,7 @@
 preview (designs/preview_clack.py), so the watch draws the same geometry
 the owner saw on the states page:
 
-- apps/clack/source/Layout.mc: per device width (454, 416, 390) and style, the
+- apps/clack/source/Layout.mc: per device width (466, 454, 416, 390, 360) and style, the
   leaves' geometry in pixels (digit height, leaf width and height, the
   hinge, each leaf's x, the slot, corners, pins, stack step, the captions'
   lines), and the lamp's brightness at each leaf
@@ -36,7 +36,7 @@ APP = ROOT / "apps" / "clack"
 STYLES = [("original", "0", "roboto"), ("league", "1", "league"), ("antonio", "1", "antonio"),
           ("bebas", "1", "bebas"), ("robotozoom", "1", "roboto")]
 FONT_INDEX = {"roboto": 0, "league": 1, "antonio": 2, "bebas": 3}
-WIDTHS = [454, 416, 390]      # the fenix 8 47/51 mm, the fenix 8 43 mm, the Venu 4 41 mm
+WIDTHS = [466, 454, 416, 390, 360]   # fenix 9 Pro 51 mm; fenix 8 47/51 mm; fenix 8 43 mm; Venu 4 41 mm; Forerunner 265S
 FPS = 20
 DROPS = 12          # drop tables; each flip picks one and draws its own push
 PAD = 2             # px round each glyph in the bitmap fonts, room for the outlines
@@ -116,10 +116,15 @@ def write_layout():
         lamps = lamp_factors(w)
         lines.append("    // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)")
         lines.append("    const LAMP%d = [%s, %s] as Array<Array<Float>>;" % (w, mc_list(lamps[0], "Float"), mc_list(lamps[1], "Float")))
+    def pick(prefix):   # the table of the nearest width at or below the screen's, the smallest for anything narrower
+        expr = "%s%d" % (prefix, WIDTHS[-1])
+        for w in reversed(WIDTHS[:-1]):
+            expr = "((w >= %d) ? %s%d : %s)" % (w - 6, prefix, w, expr)
+        return expr
     lines += ["", "    function table(w as Number, style as Number) as Array<Number> {",
-              "        return ((w >= 440) ? W454 : ((w >= 400) ? W416 : W390))[style];", "    }", "",
+              "        return %s[style];" % pick("W"), "    }", "",
               "    function lamp(w as Number, zoomed as Boolean) as Array<Float> {",
-              "        return ((w >= 440) ? LAMP454 : ((w >= 400) ? LAMP416 : LAMP390))[zoomed ? 1 : 0];", "    }", "}", ""]
+              "        return %s[zoomed ? 1 : 0];" % pick("LAMP"), "    }", "}", ""]
     (APP / "source" / "Layout.mc").write_text("\n".join(lines))
 
 

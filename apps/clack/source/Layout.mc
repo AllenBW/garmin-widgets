@@ -13,6 +13,15 @@ module Layout {
     // captions' em, zoomed, the font, standby as an eroded fill (1) or outlines (0)]
     enum Field { DIGIT, LEAF_W, LEAF_H, Y0, HINGE, X0, X1, X2, X3, CX0, CX1, CX2, CX3, SLOT, CORNER, PIN, STEP,
                  CAPTION_Y, SMALL, ZOOMED, FONT, AOD_FILL }
+    const W466 = [
+        [145, 101, 192, 137, 233, 11, 122, 242, 353, 62, 173, 293, 404, 3, 15, 4, 3, 380, 21, 0, 0, 1] as Array<Number>,
+        [224, 100, 492, -13, 233, 22, 127, 240, 345, 71, 177, 289, 395, 3, 15, 4, 3, 401, 21, 1, 1, 0] as Array<Number>,
+        [212, 100, 480, -7, 233, 20, 126, 240, 346, 70, 176, 290, 396, 3, 15, 4, 3, 401, 21, 1, 2, 0] as Array<Number>,
+        [192, 105, 480, -7, 233, 11, 122, 240, 350, 64, 174, 292, 402, 3, 15, 4, 3, 401, 21, 1, 3, 0] as Array<Number>,
+        [165, 105, 480, -7, 233, 11, 121, 240, 350, 63, 174, 292, 403, 3, 15, 4, 3, 401, 21, 1, 0, 1] as Array<Number>,
+    ] as Array<Array<Number>>;
+    // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)
+    const LAMP466 = [[0.252, 0.173, 0.057, 0.003] as Array<Float>, [0.292, 0.197, 0.083, 0.014] as Array<Float>] as Array<Array<Float>>;
     const W454 = [
         [142, 99, 187, 134, 227, 11, 119, 236, 344, 61, 168, 286, 393, 3, 15, 4, 3, 370, 20, 0, 0, 1] as Array<Number>,
         [218, 97, 479, -13, 227, 21, 123, 233, 336, 69, 172, 282, 385, 3, 15, 4, 3, 390, 20, 1, 1, 0] as Array<Number>,
@@ -40,12 +49,21 @@ module Layout {
     ] as Array<Array<Number>>;
     // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)
     const LAMP390 = [[0.252, 0.173, 0.057, 0.003] as Array<Float>, [0.292, 0.197, 0.083, 0.014] as Array<Float>] as Array<Array<Float>>;
+    const W360 = [
+        [112, 78, 148, 106, 180, 9, 94, 187, 273, 48, 134, 226, 312, 2, 12, 3, 2, 293, 16, 0, 0, 1] as Array<Number>,
+        [173, 77, 380, -10, 180, 16, 98, 185, 266, 55, 136, 224, 305, 2, 12, 3, 2, 310, 16, 1, 1, 0] as Array<Number>,
+        [163, 78, 371, -5, 180, 15, 97, 185, 267, 54, 136, 224, 306, 2, 12, 3, 2, 310, 16, 1, 2, 0] as Array<Number>,
+        [148, 81, 371, -5, 180, 8, 94, 185, 270, 49, 134, 226, 311, 2, 12, 3, 2, 310, 16, 1, 3, 0] as Array<Number>,
+        [127, 81, 371, -5, 180, 8, 94, 185, 270, 49, 134, 226, 311, 2, 12, 3, 2, 310, 16, 1, 0, 1] as Array<Number>,
+    ] as Array<Array<Number>>;
+    // The lamp's brightness over leaves 0 to 3 after sunset, original then zoomed (preview_clack.lamp_mask)
+    const LAMP360 = [[0.252, 0.173, 0.057, 0.003] as Array<Float>, [0.292, 0.197, 0.083, 0.014] as Array<Float>] as Array<Array<Float>>;
 
     function table(w as Number, style as Number) as Array<Number> {
-        return ((w >= 440) ? W454 : ((w >= 400) ? W416 : W390))[style];
+        return ((w >= 460) ? W466 : ((w >= 448) ? W454 : ((w >= 410) ? W416 : ((w >= 384) ? W390 : W360))))[style];
     }
 
     function lamp(w as Number, zoomed as Boolean) as Array<Float> {
-        return ((w >= 440) ? LAMP454 : ((w >= 400) ? LAMP416 : LAMP390))[zoomed ? 1 : 0];
+        return ((w >= 460) ? LAMP466 : ((w >= 448) ? LAMP454 : ((w >= 410) ? LAMP416 : ((w >= 384) ? LAMP390 : LAMP360))))[zoomed ? 1 : 0];
     }
 }

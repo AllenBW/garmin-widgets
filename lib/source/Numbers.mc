@@ -41,8 +41,19 @@ module Lib {
         ] as Array<Array<Number or Float or Boolean>>;
 
         // A digit's, a colon's, a slash's and a minus's advance in thousandths
-        // of an em, for Bionic Bold then Bionic Medium, from the TTFs
-        const ADVANCE = [[516, 204, 409, 312], [500, 194, 400, 312]] as Array<Array<Number>>;
+        // of an em, one row per Ink face (Bionic Bold and Medium, then the
+        // faces that stand in for them where a watch has no Bionic), from the TTFs
+        const ADVANCE = [
+            [516, 204, 409, 312],
+            [500, 194, 400, 312],
+            [506, 274, 331, 363],
+            [494, 233, 371, 248],
+            [568, 264, 390, 340],
+            [621, 181, 443, 375],
+            [562, 242, 412, 276],
+            [507, 227, 374, 247],
+            [621, 181, 443, 375]
+        ] as Array<Array<Number>>;
         const DEGREE = 0.30;       // the width a degree sign adds, per digit height
         // The least room each reading takes in its row, in the order of Value:
         // 0 steps in the morning mustn't balloon its row and squeeze the next
@@ -135,7 +146,7 @@ module Lib {
         // size while the digits change; dashes count as the digits they stand for
         function ratio(text as String, face as Number) as Float {
             var chars = text.toCharArray();
-            var advance = ADVANCE[(face == Lib.Ink.BIONIC_MEDIUM) ? 1 : 0];
+            var advance = ADVANCE[face];
             var sum = 0;
             var extra = 0.0;
             for (var i = 0; i < chars.size(); i++) {
@@ -209,6 +220,10 @@ module Lib {
         // A reading to set in a row, with the room it takes at least
         function reading(values as Array<String>, value as Number, face as Number, color as Number,
                          type as Complications.Type?) as Item {
+            // Where the watch has none of the Bionic faces (the Venu 3, the
+            // Forerunner 570), the nearest face it has draws and measures the
+            // row (Lib.Ink.CHAIN); on the fenix 8 the face is its own
+            face = Lib.Ink.resolve(face);
             var item = new Item(values[value], face, color, type);
             if (ratio(LEAST[value], face) > ratio(item.text, face)) {
                 item.room = LEAST[value];

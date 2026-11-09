@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the Lockup face (design #20) with sample readings: what LockupView
+"""Render the Lockup face (design #23) with sample readings: what LockupView
 draws, from the same rows and the same digits (gen_lockup.glyph).
 
     python3 -I designs/preview_lockup.py out.png [day|night|widest|empty] [standby] [look=yours|orange|blue|green|low|gold|ember|orchard|dusk]

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the Clack face (design #23) with sample readings: what ClackView
+"""Render the Clack face (design #24) with sample readings: what ClackView
 will draw, from the same layout fractions, with Pillow and the watch's own
 Roboto Condensed Bold.
 

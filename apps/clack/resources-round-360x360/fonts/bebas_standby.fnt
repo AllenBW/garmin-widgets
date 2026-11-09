@@ -1,0 +1,14 @@
+info face="bebas_standby" size=156 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=156 base=156 scaleW=735 scaleH=156 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="bebas_standby.png"
+chars count=10
+char id=48 x=2 y=2 width=73 height=152 xoffset=0 yoffset=0 xadvance=73 page=0 chnl=15
+char id=49 x=77 y=2 width=50 height=152 xoffset=0 yoffset=0 xadvance=50 page=0 chnl=15
+char id=50 x=129 y=2 width=72 height=152 xoffset=0 yoffset=0 xadvance=72 page=0 chnl=15
+char id=51 x=203 y=2 width=72 height=152 xoffset=0 yoffset=0 xadvance=72 page=0 chnl=15
+char id=52 x=277 y=2 width=81 height=152 xoffset=0 yoffset=0 xadvance=81 page=0 chnl=15
+char id=53 x=360 y=2 width=72 height=152 xoffset=0 yoffset=0 xadvance=72 page=0 chnl=15
+char id=54 x=434 y=2 width=73 height=152 xoffset=0 yoffset=0 xadvance=73 page=0 chnl=15
+char id=55 x=509 y=2 width=72 height=152 xoffset=0 yoffset=0 xadvance=72 page=0 chnl=15
+char id=56 x=583 y=2 width=75 height=152 xoffset=0 yoffset=0 xadvance=75 page=0 chnl=15
+char id=57 x=660 y=2 width=73 height=152 xoffset=0 yoffset=0 xadvance=73 page=0 chnl=15

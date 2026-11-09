@@ -5,31 +5,31 @@ family, written in Monkey C for Connect IQ.
 
 ## The apps
 
-| App | Type | What it does |
-|---|---|---|
-| [Field](apps/field/) | Watch face | The everyday face: large time, a daylight ring, three slots you choose, the next sun event |
-| [Daylight](apps/daylight/) | Watch face | A 24-hour sun dial: golden hours, light left, altitude and pressure |
-| [Readiness](apps/readiness/) | Watch face | Body Battery and stress gauges, sleep score, recovery and resting heart rate round the time |
-| [Night Sky](apps/nightsky/) | Watch face | The real sky overhead: stars, constellations, the Moon and the planets |
-| [Horizon](apps/horizon/) | Watch face | The bezel is the next twelve hours: rain chance per hour, dark after sunset, the next event |
-| [Today](apps/today/) | Watch face | One plain list: the next sunrise or sunset, 24-hour time, date, moon phase, heart rate, outside temperature, distance walked, alarms |
-| [Strata](apps/strata/) | Watch face | The same list set into a field of soil layers that part round each reading; colours and the four readings are yours to choose |
-| [Rings](apps/rings/) | Watch face | Three goal rings (steps, floors, Body Battery) with their numbers along the curves and the day's readings down the side, in three colour sets |
-| [Forage](apps/forage/) | Watch face | For beekeepers: whether the bees are flying, when to open the hive, the next twelve hours as comb |
-| [Vessel](apps/vessel/) | Watch face | The time as two glasses that fill to your readings (the temperature and heart rate by default), the next sunrise or sunset at the foot |
-| [Inscription](apps/inscription/) | Watch face | A coin: the time in the middle, the date and five readings set round the rim (the weather, the barometer and its trend, heart rate, steps, the next sunrise or sunset) |
-| [Overlap](apps/overlap/) | Watch face | The hours enormous and quiet behind bright minutes, cropped by the bezel, the date and two readings (the next sunrise or sunset and the temperature) |
-| [Lockup](apps/lockup/) | Watch face | Rows of numbers reaching the bezel all the way round, in numerals of its own, coloured by family |
-| [Blocks](apps/blocks/) | Watch face | The screen full of numbers, sized by importance and coloured by family: hours and minutes on a diagonal, the sun, weather and body readings around them, no labels |
-| [Wall](apps/wall/) | Watch face | A wall of small digits from your readings, where the time is the part that lights up, with a band of readings across the middle |
-| [Clack](apps/clack/) | Watch face | A split-flap clock with no case: four leaves that flip each minute as the mechanism does, the minutes you missed rolling by when you wake the watch, an amber lamp after sunset, five styles |
-| [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain |
-| [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline |
-| [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it |
-| [Sauna and Steam](apps/sauna/) | Glance + app | Times a sauna or steam visit round by round, coaches it against the published guidance, saves it to Garmin Connect |
-| [Tally](apps/tally/) | Glance + app | Buttons you make (on the phone, with the hours each shows), one tap to log, and the pattern over two weeks: a ring per day and what came before; every entry also goes to your own Google Sheet |
-| [Stretching God](apps/stretch/) | Glance + app | Guided stretching: 39 stretches drawn as a figure that eases in and holds, strung into 12 routines (morning, desk, bed, before and after a run, ride, hike or lifting), coached with a buzz for each turn, saved to Garmin Connect |
-| [Sound Level](apps/sound/) | Glance + app | **Experimental.** An approximate sound level meter from the watch microphone, with the NIOSH safe-exposure range |
+| App | Type | What it does | Store |
+|---|---|---|---|
+| [Field](apps/field/) | Watch face | The everyday face: large time, a daylight ring, three slots you choose, the next sun event | [Store](https://apps.garmin.com/apps/482f6139-7e6d-432c-b448-762fa167a467) |
+| [Daylight](apps/daylight/) | Watch face | A 24-hour sun dial: golden hours, light left, altitude and pressure | [Store](https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c) |
+| [Readiness](apps/readiness/) | Watch face | Body Battery and stress gauges, sleep score, recovery and resting heart rate round the time | in review |
+| [Night Sky](apps/nightsky/) | Watch face | The real sky overhead: stars, constellations, the Moon and the planets | [Store](https://apps.garmin.com/apps/a9a5898b-4678-42e7-bb82-3ac7f378b438) |
+| [Horizon](apps/horizon/) | Watch face | The bezel is the next twelve hours: rain chance per hour, dark after sunset, the next event | [Store](https://apps.garmin.com/apps/c4305cc0-41b2-4604-9ab0-87e40858e8a4) |
+| [Today](apps/today/) | Watch face | One plain list: the next sunrise or sunset, 24-hour time, date, moon phase, heart rate, outside temperature, distance walked, alarms | [Store](https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9) |
+| [Strata](apps/strata/) | Watch face | The same list set into a field of soil layers that part round each reading; colours and the four readings are yours to choose | [Store](https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279) |
+| [Rings](apps/rings/) | Watch face | Three goal rings (steps, floors, Body Battery) with their numbers along the curves and the day's readings down the side, in three colour sets | [Store](https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f) |
+| [Forage](apps/forage/) | Watch face | For beekeepers: whether the bees are flying, when to open the hive, the next twelve hours as comb | [Store](https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f) |
+| [Vessel](apps/vessel/) | Watch face | The time as two glasses that fill to your readings (the temperature and heart rate by default), the next sunrise or sunset at the foot | [Store](https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6) |
+| [Inscription](apps/inscription/) | Watch face | A coin: the time in the middle, the date and five readings set round the rim (the weather, the barometer and its trend, heart rate, steps, the next sunrise or sunset) | [Store](https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614) |
+| [Overlap](apps/overlap/) | Watch face | The hours enormous and quiet behind bright minutes, cropped by the bezel, the date and two readings (the next sunrise or sunset and the temperature) | [Store](https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a) |
+| [Lockup](apps/lockup/) | Watch face | Rows of numbers reaching the bezel all the way round, in numerals of its own, coloured by family | in review |
+| [Blocks](apps/blocks/) | Watch face | The screen full of numbers, sized by importance and coloured by family: hours and minutes on a diagonal, the sun, weather and body readings around them, no labels | in review |
+| [Wall](apps/wall/) | Watch face | A wall of small digits from your readings, where the time is the part that lights up, with a band of readings across the middle | in review |
+| [Clack](apps/clack/) | Watch face | A split-flap clock with no case: four leaves that flip each minute as the mechanism does, the minutes you missed rolling by when you wake the watch, an amber lamp after sunset, five styles | in review |
+| [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain | in review |
+| [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline | [Store](https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c) |
+| [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it | [Store](https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4) |
+| [Sauna and Steam](apps/sauna/) | Glance + app | Times a sauna or steam visit round by round, coaches it against the published guidance, saves it to Garmin Connect | [Store](https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815) |
+| [Tally](apps/tally/) | Glance + app | Buttons you make (on the phone, with the hours each shows), one tap to log, and the pattern over two weeks: a ring per day and what came before; every entry also goes to your own Google Sheet | in review |
+| [Stretching God](apps/stretch/) | Glance + app | Guided stretching: 39 stretches drawn as a figure that eases in and holds, strung into 12 routines (morning, desk, bed, before and after a run, ride, hike or lifting), coached with a buzz for each turn, saved to Garmin Connect | [Store](https://apps.garmin.com/apps/23ceaee4-4ad6-4107-85dd-09e0e8deada4) |
+| [Sound Level](apps/sound/) | Glance + app | **Experimental.** An approximate sound level meter from the watch microphone, with the NIOSH safe-exposure range | in review |
 
 > **Sound Level is experimental.** Earlier builds that started and stopped
 > the microphone repeatedly made a fēnix 8 restart itself (a firmware
@@ -81,11 +81,13 @@ the list, and writes it into each manifest):
 
 | Family | Watches |
 |---|---|
-| fēnix 8 (the ones on the desk) | fēnix 8 43 mm, 47/51 mm and Pro, tactix 8, quatix 8 (416 and 454 px) |
+| fēnix 8 (the ones on the desk) | fēnix 8 AMOLED 43 mm, 47/51 mm and Pro (47 mm, 51 mm and MicroLED), tactix 8 AMOLED, quatix 8 AMOLED and Pro (416 and 454 px) |
 | fēnix 9 | fēnix 9 43 mm, 47/51 mm, Pro 43/47/51 mm, fēnix E (416, 454 and 466 px) |
-| Forerunner | 165, 170, 265, 265S, 570, 70, 965, 970 (360 to 454 px) |
+| Forerunner | 165 and 165 Music, 170 and 170 Music, 265, 265S, 570 42/47 mm, 70, 965, 970 (360 to 454 px) |
 | Venu and vívoactive | Venu 3, 3S, 4 41 mm, 4 45 mm, vívoactive 6 (390 and 454 px) |
-| epix, MARQ, Descent, D2, Approach | epix (Gen 2) and Pro, MARQ Gen 2 and 3, Descent Mk3, D2 Mach 1 and 2, D2 Air X15, Approach S70 and S72 |
+| epix, MARQ, Descent, D2, Approach | epix (Gen 2) and Pro 42/47/51 mm, quatix 7 Sapphire and Pro, tactix 7 AMOLED, MARQ Gen 2 (Aviator, Commander Carbon too) and Gen 3, Descent Mk3 43 mm and Mk3i 51 mm, D2 Mach 1 and 1 Pro, Mach 2 and 2 Pro, D2 Air X15, Approach S70 42/47 mm and S72 43/47 mm |
+
+Those are the 41 Connect IQ device ids, which the store lists as 48 watches.
 
 Everything lays out relative to the screen size. Where a watch lacks a
 font the faces use, the nearest it has stands in (the Venu 3's
@@ -98,9 +100,9 @@ Descent G2 and the Instinct 3 AMOLEDs (no vector fonts), the Venu X1
 
 ## Get them on your watch
 
-**From the Connect IQ Store.** Store links will be listed here as each app
-is approved. Install from the Connect IQ app on your phone, and updates
-arrive by themselves. (How they are packaged and submitted:
+**From the Connect IQ Store.** The Store column in the table above links
+each approved listing; the rest are in Garmin's review. Install from the
+Connect IQ app on your phone, and updates arrive by themselves. (How they are packaged and submitted:
 [`docs/STORE.md`](docs/STORE.md).)
 
 **Build and copy them yourself.** You need the free Connect IQ SDK and a
