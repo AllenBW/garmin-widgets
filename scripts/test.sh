@@ -33,10 +33,13 @@ set -e
 # monkeydo's exit code says nothing about the tests: the run passes when
 # the simulator prints a PASSED line, and that is the exit code here.
 run_tests() {
-    local out
-    out=$("$@" 2>&1)
-    printf '%s\n' "$out"
-    grep -q "PASSED" <<< "$out"
+    # to a file, not a pipe: the simulator shell leaves a process holding the
+    # pipe open, so a capture or a tee would wait on it after the tests end
+    local out; out=$(mktemp)
+    "$@" > "$out" 2>&1 || true   # monkeydo exits non-zero even on a pass; under set -e that would end the script here
+    cat "$out"
+    grep -q "PASSED" "$out"
+    local ok=$?; rm -f "$out"; return $ok
 }
 if "$ROOT/scripts/simprivate.sh" port >/dev/null 2>&1; then
     run_tests "$ROOT/scripts/simprivate.sh" do "bin/$APP-test.prg" "$DEVICE" -t $TEST_NAME
