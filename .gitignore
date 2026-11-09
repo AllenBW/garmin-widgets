@@ -4,19 +4,21 @@ bin/
 *.prg.debug.xml
 *.iq
 *.barrel
+dist/
 
 # developer keys: never commit these
 *.der
 *.pem
 
+# the workshop's Python and caches
+tools/venv/
+__pycache__/
+*.pyc
 .DS_Store
 watch-logs/
 watch-queue/
-dist/
-
-# Python caches
-__pycache__/
 .claude/scheduled_tasks.lock
+.claude/worktrees/
 
 # a machine's own notes for Claude Code, never committed
 CLAUDE.local.md
