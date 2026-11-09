@@ -7,14 +7,14 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-// The face (designs/svg/face-readiness-active.svg): a Body Battery gauge
+// The face: a Body Battery gauge
 // up the left side and a stress gauge up the right, date and time in the
 // middle, three tiles (sleep score, recovery, resting HR) and the training
 // status along the bottom. Always-on keeps the hollow time and one summary
 // line, shifted each minute.
 class ReadinessView extends WatchUi.WatchFace {
 
-    // Palette (designs/mockups.py)
+    // Palette
     private const WHITE = 0xF2F2F2;
     private const GRAY = 0x8A8A8A;
     private const DIM = 0x5A5A5A;
@@ -190,7 +190,7 @@ class ReadinessView extends WatchUi.WatchFace {
         dc.drawText(x, labelY, _labelFont, label, justification);
     }
 
-    // Always-on (designs/svg/face-readiness-aod.svg): hollow time and one
+    // Always-on: hollow time and one
     // dim summary line, walked round a 5x5 grid of offsets each minute
     private function drawAlwaysOn(dc as Dc, r as Readings) as Void {
         var w = dc.getWidth();

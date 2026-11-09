@@ -47,7 +47,7 @@
         <iq:permissions>
             <!-- the sunrise and sunset complications: the lamp comes on after sunset -->
             <iq:uses-permission id="ComplicationSubscriber"/>
-            <!-- without this the weather observation position is null on a watch (EXPLORATION.md 10.1) -->
+            <!-- without this the weather observation position is null on a watch -->
             <iq:uses-permission id="Positioning"/>
         </iq:permissions>
         <iq:languages>

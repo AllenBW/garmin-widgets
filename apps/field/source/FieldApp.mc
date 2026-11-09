@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Field: the everyday watch face (designs/DESIGNS.md, design #1).
+// Field: the everyday watch face (designs/README.md, design #1).
 class FieldApp extends Application.AppBase {
 
     private var _view as FieldView?;

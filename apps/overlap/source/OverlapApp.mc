@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Overlap: the hours enormous and quiet, the minutes bright in front,
-// and a standby that stays on (designs/DESIGNS.md, design #18).
+// and a standby that stays on (designs/README.md, design #18).
 class OverlapApp extends Application.AppBase {
 
     function initialize() {

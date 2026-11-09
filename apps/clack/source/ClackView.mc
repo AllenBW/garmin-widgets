@@ -891,7 +891,7 @@ class ClackView extends WatchUi.WatchFace {
     }
 
     // The screenshot build reports the frame rate and the draw time every
-    // 64 frames, as the spike did (designs/clack/spike)
+    // 64 frames, as the roll spike did
     (:sample) private var _frames as Number = 0;
     (:sample) private var _last as Number = 0;
     (:sample) private var _gapSum as Number = 0;

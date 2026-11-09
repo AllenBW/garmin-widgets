@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Strata: the Today list drawn into a field of soil layers (designs/DESIGNS.md, design #12).
+// Strata: the Today list drawn into a field of soil layers (designs/README.md, design #12).
 class StrataApp extends Application.AppBase {
 
     function initialize() {

@@ -5,8 +5,8 @@ import Toybox.Math;
 module Lib {
 
     // Arcs and ring gauges. Angles are in degrees clockwise from 12 o'clock,
-    // the same convention as designs/mockups.py, so a layout can be copied
-    // straight from a mockup. Dc.drawArc counts counter-clockwise from
+    // the convention the design mockups use, so a layout can be copied
+    // straight from one. Dc.drawArc counts counter-clockwise from
     // 3 o'clock, and the conversion lives here.
     (:arcs)
     module Arcs {

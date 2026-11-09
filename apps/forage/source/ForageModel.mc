@@ -50,7 +50,7 @@ class ForageOutlook {
 }
 
 // Worked out from plain numbers so the tests can feed it a synthetic day.
-// The thresholds are beekeepers' rules of thumb (DESIGNS.md #15).
+// The thresholds are beekeepers' rules of thumb (design #15).
 module ForageModel {
 
     const FLY_C = 12.8;        // 55 °F

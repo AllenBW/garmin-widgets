@@ -10,8 +10,7 @@ import Toybox.WatchUi;
 import Toybox.Weather;
 
 // Field: the time large and legible, plus the handful of things checked all
-// day. Layout follows designs/svg/face-field-active.svg and face-field-aod.svg;
-// every position is a fraction of the screen size so it survives other
+// day. Every position is a fraction of the screen size so it survives other
 // round AMOLED devices.
 //
 // Active:    bezel ring (a 24 h daylight dial by default; step goal, battery
@@ -36,7 +35,7 @@ import Toybox.Weather;
 // "10:08" is 264 px wide in NUMBER_MEDIUM; "8,412" is 109 px wide in SMALL.
 class FieldView extends WatchUi.WatchFace {
 
-    // Palette (designs/mockups.py)
+    // Palette
     private const WHITE = 0xF2F2F2;
     private const GRAY = 0x8A8A8A;
     private const DIM = 0x5A5A5A;

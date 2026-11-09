@@ -47,7 +47,7 @@
         <iq:permissions>
             <!-- sunrise and sunset from the watch's own complications; press-and-hold opens the native widgets -->
             <iq:uses-permission id="ComplicationSubscriber"/>
-            <!-- without this the weather observation position is null on a watch (EXPLORATION.md 10.1),
+            <!-- without this the weather observation position is null on a watch,
                  and the Weather fallback for sunrise/sunset needs a location; nothing is switched on -->
             <iq:uses-permission id="Positioning"/>
         </iq:permissions>

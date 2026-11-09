@@ -21,7 +21,7 @@ class Readings {
 // SensorHistory samples (stress falls back to the activity monitor), sleep
 // score, recovery time and training status are complications, and the
 // resting heart rate is in the user profile. HRV status and Training
-// Readiness are not exposed to Connect IQ (see designs/DESIGNS.md).
+// Readiness are not exposed to Connect IQ.
 module Metrics {
 
     function read() as Readings {

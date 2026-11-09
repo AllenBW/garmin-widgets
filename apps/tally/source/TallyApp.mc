@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-// Tally (designs/DESIGNS.md, design #19): buttons you make, each tap a
+// Tally (designs/README.md, design #19): buttons you make, each tap a
 // moment logged, and the pattern they make over two weeks. The buttons
 // (name, colour, the hours they show) are set on the phone in Garmin
 // Connect; every entry goes to the owner's Google Sheet too.

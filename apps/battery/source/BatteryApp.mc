@@ -5,7 +5,7 @@ import Toybox.System;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-// Battery Planner (designs/DESIGNS.md, design #2): when do I need to charge,
+// Battery Planner (designs/README.md, design #2): when do I need to charge,
 // from the battery's actual drain over the last week rather than the
 // spec-sheet estimate. A background service logs the level every half hour;
 // the glance shows the time left and the charge-by date, the app adds the

@@ -1,9 +1,9 @@
 # The stretches and routines of Stretching God (design #20), from the
-# research in designs/stretch_research.md. Read by
-# designs/gen_stretch.py (the watch's tables) and designs/preview_stretch.py
-# (the contact sheet). Poses are joint angles, with two-bone IK where a hand
-# or foot must land on something. Facing right, y up; near is the side the
-# watch names. SIDE_WORDS says what LEFT and RIGHT mean for each stretch.
+# stretching research behind it. Read by designs/gen_stretch.py (the
+# watch's tables) and designs/preview_stretch.py (the contact sheet).
+# Poses are joint angles, with two-bone IK where a hand or foot must land
+# on something. Facing right, y up; near is the side the watch names.
+# SIDE_WORDS says what LEFT and RIGHT mean for each stretch.
 # Seen from the side the figure faces left for LEFT, so the near limb is
 # the left one; seen from the front the figure's left is on the screen's
 # right.
@@ -407,7 +407,7 @@ SIDE_WORDS = {
     "ankle_rocks": "% ANKLE",
 }
 
-# ---- Routines: (stretch, hold seconds or reps, rounds); see DESIGNS.md #20
+# ---- Routines: (stretch, hold seconds or reps, rounds); design #20
 
 ROUTINES = [
     dict(const="R_MORNING", name="Morning", about="Gentle, no forward bends", flags=0,

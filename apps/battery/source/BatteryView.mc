@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-// The full app (designs/svg/app-battery.svg): the projection in large type,
+// The full app: the projection in large type,
 // the charge-by date, a bar per day for the last week with heavy days in
 // orange, and the pace underneath. Positions are fractions of the screen.
 class BatteryView extends WatchUi.View {

@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Sound Level (designs/DESIGNS.md, design #14): an approximate sound
+// Sound Level (designs/README.md, design #14): an approximate sound
 // level meter from the watch microphone, with the danger range from the
 // NIOSH exposure limit and a cue by every button. The glance is the last
 // reading; the app listens while it is open and keeps no audio.

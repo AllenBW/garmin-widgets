@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Stretching God (designs/DESIGNS.md, design #20): guided stretching, each
+// Stretching God (designs/README.md, design #20): guided stretching, each
 // stretch drawn as a moving figure and coached through the hold, the
 // release and both sides, strung into routines for the morning, before
 // and after an activity, the desk and bedtime. The glance suggests the

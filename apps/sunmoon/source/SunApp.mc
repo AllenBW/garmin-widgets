@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Sun & Moon (designs/DESIGNS.md, design #5): the next sun event and a
+// Sun & Moon (designs/README.md, design #5): the next sun event and a
 // countdown to golden hour in the glance; the sun's arc, golden and blue
 // hour and the moon in the app. Pure maths on the last known location,
 // so it works with no phone and no network.

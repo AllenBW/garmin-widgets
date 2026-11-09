@@ -152,7 +152,7 @@ module Lib {
         }
 
         // How many alarms are set. The watch tells apps the count only,
-        // never the times (EXPLORATION.md 10.1).
+        // never the times.
         function alarms() as Number {
             var settings = System.getDeviceSettings();
             return (settings has :alarmCount) ? settings.alarmCount : 0;

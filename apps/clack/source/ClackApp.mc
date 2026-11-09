@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Clack: a split-flap clock with no case, each digit its own leaf, rolling
-// at twenty frames a second after a wake (designs/DESIGNS.md, design #24).
+// at twenty frames a second after a wake (designs/README.md, design #24).
 class ClackApp extends Application.AppBase {
 
     function initialize() {

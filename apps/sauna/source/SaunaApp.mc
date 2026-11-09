@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Sauna (designs/DESIGNS.md, design #10): a sauna visit, round by round,
+// Sauna (designs/README.md, design #10): a sauna visit, round by round,
 // with the door noticed by the watch's own thermometer, the heart-rate
 // recovery after each round, and the visit saved to Garmin Connect. The
 // glance is the last visit; the app records a new one.

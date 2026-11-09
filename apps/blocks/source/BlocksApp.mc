@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Blocks: a face made of numbers, sized by importance and coloured by family
-// (designs/DESIGNS.md, design #21).
+// (designs/README.md, design #21).
 class BlocksApp extends Application.AppBase {
 
     function initialize() {

@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Inscription: the time struck large like a coin, your readings round the
-// rim, and a standby that stays on (designs/DESIGNS.md, design #17).
+// rim, and a standby that stays on (designs/README.md, design #17).
 class InscriptionApp extends Application.AppBase {
 
     function initialize() {

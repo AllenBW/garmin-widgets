@@ -5,7 +5,7 @@ import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.UserProfile;
 
-// Which routine suits now (designs/DESIGNS.md #20): the cool-down for an
+// Which routine suits now (design #20): the cool-down for an
 // activity that ended in the last hour; the morning routine from just before
 // waking to three hours after; the wind-down from ninety minutes before
 // bed; a desk break when the move bar is filling during the day; the full

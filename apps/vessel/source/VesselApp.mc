@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Vessel: the time as two glasses that fill to your readings, and a
-// standby that stays on (designs/DESIGNS.md, design #16).
+// standby that stays on (designs/README.md, design #16).
 class VesselApp extends Application.AppBase {
 
     function initialize() {

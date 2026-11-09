@@ -34,7 +34,7 @@ class SoundView extends WatchUi.View {
     private const DIM = 0x4A4A4A;
     private const BAND = 0x2A2A2A;
 
-    private const STRIDE = 4;            // every fourth sample is decoded (HANDOFF.md has the budget)
+    private const STRIDE = 4;            // every fourth sample is decoded: 2,048 decodes take 6 ms in the simulator, so raise this first if the watchdog trips
     private const STALE_AFTER = 5;       // seconds without a window before the number dims
     private const DRAW_EVERY = 250;      // ms: the windows redraw the screen at most four times a second
     private const SCALE_LO = 30;         // the bar and the chart run from here

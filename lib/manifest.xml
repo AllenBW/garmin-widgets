@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
     <!--
-        Lib: code shared by every app in this repo (see designs/DESIGNS.md,
-        "Shared building blocks"). Apps link it with
+        Lib: code shared by every app in this repo. Apps link it with
             base.barrelPath = ../../lib/monkey.jungle
             base.Lib.annotations = aod;arcs;fmt;sun;moon
         (fmt, solar and location are also glance-safe: see CLAUDE.md;

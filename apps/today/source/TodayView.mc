@@ -18,7 +18,7 @@ import Toybox.WatchUi;
 // SMALL 53, NUMBER_MEDIUM 153 ("10:08" is 264 px wide).
 class TodayView extends WatchUi.WatchFace {
 
-    // Palette (designs/mockups.py)
+    // Palette
     private const WHITE = 0xF2F2F2;
     private const GRAY = 0x8A8A8A;
     private const DIM = 0x5A5A5A;

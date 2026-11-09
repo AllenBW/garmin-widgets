@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Lockup: rows of numbers reaching the bezel all the way round, coloured by
-// family (designs/DESIGNS.md, design #23).
+// family (designs/README.md, design #23).
 class LockupApp extends Application.AppBase {
 
     function initialize() {

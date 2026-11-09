@@ -10,9 +10,8 @@ import Toybox.WatchUi;
 // Daylight: the shape of the day at a glance. A 24 h dial with noon at the
 // top: night in navy, daylight in amber, golden hours in orange, a hand at
 // the current time. Centre: light left, the time, sunrise and sunset,
-// altitude and the pressure trend. Layout follows
-// designs/svg/face-daylight-active.svg and face-daylight-aod.svg; every
-// position is a fraction of the screen size.
+// altitude and the pressure trend. Every position is a fraction of the
+// screen size.
 //
 // Always-on: four cardinal ticks, a hollow sun marker, hollow time and the
 // next sun event, shifted a few pixels each minute. Well under 10 % lit.

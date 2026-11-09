@@ -331,7 +331,7 @@ function testOverRange(logger as Logger) as Boolean {
     return true;
 }
 
-// How long decoding costs, for choosing the stride (HANDOFF.md)
+// How long decoding costs, for choosing the stride
 (:test)
 function testDecodeBudget(logger as Logger) as Boolean {
     var window = sineWindow(2048, 16384, false);

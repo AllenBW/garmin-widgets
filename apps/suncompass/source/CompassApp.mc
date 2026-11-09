@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Sun Compass (designs/DESIGNS.md, design #8): a compass rose that turns
+// Sun Compass (designs/README.md, design #8): a compass rose that turns
 // with the watch, with today's sun path drawn across the sky inside it.
 // The glance says where the sun is now; the app adds the live heading.
 (:glance)

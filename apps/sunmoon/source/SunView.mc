@@ -4,7 +4,7 @@ import Toybox.Math;
 import Toybox.Time;
 import Toybox.WatchUi;
 
-// The full app (designs/svg/app-sun.svg): the sun on its arc between
+// The full app: the sun on its arc between
 // sunrise and sunset, then golden hour, blue hour and the moon.
 class SunView extends WatchUi.View {
 

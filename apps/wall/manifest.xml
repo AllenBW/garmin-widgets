@@ -47,7 +47,7 @@
         <iq:permissions>
             <!-- the sun's times and Body Battery; press-and-hold opens a reading's widget -->
             <iq:uses-permission id="ComplicationSubscriber"/>
-            <!-- without this the weather observation position is null on a watch (EXPLORATION.md 10.1) -->
+            <!-- without this the weather observation position is null on a watch -->
             <iq:uses-permission id="Positioning"/>
             <!-- Body Battery and altitude history -->
             <iq:uses-permission id="SensorHistory"/>

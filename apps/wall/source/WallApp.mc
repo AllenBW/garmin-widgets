@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.WatchUi;
 
 // Wall: a face made of numbers, sized by importance and coloured by family
-// (designs/DESIGNS.md, design #22).
+// (designs/README.md, design #22).
 class WallApp extends Application.AppBase {
 
     function initialize() {

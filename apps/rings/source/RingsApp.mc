@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Rings: three goal rings on the left, the day's numbers on the right (designs/DESIGNS.md, design #13).
+// Rings: three goal rings on the left, the day's numbers on the right (designs/README.md, design #13).
 class RingsApp extends Application.AppBase {
 
     function initialize() {

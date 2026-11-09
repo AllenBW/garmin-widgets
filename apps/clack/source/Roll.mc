@@ -1,10 +1,9 @@
 import Toybox.Lang;
 import Toybox.Math;
 
-// The roll, as the owner approved it on the states page (designs/DESIGNS.md
-// #23, designs/clack/README.md §9): pure arithmetic fed by ClackView and the
-// tests. A leaf's flip is a push off the stop (slow, slightly accelerating,
-// to the release angle) and then a drop from the tables Drops.mc holds, the
+// The roll, as the owner approved it on the states page (design #24): pure
+// arithmetic fed by ClackView and the tests. A leaf's flip is a push off
+// the stop (slow, slightly accelerating, to the release angle) and then a drop from the tables Drops.mc holds, the
 // fall under gravity against the air and the leaf beneath, the bounce at the
 // stop (designs/gen_clack.py from preview_clack.roll_profile). The timing of
 // a minute: the units leaf's push ends on the minute, the tens leaf takes the
