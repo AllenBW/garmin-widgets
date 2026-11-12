@@ -37,7 +37,7 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Lockup | <https://apps.garmin.com/apps/0af0769d-af13-4187-9c5c-88439a84c033> | Submitted 2026-11-08 (fēnix 8 and Venu 4 41 mm); the listing edited the same day (the key image first among the screenshots, the hero image, the description with the key); 1.0.1 on 2026-11-08 (41 watches), in review |
 | Clack | <https://apps.garmin.com/apps/62844ea6-22aa-4bd7-9d01-4dfb8e048750> | Submitted 2026-11-08 (fēnix 8 and Venu 4 41 mm, category Retro); images replaced the same day (the original view as the cover, 12- and 24-hour); 1.0.1 on 2026-11-08 (41 watches, leaves laid out for 360 and 466 px too), in review |
 | Readiness | <https://apps.garmin.com/apps/78d01a69-12a3-46fa-b6ba-e79b440f833c> | Submitted 2026-11-08 as 1.0.0 (Digital; 41 watches), in review |
-| Battery Planner | <https://apps.garmin.com/apps/2b0600c0-1bcd-41db-b00b-1181a7407c1d> | Submitted 2026-11-08 as 1.0.0 (Widget, Tools; 41 watches), in review |
+| Battery Planner | <https://apps.garmin.com/apps/2b0600c0-1bcd-41db-b00b-1181a7407c1d> | Submitted 2026-11-08 as 1.0.0 (Widget, Tools; 41 watches); 1.0.1 on 2026-11-11 (how long the charge will take, larger text; the listing edited the same day: the description, the cover, a second screen image on the charger), in review |
 
 ## Listings
 
@@ -243,13 +243,22 @@ Bebas Neue or Roboto; press and hold the face to step to the next. The date
 on a leaf or under them, 12- or 24-hour with the AM/PM flag. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the
 digits as outlines and shifts each minute.
 
-**Battery Planner** (Widget). Tells you when to charge. It records the
-battery every half hour in the background, learns your drain over the last
-week and projects the day you will need the charger. The glance shows the
-level and the days left; open it for the week day by day, the pace and
-the charge-by date. Until it has a day of readings it shows the watch's
-own estimate. Built for Garmin's round AMOLED watches (fēnix 8 and 9,
-epix, Forerunner, Venu, vívoactive and more).
+**Battery Planner** (Widget). Tells you when to charge, and how long the
+charge will take. It records the battery every half hour in the
+background, learns your drain over the last week and projects the day you
+will need the charger. The glance shows the time left and the charge-by
+date; open it for the level, the week day by day with the heavy day
+marked, and the pace. Until it has a day of readings it shows the watch's
+own estimate.
+
+On the charger it turns to the charge: the time until the battery is full
+and the hour that will be, the charger's speed, and how long the charge so
+far will last you. It times your own watch on your own charger, slower
+near the top as batteries are, so the first charge only says it is timing
+and the estimate settles over the next one or two.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more).
 
 **Sun and Moon** (Widget). The next sunrise or sunset, golden and blue
 hour, and the moon's phase, worked out on the watch, offline.

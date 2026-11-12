@@ -7,7 +7,14 @@ module BatteryActivity {
 
     const MAX_ACTIVITIES = 100;
 
+    // The sample build's heavy day had a two-hour activity (sample.jungle)
+    (:sample)
+    function hoursOn(dayStart as Number) as Float {
+        return 2.0;
+    }
+
     // Hours of recorded activity that started on the day beginning at dayStart
+    (:live)
     function hoursOn(dayStart as Number) as Float {
         if (!(Toybox has :UserProfile) || !(UserProfile has :getUserActivityHistory)) {
             return 0.0;

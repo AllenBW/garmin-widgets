@@ -11,5 +11,8 @@ base.Lib.annotations = fmt
 # A build with sample readings for screenshots (the simulator has no battery
 # history to project from):
 #   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh battery <device>
+# and on the charger (the simulator's own charging switch has no speed to
+# show):
+#   CIQ_JUNGLE="monkey.jungle;sample-charge.jungle" scripts/build.sh battery <device>
 # Normal builds leave the samples out.
 base.excludeAnnotations = sample

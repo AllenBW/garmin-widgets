@@ -23,7 +23,7 @@ family, written in Monkey C for Connect IQ.
 | [Blocks](apps/blocks/) | Watch face | The screen full of numbers, sized by importance and coloured by family: hours and minutes on a diagonal, the sun, weather and body readings around them, no labels | in review |
 | [Wall](apps/wall/) | Watch face | A wall of small digits from your readings, where the time is the part that lights up, with a band of readings across the middle | in review |
 | [Clack](apps/clack/) | Watch face | A split-flap clock with no case: four leaves that flip each minute as the mechanism does, the minutes you missed rolling by when you wake the watch, an amber lamp after sunset, five styles | in review |
-| [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain | in review |
+| [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain, and how long the charge will take | in review |
 | [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline | [Store](https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c) |
 | [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it | [Store](https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4) |
 | [Sauna and Steam](apps/sauna/) | Glance + app | Times a sauna or steam visit round by round, coaches it against the published guidance, saves it to Garmin Connect | [Store](https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815) |

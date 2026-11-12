@@ -1,0 +1,2 @@
+# The sample build on the charger at 64 % (see sample.jungle)
+base.excludeAnnotations = live;glanceview;shotidle

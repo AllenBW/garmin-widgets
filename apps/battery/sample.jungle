@@ -1,3 +1,4 @@
 # Sample readings in place of the live ones, without the glance so the
-# simulator opens the app (see monkey.jungle)
-base.excludeAnnotations = live;glanceview
+# simulator opens the app (see monkey.jungle). sample-charge.jungle is the
+# same on the charger.
+base.excludeAnnotations = live;glanceview;shotcharge

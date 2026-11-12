@@ -9,11 +9,12 @@ import Toybox.WatchUi;
 // from the battery's actual drain over the last week rather than the
 // spec-sheet estimate. A background service logs the level every half hour;
 // the glance shows the time left and the charge-by date, the app adds the
-// daily drain bars.
+// daily drain bars. On the charger both show how long until it is full,
+// from the speed this watch has charged at before.
 //
 // The class runs in three places, so it carries all three annotations: the
-// background service (only this class, BatterySampler and BatteryLog are
-// loaded there), the glance (plus BatteryGlance and BatteryModel) and the
+// background service (only this class, BatterySampler, BatteryLog and
+// BatteryCharge are loaded there), the glance (plus BatteryGlance and BatteryModel) and the
 // full app.
 (:background, :glance)
 class BatteryApp extends Application.AppBase {

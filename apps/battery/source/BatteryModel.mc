@@ -16,6 +16,11 @@ class BatterySummary {
     var dayStarts as Array<Number> = new [BatteryModel.DAYS] as Array<Number>; // local midnight of each day, Unix seconds
     var levels as Array<Number> = [] as Array<Number>;   // sparkline points, oldest first
     var watchDays as Float? = null;          // the watch's own estimate, the fallback
+    var charging as Boolean = false;         // on the charger
+    var full as Boolean = false;             // and full
+    var toFull as Number? = null;            // seconds until it is; null until a charge speed is known
+    var fullAt as Number? = null;            // when that is, Unix seconds
+    var perHour as Float? = null;            // percent an hour the charger adds at this level
 
     function initialize() {
     }
@@ -31,6 +36,31 @@ module BatteryModel {
     const MIN_SPAN = 3 * 3600;       // with no complete day yet, this much history gives a rough pace
     const HEAVY = 1.5;               // a day this many times the pace is highlighted
     const SPARK_POINTS = 28;
+
+    // The summary right now: the log's, with the charger's part
+    function current() as BatterySummary {
+        var now = Time.now().value();
+        var reading = BatteryCharge.reading();
+        var s = summarize(BatteryLog.samples(), now, BatteryLog.currentLevel());
+        plugIn(s, now, reading[0], reading[1], BatteryCharge.profile());
+        return s;
+    }
+
+    // What the charger adds to a summary: at `level` percent, with the
+    // charge speeds learnt so far (BatteryCharge)
+    function plugIn(s as BatterySummary, now as Number, level as Float, charging as Boolean, bands as Array<Float>) as Void {
+        s.charging = charging;
+        if (!charging) {
+            return;
+        }
+        s.full = level >= BatteryCharge.FULL;
+        s.perHour = BatteryCharge.perHour(bands, level);
+        var seconds = BatteryCharge.secondsTo(bands, level, 100.0);
+        if (seconds != null && !s.full) {
+            s.toFull = seconds;
+            s.fullAt = now + seconds;
+        }
+    }
 
     // The summary for the log at `now` (Unix seconds) with the battery at `level` percent
     function summarize(log as Array<Number>, now as Number, level as Number) as BatterySummary {

@@ -27,13 +27,15 @@ module BatteryLog {
     }
 
     // The sample build's log (sample.jungle), for the store screenshot: seven
-    // and a half days of readings every half hour, about 12 % a day, a
-    // charge to full three days ago, ending near 58 %. Normal builds leave
-    // it out.
+    // and a half days of readings every half hour, about 12 % a day, twice
+    // that the day before yesterday, a charge to full three days ago.
+    // Normal builds leave it out.
     (:sample)
     function samples() as Array<Number> {
         var now = Time.now().value();
         var steps = 7 * 48 + 24;
+        var clock = System.getClockTime();
+        var heavyDay = now - (clock.hour * 3600 + clock.min * 60 + clock.sec) - 2 * 86400;
         var out = new [steps * STRIDE] as Array<Number>;
         var level = 92.0;
         for (var i = 0; i < steps; i++) {
@@ -43,7 +45,8 @@ module BatteryLog {
             if (charging) {
                 level = (level + 14.0 < 100.0) ? level + 14.0 : 100.0;
             } else {
-                level -= (hour >= 23 || hour < 7) ? 0.12 : ((hour >= 17 && hour < 19) ? 0.55 : 0.26);
+                var drain = (hour >= 23 || hour < 7) ? 0.12 : ((hour >= 17 && hour < 19) ? 0.55 : 0.26);
+                level -= (t >= heavyDay && t < heavyDay + 86400) ? 2 * drain : drain;
             }
             out[i * STRIDE] = t;
             out[i * STRIDE + 1] = (level + 0.5).toNumber();
@@ -71,14 +74,14 @@ module BatteryLog {
 
     // Append the battery level right now; returns the number of samples
     function recordNow() as Number {
-        var stats = System.getSystemStats();
-        record(Time.now().value(), currentLevel(), stats.charging);
+        var now = BatteryCharge.reading();
+        record(Time.now().value(), (now[0] + 0.5).toNumber(), now[1]);
         return count();
     }
 
     // The battery as a whole percent
     function currentLevel() as Number {
-        return (System.getSystemStats().battery + 0.5).toNumber();
+        return (BatteryCharge.reading()[0] + 0.5).toNumber();
     }
 
     function clear() as Void {

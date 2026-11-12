@@ -86,10 +86,12 @@ function testModelHeavyDay(logger as Logger) as Boolean {
     var heavy = BatteryModel.heavyDay(s);
     logger.debug("drains " + s.drains + " heavy " + heavy);
     Test.assertMessage(heavy != null && heavy == 4, "two days ago is the heavy day: " + heavy);
-    var line = BatteryText.paceLine(s, heavy, 2.0);
+    Test.assertEqualMessage(BatteryText.paceLine(s), "pace -10%/day", "the pace line");
+    var line = BatteryText.heavyLine(s, heavy, 2.0);
     logger.debug(line);
-    Test.assertMessage(line.find("pace -10%/day") == 0, "pace line starts with the pace: " + line);
+    Test.assertMessage(line.find(" -19%") != null, "the heavy day's drain: " + line);
     Test.assertMessage(line.find("2h activity") != null, "activity hours are mentioned: " + line);
+    Test.assertEqualMessage(BatteryText.heavyLine(s, null, 0.0), "", "no heavy day, no line");
     return true;
 }
 
@@ -171,6 +173,86 @@ function testSamplerRecords(logger as Logger) as Boolean {
 }
 
 (:test)
+function testChargeLearning(logger as Logger) as Boolean {
+    var bands = BatteryCharge.blank();
+    Test.assertMessage(BatteryCharge.secondsTo(bands, 20.0, 100.0) == null, "nothing learnt, no estimate");
+    Test.assertMessage(BatteryCharge.perHour(bands, 20.0) == null, "nor a speed");
+
+    // 20 % to 30 % in ten minutes: 60 s a percent in that band, and every
+    // other band borrows it
+    bands = BatteryCharge.learn(bands, 20.0, 30.0, 600);
+    Test.assertEqualMessage(bands[2], 60.0, "the band charged through");
+    Test.assertEqualMessage(bands[1], 0.0, "the band below is untouched");
+    Test.assertEqualMessage(bands[3], 0.0, "the band above is untouched");
+    Test.assertMessage(BatteryCharge.secondsTo(bands, 25.0, 100.0) == 75 * 60, "75 % at the one known speed");
+    Test.assertMessage(BatteryCharge.perHour(bands, 64.0) == 60.0, "60 % an hour");
+    Test.assertMessage(BatteryCharge.secondsTo(bands, 100.0, 100.0) == 0, "full already");
+
+    // The top band is slower: the estimate uses each band's own speed, and
+    // the bands between take the nearer one's
+    bands = BatteryCharge.learn(bands, 90.0, 100.0, 1800);
+    Test.assertEqualMessage(bands[9], 180.0, "the last tenth");
+    Test.assertMessage(BatteryCharge.secondsTo(bands, 85.0, 100.0) == 5 * 180 + 10 * 180, "85 % borrows from the band above");
+    Test.assertMessage(BatteryCharge.secondsTo(bands, 35.0, 40.0) == 5 * 60, "35 % borrows from the band below");
+
+    // A pair across two bands is shared between them, and a band seen again
+    // moves part of the way: 5 % of each at 120 s a percent
+    bands = BatteryCharge.learn(BatteryCharge.learn(BatteryCharge.blank(), 20.0, 40.0, 1200), 25.0, 35.0, 1200);
+    Test.assertEqualMessage(bands[2], 60.0 + 60.0 * BatteryCharge.WEIGHT * 0.5, "half a band moves it a quarter of the way");
+    Test.assertEqualMessage(bands[3], bands[2], "both bands alike");
+
+    // Nonsense teaches nothing: a fall, no time, a clock change
+    var before = bands[2];
+    bands = BatteryCharge.learn(bands, 28.0, 22.0, 600);
+    bands = BatteryCharge.learn(bands, 22.0, 28.0, 0);
+    bands = BatteryCharge.learn(bands, 22.0, 28.0, 3);
+    Test.assertEqualMessage(bands[2], before, "unchanged");
+    return true;
+}
+
+(:test)
+function testChargeObserved(logger as Logger) as Boolean {
+    BatteryCharge.clear();
+    var t = 1000000;
+    BatteryCharge.observe(t, 40.0, true);
+    Test.assertMessage(BatteryCharge.secondsTo(BatteryCharge.profile(), 40.0, 100.0) == null, "one reading is not a speed");
+    BatteryCharge.observe(t + 30, 40.4, true);     // too small a gain: keep measuring from the first
+    BatteryCharge.observe(t + 120, 42.0, true);    // 2 % in 120 s
+    var bands = BatteryCharge.profile();
+    Test.assertEqualMessage(bands[4], 60.0, "60 s a percent from the first reading to the third");
+    BatteryCharge.observe(t + 3600, 80.0, true);   // too long a gap: not measured across
+    Test.assertEqualMessage(BatteryCharge.profile()[7], 0.0, "nothing learnt across the gap");
+    BatteryCharge.observe(t + 3900, 85.0, true);
+    Test.assertEqualMessage(BatteryCharge.profile()[8], 60.0, "measuring again after it");
+    BatteryCharge.observe(t + 4000, 85.0, false);  // unplugged
+    BatteryCharge.observe(t + 4100, 90.0, true);   // and back: a new start
+    Test.assertEqualMessage(BatteryCharge.profile()[8], 60.0, "nothing learnt across the unplugging");
+
+    // On the charger the summary counts down to full
+    var s = BatteryModel.summarize([] as Array<Number>, t, 85);
+    BatteryModel.plugIn(s, t, 85.0, true, BatteryCharge.profile());
+    Test.assertMessage(s.charging && !s.full, "charging");
+    Test.assertMessage(s.toFull == 15 * 60, "15 % at 60 s each");
+    Test.assertMessage(s.fullAt == t + 15 * 60, "and when");
+    Test.assertEqualMessage(BatteryText.headline(s), "15m to full", "the headline");
+    Test.assertEqualMessage(BatteryText.title(s, "BATTERY"), "CHARGING 85%", "the title");
+    Test.assertEqualMessage(BatteryText.speedLine(s), "+60% an hour", "the speed");
+    s = BatteryModel.summarize([] as Array<Number>, t, 100);
+    BatteryModel.plugIn(s, t, 100.0, true, BatteryCharge.profile());
+    Test.assertMessage(s.full && s.toFull == null, "full");
+    Test.assertEqualMessage(BatteryText.headline(s), "Full", "the headline when full");
+    s = BatteryModel.summarize([] as Array<Number>, t, 85);
+    BatteryModel.plugIn(s, t, 85.0, true, BatteryCharge.blank());
+    Test.assertEqualMessage(BatteryText.headline(s), "Charging", "no speed yet");
+    BatteryModel.plugIn(s, t, 85.0, false, BatteryCharge.profile());
+    Test.assertEqualMessage(BatteryText.title(s, "BATTERY"), "BATTERY", "off the charger");
+
+    BatteryCharge.observe(t + 5000, 90.0, false);  // back to the half-hourly samples
+    BatteryCharge.clear();
+    return true;
+}
+
+(:test)
 function testGlanceAndAppDraw(logger as Logger) as Boolean {
     var settings = System.getDeviceSettings();
     var w = settings.screenWidth;
@@ -198,6 +280,22 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     new BatteryDelegate(view).onSelect();
     view.onUpdate(screen);
     Test.assertEqualMessage(BatteryLog.count(), BatteryTestData.syntheticLog(now, 11).size() / 3 + 1, "select logged a sample");
+
+    // On the charger: timing it, counting down, full; with and without a pace
+    var logs = [BatteryTestData.syntheticLog(now, 11), [] as Array<Number>];
+    var levels = [64.0, 64.0, 100.0];
+    var speeds = [BatteryCharge.blank(), BatteryCharge.learn(BatteryCharge.blank(), 0.0, 100.0, 5400), BatteryCharge.blank()];
+    for (var i = 0; i < logs.size(); i++) {
+        for (var j = 0; j < levels.size(); j++) {
+            var s = BatteryModel.summarize(logs[i], now, levels[j].toNumber());
+            BatteryModel.plugIn(s, now, levels[j], true, speeds[j]);
+            glance.show(s);
+            glance.onUpdate(glanceDc);
+            view.show(s);
+            view.onUpdate(screen);
+        }
+    }
+    view.onHide();
 
     var stats = System.getSystemStats();
     logger.debug("memory: " + stats.usedMemory + " of " + stats.totalMemory + " bytes used");
