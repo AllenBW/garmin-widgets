@@ -28,6 +28,13 @@ LOOKS = {
     "ember": dict(data=0xE6CFA0, sun=0xFF5A36, wx=0xE8D44A, body=0xFF5C9E, s=.86, t=.70),
     "orchard": dict(data=0xF2ECE2, sun=0x8CE03C, wx=0x2EE6B0, body=0xE8D44A, s=.86, t=.70),
     "dusk": dict(data=0xF8D2D8, sun=0xA77BFF, wx=0x38A8FF, body=0xFF5C9E, s=.86, t=.70),
+    # the muted weeks' sets (Lib.Numbers.MUTED; the fifth is low light)
+    "sage": dict(data=0xE3E0D0, sun=0xD9A15C, wx=0x8DB08A, body=0xC48A80, s=.86, t=.70),
+    "smoke": dict(data=0xDED6CC, sun=0xE39B5B, wx=0x9AA7BF, body=0xB98AA6, s=.86, t=.70),
+    "umber": dict(data=0xE3CFB2, sun=0xC8843C, wx=0x7E9A9E, body=0xA86B73, s=.86, t=.70),
+    "slate": dict(data=0xDCE0E2, sun=0xD8A26A, wx=0x6F9CC4, body=0xBF8697, s=.86, t=.70),
+    "clay": dict(data=0xEADBC8, sun=0xE0894A, wx=0x86A9A3, body=0xB87A8F, s=.86, t=.70),
+    "ochre": dict(data=0xE8DFC9, sun=0xD4A548, wx=0x7C9CB5, body=0xBD7F8C, s=.86, t=.70),
 }
 SAMPLES = {
     "day": dict(time="14:38", hh="14", mm="38", sun="19:22", count="4:44", temp="46°", hr="72", hi="52", lo="38",
