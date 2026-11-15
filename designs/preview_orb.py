@@ -7,6 +7,12 @@ toward the limb with cos(angle).
 
     python3 -I designs/preview_orb.py out.png [day|night|widest|empty|short] [standby] [turn|drum] [look=yours|orange|...] [w=454]
     python3 -I designs/preview_orb.py --check
+    python3 -I designs/preview_orb.py --motion out.gif [away|minute|heart] [look=...]
+
+`--motion` draws a move from the readings of a moment before, a frame every
+50 ms, as OrbBand.frame plays it: a band turns half a revolution when at
+least half its characters changed (or a reading changed its length), else
+each changed digit turns as a drum, units first.
 
 `turn` draws the heart rate's band half way through a turn from the readings
 of seven minutes before, `drum` the time's last digit half way round. Prints
@@ -189,6 +195,95 @@ def awake(d, lk, motion=None):
     return im.resize((W, W), Image.LANCZOS)
 
 
+# ---------------------------------------------------------------- the motion (OrbMoves, OrbBand.frame)
+
+DRUM, DRUM_STEP, DRUM_BAND = 500, 70, 50             # OrbView's
+TURN, TURN_GROW, TURN_STEP = 850, 140, 90
+PUSH, SETTLE, BACK = 70, 500, 0.025                  # Lib.Motion's
+
+# What changed since you last looked: (was, now), as OrbView.demo's
+BASE = SAMPLES["day"]
+SCENES = {
+    "away": (dict(BASE, time="14:31", count="4:51", charge="88%", hr="88", steps="5980", bat="83", temp="45°"), BASE),
+    "minute": (dict(BASE, time="14:37", count="4:45"), BASE),
+    "heart": (dict(BASE, hr="70"), BASE),
+}
+
+
+def ease(t, dur, fall, amp):
+    """Lib.Motion.ease"""
+    if t <= 0:
+        return 0.0
+    if t < PUSH:
+        return -BACK * math.sin(math.pi * t / PUSH)
+    x = (t - PUSH) / dur
+    if x < 1:
+        if fall:
+            return x * x
+        return 4 * x ** 3 if x < 0.5 else 1 - (2 - 2 * x) ** 3 / 2
+    y = (t - PUSH - dur) / 1000
+    if y * 1000 >= SETTLE:
+        return 1.0
+    return 1 - amp * math.exp(-y * 10) * abs(math.sin(y * math.pi / 0.12))
+
+
+def plan(was, now):
+    """per band, as OrbMoves.mode and OrbBand.plan: ("turn", start, dur),
+    ("drums", start, [delay or -1 per character]) or None"""
+    out = []
+    for i, (a, b) in enumerate(zip(bands(was), bands(now))):
+        old, new = [s[0] for s in a.segs], [s[0] for s in b.segs]
+        if old == new:
+            out.append(None)
+            continue
+        moved = [x != y for p, q in zip(old, new) for x, y in zip(p, q)]
+        if [len(s) for s in old] != [len(s) for s in new] or 2 * sum(moved) >= len(moved):
+            out.append(("turn", i * TURN_STEP, TURN + TURN_GROW * abs(i - 2)))
+            continue
+        delays, right = [-1] * len(moved), 0
+        for k in range(len(moved) - 1, -1, -1):
+            if moved[k]:
+                delays[k], right = right * DRUM_STEP, right + 1
+        out.append(("drums", i * DRUM_BAND, delays))
+    return out
+
+
+def moving(was, now, lk, t, p=None):
+    """the face `t` ms into the move from `was` to `now`"""
+    p = p or plan(was, now)
+    size = W * SS
+    im = Image.new("RGB", (size, size))
+    dr = ImageDraw.Draw(im)
+    for b, o, m in zip(bands(now), bands(was), p):
+        if m and m[0] == "turn" and t - m[1] < PUSH + m[2] + SETTLE:
+            rot = math.pi * ease(t - m[1], m[2], False, 0.03)
+            draw_band(dr, o, lk, 0.0, rot)
+            draw_band(dr, b, lk, math.pi, rot)
+        elif m and m[0] == "drums":
+            for it, ot, d in zip(b.items, o.items, m[2]):
+                e = t - m[1] - d
+                if d < 0 or e >= PUSH + DRUM + SETTLE:
+                    draw_band_item(dr, b, it, lk)
+                else:
+                    draw_drum(dr, b, it, ot, math.pi * ease(e, DRUM, False, 0.04), lk)
+        else:
+            draw_band(dr, b, lk)
+    return im.resize((W, W), Image.LANCZOS)
+
+
+def motion(out, scene, lk):
+    """frames every 50 ms (the view's PERIOD) of a move, as out.gif"""
+    was, now = SCENES[scene]
+    p = plan(was, now)
+    span = max(m[1] + (m[2] if m[0] == "turn" else DRUM + max(m[2])) for m in p if m) + PUSH + SETTLE
+    frames = [moving(was, now, lk, t, p) for t in range(0, span + 50, 50)]
+    frames[0].save(out, save_all=True, append_images=frames[1:] + [frames[-1]] * 20, duration=50, loop=0)
+    print(f"{scene}: {sum(1 for m in p if m)} bands move over {span} ms; {out}")
+    for i, m in enumerate(p):
+        if m:
+            print(f"  band {i}: {m[0]} from {m[1]} ms")
+
+
 def draw_band_item(dr, b, it, lk):
     sh = b.shade(b.ang(it["u"] + it["w"] / 2))
     draw_glyph(dr, b, it, lambda uu: sine(b.ang(it["u"] + uu)), color(lk, it, sh), SS)
@@ -295,6 +390,10 @@ def check():
 if __name__ == "__main__":
     if "--check" in sys.argv:
         check()
+    elif "--motion" in sys.argv:
+        args = [a for a in sys.argv[1:] if a != "--motion"]
+        motion(args[0], next((a for a in args[1:] if a in SCENES), "away"),
+               next((LOOKS[a[5:]] for a in args if a.startswith("look=")), LOOKS["yours"]))
     else:
         out = sys.argv[1]
         words = sys.argv[2:]
