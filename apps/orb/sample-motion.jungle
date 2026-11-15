@@ -1,0 +1,4 @@
+# Sample readings, a wake every few seconds and each motion's cost logged,
+# for a real simulator run (see monkey.jungle and OrbView.demo):
+#   CIQ_JUNGLE="monkey.jungle;sample-motion.jungle" scripts/build.sh orb <device>
+base.excludeAnnotations = live;still

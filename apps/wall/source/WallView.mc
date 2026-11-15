@@ -73,6 +73,7 @@ class WallView extends WatchUi.WatchFace {
     private var _stream as Array<Number> = [0] as Array<Number>;
     private var _colors as Lib.Numbers.Colors = Lib.Numbers.colors(Lib.Look.YOURS);
     private var _look as Number = Lib.Look.YOURS;
+    private var _day as Number = 0;           // the daily look's day
     private var _minute as Number = -1;
     private var _hour as Number = -1;
     private var _awake as Boolean = true;
@@ -100,6 +101,7 @@ class WallView extends WatchUi.WatchFace {
     function reloadSettings() as Void {
         _look = Lib.Look.mode();
         _colors = Lib.Numbers.colors(_look);
+        _day = Lib.Look.today();
         _minute = -1;
         _hour = -1;
         _baseRow = 0;
@@ -228,6 +230,9 @@ class WallView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();     // a new day, and on a Monday perhaps a muted week
+        }
         refresh();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -259,7 +264,7 @@ class WallView extends WatchUi.WatchFace {
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
             dc.drawText(_w / 2.0, _w / 2.0,
                         Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
-                        Lib.Look.title(_look, Lib.Numbers.NAMES), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+                        Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 

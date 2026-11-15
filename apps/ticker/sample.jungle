@@ -1,0 +1,2 @@
+# Sample readings in place of the live ones, the face at rest (see monkey.jungle)
+base.excludeAnnotations = live;wake;standby

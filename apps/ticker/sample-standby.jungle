@@ -1,0 +1,3 @@
+# Sample readings held in low power mode: the standby look, which the
+# simulator cannot be put into from a script (see monkey.jungle)
+base.excludeAnnotations = live;wake;lit

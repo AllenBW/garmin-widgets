@@ -1,0 +1,3 @@
+# Sample readings, last looked at seven minutes ago: the face runs the wake
+# on load, then steps a minute each minute (see monkey.jungle)
+base.excludeAnnotations = live;rested;standby

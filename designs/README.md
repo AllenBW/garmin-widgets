@@ -34,5 +34,8 @@ one, are not part of this repository.
 | 22 | Wall | Watch face | A wall of small digits; the time is where they light up; a band of readings across the middle |
 | 23 | Lockup | Watch face | Rows of numbers reaching the bezel all the way round, in numerals of its own, coloured by family |
 | 24 | Clack | Watch face | A split-flap clock with no case: four leaves that flip as the mechanism does, an amber lamp after sunset |
+| 25 | Ticker | Watch face | The time as a tape of minutes that runs through the ones you missed, two thin tapes of readings that turn to whatever changed |
+| 26 | Shuttle | Watch face | Lockup's rows of numbers, each digit that changed sliding sideways in its own slot |
+| 27 | Orb | Watch face | Lockup's rows printed round a globe: a digit that changed turns like a small globe, a row that mostly changed turns its band |
 
 Dropped along the way: 9, Pocket QR (QR codes from the phone).

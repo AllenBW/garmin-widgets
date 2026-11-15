@@ -44,6 +44,7 @@ class LockupView extends WatchUi.WatchFace {
 
     private var _colors as Lib.Numbers.Colors = Lib.Numbers.colors(Lib.Look.YOURS);
     private var _look as Number = Lib.Look.YOURS;
+    private var _day as Number = 0;           // the daily look's day
     private var _rolling as Boolean = true;
     private var _minute as Number = -1;
     private var _second as Number = -1;
@@ -58,6 +59,7 @@ class LockupView extends WatchUi.WatchFace {
     private var _useTimer as Boolean = true;
 
     private var _ref as Graphics.BufferedBitmapReference? = null;
+    private var _bitmap as Graphics.BufferedBitmap? = null;
     private var _timer as Timer.Timer? = null;
     private var _ticking as Boolean = false;
 
@@ -75,6 +77,7 @@ class LockupView extends WatchUi.WatchFace {
     function reloadSettings() as Void {
         _look = Lib.Look.mode();
         _colors = Lib.Numbers.colors(_look);
+        _day = Lib.Look.today();
         _rolling = setting("RollingDigits", true);
         _minute = -1;
         build();
@@ -340,6 +343,9 @@ class LockupView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();     // a new day, and on a Monday perhaps a muted week
+        }
         refresh();
         var thin = !_awake && _burnIn;
         if (thin) {
@@ -375,38 +381,41 @@ class LockupView extends WatchUi.WatchFace {
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
             dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09,
                         Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
-                        Lib.Look.title(_look, Lib.Numbers.NAMES), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+                        Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
         schedule();
     }
 
-    // The face's bitmap, from the graphics pool, which can take it back at any
-    // time; the rows are then all drawn again. Null without one.
+    // The face's bitmap, from the graphics pool, made once and held. The pool
+    // purges a bitmap that nothing holds, and get() then makes a new blank
+    // one rather than returning null: holding only the reference left a face
+    // showing just the readings that changed since (the heart rate, then the
+    // time). Null without one; the rows are then all drawn each update.
     private function canvas(dc as Dc) as Graphics.BufferedBitmap? {
-        if (!(Graphics has :createBufferedBitmap)) {
-            return null;
+        var bitmap = _bitmap;
+        if (bitmap != null || !(Graphics has :createBufferedBitmap)) {
+            return bitmap;
         }
-        var bitmap = null;
-        var ref = _ref;
-        if (ref != null) {
-            bitmap = ref.get();
-        }
-        if (bitmap == null) {
-            try {
+        try {
+            var ref = _ref;
+            if (ref == null) {
                 ref = Graphics.createBufferedBitmap({:width => dc.getWidth(), :height => dc.getHeight()});
                 _ref = ref;
-                bitmap = ref.get();
-            } catch (e) {
-                bitmap = null;
             }
-            if (bitmap != null) {
-                var b = (bitmap as Graphics.BufferedBitmap).getDc();
-                b.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-                b.clear();
-            }
-            dirtyAll();
+            bitmap = ref.get() as Graphics.BufferedBitmap?;
+        } catch (e) {
+            bitmap = null;
         }
-        return bitmap as Graphics.BufferedBitmap?;
+        if (bitmap != null) {
+            var b = bitmap.getDc();
+            b.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            b.clear();
+        } else {
+            _ref = null;    // no room in the pool; try again next update
+        }
+        _bitmap = bitmap;
+        dirtyAll();
+        return bitmap;
     }
 
     // The rows that need it, up to BUDGET digits an update: a wake where

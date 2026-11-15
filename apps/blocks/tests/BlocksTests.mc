@@ -144,6 +144,14 @@ function testNumbersColors(logger as Logger) as Boolean {
     Test.assertMessage(Lib.Numbers.colors(Lib.Look.BRIGHT).fluorescent, "high visibility");
     Test.assertMessage(!Lib.Numbers.colors(Lib.Look.LOW).fluorescent, "low light");
     Test.assertEqualMessage(Lib.Numbers.PERSONAS.size(), Lib.Numbers.NAMES.size(), "a name per persona");
+    Test.assertEqualMessage(Lib.Numbers.MUTED.size(), Lib.Numbers.PERSONAS.size(), "a muted persona for each day");
+    Test.assertEqualMessage(Lib.Numbers.MUTED_NAMES.size(), Lib.Numbers.MUTED.size(), "a name per muted persona");
+    Test.assertEqualMessage(Lib.Numbers.MUTED_NAMES[Lib.Look.dayOf(20773, 7)], "LOW LIGHT", "a muted week opens on Low light");
+    Test.assertMessage(Lib.Numbers.mutedOn(20766, true), "Monday 9 November 2026: muted");
+    Test.assertMessage(Lib.Numbers.mutedOn(20772, true), "Sunday 15 November: still muted");
+    Test.assertMessage(!Lib.Numbers.mutedOn(20773, true), "Monday 16 November: bright again");
+    Test.assertMessage(Lib.Numbers.mutedOn(20780, true), "Monday 23 November: muted");
+    Test.assertMessage(!Lib.Numbers.mutedOn(20766, false), "the setting off: never muted");
     Test.assertEqualMessage(Lib.Numbers.scale(0xFF8040, 0.5), 0x7F4020, "half");
     return true;
 }

@@ -7,7 +7,8 @@
         (fmt, solar and location are also glance-safe: see CLAUDE.md;
         cues draws the button cues at Garmin's hint angles; slots, icons,
         config and ink are the readings, icons, settings and digit ink the
-        Vessel, Inscription and Overlap faces share)
+        Vessel, Inscription and Overlap faces share; motion is how a number
+        arrives on Ticker, Shuttle and Orb)
         and declare <iq:depends name="Lib" version="0.1.0"/> in their manifest.
     -->
     <iq:barrel id="01cb49eb9f324410940f13009c6aee5b" module="Lib" version="0.1.0" minApiLevel="5.0.0">

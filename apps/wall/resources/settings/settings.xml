@@ -9,4 +9,7 @@
             <listEntry value="3">@Strings.LookDaily</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.MutedWeeks" title="@Strings.MutedTitle">
+        <settingConfig type="boolean"/>
+    </setting>
 </settings>

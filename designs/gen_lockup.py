@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Generate apps/lockup/source/Digits.mc: Lockup's own block numerals.
+"""Generate Digits.mc: Lockup's own block numerals, for every face that uses
+them (Lockup, and Ticker, Shuttle and Orb, designs #25 to #27).
 
 A digit is a block a thousand units tall, with slits cut out of it; its width
 is a share of the row's and its height the row's. Weights differ only in how
@@ -12,7 +13,8 @@ Regenerate rather than edit the output.
 """
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent.parent / "apps/lockup/source/Digits.mc"
+APPS = Path(__file__).resolve().parent.parent / "apps"
+FACES = ("lockup", "ticker", "shuttle", "orb")                 # each app that draws these numerals
 WEIGHTS = {"BLACK": (0.36, 0.25), "REGULAR": (0.23, 0.16)}   # stem and bar thickness, as shares of the block
 CHARS = "0123456789:/°-%"
 E = 0.03                                                     # a cut runs this far past the block, so no sliver is left
@@ -102,8 +104,12 @@ def main():
               "        if (n == 45) { return 13; }",
               "        if (n == 37) { return 14; }",
               "        return -1;", "    }", "}", ""]
-    OUT.write_text("\n".join(lines), encoding="utf8")
-    print(OUT)
+    for face in FACES:
+        if (APPS / face).is_dir():
+            out = APPS / face / "source" / "Digits.mc"
+            out.parent.mkdir(exist_ok=True)
+            out.write_text("\n".join(lines), encoding="utf8")
+            print(out)
 
 
 if __name__ == "__main__":

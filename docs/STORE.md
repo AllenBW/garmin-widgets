@@ -181,7 +181,7 @@ open it. To change the look, press and hold the time (the big numbers). Each
 hold moves to the next look and shows its name for a moment: your own
 colours, high visibility in orange, then blue, then green, low light for a
 dark room, a new look each day, and back to your own. The Look setting in
-the phone app picks one too. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the numbers as outlines and
+the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the numbers as outlines and
 shifts each minute.
 
 **Wall** (Watch face). A wall of small digits, all taken from your readings,
@@ -201,7 +201,7 @@ through it. Press and hold a reading to open it. To change the look, press
 and hold the time (the big numbers). Each hold moves to the next look and
 shows its name for a moment: your own colours, high visibility in orange,
 then blue, then green, low light for a dark room, a new look each day, and
-back to your own. The Look setting in the phone app picks one too. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that keeps
+back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that keeps
 only the digits along the edges of the time.
 
 **Lockup** (Watch face). Rows of numbers stacked like a wood-type poster,
@@ -225,7 +225,7 @@ turns that off. Press and hold a reading to open it. To change the look,
 press and hold the time (the big numbers). Each hold moves to the next look
 and shows its name for a moment: your own colours, high visibility in
 orange, then blue, then green, low light for a dark room, a new look each
-day, and back to your own. The Look setting in the phone app picks one too.
+day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
 that draws the date, the sun, the time and the temperature as outlines and
 shifts each minute.
@@ -242,6 +242,91 @@ zoomed view where the bezel cuts the leaves, in League Gothic, Antonio,
 Bebas Neue or Roboto; press and hold the face to step to the next. The date
 on a leaf or under them, 12- or 24-hour with the AM/PM flag. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the
 digits as outlines and shifts each minute.
+
+**Ticker** (Watch face). The time as a tape of minutes across the middle,
+in block numerals, with the minute before it just showing at the edge.
+Raise your wrist and the minutes you missed run past, then the tape stops
+on now. A thin tape of readings runs above and below, the one in the
+middle bright. When a reading has changed since you last looked, its tape
+turns to it and only the digits that changed slide into place; if nothing
+changed, nothing moves. No labels: the key image among the screenshots
+names every number; here it is in words.
+
+The time across the middle, 24-hour.
+The top tape: the date as month/day, the next sunset or sunrise, the time
+  left until it, and the watch's battery.
+The bottom tape: your heart rate, steps and Body Battery, then the
+  temperature, today's high and today's low.
+
+The colours group the numbers by what they are about: white for the time
+and date, amber for the sun, blue for the weather, rose for your body.
+Learn the four and the face reads at a glance with no labels at all.
+
+"Moving tapes" in the phone app turns the motion off. Press and hold the
+reading in the middle of a tape to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
+and shows its name for a moment: your own colours, high visibility in
+orange, then blue, then green, low light for a dark room, a new look each
+day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
+that draws the time and two readings as outlines and shifts each
+minute.
+
+**Shuttle** (Watch face). Rows of numbers stacked like a wood-type poster,
+reaching the edge of the screen all the way round, in block numerals whose
+end digits bend to follow the circle. When a number has changed since you
+last looked, only its changed digits move: each slides sideways out of its
+own slot as the new one slides in behind it, units first, the rows
+alternating direction. If nothing changed, nothing moves. No labels: the
+key image among the screenshots names every number; here it is in words,
+top to bottom.
+
+The date as month/day.
+The next sunset or sunrise, with the time left until it beside it and the
+  watch's battery (the percentage) under that.
+The time across the middle.
+Your heart rate, with your steps beside it and Body Battery under them.
+Today's high, the temperature now, and today's low.
+
+The colours group the numbers by what they are about: white for the time
+and date, amber for the sun, blue for the weather, rose for your body.
+Learn the four and the face reads at a glance with no labels at all.
+
+"Sliding digits" in the phone app turns the motion off. Press and hold a
+reading to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
+and shows its name for a moment: your own colours, high visibility in
+orange, then blue, then green, low light for a dark room, a new look each
+day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
+that draws the date, the sun, the time and the temperature as outlines and
+shifts each minute.
+
+**Orb** (Watch face). Rows of numbers printed round a globe, crowding and
+dimming toward its edge. When a number has changed since you last looked,
+each changed digit turns like a small globe of its own, the new number
+coming round from behind; when most of a row has changed, the whole row
+turns, each at its own pace. If nothing changed, nothing moves. No labels:
+the key image among the screenshots names every number; here it is in
+words, top to bottom.
+
+The date as month/day.
+The next sunset or sunrise, the time left until it, and the watch's
+  battery.
+The time across the middle.
+Your heart rate, steps and Body Battery.
+Today's high, the temperature now, and today's low.
+
+The colours group the numbers by what they are about: white for the time
+and date, amber for the sun, blue for the weather, rose for your body.
+Learn the four and the face reads at a glance with no labels at all.
+
+"Turning digits" in the phone app turns the motion off. Press and hold a
+reading to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
+and shows its name for a moment: your own colours, high visibility in
+orange, then blue, then green, low light for a dark room, a new look each
+day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
+that draws the date, the sun, the time and the temperature as outlines, the
+globe turning a little each minute.
 
 **Battery Planner** (Widget). Tells you when to charge, and how long the
 charge will take. It records the battery every half hour in the

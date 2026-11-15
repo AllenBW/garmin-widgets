@@ -1,4 +1,5 @@
-"""The key images for the faces made of numbers (Blocks, Wall, Lockup): the
+"""The key images for the faces made of numbers (Blocks, Wall, Lockup, Ticker,
+Shuttle, Orb): the
 store screenshot with every reading named, as the 1440 x 720 hero the
 Connect IQ phone app shows at the top of a listing and as a square screen
 image. Reads docs/store/<face>-screen.jpg; needs Pillow (a venv) and the
@@ -168,7 +169,42 @@ WALL = [
 WALL_BAND = [("date", N, 0.027, 0.283), ("next sunset or sunrise", SU, 0.296, 0.531), ("time until it", SU, 0.543, 0.719),
              ("temperature", WX, 0.730, 0.854), ("heart rate", BO, 0.866, 0.973)]
 
-TAGS = {"blocks": "what each number is", "wall": "what each number is", "lockup": "what each number is"}
+# Ticker (design #25): the tapes at rest, the sun above and the temperature below
+TICKER = [
+    dict(text="date, month/day", color=N, anchor=(0.090, 0.214), side="L"),
+    dict(text="the minute before", color=N, anchor=(0.012, 0.420), side="L"),
+    dict(text="time, 24-hour", color=N, anchor=(0.095, 0.560), side="L"),
+    dict(text="Body Battery", color=BO, anchor=(0.154, 0.784), side="L"),
+    dict(text="temperature", color=WX, anchor=(0.430, 0.828), side="L"),
+    dict(text="next sunset or sunrise", color=SU, anchor=(0.623, 0.170), side="R"),
+    dict(text="time until it", color=SU, anchor=(0.890, 0.214), side="R"),
+    dict(text="today's high", color=WX, anchor=(0.850, 0.784), side="R"),
+]
+
+# Shuttle (design #26) is Lockup's layout
+SHUTTLE = LOCKUP
+
+# Orb (design #27): Lockup's readings in five bands round a globe
+ORB = [
+    dict(text="date, month/day", color=N, anchor=(0.200, 0.090), side="L"),
+    dict(text="next sunset or sunrise", color=SU, anchor=(0.084, 0.218), side="L"),
+    dict(text="time", color=N, anchor=(0.037, 0.437), side="L"),
+    dict(text="heart rate", color=BO, anchor=(0.046, 0.660), side="L"),
+    dict(text="today's high", color=WX, anchor=(0.101, 0.800), side="L"),
+    dict(text="temperature", color=WX, anchor=(0.440, 0.940), side="L"),
+    dict(text="time until it", color=SU, anchor=(0.660, 0.155), side="R"),
+    dict(text="watch battery", color=N, anchor=(0.916, 0.218), side="R"),
+    dict(text="steps", color=BO, anchor=(0.580, 0.581), side="R"),
+    dict(text="Body Battery", color=BO, anchor=(0.954, 0.660), side="R"),
+    dict(text="today's low", color=WX, anchor=(0.899, 0.800), side="R"),
+]
+
+TAGS = {"blocks": "what each number is", "wall": "what each number is", "lockup": "what each number is",
+        "ticker": "what each number is", "shuttle": "what each number is", "orb": "what each number is"}
+
+# A line under the title, for a face whose numbers move about
+NOTES = {"ticker": "the tapes turn to whatever changed: above, the date, the sun, the time until it and the battery;"
+                   " below, heart rate, steps, Body Battery, the temperature, today's high and low"}
 
 
 def wall_strip(pg, x, y, w, labels_above, labels_below, fnt):
@@ -209,6 +245,9 @@ def hero(name, items, out):
     else:
         pg.face(name, 720, 360, 600)
         title(pg, name, TAGS[name], 48, 40)
+        if name in NOTES:
+            for n, line in enumerate(wrap(pg, NOTES[name], font(REG, 23), 1344)):
+                pg.text(line, 48, 590 + n * 28, font(REG, 23), GREY)
         callouts(pg, items, font(REG, 34), 400, 1040, 175, 690, 14)
         legend(pg, 48, 672)
     pg.save(out)
@@ -226,6 +265,9 @@ def square(name, items, out):
                 500, 700 + h + 86, font(REG, 24), GREY, anchor="mt")
     else:
         pg.face(name, 500, 530, 540)
+        if name in NOTES:
+            for n, line in enumerate(wrap(pg, NOTES[name], font(REG, 22), 904)):
+                pg.text(line, 48, 150 + n * 28, font(REG, 22), GREY)
         callouts(pg, items, font(REG, 30), 212, 788, 180, 860, 14)
     legend(pg, 48, 950, 26, 30)
     pg.save(out)
@@ -233,7 +275,11 @@ def square(name, items, out):
 
 if __name__ == "__main__":
     outdir = Path(sys.argv[1])
-    for name, items in (("blocks", BLOCKS), ("wall", WALL), ("lockup", LOCKUP)):
+    faces = (("blocks", BLOCKS), ("wall", WALL), ("lockup", LOCKUP), ("ticker", TICKER), ("shuttle", SHUTTLE), ("orb", ORB))
+    only = sys.argv[2:]
+    for name, items in faces:
+        if only and name not in only:
+            continue
         hero(name, [dict(i) for i in items], outdir / f"{name}-hero.png")
         square(name, [dict(i) for i in items], outdir / f"{name}-key.png")
         print(name)

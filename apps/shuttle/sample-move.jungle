@@ -1,0 +1,5 @@
+# Sample readings that move: every other minute the readings of seven
+# minutes before, and a heart rate that changes every four seconds, with
+# each move's frames and draw times logged (ShuttleView's measure), for a
+# watchdog run on the simulator (see monkey.jungle)
+base.excludeAnnotations = live;still

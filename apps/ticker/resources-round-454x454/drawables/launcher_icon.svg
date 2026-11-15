@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="65" height="65">
+  <!-- Ticker launcher icon: black disc, "38" in Lockup's block numerals on the minute tape, the last minute dim at the left,
+       a thin amber tape above and a thin blue one below, their neighbours dim -->
+  <circle cx="32" cy="32" r="31" fill="#000000"/>
+  <rect x="19" y="22" width="12" height="20" fill="#F2ECE2"/>
+  <rect x="18.6" y="27" width="8.1" height="2.5" fill="#000000"/>
+  <rect x="18.6" y="34.5" width="8.1" height="2.5" fill="#000000"/>
+  <rect x="33" y="22" width="12" height="20" fill="#F2ECE2"/>
+  <rect x="37.3" y="27" width="3.4" height="2.5" fill="#000000"/>
+  <rect x="37.3" y="34.5" width="3.4" height="2.5" fill="#000000"/>
+  <rect x="3" y="24" width="10" height="16" fill="#3A3836"/>
+  <rect x="10" y="13" width="10" height="5" fill="#57401A"/>
+  <rect x="25" y="13" width="14" height="5" fill="#FFB020"/>
+  <rect x="44" y="13" width="10" height="5" fill="#57401A"/>
+  <rect x="10" y="46" width="10" height="5" fill="#572036"/>
+  <rect x="25" y="46" width="14" height="5" fill="#4DB2FF"/>
+  <rect x="44" y="46" width="10" height="5" fill="#1A3D57"/>
+</svg>

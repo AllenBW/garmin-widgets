@@ -1,3 +1,4 @@
+import Toybox.Application;
 import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -40,6 +41,23 @@ module Lib {
             [Look.WHITE, Look.FLARE, 0x2EE6B0, 0xFF4F7A, 1.0, 1.0, true]
         ] as Array<Array<Number or Float or Boolean>>;
 
+        // Muted weeks (the faces' MutedWeeks setting): every other week, from
+        // Monday, the daily look is one of these instead, softer in Ember's
+        // mood and each family still its own colour. Indexed like PERSONAS by
+        // the day, so the week opens on Low light (the 1st of January 1970, day
+        // 0, was a Thursday)
+        const MUTED_KEY = "MutedWeeks";
+        const MUTED_NAMES = ["SAGE", "SMOKE", "UMBER", "SLATE", "LOW LIGHT", "CLAY", "OCHRE"] as Array<String>;
+        const MUTED = [
+            [0xE3E0D0, 0xD9A15C, 0x8DB08A, 0xC48A80, 0.86, 0.70, false],
+            [0xDED6CC, 0xE39B5B, 0x9AA7BF, 0xB98AA6, 0.86, 0.70, false],
+            [0xE3CFB2, 0xC8843C, 0x7E9A9E, 0xA86B73, 0.86, 0.70, false],
+            [0xDCE0E2, 0xD8A26A, 0x6F9CC4, 0xBF8697, 0.86, 0.70, false],
+            LOW_LIGHT,
+            [0xEADBC8, 0xE0894A, 0x86A9A3, 0xB87A8F, 0.86, 0.70, false],
+            [0xE8DFC9, 0xD4A548, 0x7C9CB5, 0xBD7F8C, 0.86, 0.70, false]
+        ] as Array<Array<Number or Float or Boolean>>;
+
         // A digit's, a colon's, a slash's and a minus's advance in thousandths
         // of an em, one row per Ink face (Bionic Bold and Medium, then the
         // faces that stand in for them where a watch has no Bionic), from the TTFs
@@ -71,9 +89,31 @@ module Lib {
             } else if (mode == Look.LOW) {
                 c = LOW_LIGHT;
             } else if (mode == Look.DAILY) {
-                c = PERSONAS[Look.day(PERSONAS.size())];
+                c = (muted() ? MUTED : PERSONAS)[Look.day(PERSONAS.size())];
             }
             return new Colors(c);
+        }
+
+        // The daily look's names this week
+        function names() as Array<String> {
+            return muted() ? MUTED_NAMES : NAMES;
+        }
+
+        // Whether this is a muted week, with the setting on
+        function muted() as Boolean {
+            var on = null;
+            try {
+                on = Application.Properties.getValue(MUTED_KEY);
+            } catch (e) {
+                on = null;
+            }
+            return mutedOn(Look.today(), (on instanceof Lang.Boolean) && (on as Boolean));
+        }
+
+        // Whether `days` since 1970 falls in a muted week: weeks from Monday,
+        // every other one, this one (from 9 November 2026) among them
+        function mutedOn(days as Number, on as Boolean) as Boolean {
+            return on && ((days + 3) / 7) % 2 == 1;
         }
 
         // ------------------------------------------------------------ readings

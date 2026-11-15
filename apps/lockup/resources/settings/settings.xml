@@ -9,6 +9,9 @@
             <listEntry value="3">@Strings.LookDaily</listEntry>
         </settingConfig>
     </setting>
+    <setting propertyKey="@Properties.MutedWeeks" title="@Strings.MutedTitle">
+        <settingConfig type="boolean"/>
+    </setting>
     <setting propertyKey="@Properties.RollingDigits" title="@Strings.RollingTitle">
         <settingConfig type="boolean"/>
     </setting>

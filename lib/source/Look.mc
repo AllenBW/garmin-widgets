@@ -82,7 +82,12 @@ module Lib {
 
         // Today's persona of `count`, the next one each day
         function day(count as Number) as Number {
-            return dayOf(Time.today().value() / 86400, count);
+            return dayOf(today(), count);
+        }
+
+        // Days since 1970 to today, the daily look's clock
+        function today() as Number {
+            return Time.today().value() / 86400;
         }
 
         function dayOf(days as Number, count as Number) as Number {

@@ -34,6 +34,7 @@ class BlocksView extends WatchUi.WatchFace {
     private var _values as Array<String> = [] as Array<String>;
     private var _colors as Lib.Numbers.Colors = Lib.Numbers.colors(Lib.Look.YOURS);
     private var _look as Number = Lib.Look.YOURS;
+    private var _day as Number = 0;           // the daily look's day
     private var _minute as Number = -1;
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -51,6 +52,7 @@ class BlocksView extends WatchUi.WatchFace {
     function reloadSettings() as Void {
         _look = Lib.Look.mode();
         _colors = Lib.Numbers.colors(_look);
+        _day = Lib.Look.today();
         _minute = -1;
         _dirty = true;
     }
@@ -136,6 +138,9 @@ class BlocksView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();     // a new day, and on a Monday perhaps a muted week
+        }
         refresh();
         var titled = _awake && Lib.Look.shown();
         if (titled != _titled) {
@@ -160,7 +165,7 @@ class BlocksView extends WatchUi.WatchFace {
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
             dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.13,
                         Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
-                        Lib.Look.title(_look, Lib.Numbers.NAMES), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+                        Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }
 
