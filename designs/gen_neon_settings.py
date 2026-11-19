@@ -6,12 +6,21 @@ Lib.Neon and Lib.Look read:
   light, or a new set each day; holding the time on the watch steps
   through the same six
 - Hours, Minutes, Detail: a tube each, from the sign shop's chart
-  (designs/colors.py, TUBES). No free colour picker and no watch face
-  editor colours: every choice stays a colour neon can make
+  (designs/colors.py, TUBES)
+- the fēnix 8's watch face editor (resources/configs/watchface.xml) with
+  the same three choices: the accent colour is the hours' tube, the data
+  colour the minutes' and the style the details', each offering only the
+  sixteen tubes (no "any colour"), so every choice stays a colour neon can
+  make. Lib.Neon.chosen takes whichever was changed last
 
     python3 -I designs/gen_neon_settings.py sign|edge|noir
 
-Writes resources/settings/properties.xml and settings.xml, and
+- the face's own settings menu on the watch, for every watch
+  (source/Choices.mc, read by Lib.WatchMenu from getSettingsView): the
+  phone app's list, the same choices, writing the same properties
+
+Writes resources/configs/watchface.xml, resources/settings/properties.xml
+and settings.xml, source/Choices.mc, and
 resources/strings/strings.xml whole; the face's own strings go in FACES.
 Regenerate rather than edit the output.
 """
@@ -32,12 +41,17 @@ LOOKS = [("Yours", "Your tubes below", 0), ("Bright", "High visibility, red", 1)
 
 # name, what each tube lights, and any strings of the face's own
 FACES = {
-    "sign": dict(name="Neon Sign", hours="The hours", minutes="The minutes", detail="The date", strings={}),
+    "sign": dict(name="Neon Sign", hours="The hours", minutes="The minutes", detail="The date",
+                 detail_word="date", strings={}),
     "edge": dict(name="Neon Edge", hours="Edges facing the upper left", minutes="Edges facing the lower right",
-                 detail="The date", strings={}),
+                 detail="The date", detail_word="date", strings={}),
     "noir": dict(name="Neon Noir", hours="The hour hand", minutes="The minute hand",
-                 detail="The markers and the date", strings={}),
+                 detail="The markers and the date", detail_word="markers", strings={}),
 }
+
+
+def x(v):
+    return f"0x{v:06X}"
 
 
 def key(s):
@@ -50,6 +64,25 @@ def main(face):
     tubes = list(TUBES)
     first = next(iter(NEON_SETS.values()))
     parts = (("Hours", f["hours"]), ("Minutes", f["minutes"]), ("Detail", f["detail"]))
+
+    cfg = HEAD.format("resources") + NOTE
+    cfg += f"""    <!-- The fēnix 8's own watch face editor (Watch Face > {f['name']} > Customize), which
+         previews each change live. The accent colour is the tube of {f['hours'].lower()},
+         the data colour the tube of {f['minutes'].lower()}, the style the tube of {f['detail'].lower()}:
+         the same three choices as the phone app's settings (resources/settings), each
+         offering only the sixteen tubes. Lib.Neon.chosen takes whichever was changed last. -->
+    <watchface-config>
+        <styles>
+"""
+    for i, n in enumerate(tubes):
+        cfg += f'            <style id="{i}" label="@Strings.Detail{key(n)}"{" default=\"true\"" if n == first[2] else ""}/>\n'
+    for tag, default in (("accentColors", first[0]), ("dataColors", first[1])):
+        cfg += f"        </styles>\n        <{tag}>\n" if tag == "accentColors" else f"        <{tag}>\n"
+        cfg += "".join(f'            <color label="@Strings.Tube{key(n)}"{" default=\"true\"" if n == default else ""}>{x(TUBES[n][0])}</color>\n' for n in tubes)
+        cfg += f"        </{tag}>\n"
+    cfg += "    </watchface-config>\n</resources>\n"
+    (res / "configs").mkdir(parents=True, exist_ok=True)
+    (res / "configs/watchface.xml").write_text(cfg)
 
     p = HEAD.format("properties") + NOTE
     p += f"    <!-- Lib.Look: {', '.join(f'{i} {n}' for _, n, i in sorted(LOOKS, key=lambda look: look[2]))} -->\n"
@@ -76,14 +109,51 @@ def main(face):
     st = HEAD.format("strings") + NOTE
     st += f'    <string id="AppName">{f["name"]}</string>\n'
     st += '    <string id="LookTitle">Look</string>\n'
-    st += '    <string id="LookPrompt">Or press and hold the time on the watch to step through the looks.</string>\n'
+    st += '    <string id="LookPrompt">Or press and hold the face on the watch to step through the looks. The tubes below can also be chosen in the watch face editor on the watch.</string>\n'
     st += "".join(f'    <string id="Look{k}">{n}</string>\n' for k, n, _ in LOOKS)
     st += "".join(f'    <string id="{prop}Title">{what}</string>\n' for prop, what in parts)
     st += "".join(f'    <string id="Tube{key(n)}">{TUBES[n][3]}</string>\n' for n in tubes)
+    st += "".join(f'    <string id="Detail{key(n)}">{TUBES[n][3]} {f["detail_word"]}</string>\n' for n in tubes)
     st += "".join(f'    <string id="{k}">{v}</string>\n' for k, v in f["strings"].items())
     st += "</strings>\n"
     (res / "strings").mkdir(parents=True, exist_ok=True)
     (res / "strings/strings.xml").write_text(st)
+    ids = lambda names: ", ".join(f"Rez.Strings.{n}" for n in names)
+    mc = f"""// Generated by designs/gen_neon_settings.py; regenerate, don't edit.
+import Toybox.Lang;
+import Toybox.WatchUi;
+
+// {f['name']}'s settings on the watch (Lib.WatchMenu, from getSettingsView):
+// the phone app's list, the same choices, writing the same properties
+module Choices {{
+
+    function entries() as Array<Lib.WatchMenu.Entry> {{
+        var tubes = strings([{ids("Tube" + key(n) for n in tubes)}] as Array<ResourceId>);
+        var values = [] as Array<Number>;
+        for (var i = 0; i < tubes.size(); i++) {{
+            values.add(i);
+        }}
+        return [
+            [load(Rez.Strings.LookTitle), null, strings([{ids("Look" + k for k, _, _ in LOOKS)}] as Array<ResourceId>),
+             [{", ".join(str(i) for _, _, i in LOOKS)}] as Array<Number>],
+""" + "".join(f"""            [load(Rez.Strings.{prop}Title), "{prop}", tubes, values]{"," if i < 2 else ""}
+""" for i, (prop, _) in enumerate(parts)) + """        ] as Array<Lib.WatchMenu.Entry>;
+    }
+
+    function load(id as ResourceId) as String {
+        return WatchUi.loadResource(id) as String;
+    }
+
+    function strings(ids as Array<ResourceId>) as Array<String> {
+        var out = [] as Array<String>;
+        for (var i = 0; i < ids.size(); i++) {
+            out.add(load(ids[i]));
+        }
+        return out;
+    }
+}
+"""
+    (ROOT / "apps" / face / "source/Choices.mc").write_text(mc)
     print(f"{face}: {len(tubes)} tubes, {len(LOOKS)} looks")
 
 

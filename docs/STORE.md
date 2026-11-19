@@ -15,7 +15,7 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 |---|---|---|
 | Strata | <https://apps.garmin.com/apps/b19aa78e-870c-4bdd-8060-1d9b9e0e6279> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 the same day (about 18 KB less memory); 1.0.4 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.5 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.5 live since 2026-11-08; a moving cover 2026-11-15 (`strata-cover.png`: three of its colour sets) |
 | Rings | <https://apps.garmin.com/apps/607da8f9-d15c-4116-982d-faa381de3d5f> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.4 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.4 live since 2026-11-08; a moving cover 2026-11-15 (`rings-cover.png`: its colour sets) |
-| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), 1.0.3 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.3 live since 2026-11-08; a moving cover 2026-11-15 (`sauna-cover.png`: its screens); 1.0.4 on 2026-11-19 (the glance's lines fit the Venu 4 41 mm's narrower row), in review |
+| Sauna and Steam | <https://apps.garmin.com/apps/a5da0e99-f413-4173-8cb2-54e90a7ab815> | Submitted 2026-10-31; 1.0.1 the same night; 1.0.2 on 2026-11-03 (going in and going out each their own setting), 1.0.3 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.3 live since 2026-11-08; a moving cover 2026-11-15 (`sauna-cover.png`: its screens) |
 | Forage | <https://apps.garmin.com/apps/65afb30e-8950-471a-bfda-65b926d8828f> | Submitted 2026-10-31; 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-03, 1.0.1 live since 2026-11-08 |
 | Today | <https://apps.garmin.com/apps/b954d6a3-123c-4d78-ac5b-f61db6fe90d9> | Submitted 2026-10-31; 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-03, 1.0.1 live since 2026-11-08 |
 | Daylight | <https://apps.garmin.com/apps/91c393da-910d-43e9-986f-8c2bbc84994c> | Submitted 2026-10-31; 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-03, 1.0.1 live since 2026-11-08 |
@@ -28,7 +28,7 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Field | <https://apps.garmin.com/apps/482f6139-7e6d-432c-b448-762fa167a467> | Submitted 2026-11-03; 1.0.1 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.2 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.2 live since 2026-11-08; a moving cover 2026-11-15 (`field-cover.png`: its looks) |
 | Tally (beta) | <https://apps.garmin.com/apps/f1199679-5038-4bd6-a4e8-b39fde08d3b0> | Submitted 2026-11-03 as a beta (only the developer sees it); 1.0.1 the same day (taps that log, readable text, History, past entries); 1.0.2 on 2026-11-04 (buttons made and changed on the watch); going public needs a new app id; 1.0.3 on 2026-11-08 (41 watches); superseded by the public listing below |
 | Tally | <https://apps.garmin.com/apps/f638472c-694c-42fd-8d16-d51708d7640d> | Submitted 2026-11-08 as 1.0.0 under a new app id (Tools; 41 watches), the beta never having been approved; approved 2026-11-09, 1.0.0 live since 2026-11-09; a moving cover 2026-11-15 (`tally-cover.png`: its screens) |
-| Stretching God | <https://apps.garmin.com/apps/23ceaee4-4ad6-4107-85dd-09e0e8deada4> | Submitted 2026-11-06 as 1.0.0 (Health & Fitness, Other), 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-06, 1.0.1 live since 2026-11-08; a moving cover 2026-11-15 (`stretch-cover.png`: the figure easing into its stretch); 1.0.2 on 2026-11-19 (the glance's lines fit the Venu 4 41 mm's narrower row), in review |
+| Stretching God | <https://apps.garmin.com/apps/23ceaee4-4ad6-4107-85dd-09e0e8deada4> | Submitted 2026-11-06 as 1.0.0 (Health & Fitness, Other), 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-06, 1.0.1 live since 2026-11-08; a moving cover 2026-11-15 (`stretch-cover.png`: the figure easing into its stretch) |
 | Vessel | <https://apps.garmin.com/apps/744760ba-2ee2-4c0d-ada9-12a7e502f9b6> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.4 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.4 live since 2026-11-08; a moving cover 2026-11-15 (`vessel-cover.png`: its looks) |
 | Inscription | <https://apps.garmin.com/apps/491cc91a-09e1-4fd9-b7f5-8dcc6eff0614> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.4 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.4 live since 2026-11-08; a moving cover 2026-11-15 (`inscription-cover.png`: its looks) |
 | Overlap | <https://apps.garmin.com/apps/0b67fd07-dbf4-4bc6-974b-344c4d78593a> | Submitted 2026-10-31; 1.0.1 on 2026-11-01 (new defaults, larger text); 1.0.2 on 2026-11-03 (the looks); 1.0.3 on 2026-11-04 (blue and green high visibility, the descriptions say how to switch looks), 1.0.4 on 2026-11-08 (41 watches); approved 2026-11-04, 1.0.4 live since 2026-11-08; a moving cover 2026-11-15 (`overlap-cover.png`: its looks) |
@@ -37,7 +37,7 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Lockup | <https://apps.garmin.com/apps/0af0769d-af13-4187-9c5c-88439a84c033> | Submitted 2026-11-08 (fēnix 8 and Venu 4 41 mm); the listing edited the same day (the key image first among the screenshots, the hero image, the description with the key); 1.0.1 on 2026-11-08 (41 watches); approved 2026-11-09, 1.0.1 live since 2026-11-09; 1.0.2 on 2026-11-15 (every number stays drawn, where the face could keep only the ones that changed; the daily look changes at midnight; muted weeks, with a setting to turn them off; the description says so), in review; a moving cover 2026-11-15 (`lockup-cover.png`: its looks) |
 | Clack | <https://apps.garmin.com/apps/62844ea6-22aa-4bd7-9d01-4dfb8e048750> | Submitted 2026-11-08 (fēnix 8 and Venu 4 41 mm, category Retro); images replaced the same day (the original view as the cover, 12- and 24-hour); 1.0.1 on 2026-11-08 (41 watches, leaves laid out for 360 and 466 px too); approved 2026-11-09, 1.0.1 live since 2026-11-09; the cover animated 2026-11-15 (`clack-cover.png`: the leaves rolling from 9:59 to 10:00 PM) |
 | Readiness | <https://apps.garmin.com/apps/78d01a69-12a3-46fa-b6ba-e79b440f833c> | Submitted 2026-11-08 as 1.0.0 (Digital; 41 watches); approved 2026-11-09, 1.0.0 live since 2026-11-09 |
-| Battery Planner | <https://apps.garmin.com/apps/2b0600c0-1bcd-41db-b00b-1181a7407c1d> | Submitted 2026-11-08 as 1.0.0 (Widget, Tools; 41 watches); 1.0.1 on 2026-11-11 (how long the charge will take, larger text; the listing edited the same day: the description, the cover, a second screen image on the charger); approved 2026-11-09, 1.0.1 live since 2026-11-11; a moving cover 2026-11-15 (`battery-cover.png`: its two screens); 1.0.2 on 2026-11-19 (the glance fits the Venu 4 41 mm's narrower row; the charge-by line was cut there and on the fēnix 8 on long dates), in review |
+| Battery Planner | <https://apps.garmin.com/apps/2b0600c0-1bcd-41db-b00b-1181a7407c1d> | Submitted 2026-11-08 as 1.0.0 (Widget, Tools; 41 watches); 1.0.1 on 2026-11-11 (how long the charge will take, larger text; the listing edited the same day: the description, the cover, a second screen image on the charger); approved 2026-11-09, 1.0.1 live since 2026-11-11; a moving cover 2026-11-15 (`battery-cover.png`: its two screens) |
 | Ticker | <https://apps.garmin.com/apps/d14f2c95-1ad6-454e-9636-d297ec1781d6> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`ticker-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Shuttle | <https://apps.garmin.com/apps/94483fa6-207f-4439-b714-a4d1c7fa97c0> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`shuttle-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Orb | <https://apps.garmin.com/apps/7d97715c-2e87-4cb6-acc7-db551a73dcfc> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`orb-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
@@ -345,7 +345,9 @@ comes on the way a tube lights: a stutter, a dim glow, then full. When the
 minute turns while you watch, the old numeral flickers out and the new one
 lights in its place.
 
-Every colour is one a sign shop can make. In the phone app, choose a tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose a tube
 for the hours, one for the minutes and one for the date, from sixteen tubes:
 rose, turquoise, amber, ruby, neon red, orange, coral, magenta, purple,
 lavender, cobalt, horizon blue, green, lemon, warm white and snow white.
@@ -376,7 +378,9 @@ comes on the way a tube lights: a stutter, a dim glow, then full. When the
 minute turns while you watch, the old numeral flickers out and the new one
 lights in its place.
 
-Every colour is one a sign shop can make. In the phone app, choose the tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose the tube
 for the edges facing the upper left, the tube for those facing the lower
 right and the tube for the date, from sixteen tubes: rose, turquoise, amber,
 ruby, neon red, orange, coral, magenta, purple, lavender, cobalt, horizon
@@ -403,7 +407,9 @@ cap, no seconds.
 When you raise your wrist the hands sweep from where you last saw them to
 the time now, and a new date comes on with a flicker, as a tube does.
 
-Every colour is one a sign shop can make. In the phone app, choose a tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose a tube
 for the hour hand, one for the minute hand and one for the markers and the
 date, from sixteen tubes: rose, turquoise, amber, ruby, neon red, orange,
 coral, magenta, purple, lavender, cobalt, horizon blue, green, lemon, warm
