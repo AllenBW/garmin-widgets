@@ -35,13 +35,19 @@ class StretchGlance extends WatchUi.GlanceView {
         var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
+        // the small lines drop to the smaller system font where the row is narrow (274 px on the Venu 4 41 mm)
+        var w = dc.getWidth();
+        var small = [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>;
         // the top line inside the row: its top on the row's top edge, all three rows from the same x
+        var why = StretchPlan.why(s);
+        var font = Lib.Fmt.fitFont(dc, why, small, w);
         dc.setColor(ACCENT, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, Graphics.getFontHeight(Graphics.FONT_GLANCE) / 2 + 1, Graphics.FONT_GLANCE, StretchPlan.why(s), left);
+        dc.drawText(0, Graphics.getFontHeight(font) / 2 + 1, font, why, left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), _bigFont,
                     StretchRoutines.NAMES[s[0]] + " · " + StretchPlan.minutes(s[0]), left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, StretchText.streakLine(now), left);
+        var streak = StretchText.streakLine(now);
+        dc.drawText(0, (h * 0.85).toNumber(), Lib.Fmt.fitFont(dc, streak, small, w), streak, left);
     }
 }

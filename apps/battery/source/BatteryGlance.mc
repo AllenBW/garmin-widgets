@@ -61,12 +61,16 @@ class BatteryGlance extends WatchUi.GlanceView {
 
         var sparkX = (w * 0.74).toNumber();
         var headline = BatteryText.headline(s);
+        // the small lines drop to the smaller system font where the row is narrow (274 px on the Venu 4 41 mm)
+        var small = [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>;
+        var title = BatteryText.title(s, "BATTERY");
         dc.setColor(s.charging ? GREEN : CYAN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.15).toNumber(), Graphics.FONT_GLANCE, BatteryText.title(s, "BATTERY"), left);
+        dc.drawText(0, (h * 0.15).toNumber(), Lib.Fmt.fitFont(dc, title, small, w), title, left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), Lib.Fmt.fitFont(dc, headline, _bigFonts, sparkX - (w * 0.03).toNumber()), headline, left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, BatteryText.chargeLine(s), left);
+        var charge = BatteryText.chargeLine(s);
+        dc.drawText(0, (h * 0.85).toNumber(), Lib.Fmt.fitFont(dc, charge, small, w), charge, left);
 
         drawSparkline(dc, s.levels, sparkX, (h * 0.28).toNumber(), w - sparkX - 2, (h * 0.44).toNumber());
     }
