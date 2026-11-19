@@ -41,6 +41,9 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Ticker | <https://apps.garmin.com/apps/d14f2c95-1ad6-454e-9636-d297ec1781d6> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`ticker-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Shuttle | <https://apps.garmin.com/apps/94483fa6-207f-4439-b714-a4d1c7fa97c0> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`shuttle-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Orb | <https://apps.garmin.com/apps/7d97715c-2e87-4cb6-acc7-db551a73dcfc> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`orb-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
+| Neon Sign | <https://apps.garmin.com/apps/549071dd-005d-4d20-8505-b4926b390ae8> | Submitted 2026-11-19 as 1.0.0 (Digital; 38 watches, 44 devices), with a cover that moves; in review |
+| Neon Edge | <https://apps.garmin.com/apps/dc81e858-10b9-46a6-8a01-0c01572033f0> | Submitted 2026-11-19 as 1.0.0 (Digital; 41 watches, 47 devices), with a cover that moves; in review |
+| Neon Noir | <https://apps.garmin.com/apps/e463d238-7076-4949-9756-d3f59285d203> | Submitted 2026-11-19 as 1.0.0 (Analog; 38 watches, 44 devices), with a cover that moves; in review |
 
 ## Listings
 
