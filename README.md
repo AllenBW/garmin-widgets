@@ -26,6 +26,9 @@ family, written in Monkey C for Connect IQ.
 | [Ticker](apps/ticker/) | Watch face | The time as a tape of minutes that runs through the ones you missed, two thin tapes of readings that turn to whatever changed | [Store](https://apps.garmin.com/apps/d14f2c95-1ad6-454e-9636-d297ec1781d6) |
 | [Shuttle](apps/shuttle/) | Watch face | Lockup's rows of numbers, each digit that changed sliding sideways in its own slot | [Store](https://apps.garmin.com/apps/94483fa6-207f-4439-b714-a4d1c7fa97c0) |
 | [Orb](apps/orb/) | Watch face | Lockup's rows printed round a globe: a digit that changed turns like a small globe, a row that mostly changed turns its band | [Store](https://apps.garmin.com/apps/7d97715c-2e87-4cb6-acc7-db551a73dcfc) |
+| [Neon Sign](apps/sign/) | Watch face | The time as a neon sign: numerals bent from one tube each, lighting as a tube does when they change, in any of sixteen real tube colours | in review |
+| [Neon Edge](apps/edge/) | Watch face | Enormous numerals left dark, only their edges lit: one tube from the upper left, another from the lower right | in review |
+| [Neon Noir](apps/noir/) | Watch face | An analog dial in neon: the hands loops of tube that sweep to the time when you look, the date bent from the same tube | in review |
 | [Battery Planner](apps/battery/) | Glance + app | When to charge, projected from the last week's drain, and how long the charge will take | [Store](https://apps.garmin.com/apps/2b0600c0-1bcd-41db-b00b-1181a7407c1d) |
 | [Sun and Moon](apps/sunmoon/) | Glance + app | The next sun event, golden and blue hour and the moon, offline | [Store](https://apps.garmin.com/apps/58e942b4-a87e-475d-a9d4-1cf8ec00551c) |
 | [Sun Compass](apps/suncompass/) | Glance + app | A compass rose with today's sun path drawn across it | [Store](https://apps.garmin.com/apps/80bfaa63-896c-417b-be49-b961ed2b4af4) |
@@ -57,6 +60,7 @@ listing's cover and screenshots are in [`docs/store/`](docs/store/).
 <tr><td align="center"><img src="docs/store/forage-screen.jpg" width="200" alt="Forage"><br>Forage</td><td align="center"><img src="docs/store/vessel-screen.jpg" width="200" alt="Vessel"><br>Vessel</td><td align="center"><img src="docs/store/inscription-screen.jpg" width="200" alt="Inscription"><br>Inscription</td><td align="center"><img src="docs/store/overlap-screen.jpg" width="200" alt="Overlap"><br>Overlap</td></tr>
 <tr><td align="center"><img src="docs/store/lockup-screen.jpg" width="200" alt="Lockup"><br>Lockup</td><td align="center"><img src="docs/store/blocks-screen.jpg" width="200" alt="Blocks"><br>Blocks</td><td align="center"><img src="docs/store/wall-screen.jpg" width="200" alt="Wall"><br>Wall</td><td align="center"><img src="docs/store/clack-screen.jpg" width="200" alt="Clack"><br>Clack</td></tr>
 <tr><td align="center"><img src="docs/store/ticker-screen.jpg" width="200" alt="Ticker"><br>Ticker</td><td align="center"><img src="docs/store/shuttle-screen.jpg" width="200" alt="Shuttle"><br>Shuttle</td><td align="center"><img src="docs/store/orb-screen.jpg" width="200" alt="Orb"><br>Orb</td></tr>
+<tr><td align="center"><img src="docs/store/sign-cover.png" width="200" alt="Neon Sign"><br>Neon Sign</td><td align="center"><img src="docs/store/edge-cover.png" width="200" alt="Neon Edge"><br>Neon Edge</td><td align="center"><img src="docs/store/noir-cover.png" width="200" alt="Neon Noir"><br>Neon Noir</td></tr>
 </table>
 
 **Their colours.** Each of these faces has high visibility in orange,

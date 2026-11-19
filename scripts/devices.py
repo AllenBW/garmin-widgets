@@ -41,7 +41,13 @@ ALL = FENIX8 + FULL + TWO_BUTTON + FORERUNNER_6 + FIVE_BUTTON_5 + THREE_BUTTON_5
 # Toybox.Audio's supported devices among ALL (SDK 9.3 doc: Toybox.Audio)
 MICROPHONE = FENIX8 + FULL + TWO_BUTTON + FORERUNNER_6
 
-PER_APP = {"sound": MICROPHONE}
+# A neon halo is a PNG-packed bitmap, the one packing that keeps its light, and three watches can't
+# pack one (compiler.json: no "png" in imageFormats): Sign's halo loses its outer glow there and
+# Noir has none, and a neon face with no glow isn't worth listing (Edge has a halo of font layers)
+NO_PNG = ["fr165", "fr165m", "fr70"]
+PNG_ONLY = [d for d in ALL if d not in NO_PNG]
+
+PER_APP = {"sound": MICROPHONE, "sign": PNG_ONLY, "noir": PNG_ONLY}
 
 
 def products(app):

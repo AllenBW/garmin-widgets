@@ -1,0 +1,2 @@
+# The sample time held in low power mode: the standby look (see monkey.jungle)
+base.excludeAnnotations = live;free;strike1;strike2;strike3;strike4

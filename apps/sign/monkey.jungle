@@ -1,0 +1,16 @@
+project.manifest = manifest.xml
+
+# Unit tests (tests/) are annotated (:test) and only compiled with --unit-test
+base.sourcePath = source;tests
+
+# Shared code: the Lib barrel at the repo root (lib/). Only the annotated
+# sub-modules listed here are compiled into this app.
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = aod;look;neon;strike;motion
+
+# A build with the sample time for screenshots (sample.jungle), the same
+# held in standby (sample-standby.jungle), or held at a moment of the strike
+# (sample-strike-1.jungle to -4: 100, 250, 420 and 600 ms after a wake):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh sign <device>
+# Normal builds leave the samples out.
+base.excludeAnnotations = sample;held;strike1;strike2;strike3;strike4

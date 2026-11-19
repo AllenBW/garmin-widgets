@@ -331,6 +331,92 @@ Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu,
 that draws the date, the sun, the time and the temperature as outlines, the
 globe turning a little each minute.
 
+**Neon Sign** (Watch face). The time as a neon sign on a black wall: each
+numeral bent from one glass tube, the hours over the minutes, set a little
+left of centre with the dark left open around them. The tubes glow as neon
+does, a pale core with a soft halo in the tube's colour. The day and date
+sit to the right in a thinner tube. Nothing else is on the face.
+
+When you raise your wrist, any numeral that changed since you last looked
+comes on the way a tube lights: a stutter, a dim glow, then full. When the
+minute turns while you watch, the old numeral flickers out and the new one
+lights in its place.
+
+Every colour is one a sign shop can make. In the phone app, choose a tube
+for the hours, one for the minutes and one for the date, from sixteen tubes:
+rose, turquoise, amber, ruby, neon red, orange, coral, magenta, purple,
+lavender, cobalt, horizon blue, green, lemon, warm white and snow white.
+
+To change the look, press and hold the face. Each hold moves to the next
+look and shows its name for a moment: your own tubes, high visibility as a
+white sign with red, then blue, then green, low light for a dark room, a new
+set each day (Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call), and
+back to your own. The Look setting in the phone app picks one too. 12- or
+24-hour, as your watch is set.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), with a dim always-on mode that draws the tubes
+thin with no glow and shifts each minute. Not for the Forerunner 165 and 70,
+whose screens can't carry the glow.
+
+**Neon Edge** (Watch face). The time in neon, and the numbers themselves
+left dark: only their edges are lit. Enormous numerals, the hours over the
+minutes, stand between two signs: every edge that faces the upper left glows
+in one tube and every edge that faces the lower right in another, and where
+an edge turns away from both there is no light at all. Each run is a real
+tube, one width from end to end with round ends, a pale core and a soft glow
+in its colour, on black. The date sits beside the time in thin tube of a
+third colour. Nothing else.
+
+When you raise your wrist, any numeral that changed since you last looked
+comes on the way a tube lights: a stutter, a dim glow, then full. When the
+minute turns while you watch, the old numeral flickers out and the new one
+lights in its place.
+
+Every colour is one a sign shop can make. In the phone app, choose the tube
+for the edges facing the upper left, the tube for those facing the lower
+right and the tube for the date, from sixteen tubes: rose, turquoise, amber,
+ruby, neon red, orange, coral, magenta, purple, lavender, cobalt, horizon
+blue, green, lemon, warm white and snow white.
+
+To change the look, press and hold the face. Each hold moves to the next
+look and shows its name for a moment: your own tubes, high visibility as a
+white sign with red, then blue, then green, low light for a dark room, a new
+set each day (Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call), and
+back to your own. The Look setting in the phone app picks one too. 12- or
+24-hour, as your watch is set.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), with a dim always-on mode that draws the tubes
+thin with no glow and shifts each minute.
+
+**Neon Noir** (Watch face). An analog dial in neon on black. The hands are
+loops of glowing tube, the hour hand short and the minute hand long; the
+twelve is a pair of strokes and three, six and nine one each; the date is
+bent from the same thin tube and sits at three o'clock, stepping aside to
+nine or six when a hand comes by. Nothing else: no minor marks, no centre
+cap, no seconds.
+
+When you raise your wrist the hands sweep from where you last saw them to
+the time now, and a new date comes on with a flicker, as a tube does.
+
+Every colour is one a sign shop can make. In the phone app, choose a tube
+for the hour hand, one for the minute hand and one for the markers and the
+date, from sixteen tubes: rose, turquoise, amber, ruby, neon red, orange,
+coral, magenta, purple, lavender, cobalt, horizon blue, green, lemon, warm
+white and snow white.
+
+To change the look, press and hold the face. Each hold moves to the next
+look and shows its name for a moment: your own tubes, high visibility as a
+white sign with red, then blue, then green, low light for a dark room, a new
+set each day (Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call), and
+back to your own. The Look setting in the phone app picks one too.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), with a dim always-on mode that keeps the two
+hands and the twelve as thin tubes with no glow and shifts each minute. Not
+for the Forerunner 165 and 70, whose screens can't carry the glow.
+
 **Battery Planner** (Widget). Tells you when to charge, and how long the
 charge will take. It records the battery every half hour in the
 background, learns your drain over the last week and projects the day you

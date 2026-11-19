@@ -1,0 +1,5 @@
+# The sample time held at a moment of the strike, all four numerals struck (see monkey.jungle)
+base.excludeAnnotations = live;standby;still;strike2;strike3;strike4;plain
+fr165.excludeAnnotations = live;standby;still;strike2;strike3;strike4;tinted
+fr165m.excludeAnnotations = live;standby;still;strike2;strike3;strike4;tinted
+fr70.excludeAnnotations = live;standby;still;strike2;strike3;strike4;tinted

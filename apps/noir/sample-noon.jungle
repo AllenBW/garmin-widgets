@@ -1,0 +1,2 @@
+# 12:00, the minute loop nested in the hour loop (see monkey.jungle)
+base.excludeAnnotations = live;standbyshot;titleshot;t1037;t0417;t0915;t0752;sweep1;sweep2;sweep3;sweep4

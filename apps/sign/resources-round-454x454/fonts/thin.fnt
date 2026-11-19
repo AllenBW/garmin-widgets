@@ -1,0 +1,14 @@
+info face="sign_thin" size=144 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=144 base=144 scaleW=782 scaleH=148 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="thin.png"
+chars count=10
+char id=48 x=2 y=2 width=83 height=144 xoffset=0 yoffset=0 xadvance=83 page=0 chnl=15
+char id=49 x=87 y=2 width=42 height=144 xoffset=0 yoffset=0 xadvance=42 page=0 chnl=15
+char id=50 x=131 y=2 width=80 height=144 xoffset=0 yoffset=0 xadvance=80 page=0 chnl=15
+char id=51 x=213 y=2 width=77 height=144 xoffset=0 yoffset=0 xadvance=77 page=0 chnl=15
+char id=52 x=292 y=2 width=82 height=144 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=53 x=376 y=2 width=78 height=144 xoffset=0 yoffset=0 xadvance=78 page=0 chnl=15
+char id=54 x=456 y=2 width=81 height=144 xoffset=0 yoffset=0 xadvance=81 page=0 chnl=15
+char id=55 x=539 y=2 width=77 height=144 xoffset=0 yoffset=0 xadvance=77 page=0 chnl=15
+char id=56 x=618 y=2 width=79 height=144 xoffset=0 yoffset=0 xadvance=79 page=0 chnl=15
+char id=57 x=699 y=2 width=81 height=144 xoffset=0 yoffset=0 xadvance=81 page=0 chnl=15

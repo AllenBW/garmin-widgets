@@ -1,0 +1,2 @@
+# The sample time in place of the clock (see monkey.jungle)
+base.excludeAnnotations = live;held;strike1;strike2;strike3;strike4

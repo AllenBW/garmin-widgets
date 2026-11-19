@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Noir launcher icon: black disc, the hour hand a rose loop of tube, the minute hand a turquoise one, the twelve a pair of amber strokes -->
+  <circle cx="32" cy="32" r="31" fill="#000000"/>
+  <g fill="none" stroke-linecap="round">
+    <rect x="-4.5" y="-21" width="9" height="16" rx="4.5" transform="translate(32 32) rotate(-41.5)" stroke="#E83E6C" stroke-width="2.6"/>
+    <rect x="-3" y="-27" width="6" height="22" rx="3" transform="translate(32 32) rotate(222)" stroke="#18B0AA" stroke-width="2.6"/>
+    <path d="M29.6,4 V10 M34.4,4 V10" stroke="#EC9224" stroke-width="2.2"/>
+  </g>
+</svg>

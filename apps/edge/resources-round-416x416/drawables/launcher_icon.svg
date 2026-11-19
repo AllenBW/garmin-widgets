@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="60" height="60">
+  <!-- Edge launcher icon: a black disc and a numeral's edges, the upper left in rose tube, the lower right in turquoise -->
+  <circle cx="32" cy="32" r="31" fill="#000000"/>
+  <g fill="none" stroke-linecap="round" stroke-width="3.2">
+    <path d="M22,44 L22,22 Q22,12 32,12 Q37,12 39.5,15" stroke="#E83E6C"/>
+    <path d="M42,20 L42,42 Q42,52 32,52 Q27,52 24.5,49" stroke="#18B0AA"/>
+    <path d="M30,24 L30,40" stroke="#18B0AA"/>
+    <path d="M34.5,24 L34.5,40" stroke="#E83E6C"/>
+  </g>
+</svg>

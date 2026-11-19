@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+"""Generate the Edge face's tables and bitmap fonts from its preview
+(designs/preview_edge.py, whose tubes come from designs/edge_runs.py), so
+the watch lays the very masks the preview does:
+
+- apps/edge/source/Layout.mc: per screen width (466, 454, 416, 390, 360)
+  the face's whole pixels: the numerals' height, rows and advances, the
+  pads of the fonts' cells, the date's place and its letters' advances
+- apps/edge/resources-round-<w>x<w>/tubes/: the lit tubes as white
+  bitmaps whose alpha is the mask, with tubes.xml: for each digit a sheet
+  of its halos (glow_<d>.png) and one of its cores (core_<d>.png), the
+  tubes facing the upper left in the left cell and those facing the lower
+  right in the right; and the date's lettering (A to Z, 0 to 9, a hyphen)
+  as a grid of halos and one of cores
+- apps/edge/resources-round-<w>x<w>/fonts/: standby's thin tubes as a
+  BMFont (edge_thin: "0" to "9" the upper left tubes, "A" to "J" the
+  lower right), with fonts.xml
+- apps/edge/resources-plain-390x390/fonts/: for the watches that cannot
+  tint a bitmap (PLAIN: the Forerunner 165 and 70; monkey.jungle gives
+  them this folder), everything as BMFonts: the halo in three layers of
+  four levels each, the cores, the lettering and the thin tubes
+
+The watch cannot blur, so a tube's halo is baked here: the mask is the
+halo's strength, and the watch draws it tinted with the tube's own colour
+(drawBitmap2), then the core's mask tinted with the colour washed toward
+white (Lib.Neon.core). A bitmap font would be smaller, but a font's mask
+has four levels at most (two bits, with antialias="true"; one without):
+enough for a thin tube, steps in a halo.
+
+    python3 -I designs/gen_edge.py
+
+Pillow only. Regenerate rather than edit the output.
+"""
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
+import edge_runs as er  # noqa: E402
+import preview_edge as pe  # noqa: E402
+
+ROOT = Path(__file__).resolve().parent.parent
+APP = ROOT / "apps" / "edge"
+DIGITS = "0123456789"
+LOWER = "ABCDEFGHIJ"                      # the same digits' lower-right tubes
+LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
+SHEET = 1000                              # px: the font mask's rows are no wider
+# Watches whose bitmaps keep no 8-bit alpha and take no tint (no "png" among compiler.json's imageFormats,
+# enhancedGraphicSupport false), by screen width: they get the halo as font layers instead
+PLAIN = {390: ["fr165", "fr165m", "fr70"]}
+LETTER_COLS = 10                          # the lettering's sheets are grids this wide
+HEAD = ('<{0} xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+        'xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">')
+FIELDS = ["H", "Y0", "Y1", "CX", "PAD", "CORE_PAD", "DATE_X", "LETTER", "LETTER_PAD", "LETTER_GAP", "SPACE",
+          "LINE_GAP", "SHIFT", "LETTER_CELL"]
+
+
+def write_font(folder, name, glyphs):
+    """One BMFont: the glyphs in rows in a grey mask PNG, each drawn from
+    its cell's top left corner (TEXT_JUSTIFY_LEFT at the cell's x, y). The
+    masks are in a font's four levels already (preview_edge.four)."""
+    gap = 2
+    height = max(g.height for _, g in glyphs)
+    x, y, spots = gap, gap, []
+    for ch, g in glyphs:
+        if x + g.width + gap > SHEET and x > gap:
+            x, y = gap, y + height + gap
+        spots.append((ch, g, x, y))
+        x += g.width + gap
+    width = max(sx + g.width for _, g, sx, _ in spots) + gap
+    sheet = Image.new("L", (width, y + height + gap), 0)
+    for _, g, sx, sy in spots:
+        sheet.paste(g, (sx, sy))
+    folder.mkdir(parents=True, exist_ok=True)
+    sheet.save(folder / (name + ".png"), optimize=True)
+    fnt = [f'info face="{name}" size={height} bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 '
+           f"padding=0,0,0,0 spacing={gap},{gap} outline=0",
+           f"common lineHeight={height} base={height} scaleW={sheet.width} scaleH={sheet.height} pages=1 packed=0 "
+           "alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4",
+           f'page id=0 file="{name}.png"', f"chars count={len(spots)}"]
+    for ch, g, sx, sy in spots:
+        fnt.append(f"char id={ord(ch)} x={sx} y={sy} width={g.width} height={g.height} xoffset=0 yoffset=0 "
+                   f"xadvance={g.width} page=0 chnl=15")
+    (folder / (name + ".fnt")).write_text("\n".join(fnt) + "\n")
+    assert set(sheet.tobytes()) <= {0, 85, 170, 255}, f"{name}: a font's mask has four levels"
+    fid = "".join(p.capitalize() for p in name.split("_"))
+    return f'    <font id="{fid}" filename="{name}.fnt" filter="{"".join(ch for ch, _ in glyphs)}" antialias="true"/>'
+
+
+def digit_glyphs(w, kind):
+    return [(ch, pe.digit_mask(c, light, w, kind))
+            for light, chars in ((er.UL, DIGITS), (er.LR, LOWER)) for c, ch in zip(DIGITS, chars)]
+
+
+def write_fonts(folder, lines, note):
+    xml = [HEAD.format("fonts"), "    <!-- Generated by designs/gen_edge.py; regenerate, don't edit. " + note[0]]
+    xml += ["         " + n for n in note[1:-1]] + ["         " + note[-1] + " -->"] + lines + ["</fonts>"]
+    (folder / "fonts.xml").write_text("\n".join(xml) + "\n")
+
+
+def write_sheet(folder, name, cells, cols):
+    """A sheet of masks as a bitmap: white, the mask its alpha, so
+    drawBitmap2's tint colours it. The cells are one size, in a grid."""
+    cw, ch = max(c.width for c in cells), max(c.height for c in cells)
+    rows = (len(cells) + cols - 1) // cols
+    alpha = Image.new("L", (cols * cw, rows * ch), 0)
+    for k, c in enumerate(cells):
+        alpha.paste(c, ((k % cols) * cw, (k // cols) * ch))
+    white = Image.new("L", alpha.size, 255)
+    Image.merge("RGBA", (white, white, white, alpha)).save(folder / (name + ".png"), optimize=True)
+    return alpha.size
+
+
+def write_resources():
+    for w in pe.WIDTHS:
+        root = APP / f"resources-round-{w}x{w}"
+        write_fonts(root / "fonts", [write_font(root / "fonts", "edge_thin", digit_glyphs(w, "thin"))],
+                    ["Standby's thin tubes as a grey mask that",
+                     "drawText colours, at this screen's size: each digit's tubes (the edges of Antonio Bold, SIL OFL,",
+                     'designs/fonts), "0" to "9" those facing the upper left, "A" to "J" the lower right.'])
+        folder = root / "tubes"
+        folder.mkdir(parents=True, exist_ok=True)
+        xml = [HEAD.format("drawables"),
+               "    <!-- Generated by designs/gen_edge.py; regenerate, don't edit. The lit tubes at this screen's size, as",
+               "         white bitmaps whose alpha is the mask and which drawBitmap2's tint colours (so they are packed",
+               "         as PNG: a paletted bitmap takes no tint). Each digit has a sheet of its halos and one of its",
+               "         cores, the tubes facing the upper left in the left cell and the lower right in the right;",
+               "         the date's lettering has a grid of halos and one of cores, A to Z, 0 to 9 and a hyphen. -->"]
+        total = 0
+        for kind in ("glow", "core"):
+            for c in DIGITS:
+                size = write_sheet(folder, f"{kind}_{c}", [pe.digit_mask(c, light, w, kind) for light in (er.UL, er.LR)], 2)
+                xml.append(f'    <bitmap id="{kind.capitalize()}{c}" filename="{kind}_{c}.png" packingFormat="png"/>')
+                total += size[0] * size[1]
+            size = write_sheet(folder, f"letters_{kind}", [pe.letter_mask(c, w, kind) for c in LETTERS], LETTER_COLS)
+            xml.append(f'    <bitmap id="Letters{kind.capitalize()}" filename="letters_{kind}.png" packingFormat="png"/>')
+        xml.append("</drawables>")
+        (folder / "tubes.xml").write_text("\n".join(xml) + "\n")
+        print(f"{w}: the digits' sheets {total} px in all, the lettering's {size[0]}x{size[1]}")
+    for w in PLAIN:
+        folder = APP / f"resources-plain-{w}x{w}" / "fonts"
+        lines = [write_font(folder, "edge_thin", digit_glyphs(w, "thin"))]
+        for n in range(len(pe.LAYERS)):
+            lines.append(write_font(folder, f"edge_layer{n}", digit_glyphs(w, f"layer{n}")))
+            lines.append(write_font(folder, f"letters_layer{n}", [(c, pe.letter_mask(c, w, f"layer{n}")) for c in LETTERS]))
+        lines.append(write_font(folder, "edge_core", digit_glyphs(w, "core4")))
+        lines.append(write_font(folder, "letters_core", [(c, pe.letter_mask(c, w, "core4")) for c in LETTERS]))
+        write_fonts(folder, lines,
+                    ["For the watches that cannot tint a",
+                     f"bitmap ({', '.join(PLAIN[w])}; monkey.jungle gives them this folder in place of",
+                     f"resources-round-{w}x{w}): everything as grey masks that drawText colours. A font's mask has four",
+                     "levels, so a halo is three layers, drawn in the tube's colour at Layout.LAYERS percent",
+                     "(preview_edge.layered)."])
+        print(f"{w} plain: {len(lines)} fonts for {', '.join(PLAIN[w])}")
+
+
+def mc(values):
+    return "[" + ", ".join(str(v) for v in values) + "] as Array<Number>"
+
+
+def write_layout():
+    s = "import Toybox.Lang;\n\n// Generated by designs/gen_edge.py from designs/preview_edge.py; regenerate, don't edit.\n"
+    s += "module Layout {\n\n"
+    s += "    // A screen's table, in pixels: the numerals' height, the two rows' tops, the numerals' centre, the\n"
+    s += "    // pad round a digit's box in the glow font's cells and in the core and thin fonts', the date's\n"
+    s += "    // centre, its letters' height, the pad of their cells, the gap between letters, a space, the gap\n"
+    s += "    // between a title's two lines, standby's step, the widest letter (the lettering's sheets are grids\n"
+    s += f"    // {LETTER_COLS} cells wide, a cell the widest letter by the letters' height with the pad all round)\n"
+    s += "    enum Field { " + ", ".join(FIELDS) + " }\n"
+    s += f"    const LETTER_COLS = {LETTER_COLS};\n"
+    s += "    // Where a watch cannot tint a bitmap, a halo is three font layers in the tube's colour at these percents\n"
+    s += "    const LAYERS = " + mc(round(v * 100) for v in pe.LAYERS) + ";\n"
+    s += "    const WIDTHS = " + mc(pe.WIDTHS) + ";\n"
+    for w in pe.WIDTHS:
+        m = pe.metrics(w)
+        row = [m["h"], m["y"][0], m["y"][1], m["cx"], m["pad"], m["core_pad"], m["date_x"], m["letter"],
+               m["letter_pad"], m["letter_gap"], m["letter_adv"][" "], m["line_gap"], m["shift"], m["letter_cell"]]
+        s += f"    const W{w} = {mc(row)};\n"
+        s += f"    const ADV{w} = {mc(m['adv'][c] for c in DIGITS)};          // the digits' advances, 0 to 9\n"
+        s += f"    const LETTERS{w} = {mc(m['letter_adv'][c] for c in LETTERS)};   // A to Z, 0 to 9, hyphen\n"
+    s += """
+    // The index of the widest table no wider than the screen (the narrowest for anything smaller)
+    function pick(width as Number) as Number {
+        var best = WIDTHS.size() - 1;
+        for (var i = 0; i < WIDTHS.size(); i++) {
+            if (WIDTHS[i] <= width) {
+                best = i;
+                break;
+            }
+        }
+        return best;
+    }
+
+    function table(width as Number) as Array<Number> {
+        return [""" + ", ".join(f"W{w}" for w in pe.WIDTHS) + """][pick(width)];
+    }
+
+    function advances(width as Number) as Array<Number> {
+        return [""" + ", ".join(f"ADV{w}" for w in pe.WIDTHS) + """][pick(width)];
+    }
+
+    function letters(width as Number) as Array<Number> {
+        return [""" + ", ".join(f"LETTERS{w}" for w in pe.WIDTHS) + """][pick(width)];
+    }
+}
+"""
+    (APP / "source").mkdir(parents=True, exist_ok=True)
+    (APP / "source" / "Layout.mc").write_text(s)
+
+
+if __name__ == "__main__":
+    write_layout()
+    print("Layout.mc")
+    write_resources()

@@ -1,0 +1,2 @@
+# The sample held 420 ms into a wake's sweep from 6:15 the day before (see monkey.jungle)
+base.excludeAnnotations = live;standbyshot;titleshot;still;t1200;t0417;t0915;t0752;sweep1;sweep2;sweep4

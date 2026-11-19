@@ -1,0 +1,24 @@
+info face="edge_thin" size=152 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=152 base=152 scaleW=975 scaleH=310 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="edge_thin.png"
+chars count=20
+char id=48 x=2 y=2 width=87 height=152 xoffset=0 yoffset=0 xadvance=87 page=0 chnl=15
+char id=49 x=91 y=2 width=59 height=152 xoffset=0 yoffset=0 xadvance=59 page=0 chnl=15
+char id=50 x=152 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=51 x=236 y=2 width=83 height=152 xoffset=0 yoffset=0 xadvance=83 page=0 chnl=15
+char id=52 x=321 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=53 x=405 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=54 x=489 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=55 x=573 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=56 x=657 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=57 x=741 y=2 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=65 x=825 y=2 width=87 height=152 xoffset=0 yoffset=0 xadvance=87 page=0 chnl=15
+char id=66 x=914 y=2 width=59 height=152 xoffset=0 yoffset=0 xadvance=59 page=0 chnl=15
+char id=67 x=2 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=68 x=86 y=156 width=83 height=152 xoffset=0 yoffset=0 xadvance=83 page=0 chnl=15
+char id=69 x=171 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=70 x=255 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=71 x=339 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=72 x=423 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=73 x=507 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15
+char id=74 x=591 y=156 width=82 height=152 xoffset=0 yoffset=0 xadvance=82 page=0 chnl=15

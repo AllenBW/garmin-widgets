@@ -1,0 +1,24 @@
+info face="edge_thin" size=181 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=2,2 outline=0
+common lineHeight=181 base=181 scaleW=972 scaleH=368 pages=1 packed=0 alphaChnl=1 redChnl=4 greenChnl=4 blueChnl=4
+page id=0 file="edge_thin.png"
+chars count=20
+char id=48 x=2 y=2 width=103 height=181 xoffset=0 yoffset=0 xadvance=103 page=0 chnl=15
+char id=49 x=107 y=2 width=70 height=181 xoffset=0 yoffset=0 xadvance=70 page=0 chnl=15
+char id=50 x=179 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=51 x=278 y=2 width=98 height=181 xoffset=0 yoffset=0 xadvance=98 page=0 chnl=15
+char id=52 x=378 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=53 x=477 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=54 x=576 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=55 x=675 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=56 x=774 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=57 x=873 y=2 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=65 x=2 y=185 width=103 height=181 xoffset=0 yoffset=0 xadvance=103 page=0 chnl=15
+char id=66 x=107 y=185 width=70 height=181 xoffset=0 yoffset=0 xadvance=70 page=0 chnl=15
+char id=67 x=179 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=68 x=278 y=185 width=98 height=181 xoffset=0 yoffset=0 xadvance=98 page=0 chnl=15
+char id=69 x=378 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=70 x=477 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=71 x=576 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=72 x=675 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=73 x=774 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15
+char id=74 x=873 y=185 width=97 height=181 xoffset=0 yoffset=0 xadvance=97 page=0 chnl=15

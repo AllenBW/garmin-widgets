@@ -1,0 +1,29 @@
+project.manifest = manifest.xml
+
+# Unit tests (tests/) are annotated (:test) and only compiled with --unit-test
+base.sourcePath = source;tests
+
+# Shared code: the Lib barrel at the repo root (lib/). Only the annotated
+# sub-modules listed here are compiled into this app.
+base.barrelPath = ../../lib/monkey.jungle
+base.Lib.annotations = aod;look;neon;strike;motion
+
+# A build with the sample time and date for screenshots (sample.jungle),
+# the same held in standby (sample-standby.jungle), or held at a moment of
+# the strike (sample-strike-1.jungle to -4: 100, 250, 420 and 600 ms after
+# a wake):
+#   CIQ_JUNGLE="monkey.jungle;sample.jungle" scripts/build.sh edge <device>
+# Normal builds leave the samples out.
+#
+# The lit tubes are bitmaps that drawBitmap2 tints (:tinted). The
+# Forerunner 165, 165 Music and 70 cannot tint a bitmap and keep one bit of
+# its alpha (no "png" among their image formats), so they draw everything
+# from fonts (:plain) and get their own resources in place of
+# resources-round-390x390 (designs/gen_edge.py, PLAIN).
+base.excludeAnnotations = sample;standby;lit;strike1;strike2;strike3;strike4;plain
+fr165.excludeAnnotations = sample;standby;lit;strike1;strike2;strike3;strike4;tinted
+fr165m.excludeAnnotations = sample;standby;lit;strike1;strike2;strike3;strike4;tinted
+fr70.excludeAnnotations = sample;standby;lit;strike1;strike2;strike3;strike4;tinted
+fr165.resourcePath = resources;resources-plain-390x390
+fr165m.resourcePath = resources;resources-plain-390x390
+fr70.resourcePath = resources;resources-plain-390x390

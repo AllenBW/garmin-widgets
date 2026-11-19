@@ -1,0 +1,2 @@
+# The sample held in low power mode: the standby look (see monkey.jungle)
+base.excludeAnnotations = live;awakeshot;titleshot;t1200;t0417;t0915;t0752;sweep1;sweep2;sweep3;sweep4
