@@ -407,3 +407,74 @@ function testNeonColors(logger as Logger) as Boolean {
     }
     return true;
 }
+
+// Lib.Neon: the tubes chosen in the phone app or the watch face editor,
+// whichever was changed last; the editor offers only tubes, and anything
+// else snaps to the nearest
+(:test)
+function testNeonChosen(logger as Logger) as Boolean {
+    for (var i = 0; i < Lib.Neon.TUBES.size(); i++) {
+        Test.assertEqualMessage(Lib.Neon.tubeOf(Lib.Neon.TUBES[i]), i, "a tube is itself");
+    }
+    Test.assertEqualMessage(Lib.Neon.tubeOf(0xFF4020), Lib.Neon.RED, "a stray red snaps to neon red");
+    Test.assertEqualMessage(Lib.Neon.tubeOf(0x2060FF), Lib.Neon.COBALT, "a stray blue to cobalt");
+    Test.assertEqualMessage(Lib.Neon.tubeOf(0xFFFFFF), Lib.Neon.SNOW, "white to snow white");
+    var keys = Lib.Neon.KEYS;
+    var was = [] as Array<Number?>;
+    for (var k = 0; k < keys.size(); k++) {
+        var v = Application.Properties.getValue(keys[k]);
+        was.add((v instanceof Number) ? v as Number : null);
+    }
+    var source = Application.Storage.getValue(Lib.Neon.SOURCE);
+    Application.Properties.setValue("Hours", Lib.Neon.RUBY);
+    Application.Properties.setValue("Minutes", Lib.Neon.COBALT);
+    Application.Properties.setValue("Detail", Lib.Neon.LEMON);
+    Lib.Neon.changedOnPhone();
+    Test.assertMessage(Lib.Neon.PHONE.equals(Application.Storage.getValue(Lib.Neon.SOURCE)), "the phone changed last");
+    Test.assertEqualMessage(SignTesting.joined(Lib.Neon.chosen()), "3 10 13", "so the phone's tubes are drawn");
+    Lib.Neon.changedInEditor();
+    Test.assertMessage(Lib.Neon.EDITOR.equals(Application.Storage.getValue(Lib.Neon.SOURCE)), "then the editor");
+    var t = Lib.Neon.chosen();
+    for (var i = 0; i < 3; i++) {
+        Test.assertMessage(t[i] >= 0 && t[i] < Lib.Neon.TUBES.size(), "the editor's choice is a tube");
+    }
+    for (var k = 0; k < keys.size(); k++) {
+        var v = was[k];
+        if (v != null) {
+            Application.Properties.setValue(keys[k], v);
+        }
+    }
+    Application.Storage.setValue(Lib.Neon.SOURCE, (source instanceof String) ? source as String : Lib.Neon.EDITOR);
+    return true;
+}
+
+// Lib.WatchMenu: the settings on the watch are the phone app's list, and a
+// choice there writes the same property, winning over the editor
+(:test)
+function testWatchMenu(logger as Logger) as Boolean {
+    var entries = Choices.entries();
+    Test.assertEqualMessage(entries.size(), 4, "the look and three tubes, as on the phone");
+    Test.assertMessage(entries[0][1] == null, "the look first");
+    Test.assertEqualMessage(SignTesting.joined(entries[0][3]), SignTesting.joined(Lib.Look.ORDER), "the looks in Lib.Look's order");
+    for (var i = 1; i < entries.size(); i++) {
+        Test.assertEqualMessage(entries[i][2].size(), Lib.Neon.TUBES.size(), "every tube offered");
+        Test.assertEqualMessage(entries[i][2].size(), entries[i][3].size(), "a label for every choice");
+    }
+    var hours = entries[1];
+    var was = Application.Properties.getValue("Hours");
+    var source = Application.Storage.getValue(Lib.Neon.SOURCE);
+    Lib.WatchMenu.choose(hours, Lib.Neon.COBALT);
+    Test.assertEqualMessage(Lib.WatchMenu.current(hours), Lib.Neon.COBALT, "the choice is where the setting stands");
+    Test.assertEqualMessage(Lib.WatchMenu.label(hours), hours[2][Lib.Neon.COBALT], "and its label shows");
+    Test.assertMessage(Lib.Neon.PHONE.equals(Application.Storage.getValue(Lib.Neon.SOURCE)), "a choice on the watch wins over the editor");
+    Test.assertEqualMessage(Lib.Neon.chosen()[0], Lib.Neon.COBALT, "and is the tube drawn");
+    var look = Lib.Look.mode();
+    Lib.WatchMenu.choose(entries[0], 4);              // the fifth look in the order: low light
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.LOW, "the look chosen as a hold chooses it");
+    Application.Storage.setValue(Lib.Look.KEY, look);
+    if (was instanceof Number) {
+        Application.Properties.setValue("Hours", was as Number);
+    }
+    Application.Storage.setValue(Lib.Neon.SOURCE, (source instanceof String) ? source as String : Lib.Neon.EDITOR);
+    return true;
+}

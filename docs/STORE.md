@@ -41,9 +41,10 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Ticker | <https://apps.garmin.com/apps/d14f2c95-1ad6-454e-9636-d297ec1781d6> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`ticker-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Shuttle | <https://apps.garmin.com/apps/94483fa6-207f-4439-b714-a4d1c7fa97c0> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`shuttle-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
 | Orb | <https://apps.garmin.com/apps/7d97715c-2e87-4cb6-acc7-db551a73dcfc> | Submitted 2026-11-15 as 1.0.0 (Digital; 47 devices), the listing with its hero the same day; a moving cover the same day while in review (`orb-cover.png`: waking after 47 minutes away); approved 2026-11-16, 1.0.0 live since 2026-11-16 |
-| Neon Sign | <https://apps.garmin.com/apps/549071dd-005d-4d20-8505-b4926b390ae8> | Submitted 2026-11-19 as 1.0.0 (Digital; 38 watches, 44 devices), with a cover that moves; in review |
-| Neon Edge | <https://apps.garmin.com/apps/dc81e858-10b9-46a6-8a01-0c01572033f0> | Submitted 2026-11-19 as 1.0.0 (Digital; 41 watches, 47 devices), with a cover that moves; in review |
-| Neon Noir | <https://apps.garmin.com/apps/e463d238-7076-4949-9756-d3f59285d203> | Submitted 2026-11-19 as 1.0.0 (Analog; 38 watches, 44 devices), with a cover that moves; in review |
+| Neon Sign | <https://apps.garmin.com/apps/549071dd-005d-4d20-8505-b4926b390ae8> | Submitted 2026-11-19 as 1.0.0 (Digital; 38 watches, 44 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
+| Neon Edge | <https://apps.garmin.com/apps/dc81e858-10b9-46a6-8a01-0c01572033f0> | Submitted 2026-11-19 as 1.0.0 (Digital; 41 watches, 47 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
+| Neon Noir | <https://apps.garmin.com/apps/e463d238-7076-4949-9756-d3f59285d203> | Submitted 2026-11-19 as 1.0.0 (Analog; 38 watches, 44 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
+| ChargeLog | <https://apps.garmin.com/apps/ad9b2bae-dcae-4f47-b92f-709d309ebe91> | Submitted 2026-11-19 as 1.0.0 (Widget, Tools; 48 devices), released from its own repo with the ChargeLog phone app, so its source is not here; approved 2026-11-20, 1.0.0 live since 2026-11-20 |
 
 ## Listings
 
@@ -345,7 +346,9 @@ comes on the way a tube lights: a stutter, a dim glow, then full. When the
 minute turns while you watch, the old numeral flickers out and the new one
 lights in its place.
 
-Every colour is one a sign shop can make. In the phone app, choose a tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose a tube
 for the hours, one for the minutes and one for the date, from sixteen tubes:
 rose, turquoise, amber, ruby, neon red, orange, coral, magenta, purple,
 lavender, cobalt, horizon blue, green, lemon, warm white and snow white.
@@ -376,7 +379,9 @@ comes on the way a tube lights: a stutter, a dim glow, then full. When the
 minute turns while you watch, the old numeral flickers out and the new one
 lights in its place.
 
-Every colour is one a sign shop can make. In the phone app, choose the tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose the tube
 for the edges facing the upper left, the tube for those facing the lower
 right and the tube for the date, from sixteen tubes: rose, turquoise, amber,
 ruby, neon red, orange, coral, magenta, purple, lavender, cobalt, horizon
@@ -403,7 +408,9 @@ cap, no seconds.
 When you raise your wrist the hands sweep from where you last saw them to
 the time now, and a new date comes on with a flicker, as a tube does.
 
-Every colour is one a sign shop can make. In the phone app, choose a tube
+Every colour is one a sign shop can make. On the watch, in the
+face's settings or the watch face editor (Customize), or in the phone
+app, choose a tube
 for the hour hand, one for the minute hand and one for the markers and the
 date, from sixteen tubes: rose, turquoise, amber, ruby, neon red, orange,
 coral, magenta, purple, lavender, cobalt, horizon blue, green, lemon, warm
@@ -437,6 +444,29 @@ and the estimate settles over the next one or two.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
 Venu, vívoactive and more), and for the Forerunner 955 and 255, fēnix 7 and
 7 Pro, and fēnix 8 Solar.
+
+**ChargeLog** (Widget). ChargeLog records every charge your watch takes. On
+the charger, its glance puts the time to 100% first, then when it will be
+full and how fast it is charging. Off the charger, it shows your last charge
+and how fast the battery has gone down since.
+
+Open the app for the charge in progress, the last one, and your history.
+Each charge has a page of its own: its level over time, how long each
+percent took and how long it sat full.
+
+With ChargeLog for Android, from Google Play, your watch's charges also go
+to your phone through the Garmin Connect app, a few minutes after the watch
+comes off the charger, and sit there beside your phone's own. Turn it on in
+the phone app under Settings → Garmin watch.
+
+ChargeLog reads the battery level every five minutes, in the background, so
+a charge is recorded without opening anything. A Garmin reports its battery
+level and nothing else (no current or power), so that is what ChargeLog
+shows. Your charges go to no server: only to the ChargeLog app on your own
+phone, through Garmin Connect.
+
+Built for Garmin's round AMOLED watches on Connect IQ 5.1 or later (fēnix 8
+and 9, epix, Forerunner, Venu, vívoactive and more).
 
 **Sun and Moon** (Widget). The next sunrise or sunset, golden and blue
 hour, and the moon's phase, worked out on the watch, offline.
