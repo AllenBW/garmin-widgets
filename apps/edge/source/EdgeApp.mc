@@ -18,16 +18,9 @@ class EdgeApp extends Application.AppBase {
         return [view, new EdgeDelegate(view)];
     }
 
-    // The settings on the watch itself, for every watch: the phone app's
-    // list as a menu (Lib.WatchMenu, Choices)
-    function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
-        return Lib.WatchMenu.view(WatchUi.loadResource(Rez.Strings.AppName) as String, Choices.entries());
-    }
-
-    // A choice made in the phone app or the watch's settings menu wins over
-    // the last hold and over the watch face editor
+    // A new look chosen in the phone app wins over the last hold
     function onSettingsChanged() as Void {
-        Lib.Neon.changedOnPhone();
+        Lib.Look.changedOnPhone();
         var view = _view;
         if (view != null) {
             view.reloadSettings();

@@ -65,8 +65,7 @@ listing's cover and screenshots are in [`docs/store/`](docs/store/).
 
 **Their colours.** Each of these faces has high visibility in orange,
 blue or green and a low-light look, set in its settings; Rings and
-Strata have colour sets of their own as well; the neon faces take any
-three of sixteen tubes, shown here in their daily sets.
+Strata have colour sets of their own as well.
 
 <table>
 <tr><th align="left">Field</th><td align="center"><img src="docs/store/field-look-default.jpg" width="130" alt="default"><br>default</td><td align="center"><img src="docs/store/field-look-orange.jpg" width="130" alt="high visibility"><br>high visibility</td><td align="center"><img src="docs/store/field-look-blue.jpg" width="130" alt="blue"><br>blue</td><td align="center"><img src="docs/store/field-look-green.jpg" width="130" alt="green"><br>green</td><td align="center"><img src="docs/store/field-look-low.jpg" width="130" alt="low light"><br>low light</td></tr>
@@ -83,9 +82,6 @@ three of sixteen tubes, shown here in their daily sets.
 <tr><th align="left">Ticker</th><td align="center"><img src="docs/store/ticker-look-default.jpg" width="130" alt="default"><br>default</td><td align="center"><img src="docs/store/ticker-look-orange.jpg" width="130" alt="high visibility"><br>high visibility</td><td align="center"><img src="docs/store/ticker-look-blue.jpg" width="130" alt="blue"><br>blue</td><td align="center"><img src="docs/store/ticker-look-green.jpg" width="130" alt="green"><br>green</td><td align="center"><img src="docs/store/ticker-look-low.jpg" width="130" alt="low light"><br>low light</td></tr>
 <tr><th align="left">Shuttle</th><td align="center"><img src="docs/store/shuttle-look-default.jpg" width="130" alt="default"><br>default</td><td align="center"><img src="docs/store/shuttle-look-orange.jpg" width="130" alt="high visibility"><br>high visibility</td><td align="center"><img src="docs/store/shuttle-look-blue.jpg" width="130" alt="blue"><br>blue</td><td align="center"><img src="docs/store/shuttle-look-green.jpg" width="130" alt="green"><br>green</td><td align="center"><img src="docs/store/shuttle-look-low.jpg" width="130" alt="low light"><br>low light</td></tr>
 <tr><th align="left">Orb</th><td align="center"><img src="docs/store/orb-look-default.jpg" width="130" alt="default"><br>default</td><td align="center"><img src="docs/store/orb-look-orange.jpg" width="130" alt="high visibility"><br>high visibility</td><td align="center"><img src="docs/store/orb-look-blue.jpg" width="130" alt="blue"><br>blue</td><td align="center"><img src="docs/store/orb-look-green.jpg" width="130" alt="green"><br>green</td><td align="center"><img src="docs/store/orb-look-low.jpg" width="130" alt="low light"><br>low light</td></tr>
-<tr><th align="left">Neon Sign</th><td align="center"><img src="docs/store/sign-screen.jpg" width="130" alt="Downtown"><br>Downtown</td><td align="center"><img src="docs/store/sign-motel.jpg" width="130" alt="Motel"><br>Motel</td><td align="center"><img src="docs/store/sign-arcade.jpg" width="130" alt="Arcade"><br>Arcade</td><td align="center"><img src="docs/store/sign-diner.jpg" width="130" alt="Diner"><br>Diner</td><td align="center"><img src="docs/store/sign-rain.jpg" width="130" alt="Rain"><br>Rain</td></tr>
-<tr><th align="left">Neon Edge</th><td align="center"><img src="docs/store/edge-screen.jpg" width="130" alt="Downtown"><br>Downtown</td><td align="center"><img src="docs/store/edge-motel.jpg" width="130" alt="Motel"><br>Motel</td><td align="center"><img src="docs/store/edge-arcade.jpg" width="130" alt="Arcade"><br>Arcade</td><td align="center"><img src="docs/store/edge-diner.jpg" width="130" alt="Diner"><br>Diner</td><td align="center"><img src="docs/store/edge-rain.jpg" width="130" alt="Rain"><br>Rain</td></tr>
-<tr><th align="left">Neon Noir</th><td align="center"><img src="docs/store/noir-screen.jpg" width="130" alt="Downtown"><br>Downtown</td><td align="center"><img src="docs/store/noir-motel.jpg" width="130" alt="Motel"><br>Motel</td><td align="center"><img src="docs/store/noir-arcade.jpg" width="130" alt="Arcade"><br>Arcade</td><td align="center"><img src="docs/store/noir-diner.jpg" width="130" alt="Diner"><br>Diner</td><td align="center"><img src="docs/store/noir-rain.jpg" width="130" alt="Rain"><br>Rain</td></tr>
 </table>
 
 ### Glances and apps
@@ -125,6 +121,9 @@ the list, and writes it into each manifest):
 | epix, MARQ, Descent, D2, Approach | epix (Gen 2) and Pro 42/47/51 mm, quatix 7 Sapphire and Pro, tactix 7 AMOLED, MARQ Gen 2 (Aviator, Commander Carbon too) and Gen 3, Descent Mk3 43 mm and Mk3i 51 mm, D2 Mach 1 and 1 Pro, Mach 2 and 2 Pro, D2 Air X15, Approach S70 42/47 mm and S72 43/47 mm |
 
 Those are the 41 Connect IQ device ids, which the store lists as 48 watches.
+Battery Planner is also built for these MIP watches: Forerunner 955 and 255
+(255S and the Music models too), fēnix 7 and 7 Pro (all sizes) and fēnix 8
+Solar 47/51 mm (218 to 280 px).
 
 Everything lays out relative to the screen size. Where a watch lacks a
 font the faces use, the nearest it has stands in (the Venu 3's
@@ -133,7 +132,7 @@ button, a tap on that button's cue or a hold on the screen does its job.
 Sound Level needs a microphone, so it is built for the API 6 watches
 only. Not built for: the Venu 2 family, vívoactive 5, Approach S50,
 Descent G2 and the Instinct 3 AMOLEDs (no vector fonts), the Venu X1
-(rectangular) and the MIP watches.
+(rectangular) and the other MIP watches.
 
 ## Get them on your watch
 

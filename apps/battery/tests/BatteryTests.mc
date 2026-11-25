@@ -302,3 +302,18 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     BatteryLog.clear();
     return true;
 }
+
+// The first day's line has a shorter one for a narrow glance, and it fits
+// the narrowest row there is (two thirds of the screen)
+(:test)
+function testShortLine(logger as Logger) as Boolean {
+    var w = System.getDeviceSettings().screenWidth;
+    var dc = (Graphics.createBufferedBitmap({:width => w, :height => w}).get() as Graphics.BufferedBitmap).getDc();
+    var s = new BatterySummary();
+    Test.assertMessage(dc.getTextWidthInPixels(BatteryText.shortLine(s), Graphics.FONT_XTINY) <= w * 0.67, "first day");
+    s.chargeBy = new Time.Moment(Time.now().value());
+    Test.assertEqualMessage("charge " + BatteryText.shortLine(s), BatteryText.chargeLine(s), "the date without its verb");
+    s.charging = true;
+    Test.assertEqualMessage(BatteryText.shortLine(s), BatteryText.chargeLine(s), "so is the charge");
+    return true;
+}

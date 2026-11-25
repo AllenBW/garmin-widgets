@@ -10,7 +10,8 @@ fonts (the layouts size their text as a fraction of the screen, which
 needs them). Left out: the Venu 2 family, D2 Air X10, vívoactive 5,
 Approach S50, Descent G2 and the Instinct 3 AMOLEDs (no vector fonts, so
 every scaled word would fall back to a fixed system font), the Venu X1
-(rectangular) and the MIP watches (64 colours, no always-on rules).
+(rectangular) and the MIP watches (64 colours, no always-on rules),
+except Battery Planner, which is built for the ones in MIP.
 Sound Level needs a microphone (Toybox.Audio), so it gets only the
 watches that have one.
 """
@@ -47,7 +48,13 @@ MICROPHONE = FENIX8 + FULL + TWO_BUTTON + FORERUNNER_6
 NO_PNG = ["fr165", "fr165m", "fr70"]
 PNG_ONLY = [d for d in ALL if d not in NO_PNG]
 
-PER_APP = {"sound": MICROPHONE, "sign": PNG_ONLY, "noir": PNG_ONLY}
+# MIP, 218 to 280 px, five buttons: Battery Planner draws in their 64 colours (BatteryView), asked for
+# by a Forerunner 955 wearer on 2026-11-25; no other app has been laid out for them. The Forerunner 255s
+# have no vector fonts: the system's smallest stand in
+MIP = ["fr955", "fr255", "fr255m", "fr255s", "fr255sm", "fenix7", "fenix7s", "fenix7x", "fenix7pro", "fenix7spro",
+       "fenix7xpro", "fenix7pronowifi", "fenix7xpronowifi", "fenix8solar47mm", "fenix8solar51mm"]
+
+PER_APP = {"battery": ALL + MIP, "sound": MICROPHONE, "sign": PNG_ONLY, "noir": PNG_ONLY}
 
 
 def products(app):
@@ -72,7 +79,7 @@ def rewrite(path, devices, check):
 
 def main():
     check = "--check" in sys.argv
-    ok = rewrite(ROOT / "lib" / "manifest.xml", ALL, check)
+    ok = rewrite(ROOT / "lib" / "manifest.xml", ALL + MIP, check)
     for app in sorted(p.name for p in (ROOT / "apps").iterdir() if (p / "manifest.xml").exists()):
         ok = rewrite(ROOT / "apps" / app / "manifest.xml", products(app), check) and ok
     sys.exit(0 if ok else 1)

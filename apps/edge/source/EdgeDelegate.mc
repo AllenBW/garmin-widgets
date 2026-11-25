@@ -1,4 +1,3 @@
-import Toybox.Application.WatchFaceConfig;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
@@ -19,15 +18,6 @@ class EdgeDelegate extends WatchUi.WatchFaceDelegate {
         _view.reloadSettings();
         WatchUi.requestUpdate();
         return true;
-    }
-
-    // The editor changed a tube: it wins over the phone app's settings until
-    // they are next changed (Lib.Neon.chosen)
-    function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
-                                                 :committed as Boolean}) as Void {
-        Lib.Neon.changedInEditor();
-        _view.reloadSettings();
-        WatchUi.requestUpdate();
     }
 
     // The firmware calls this when onUpdate takes too long in low power mode

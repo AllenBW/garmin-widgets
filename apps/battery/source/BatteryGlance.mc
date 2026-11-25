@@ -27,8 +27,9 @@ class BatteryGlance extends WatchUi.GlanceView {
         var h = dc.getHeight();
         _bigFonts = [
             Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.42).toNumber(), Graphics.FONT_MEDIUM),
-            Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.38).toNumber(), Graphics.FONT_MEDIUM),
-            Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.34).toNumber(), Graphics.FONT_MEDIUM)
+            Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.38).toNumber(), Graphics.FONT_SMALL),
+            Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.34).toNumber(), Graphics.FONT_TINY),
+            Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.28).toNumber(), Graphics.FONT_XTINY)   // the MIP watches' narrow rows
         ] as Array<FontType>;
     }
 
@@ -61,14 +62,26 @@ class BatteryGlance extends WatchUi.GlanceView {
 
         var sparkX = (w * 0.74).toNumber();
         var headline = BatteryText.headline(s);
+        // the small lines drop to the smaller system font where the row is narrow (274 px on the Venu 4 41 mm)
+        var small = [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>;
+        var title = BatteryText.title(s, "BATTERY");
         dc.setColor(s.charging ? GREEN : CYAN, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.15).toNumber(), Graphics.FONT_GLANCE, BatteryText.title(s, "BATTERY"), left);
+        dc.drawText(0, (h * 0.15).toNumber(), Lib.Fmt.fitFont(dc, title, small, w), title, left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.5).toNumber(), Lib.Fmt.fitFont(dc, headline, _bigFonts, sparkX - (w * 0.03).toNumber()), headline, left);
+        var room = sparkX - (w * 0.03).toNumber();
+        var bigFont = Lib.Fmt.fitFont(dc, headline, _bigFonts, room);
+        dc.drawText(0, (h * 0.5).toNumber(), bigFont, headline, left);
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, BatteryText.chargeLine(s), left);
+        var charge = BatteryText.chargeLine(s);
+        if (dc.getTextWidthInPixels(charge, Graphics.FONT_XTINY) > w) {
+            charge = BatteryText.shortLine(s);
+        }
+        dc.drawText(0, (h * 0.85).toNumber(), Lib.Fmt.fitFont(dc, charge, small, w), charge, left);
 
-        drawSparkline(dc, s.levels, sparkX, (h * 0.28).toNumber(), w - sparkX - 2, (h * 0.44).toNumber());
+        // the narrowest rows (140 px on the Forerunner 255S) give a long headline the sparkline's room
+        if (dc.getTextWidthInPixels(headline, bigFont) <= sparkX) {
+            drawSparkline(dc, s.levels, sparkX, (h * 0.28).toNumber(), w - sparkX - 2, (h * 0.44).toNumber());
+        }
     }
 
     // Battery level over the log, 0 % at the bottom of the box, 100 % at the top

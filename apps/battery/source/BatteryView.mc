@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.Time;
 import Toybox.Timer;
 import Toybox.WatchUi;
@@ -13,14 +14,14 @@ class BatteryView extends WatchUi.View {
 
     private const CYAN = 0x3EC6E0;
     private const GREEN = 0x5BD96A;
-    private const ORANGE = 0xFF7A3D;
     private const WHITE = 0xF2F2F2;
     private const GRAY = 0xA8A8A8;
-    private const DIM = 0x7A7A7A;
-    private const TRACK = 0x262626;
 
     private const TICK_MS = 10000;   // how often the charger is looked at while the app is open
 
+    private var _orange as Number = 0xFF7A3D;
+    private var _dim as Number = 0x7A7A7A;
+    private var _track as Number = 0x262626;
     private var _summary as BatterySummary?;
     private var _heavy as Number? = null;
     private var _heavyHours as Float = 0.0;
@@ -36,9 +37,18 @@ class BatteryView extends WatchUi.View {
 
     function onLayout(dc as Dc) as Void {
         var h = dc.getHeight();
+        // A MIP screen (64 colours, no burn-in) takes the nearest colour it
+        // has: the orange would turn red, the day letters dark grey and the
+        // charge bar's track black, so it gets three it can show
+        var settings = System.getDeviceSettings();
+        if ((settings has :requiresBurnInProtection) && !settings.requiresBurnInProtection) {
+            _orange = 0xFF5500;
+            _dim = 0xAAAAAA;
+            _track = 0x555555;
+        }
         _bigFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.19).toNumber(), Graphics.FONT_LARGE);
-        _textFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.075).toNumber(), Graphics.FONT_SMALL);
-        _noteFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.062).toNumber(), Graphics.FONT_TINY);
+        _textFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.075).toNumber(), Graphics.FONT_XTINY);
+        _noteFont = Lib.Fmt.vectorFont("RobotoCondensedRegular", (h * 0.062).toNumber(), Graphics.FONT_XTINY);
         _labelFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (h * 0.055).toNumber(), Graphics.FONT_XTINY);
     }
 
@@ -119,8 +129,12 @@ class BatteryView extends WatchUi.View {
 
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.815).toNumber(), _textFont, BatteryText.paceLine(s), center);
-        dc.setColor(ORANGE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.895).toNumber(), _noteFont, BatteryText.heavyLine(s, _heavy, _heavyHours), center);
+        var heavy = BatteryText.heavyLine(s, _heavy, _heavyHours);
+        if (dc.getTextWidthInPixels(heavy, _noteFont) > w * 0.6) {
+            heavy = BatteryText.heavyLine(s, _heavy, 0.0);   // the Forerunner 255's system font runs wide
+        }
+        dc.setColor(_orange, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.895).toNumber(), _noteFont, heavy, center);
     }
 
     // The battery as a bar, filled to the level
@@ -130,7 +144,7 @@ class BatteryView extends WatchUi.View {
         var x = (w - barW) / 2;
         var y = (h * 0.52).toNumber();
         var r = barH / 4;
-        dc.setColor(TRACK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_track, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(x, y, barW, barH, r);
         var fill = barW * s.level / 100;
         if (fill < 2 * r) {
@@ -155,7 +169,7 @@ class BatteryView extends WatchUi.View {
             var x = x0 + i * step;
             var drain = s.drains[i];
             if (drain == null) {
-                dc.setColor(TRACK, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(_track, Graphics.COLOR_TRANSPARENT);
                 dc.fillRectangle(x, base - 3, barW, 3);
             } else {
                 var barH = (drain * perPercent).toNumber();
@@ -165,10 +179,10 @@ class BatteryView extends WatchUi.View {
                 if (barH < 3) {
                     barH = 3;
                 }
-                dc.setColor((heavy != null && heavy == i) ? ORANGE : CYAN, Graphics.COLOR_TRANSPARENT);
+                dc.setColor((heavy != null && heavy == i) ? _orange : CYAN, Graphics.COLOR_TRANSPARENT);
                 dc.fillRoundedRectangle(x, base - barH, barW, barH, 3);
             }
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_dim, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + barW / 2, base + (h * 0.05).toNumber(), _labelFont, s.labels[i], center);
         }
     }

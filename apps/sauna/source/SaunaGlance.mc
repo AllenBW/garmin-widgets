@@ -33,12 +33,17 @@ class SaunaGlance extends WatchUi.GlanceView {
         dc.clear();
         // the top line sits where the round screen is narrowest: start it a little in
         dc.setColor(EMBER, Graphics.COLOR_TRANSPARENT);
-        dc.drawText((w * 0.06).toNumber(), (h * 0.17).toNumber(), Graphics.FONT_GLANCE, "SAUNA · STEAM", left);
+        // the small lines drop to the smaller system font where the row is narrow (274 px on the Venu 4 41 mm)
+        var small = [Graphics.FONT_GLANCE, Graphics.FONT_XTINY] as Array<FontType>;
+        var inset = (w * 0.06).toNumber();
+        dc.drawText(inset, (h * 0.17).toNumber(), Lib.Fmt.fitFont(dc, "SAUNA · STEAM", small, w - inset), "SAUNA · STEAM", left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, (h * 0.5).toNumber(), _bigFont, SaunaText.headline(row), left);
         // one line only: given the row's height the fit would wrap into the headline
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        var week = Graphics.fitTextToArea(SaunaText.weekShort(SaunaSettings.plan(kind)), Graphics.FONT_GLANCE, w, Graphics.getFontHeight(Graphics.FONT_GLANCE), true);
-        dc.drawText(0, (h * 0.85).toNumber(), Graphics.FONT_GLANCE, week == null ? "" : week, left);
+        var text = SaunaText.weekShort(SaunaSettings.plan(kind));
+        var font = Lib.Fmt.fitFont(dc, text, small, w);
+        var week = Graphics.fitTextToArea(text, font, w, Graphics.getFontHeight(font), true);
+        dc.drawText(0, (h * 0.85).toNumber(), font, week == null ? "" : week, left);
     }
 }

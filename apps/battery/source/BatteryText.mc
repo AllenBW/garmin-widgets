@@ -56,6 +56,17 @@ module BatteryText {
         return "watch estimate, logging day 1";
     }
 
+    // chargeLine where a glance row is too narrow for it: the first day's
+    // (274 px on the Venu 4 41 mm, 176 on the Forerunner 955), or a long date
+    // on the narrowest (140 px on the Forerunner 255S)
+    function shortLine(s as BatterySummary) as String {
+        if (s.charging) {
+            return chargeLine(s);
+        }
+        var by = s.chargeBy;
+        return (by != null) ? "by " + Lib.Fmt.shortDate(by) : "watch estimate";
+    }
+
     // "lasts 5d 19h": what the charge so far is good for at the recent pace
     function lastsLine(s as BatterySummary) as String {
         var hours = s.hoursLeft;
