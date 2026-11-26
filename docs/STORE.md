@@ -45,6 +45,8 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Neon Edge | <https://apps.garmin.com/apps/dc81e858-10b9-46a6-8a01-0c01572033f0> | Submitted 2026-11-19 as 1.0.0 (Digital; 41 watches, 47 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
 | Neon Noir | <https://apps.garmin.com/apps/e463d238-7076-4949-9756-d3f59285d203> | Submitted 2026-11-19 as 1.0.0 (Analog; 38 watches, 44 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
 | ChargeLog | <https://apps.garmin.com/apps/ad9b2bae-dcae-4f47-b92f-709d309ebe91> | Submitted 2026-11-19 as 1.0.0 (Widget, Tools; 48 devices), released from its own repo with the ChargeLog phone app, so its source is not here; approved 2026-11-20, 1.0.0 live since 2026-11-20 |
+| Neon Noir Pro | <https://apps.garmin.com/apps/2d9d5021-afc8-4066-b1f7-5d32e1b3f867> | Submitted 2026-11-26 as 1.0.0 (Analog; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; in review |
+| Neon Sign Pro | <https://apps.garmin.com/apps/b770631d-419e-4815-87cf-fe3a25656fe4> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; in review |
 
 ## Listings
 
