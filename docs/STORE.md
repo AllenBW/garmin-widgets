@@ -427,6 +427,83 @@ Venu, vívoactive and more), with a dim always-on mode that keeps the two
 hands and the twelve as thin tubes with no glow and shifts each minute. Not
 for the Forerunner 165 and 70, whose screens can't carry the glow.
 
+**Neon Noir Pro** (Watch face, $2.99). Neon Noir with six readings of your
+choosing, set into the dial's border. The rim is a sign's border in six
+runs of tube: each run breaks for its reading, bent from the same tube as
+the date, and lights as far as the reading has got, so steps fill toward
+your goal and the battery empties as it goes; a reading with no goal keeps
+its run as unlit glass. The hands are Noir's, whole, and never cross a
+reading.
+
+Choose any reading the watch has for each of the six, other apps' included:
+in the watch face editor (Customize), in the face's settings on the watch,
+or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
+battery and Body Battery to begin with. Press and hold a reading to open it.
+
+Every colour is one a sign shop can make: sixteen tubes for the hour hand,
+the minute hand and the markers. To change the look, press and hold the
+dial away from the readings: your own tubes, high visibility as a white
+sign with red, blue or green, low light for a dark room, and a new set each
+day (Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call).
+
+Neon Noir, the same dial without the readings, is free; so are Neon Sign
+and Neon Edge. This is the one to buy if you want your day on it.
+
+Bought it and want it to do something it doesn't? A reading it doesn't show, a colour, a change for your watch: write to the address on this page and I'll make it, for you and everyone who has it.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), the Forerunner 165 and 70 included, with a dim
+always-on mode that keeps the hands and the twelve as thin tubes and shifts
+each minute.
+
+**Neon Sign Pro** (Watch face, $2.99). The Pro of Neon Sign: the same time as a
+neon sign on a black wall, each numeral bent from one glass tube, the hours
+over the minutes, and six readings round it, every one of them a tube too.
+Four go down the right of the face, a small bent mark and a number each. Two
+break the border of tube round the rim, at nine and at six, as a sign's
+border breaks for a word, and that border is lit as far as the reading has
+got: your steps towards your goal, your battery as it runs down. The day and
+date are bent round the rim at twelve.
+
+You choose the six readings, on the watch or on the phone: in the watch face
+editor (Customize), in the face's settings on the watch, or in the phone
+app. Heart rate, steps, battery, Body Battery, stress, temperature, weather, calories,
+floors, intensity minutes, altitude, Pulse Ox, respiration, sunrise and
+sunset, notifications, recovery, VO2 max, sleep score, pressure and your
+next calendar event, most with a mark of their own, and in the watch face
+editor other apps' readings too.
+Press and hold a reading to open it.
+
+When you raise your wrist, any numeral that changed since you last looked
+comes on the way a tube lights: a stutter, a dim glow, then full. When the
+minute turns while you watch, the old numeral flickers out and the new one
+lights in its place.
+
+Every colour is one a sign shop can make. On the watch, in the face's
+settings or the watch face editor, or in the phone app, choose a tube for the
+hours, one for the minutes and one for the date, from sixteen tubes: rose,
+turquoise, amber, ruby, neon red, orange, coral, magenta, purple, lavender,
+cobalt, horizon blue, green, lemon, warm white and snow white.
+
+To change the look, press and hold the time. Each hold moves to the next
+look and shows its name for a moment: your own tubes, high visibility as a
+white sign with red, then blue, then green, low light for a dark room, a new
+set each day (Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call), and
+back to your own. The Look setting in the phone app picks one too. 12- or
+24-hour, as your watch is set.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), the Forerunner 165 and 70 included, with a dim
+always-on mode that draws the numerals thin with no glow and shifts each
+minute.
+
+Neon Sign, the same sign without the readings, is free; so are Neon Noir
+and Neon Edge. This is the one to buy if you want your day on it.
+
+Bought it and want it to do something it doesn't? A reading it doesn't show,
+a colour, a change for your watch: write to the address on this page and I'll
+make it, for you and everyone who has it.
+
 **Battery Planner** (Widget). Tells you when to charge, and how long the
 charge will take. It records the battery every half hour in the
 background, learns your drain over the last week and projects the day you
