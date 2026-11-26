@@ -45,9 +45,9 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | Neon Edge | <https://apps.garmin.com/apps/dc81e858-10b9-46a6-8a01-0c01572033f0> | Submitted 2026-11-19 as 1.0.0 (Digital; 41 watches, 47 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
 | Neon Noir | <https://apps.garmin.com/apps/e463d238-7076-4949-9756-d3f59285d203> | Submitted 2026-11-19 as 1.0.0 (Analog; 38 watches, 44 devices), with a cover that moves; 1.0.1 the same day (the tubes chosen on the watch: the face's own settings and the watch face editor) and its description; five screen images the same day, the face in its colour sets; approved 2026-11-19, 1.0.1 live since 2026-11-19 |
 | ChargeLog | <https://apps.garmin.com/apps/ad9b2bae-dcae-4f47-b92f-709d309ebe91> | Submitted 2026-11-19 as 1.0.0 (Widget, Tools; 48 devices), released from its own repo with the ChargeLog phone app, so its source is not here; approved 2026-11-20, 1.0.0 live since 2026-11-20 |
-| Neon Noir Pro | <https://apps.garmin.com/apps/2d9d5021-afc8-4066-b1f7-5d32e1b3f867> | Submitted 2026-11-26 as 1.0.0 (Analog; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); in review |
-| Neon Sign Pro | <https://apps.garmin.com/apps/b770631d-419e-4815-87cf-fe3a25656fe4> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); in review |
-| Neon Edge Pro | <https://apps.garmin.com/apps/53458f16-a5db-4ac1-bd62-847a1233d8a7> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); in review |
+| Neon Noir Pro | <https://apps.garmin.com/apps/2d9d5021-afc8-4066-b1f7-5d32e1b3f867> | Submitted 2026-11-26 as 1.0.0 (Analog; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); 1.0.2 the same day (a reading the watch can't give is left empty); in review |
+| Neon Sign Pro | <https://apps.garmin.com/apps/b770631d-419e-4815-87cf-fe3a25656fe4> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); 1.0.2 the same day (a reading the watch can't give is left empty); in review |
+| Neon Edge Pro | <https://apps.garmin.com/apps/53458f16-a5db-4ac1-bd62-847a1233d8a7> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; 1.0.1 the same day (every reading optional), the listing edited for it (the description, the cover, a screen with fewer readings); 1.0.2 the same day (a reading the watch can't give is left empty); in review |
 
 ## Listings
 
@@ -446,7 +446,9 @@ battery and Body Battery to begin with. Press and hold a reading to open it.
 Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
 drawn there, not even its run of tube: keep six, keep two at three and nine,
-keep one, or none at all and the dial is Noir's.
+keep one, or none at all and the dial is Noir's. A reading your watch can't
+give (the sleep score on a watch that doesn't keep one) is left empty in
+the same way.
 
 Every colour is one a sign shop can make: sixteen tubes for the hour hand,
 the minute hand and the markers. To change the look, press and hold the
@@ -486,7 +488,9 @@ Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
 drawn there, not even its run of tube. Leave the one at nine empty and the
 sign keeps its readings to the right and below, the left side open; keep
-only the four down the side, or none at all.
+only the four down the side, or none at all. A reading your watch can't
+give (the sleep score on a watch that doesn't keep one) is left empty in
+the same way.
 
 When you raise your wrist, any numeral that changed since you last looked
 comes on the way a tube lights: a stutter, a dim glow, then full. When the
@@ -536,7 +540,9 @@ battery and Body Battery to begin with. Press and hold a reading to open it.
 Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
 drawn there, not even its run of tube: keep six, keep two either side of the
-numerals, keep one, or none at all and the numerals stand alone.
+numerals, keep one, or none at all and the numerals stand alone. A reading your watch can't
+give (the sleep score on a watch that doesn't keep one) is left empty in
+the same way.
 
 Every colour is one a sign shop can make: sixteen tubes for the upper edges,
 the lower edges and the date. To change the look, press and hold the face
