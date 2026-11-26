@@ -96,3 +96,24 @@ function testWeatherText(logger as Logger) as Boolean {
     Test.assertEqualMessage(WeatherText.describe(null), "", "unknown");
     return true;
 }
+
+// A hold moves the phone's Look with it, so choosing on the phone the look
+// a hold moved away from is taken up, and a change to another setting
+// leaves the held look be (Lib.Look, 2026-11-27)
+(:test)
+function testLookRepick(logger as Logger) as Boolean {
+    Application.Properties.setValue(Lib.Look.KEY, Lib.Look.DAILY);
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.DAILY, "the phone's look");
+    Lib.Look.next();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.YOURS, "a hold steps on");
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.YOURS, "another setting changed: the held look stays");
+    Application.Properties.setValue(Lib.Look.KEY, Lib.Look.DAILY);
+    Lib.Look.changedOnPhone();
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.DAILY, "Daily chosen again on the phone is taken");
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Look.SEEN);
+    Application.Properties.setValue(Lib.Look.KEY, Lib.Look.YOURS);
+    return true;
+}

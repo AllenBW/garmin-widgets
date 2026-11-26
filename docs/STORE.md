@@ -440,8 +440,16 @@ reading.
 
 Choose any reading the watch has for each of the six, other apps' included:
 in the watch face editor (Customize), in the face's settings on the watch,
-or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
-battery and Body Battery to begin with. Press and hold a reading to open it.
+or in the phone app. Heart rate, steps, battery, Body Battery, stress, temperature, weather,
+calories, floors, intensity minutes, altitude, Pulse Ox, respiration, sunrise
+and sunset, notifications, recovery, VO2 max, sleep score, pressure and your
+next calendar event, most with a mark of their own; it begins with steps,
+heart rate, sunset, altitude, battery and Body Battery. Press and hold a reading to open it.
+
+A run is lit only where a reading has a goal or a level: your steps, floors and
+intensity minutes toward your goal, the battery and Body Battery as they run
+down, the sleep score and stress. Heart rate, sunrise and sunset, altitude and
+the others keep their run as unlit glass.
 
 Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
@@ -469,9 +477,10 @@ each minute.
 **Neon Sign Pro** (Watch face, $2.99). The Pro of Neon Sign: the same time as a
 neon sign on a black wall, each numeral bent from one glass tube, the hours
 over the minutes, and six readings round it, every one of them a tube too.
-Four go down the right of the face, a small bent mark and a number each. Two
-break the border of tube round the rim, at nine and at six, as a sign's
-border breaks for a word, and that border is lit as far as the reading has
+Four go down the right of the face, a small bent mark and a number each. Two more can
+break the border of tube round the rim, at six and at nine, as a sign's
+border breaks for a word (the one at nine starts empty, so the sign opens on
+the left), and that border is lit as far as the reading has
 got: your steps towards your goal, your battery as it runs down. The day and
 date are bent round the rim at twelve.
 
@@ -484,10 +493,16 @@ next calendar event, most with a mark of their own, and in the watch face
 editor other apps' readings too.
 Press and hold a reading to open it.
 
+A run is lit only where a reading has a goal or a level: your steps, floors and
+intensity minutes toward your goal, the battery and Body Battery as they run
+down, the sleep score and stress. Heart rate, sunrise and sunset, altitude and
+the others keep their run as unlit glass.
+
 Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
-drawn there, not even its run of tube. Leave the one at nine empty and the
-sign keeps its readings to the right and below, the left side open; keep
+drawn there, not even its run of tube. It starts with the one at nine empty, so the
+sign keeps its readings to the right and below and the left side open; add it
+back if you like, keep
 only the four down the side, or none at all. A reading your watch can't
 give (the sleep score on a watch that doesn't keep one) is left empty in
 the same way.
@@ -534,10 +549,19 @@ twelve, from the same tube.
 
 Choose any reading the watch has for each of the six, other apps' included:
 in the watch face editor (Customize), in the face's settings on the watch,
-or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
-battery and Body Battery to begin with. Press and hold a reading to open it.
+or in the phone app. Heart rate, steps, battery, Body Battery, stress, temperature, weather,
+calories, floors, intensity minutes, altitude, Pulse Ox, respiration, sunrise
+and sunset, notifications, recovery, VO2 max, sleep score, pressure and your
+next calendar event, most with a mark of their own; it begins with steps,
+heart rate, sunset, altitude, battery and Body Battery. Press and hold a reading to open it.
 
-Every reading is optional. Leave any of the six empty (None in the phone
+A run is lit only where a reading has a goal or a level: your steps, floors and
+intensity minutes toward your goal, the battery and Body Battery as they run
+down, the sleep score and stress. Heart rate, sunrise and sunset, altitude and
+the others keep their run as unlit glass.
+
+The numerals are a little smaller than Neon Edge's, to make room for the
+border. Every reading is optional. Leave any of the six empty (None in the phone
 app or the face's settings, nothing in the watch face editor) and nothing is
 drawn there, not even its run of tube: keep six, keep two either side of the
 numerals, keep one, or none at all and the numerals stand alone. A reading your watch can't

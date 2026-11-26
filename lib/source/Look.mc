@@ -55,10 +55,20 @@ module Lib {
             return (m == BRIGHT_BLUE) ? ARC : ((m == BRIGHT_GREEN) ? VOLT : BLAZE);
         }
 
-        // A hold on the time: the next look, its name shown for a moment
+        // A hold on the time: the next look, its name shown for a moment. The
+        // phone's setting is moved to it too, so the phone shows the look that
+        // is on, and choosing another there (even the one held away from) is
+        // a change it takes up (2026-11-27: choosing Daily again after a hold
+        // had moved on from it did nothing)
         function next() as Number {
             var m = ORDER[(ORDER.indexOf(mode()) + 1) % MODES];
             Application.Storage.setValue(KEY, m);
+            try {
+                Application.Properties.setValue(KEY, m);
+            } catch (e) {
+                // a face with no Look setting: the hold alone keeps it
+            }
+            Application.Storage.setValue(SEEN, m);
             changedAt = System.getTimer();
             return m;
         }
