@@ -506,6 +506,38 @@ Bought it and want it to do something it doesn't? A reading it doesn't show,
 a colour, a change for your watch: write to the address on this page and I'll
 make it, for you and everyone who has it.
 
+**Neon Edge Pro** (Watch face, $2.99). Neon Edge with six readings of your
+choosing, set into a border round the time. The numerals are Edge's,
+enormous and never drawn, only their edges lit in neon tube, one colour on
+the edges facing the upper left and another on those facing the lower
+right. Round them the rim is a sign's border in six runs of tube: each run
+breaks for its reading and lights as far as the reading has got, so steps
+fill toward your goal and the battery empties as it goes; a reading with no
+goal keeps its run as unlit glass. The date is bent round the rim at
+twelve, from the same tube.
+
+Choose any reading the watch has for each of the six, other apps' included:
+in the watch face editor (Customize), in the face's settings on the watch,
+or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
+battery and Body Battery to begin with. Press and hold a reading to open it.
+
+Every colour is one a sign shop can make: sixteen tubes for the upper edges,
+the lower edges and the date. To change the look, press and hold the face
+away from the readings: your own tubes, high visibility as a white sign
+with red, blue or green, low light for a dark room, and a new set each day
+(Downtown, Motel, Arcade, Diner, Rain, Orchid, Last Call). When a numeral
+changes it flickers on as a tube does.
+
+Neon Edge, the same numerals without the readings, is free; so are Neon
+Sign and Neon Noir. This is the one to buy if you want your day on it.
+
+Bought it and want it to do something it doesn't? A reading it doesn't show, a colour, a change for your watch: write to the address on this page and I'll make it, for you and everyone who has it.
+
+Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner,
+Venu, vívoactive and more), the Forerunner 165 and 70 included, with a dim
+always-on mode that keeps the numerals' edges as thin tubes and shifts each
+minute.
+
 **Battery Planner** (Widget). Tells you when to charge, and how long the
 charge will take. It records the battery every half hour in the
 background, learns your drain over the last week and projects the day you
