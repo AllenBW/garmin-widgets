@@ -47,6 +47,7 @@ carry the same key wide as the listing's hero image (`<face>-hero.jpg`).
 | ChargeLog | <https://apps.garmin.com/apps/ad9b2bae-dcae-4f47-b92f-709d309ebe91> | Submitted 2026-11-19 as 1.0.0 (Widget, Tools; 48 devices), released from its own repo with the ChargeLog phone app, so its source is not here; approved 2026-11-20, 1.0.0 live since 2026-11-20 |
 | Neon Noir Pro | <https://apps.garmin.com/apps/2d9d5021-afc8-4066-b1f7-5d32e1b3f867> | Submitted 2026-11-26 as 1.0.0 (Analog; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; in review |
 | Neon Sign Pro | <https://apps.garmin.com/apps/b770631d-419e-4815-87cf-fe3a25656fe4> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; in review |
+| Neon Edge Pro | <https://apps.garmin.com/apps/53458f16-a5db-4ac1-bd62-847a1233d8a7> | Submitted 2026-11-26 as 1.0.0 (Digital; $2.99, sold through the Connect IQ merchant account; 47 devices), with a cover that moves; its source is not public; in review |
 
 ## Listings
 
@@ -442,6 +443,11 @@ in the watch face editor (Customize), in the face's settings on the watch,
 or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
 battery and Body Battery to begin with. Press and hold a reading to open it.
 
+Every reading is optional. Leave any of the six empty (None in the phone
+app or the face's settings, nothing in the watch face editor) and nothing is
+drawn there, not even its run of tube: keep six, keep two at three and nine,
+keep one, or none at all and the dial is Noir's.
+
 Every colour is one a sign shop can make: sixteen tubes for the hour hand,
 the minute hand and the markers. To change the look, press and hold the
 dial away from the readings: your own tubes, high visibility as a white
@@ -475,6 +481,12 @@ sunset, notifications, recovery, VO2 max, sleep score, pressure and your
 next calendar event, most with a mark of their own, and in the watch face
 editor other apps' readings too.
 Press and hold a reading to open it.
+
+Every reading is optional. Leave any of the six empty (None in the phone
+app or the face's settings, nothing in the watch face editor) and nothing is
+drawn there, not even its run of tube. Leave the one at nine empty and the
+sign keeps its readings to the right and below, the left side open; keep
+only the four down the side, or none at all.
 
 When you raise your wrist, any numeral that changed since you last looked
 comes on the way a tube lights: a stutter, a dim glow, then full. When the
@@ -520,6 +532,11 @@ Choose any reading the watch has for each of the six, other apps' included:
 in the watch face editor (Customize), in the face's settings on the watch,
 or in the phone app. Steps, heart rate, sunrise and sunset, altitude,
 battery and Body Battery to begin with. Press and hold a reading to open it.
+
+Every reading is optional. Leave any of the six empty (None in the phone
+app or the face's settings, nothing in the watch face editor) and nothing is
+drawn there, not even its run of tube: keep six, keep two either side of the
+numerals, keep one, or none at all and the numerals stand alone.
 
 Every colour is one a sign shop can make: sixteen tubes for the upper edges,
 the lower edges and the date. To change the look, press and hold the face
