@@ -32,9 +32,18 @@ function testNoirDrawsEveryMode(logger as Logger) as Boolean {
     var view = new NoirView();
     view.onLayout(dc);
 
+    // a start's first frame: the hands and the marks straight to the screen,
+    // nothing of standby's or the date's loaded
     var started = System.getTimer();
     view.onUpdate(dc);
-    logger.debug("awake, the first frame (the tubes loaded, the face into its bitmap): " + (System.getTimer() - started) + " ms");
+    logger.debug("awake, the first frame (the hands and the marks, straight to the screen): " + (System.getTimer() - started) + " ms");
+    Test.assertMessage(!view.bitmapped(), "the first frame makes no bitmap");
+    Test.assertEqualMessage(view.loaded().toString(), "[false, false]", "nor loads standby's tubes or the date's sheets");
+    started = System.getTimer();
+    view.onUpdate(dc);
+    logger.debug("awake, the next (the face into its bitmap, the date's sheets loaded): " + (System.getTimer() - started) + " ms");
+    Test.assertMessage(view.bitmapped(), "the bitmap the frame after");
+    Test.assertEqualMessage(view.loaded().toString(), "[false, true]", "and the date's sheets");
     started = System.getTimer();
     view.onUpdate(dc);
     logger.debug("awake, from the bitmap: " + (System.getTimer() - started) + " ms");
@@ -67,6 +76,7 @@ function testNoirDrawsEveryMode(logger as Logger) as Boolean {
     view.setTitled(true);
     view.onUpdate(dc);
 
+    Test.assertEqualMessage(view.loaded().toString(), "[true, true]", "standby's tubes loaded at the first standby");
     var stats = System.getSystemStats();
     logger.debug("memory: " + stats.usedMemory + " of " + stats.totalMemory + " bytes used");
     return true;

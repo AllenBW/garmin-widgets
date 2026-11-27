@@ -2,6 +2,7 @@ import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Time;
 import Toybox.WatchUi;
 
 // Blocks: the screen filled with numbers, no labels. The hours upper left
@@ -19,6 +20,13 @@ import Toybox.WatchUi;
 // temperature in thin outlines, shifted each minute; about 9 % of the screen
 // lit on the simulator (designs/preview_blocks.py says a little less: its
 // outlines are thinner).
+//
+// How quickly it lights: a start's first frame is the
+// hours and minutes alone, the readings the frame after. Awake, the numbers
+// are drawn once into a bitmap and copied from it until a reading or the
+// look changes; a wake within the minute copies it again, drawing nothing.
+// A frame that lays them out draws them straight to the screen, and the
+// next one into the bitmap, so no frame does both.
 class BlocksView extends WatchUi.WatchFace {
 
     // The layout, as fractions of the screen: the same numbers as
@@ -36,15 +44,27 @@ class BlocksView extends WatchUi.WatchFace {
     private var _look as Number = Lib.Look.YOURS;
     private var _day as Number = 0;           // the daily look's day
     private var _minute as Number = -1;
+    private var _stamp as Number = -1;        // the minute read last, since 1970 (a long sleep can end on the same minute)
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
-    private var _dirty as Boolean = true;
+    private var _dirty as Boolean = true;     // the awake numbers to lay out and draw again
+    private var _thinDirty as Boolean = true; // standby's to lay out again
     private var _titled as Boolean = false;
+    private var _late as Boolean = true;      // a start's first frame: the time alone
     private var _pieces as Array<Lib.Numbers.Piece> = [] as Array<Lib.Numbers.Piece>;
+    private var _thinPieces as Array<Lib.Numbers.Piece> = [] as Array<Lib.Numbers.Piece>;
     private var _targets as Array<Lib.Numbers.Target> = [] as Array<Lib.Numbers.Target>;
+    private var _failed as Boolean = false;   // no room in the graphics pool: drawn straight to the screen
+    private var _faceRef as Graphics.BufferedBitmapReference? = null;
+    private var _face as Graphics.BufferedBitmap? = null;   // the awake numbers, drawn once
+    private var _drawn as Boolean = false;    // the bitmap holds them as they are
+    private var _titleFont as FontType? = null;
+    var composed as Number = 0;               // for the tests: how often the numbers were drawn into the bitmap
+    private var _log as Lib.Timing.Log;        // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Blocks");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -53,8 +73,9 @@ class BlocksView extends WatchUi.WatchFace {
         _look = Lib.Look.mode();
         _colors = Lib.Numbers.colors(_look);
         _day = Lib.Look.today();
-        _minute = -1;
+        _stamp = -1;
         _dirty = true;
+        _thinDirty = true;
     }
 
     // The complication a press and hold at (x, y) opens, or null on the time
@@ -74,12 +95,14 @@ class BlocksView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ state
 
     private function refresh() as Void {
-        var minute = System.getClockTime().min;
-        if (minute != _minute) {
-            _minute = minute;
+        var stamp = Time.now().value() / 60;
+        if (stamp != _stamp) {
+            _stamp = stamp;
+            _minute = System.getClockTime().min;
             _values = Lib.Numbers.read();
             sample();
             _dirty = true;
+            _thinDirty = true;
         } else if (_awake) {
             live();
         }
@@ -92,6 +115,7 @@ class BlocksView extends WatchUi.WatchFace {
         if (!heart.equals(_values[Lib.Numbers.HEART])) {
             _values[Lib.Numbers.HEART] = heart;
             _dirty = true;
+            _thinDirty = true;
         }
     }
 
@@ -114,30 +138,39 @@ class BlocksView extends WatchUi.WatchFace {
         refresh();
         _values = values;
         _dirty = true;
+        _thinDirty = true;
     }
 
     function setAwake(awake as Boolean) as Void {
         _awake = awake;
         _burnIn = true;
         _dirty = true;
+        _thinDirty = true;
+    }
+
+    // Nothing left to show over later frames (the bitmap may still be
+    // drawn at the next update: what it shows is on screen already)
+    function settled() as Boolean {
+        return !_late && !_dirty;
     }
 
     function onEnterSleep() as Void {
         _awake = false;
-        _dirty = true;
         WatchUi.requestUpdate();
     }
 
+    // The bitmap keeps the numbers as they were last drawn awake; a minute
+    // that turned in standby has already marked them to be drawn again
     function onExitSleep() as Void {
+        _log.wake();
         _awake = true;
-        _minute = -1;
-        _dirty = true;
         WatchUi.requestUpdate();
     }
 
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
@@ -153,20 +186,92 @@ class BlocksView extends WatchUi.WatchFace {
         }
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
         dc.clear();
-        if (_dirty) {
-            layout(dc, thin);
-            _dirty = false;
+        if (thin) {
+            if (_thinDirty) {
+                _thinPieces = layout(dc, true, false);
+                _thinDirty = false;
+            }
+            var off = Lib.Aod.offset(_minute, (dc.getWidth() * 0.006).toNumber());
+            for (var i = 0; i < _thinPieces.size(); i++) {
+                _thinPieces[i].draw(dc, off[0], off[1], true);
+            }
+            return;
         }
-        var off = thin ? Lib.Aod.offset(_minute, (dc.getWidth() * 0.006).toNumber()) : [0, 0];
-        for (var i = 0; i < _pieces.size(); i++) {
-            _pieces[i].draw(dc, off[0], off[1], thin);
+        var late = _late;
+        _late = false;
+        if (late) {
+            var time = layout(dc, false, true);
+            for (var i = 0; i < time.size(); i++) {
+                time[i].draw(dc, 0, 0, false);
+            }
+            WatchUi.requestUpdate();     // the readings next
+        } else {
+            drawAwake(dc);
         }
         if (titled) {
+            if (_titleFont == null) {
+                _titleFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.13,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.13, _titleFont as FontType,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
+        _log.frame(started, settled());
+    }
+
+    // The awake numbers: laid out and drawn straight to the screen when
+    // something changed, drawn into the bitmap the frame after, and copied
+    // from it from then on; without the bitmap, drawn every time
+    private function drawAwake(dc as Dc) as Void {
+        var fresh = _dirty;
+        if (fresh) {
+            _pieces = layout(dc, false, false);
+            _dirty = false;
+            _drawn = false;
+        }
+        var face = fresh ? null : bitmap(dc);
+        if (face == null) {
+            for (var i = 0; i < _pieces.size(); i++) {
+                _pieces[i].draw(dc, 0, 0, false);
+            }
+            return;
+        }
+        if (!_drawn) {
+            var fdc = face.getDc();
+            if (fdc has :setAntiAlias) {
+                fdc.setAntiAlias(true);
+            }
+            fdc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            fdc.clear();
+            for (var i = 0; i < _pieces.size(); i++) {
+                _pieces[i].draw(fdc, 0, 0, false);
+            }
+            _drawn = true;
+            composed++;
+        }
+        dc.drawBitmap(0, 0, face);
+    }
+
+    // The bitmap, made once; null when the pool has no room for it
+    private function bitmap(dc as Dc) as Graphics.BufferedBitmap? {
+        if (_failed || !(Graphics has :createBufferedBitmap)) {
+            return null;
+        }
+        if (_face == null) {
+            try {
+                _faceRef = Graphics.createBufferedBitmap({:width => dc.getWidth(), :height => dc.getHeight()});
+                _face = (_faceRef as Graphics.BufferedBitmapReference).get() as Graphics.BufferedBitmap?;
+            } catch (e) {
+                _failed = true;
+                return null;
+            }
+            if (_face == null) {
+                _faceRef = null;      // reclaimed by the pool; make it again next time
+                return null;
+            }
+            _drawn = false;
+        }
+        return _face;
     }
 
     // A reading, with the complication it opens
@@ -187,8 +292,10 @@ class BlocksView extends WatchUi.WatchFace {
         return ITEM_GAP * (items.size() - 1);
     }
 
-    // Where each number goes, once a change of a reading or a mode asks for it
-    private function layout(dc as Dc, thin as Boolean) as Void {
+    // Where each number goes, once a change of a reading or a mode asks for
+    // it: the pieces to draw (awake, the targets too). `timeOnly`: the hours
+    // and minutes alone, a start's first frame.
+    private function layout(dc as Dc, thin as Boolean, timeOnly as Boolean) as Array<Lib.Numbers.Piece> {
         var bold = Lib.Ink.BIONIC_BOLD;
         var medium = Lib.Ink.usable(Lib.Ink.BIONIC_MEDIUM);    // Bold where a watch lacks it
         var c = _colors;
@@ -211,6 +318,9 @@ class BlocksView extends WatchUi.WatchFace {
                           TIME, hx, hx + hw, hy);
         Lib.Numbers.place(dc, pieces, targets, [item(Lib.Numbers.MINUTES, bold, neutral, null)] as Array<Lib.Numbers.Item>,
                           TIME, mx, mx + hw, my);
+        if (timeOnly) {
+            return pieces;
+        }
 
         // The corner right of the hours, up from the middle: the sun
         var xr = hx + hw + ROW_GAP;
@@ -264,8 +374,10 @@ class BlocksView extends WatchUi.WatchFace {
                 [item(Lib.Numbers.ALTITUDE, medium, Lib.Numbers.scale(neutral, third), Complications.COMPLICATION_TYPE_ALTITUDE)]
             ] as Array<Array<Lib.Numbers.Item>>, bottom, 1.0);
         }
-        _pieces = pieces;
-        _targets = targets;
+        if (!thin) {
+            _targets = targets;
+        }
+        return pieces;
     }
 
     // Rows outward from y, each as large as its chord allows

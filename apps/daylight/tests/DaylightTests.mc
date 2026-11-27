@@ -44,6 +44,9 @@ function testFaceDrawsBothModes(logger as Logger) as Boolean {
     view.onUpdate(dc);
     view.onExitSleep();
     view.onUpdate(dc);
+    // a wake reads the altitude and pressure afresh, but the three hours'
+    // history only every ten minutes
+    Test.assertEqualMessage(view.trendReads, 1, "the pressure history read once, not again on the wake");
     logger.debug("location: " + Lib.Location.get());
     var stats = System.getSystemStats();
     logger.debug("memory: " + stats.usedMemory + " of " + stats.totalMemory + " bytes used");

@@ -140,9 +140,15 @@ class StrataView extends WatchUi.WatchFace {
 
     // The layers in a full-screen bitmap in the graphics pool (3 MB on the
     // fenix 8, apart from the 128 KB the face itself gets), filled a batch
-    // per frame so no call does more than the watchdog allows, then one
-    // blit a frame. Without it the layers go straight to the screen.
+    // per frame so no call does more than the watchdog allows and no frame
+    // takes long (at most BATCH layers, and no more once LAYER_MS have gone
+    // on them: a frame stays inside the watch's 300 ms however quickly it
+    // draws lines), then one blit a frame. Without it the layers go
+    // straight to the screen. A start's first frame draws the time alone;
+    // the layers start on the next.
     private const BATCH = 16;
+    private const LAYER_MS = 150;
+    private var _lit as Boolean = false;     // a lit frame drawn since the start
     private var _base as Graphics.BufferedBitmapReference? = null;
     // Held for as long as the face runs: the pool may reclaim a bitmap
     // nothing holds, and a fresh blank one from get() would show no field
@@ -155,8 +161,13 @@ class StrataView extends WatchUi.WatchFace {
     private var _pen as Number = 0;
     private var _color as Number = -1;
 
+    // How quickly the face lights: its part is the
+    // layers drawn into the bitmap
+    private var _timing as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _timing = new Lib.Timing.Log("Strata");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -339,6 +350,7 @@ class StrataView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -349,6 +361,7 @@ class StrataView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _timing.frame(started, fieldReady());
         }
     }
 
@@ -360,6 +373,7 @@ class StrataView extends WatchUi.WatchFace {
     function onExitSleep() as Void {
         _awake = true;
         _minute = -1;
+        _timing.wake();
         WatchUi.requestUpdate();
     }
 
@@ -402,9 +416,26 @@ class StrataView extends WatchUi.WatchFace {
         var earth = Palette.scale(Palette.strata(_strata, night), _earth);
         var fieldAccent = Palette.layerAccent(_accent, _celsius, earth, night);
         var timeColor = (_timeColorValue != null) ? _timeColorValue as Number : Palette.time(_timeColor, _accent, _celsius, earth);
+        var timeY = (h * TIME_Y).toNumber();
+        if (!_lit) {
+            // A start's first frame: the time alone, on black (its keyline
+            // would cut nothing), the rest from the next
+            _lit = true;
+            if (_timeOutline) {
+                drawOutline(dc, cx, timeY, _timeFont, _time, timeColor, (w >= 440) ? 3 : 2);
+            } else {
+                dc.setColor(timeColor, Graphics.COLOR_TRANSPARENT);
+                dc.drawText(cx, timeY, _timeFont, _time, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+            }
+            _targets = [[TIME, cx, timeY, (w * 0.38).toNumber(), (h * 0.1).toNumber()]] as Array<Array<Number>>;
+            WatchUi.requestUpdate();
+            return;
+        }
 
         // The field, then the stones the miles turned up
+        var made = System.getTimer();
         var base = prepare(dc, layers, earth, fieldAccent);
+        _timing.part = System.getTimer() - made;
         if (base != null) {
             dc.drawBitmap(0, 0, base);
         } else {
@@ -418,7 +449,6 @@ class StrataView extends WatchUi.WatchFace {
         }
 
         // The time, cut out of the layers
-        var timeY = (h * TIME_Y).toNumber();
         if (_timeOutline) {
             // A wider keyline clears the layers round the outline; inside it stays black. The
             // outline is 3 px on the big screens, so the time stays heavier than the date.
@@ -508,8 +538,12 @@ class StrataView extends WatchUi.WatchFace {
             if (end > count) {
                 end = count;
             }
-            drawLayers(bdc, layers, _baseLayer, end, 0, 0, earth, accent);
-            _baseLayer = end;
+            var from = _baseLayer;
+            var started = System.getTimer();
+            while (_baseLayer < end && (_baseLayer == from || System.getTimer() - started < LAYER_MS)) {
+                drawLayers(bdc, layers, _baseLayer, _baseLayer + 1, 0, 0, earth, accent);
+                _baseLayer++;
+            }
             if (_baseLayer < count) {
                 WatchUi.requestUpdate();   // keep going
             }

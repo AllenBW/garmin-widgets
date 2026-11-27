@@ -10,6 +10,7 @@ import Toybox.WatchUi;
 class SaunaApp extends Application.AppBase {
 
     private var _view as SaunaView?;
+    private var _glance as SaunaGlance?;
 
     function initialize() {
         AppBase.initialize();
@@ -19,7 +20,9 @@ class SaunaApp extends Application.AppBase {
     // glance on its glance; sample.jungle)
     (:glanceview, :typecheck(disableBackgroundCheck))
     function getGlanceView() as [GlanceView] or [GlanceView, GlanceViewDelegate] or Null {
-        return [new SaunaGlance()];
+        var glance = new SaunaGlance();
+        _glance = glance;
+        return [glance];
     }
 
     function getGlanceTheme() as AppBase.GlanceTheme {
@@ -33,9 +36,14 @@ class SaunaApp extends Application.AppBase {
         return [view, new SaunaDelegate(view)];
     }
 
-    // Settings edited on the phone while the app is open
+    // Settings edited on the phone while the app or the glance is open
     (:typecheck(disableGlanceCheck))
     function onSettingsChanged() as Void {
+        var glance = _glance;
+        if (glance != null) {
+            glance.reload();
+            WatchUi.requestUpdate();
+        }
         var view = _view;
         if (view != null) {
             view.reloadSettings();

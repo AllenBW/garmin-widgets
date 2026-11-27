@@ -4,6 +4,7 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Test;
+import Toybox.Time;
 
 // Run No Evil tests for Wall: scripts/test.sh wall [device]. Lib.Numbers is
 // tested with Blocks.
@@ -55,6 +56,36 @@ function testWallDrawsEveryMode(logger as Logger) as Boolean {
     return true;
 }
 
+// A start: the time alone first, the wall behind it two frames on, and the
+// time drawn just twice. A wake within the minute draws nothing again.
+(:test)
+function testWallLights(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var view = new WallView();
+    view.onLayout(dc);
+    var minute = Time.now().value() / 60;
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.composed, 1, "the first frame draws the time");
+    Test.assertMessage(!view.built() && !view.settled(), "and not the wall");
+    wallFill(view, dc);
+    Test.assertMessage(view.built() && view.settled(), "the wall, whole");
+    var composed = view.composed;
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.composed, composed, "a settled frame draws nothing again");
+    view.onEnterSleep();
+    view.onUpdate(dc);
+    view.onExitSleep();
+    view.onUpdate(dc);
+    Test.assertMessage(view.settled(), "settled again in the wake's first frame");
+    if (Time.now().value() / 60 == minute) {    // (the minute didn't turn while the test ran)
+        Test.assertEqualMessage(composed, 1 + 1, "the time drawn twice on a start");
+        Test.assertEqualMessage(view.composed, composed, "a wake within the minute draws the time again nowhere");
+    }
+    return true;
+}
+
 // The band's readings open their widgets; everywhere else the looks
 (:test)
 function testWallTargets(logger as Logger) as Boolean {
@@ -65,6 +96,7 @@ function testWallTargets(logger as Logger) as Boolean {
     view.onLayout(dc);
     view.setValues(["10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "72", "6214", "82", "1240", "12"] as Array<String>);
     view.onUpdate(dc);
+    view.onUpdate(dc);           // the band comes the frame after the time
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.25).toNumber()) == null, "the time is no target");
     Test.assertMessage(view.targetAt((w * 0.10).toNumber(), (w * 0.5).toNumber()) == Complications.COMPLICATION_TYPE_CALENDAR_EVENTS, "the date");
     Test.assertMessage(view.targetAt((w * 0.92).toNumber(), (w * 0.5).toNumber()) == Complications.COMPLICATION_TYPE_HEART_RATE, "heart rate");
@@ -105,6 +137,7 @@ function testWallNumerals(logger as Logger) as Boolean {
             var cells = 0;
             for (var r = 0; r < lit.size(); r++) {
                 Test.assertEqualMessage(edge[r] & lit[r], edge[r], "the edge is lit");
+                Test.assertMessage(lit[r] < (1 << LIT_RUN), "a run of lit cells fits the strip");
                 for (var bits = lit[r]; bits != 0; bits = bits >> 1) {
                     cells += bits & 1;
                 }

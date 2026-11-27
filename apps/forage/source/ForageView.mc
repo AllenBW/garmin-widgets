@@ -48,8 +48,12 @@ class ForageView extends WatchUi.WatchFace {
     private var _labelFont as FontType = Graphics.FONT_XTINY;
     private var _cellFont as FontType = Graphics.FONT_XTINY;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Forage");
         _burnIn = Lib.Aod.required();
     }
 
@@ -64,7 +68,9 @@ class ForageView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -74,6 +80,7 @@ class ForageView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -84,6 +91,7 @@ class ForageView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         WatchUi.requestUpdate();
     }
 

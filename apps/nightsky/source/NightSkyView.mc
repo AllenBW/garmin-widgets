@@ -61,8 +61,12 @@ class NightSkyView extends WatchUi.WatchFace {
     private var _dateFont as FontType = Graphics.FONT_XTINY;
     private var _labelFont as FontType = Graphics.FONT_XTINY;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Night Sky");
         _burnIn = Lib.Aod.required();
         for (var i = 0; i < Stars.COUNT; i++) {
             _sx[i] = -1;
@@ -80,6 +84,7 @@ class NightSkyView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh(dc.getWidth(), dc.getHeight(), _awake || !_burnIn);
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -90,6 +95,7 @@ class NightSkyView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -100,6 +106,7 @@ class NightSkyView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         WatchUi.requestUpdate();
     }
 
@@ -148,7 +155,9 @@ class NightSkyView extends WatchUi.WatchFace {
         if (!_located) {
             return;
         }
+        var t = System.getTimer();
         placeStars(w, h, full ? Stars.COUNT : AOD_STARS);
+        _log.part = System.getTimer() - t;   // the stars placed: the face's costly part
         if (full) {
             _fullMinute = minute;
         }

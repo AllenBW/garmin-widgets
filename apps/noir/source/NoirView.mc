@@ -27,6 +27,12 @@ import Toybox.WatchUi;
 // minute. Holding the face steps through the looks (Lib.Look), the look's
 // name standing in for the date for a moment, bent from the same tube.
 //
+// How it lights quickly: every picture is loaded
+// once and held; a start loads only the hands' and the marks' and draws
+// them straight to the screen in its first frame, and the bitmap and the
+// date come the frame after (the date's sheets loaded then, standby's thin
+// tubes at the first standby). A wake with nothing changed is one copy.
+//
 // The transition. Hands can't swap as numerals do, so they sweep: on a
 // wake each hand turns from where it stood when the face was last seen to
 // where it is now, the shorter way round, eased (Lib.Motion.ease: slow
@@ -84,6 +90,7 @@ class NoirView extends WatchUi.WatchFace {
     private var _haloCell as Array<Number> = [1, 1, 0] as Array<Number>;
     private var _coreCell as Array<Number> = [1, 1, 0] as Array<Number>;
     private var _loaded as Boolean = false;
+    private var _late as Boolean = true;       // a start's first frame: the hands and the marks, straight to the screen
 
     private var _xf as Graphics.AffineTransform? = null;      // one transform, reused
 
@@ -117,8 +124,10 @@ class NoirView extends WatchUi.WatchFace {
     private var _frames as Number = 0;
     private var _slowest as Number = 0;
     private var _spent as Number = 0;
+    private var _log as Lib.Timing.Log;        // how quickly it lights, for the watch's log
 
     function initialize() {
+        _log = new Lib.Timing.Log("Noir");
         WatchFace.initialize();
         _pacer = new Lib.Motion.Pacer(FRAME, MOST_FRAMES);
         _burnIn = Lib.Aod.required();
@@ -200,22 +209,38 @@ class NoirView extends WatchUi.WatchFace {
         }
     }
 
-    // The tubes of this screen's width (resources-round-<w>x<w>)
+    // The tubes of this screen's width (resources-round-<w>x<w>): the lit
+    // ones now, standby's (thin) and the date's sheets at their first need
     private function load() as Void {
         var at = WatchUi.loadResource(Rez.JsonData.Layout) as Dictionary<String, Array<Numeric> >;
-        _hourTube = [bitmap(Rez.Drawables.HourHalo), bitmap(Rez.Drawables.HourCore), bitmap(Rez.Drawables.HourThin)] as Array<Graphics.BitmapType?>;
+        _hourTube = [bitmap(Rez.Drawables.HourHalo), bitmap(Rez.Drawables.HourCore), null] as Array<Graphics.BitmapType?>;
         _hourAt = [at["HourHalo"], at["HourCore"], at["HourThin"]] as Array<Array<Numeric>?>;
-        _minuteTube = [bitmap(Rez.Drawables.MinuteHalo), bitmap(Rez.Drawables.MinuteCore), bitmap(Rez.Drawables.MinuteThin)] as Array<Graphics.BitmapType?>;
+        _minuteTube = [bitmap(Rez.Drawables.MinuteHalo), bitmap(Rez.Drawables.MinuteCore), null] as Array<Graphics.BitmapType?>;
         _minuteAt = [at["MinuteHalo"], at["MinuteCore"], at["MinuteThin"]] as Array<Array<Numeric>?>;
-        _twelve = [bitmap(Rez.Drawables.TwelveHalo), bitmap(Rez.Drawables.TwelveCore), bitmap(Rez.Drawables.TwelveThin)] as Array<Graphics.BitmapType?>;
+        _twelve = [bitmap(Rez.Drawables.TwelveHalo), bitmap(Rez.Drawables.TwelveCore), null] as Array<Graphics.BitmapType?>;
         _twelveAt = [at["TwelveHalo"], at["TwelveCore"], at["TwelveThin"]] as Array<Array<Numeric>?>;
         _quarter = [bitmap(Rez.Drawables.QuarterHalo), bitmap(Rez.Drawables.QuarterCore), null] as Array<Graphics.BitmapType?>;
         _quarterAt = [at["QuarterHalo"], at["QuarterCore"], null] as Array<Array<Numeric>?>;
-        _digits = [bitmap(Rez.Drawables.DigitsHalo), bitmap(Rez.Drawables.DigitsCore)] as Array<Graphics.BitmapType?>;
         _haloCell = at["haloCell"] as Array<Number>;
         _coreCell = at["coreCell"] as Array<Number>;
         _xf = new Graphics.AffineTransform();
         _loaded = true;
+    }
+
+    // Standby's thin tubes, at the first standby, and held
+    private function thin() as Void {
+        if (_hourTube[THIN] == null) {
+            _hourTube[THIN] = bitmap(Rez.Drawables.HourThin);
+            _minuteTube[THIN] = bitmap(Rez.Drawables.MinuteThin);
+            _twelve[THIN] = bitmap(Rez.Drawables.TwelveThin);
+        }
+    }
+
+    // The date's sheets, at the first date drawn, and held
+    private function loadDigits() as Void {
+        if (_digits[0] == null) {
+            _digits = [bitmap(Rez.Drawables.DigitsHalo), bitmap(Rez.Drawables.DigitsCore)] as Array<Graphics.BitmapType?>;
+        }
     }
 
     private function bitmap(id as ResourceId) as Graphics.BitmapType {
@@ -243,6 +268,7 @@ class NoirView extends WatchUi.WatchFace {
     function onExitSleep() as Void {
         _awake = true;
         _waking = true;
+        _log.wake();
         _pacer.onExitSleep();
         WatchUi.requestUpdate();
     }
@@ -352,6 +378,16 @@ class NoirView extends WatchUi.WatchFace {
         _dirty = true;
     }
 
+    // For the tests: whether the lit face is in its bitmap, and whether
+    // standby's thin tubes and the date's sheets have been loaded
+    function bitmapped() as Boolean {
+        return _face != null;
+    }
+
+    function loaded() as Array<Boolean> {
+        return [_hourTube[THIN] != null, _digits[0] != null] as Array<Boolean>;
+    }
+
     // For the tests: draw straight to the screen, as when the graphics
     // pool has no room for the bitmap
     function dropBitmap() as Void {
@@ -452,6 +488,21 @@ class NoirView extends WatchUi.WatchFace {
         if (!titled && _letters[0] != null) {
             _letters = [null, null] as Array<Graphics.BitmapType?>;
         }
+        if (_late && sweepHeld() < 0) {
+            // a start's first frame: the hands and the marks, straight to
+            // the screen; the bitmap and the date (or the look's name) next
+            _late = false;
+            _waking = false;
+            _seen = null;
+            _to = degs;
+            _date = date;
+            _place = place;
+            draw(dc, false, degs, true, false);
+            WatchUi.requestUpdate();
+            _log.frame(started, false);
+            _pacer.want(false);
+            return;
+        }
         var face = buffer(dc);
         if (face == null) {
             settle();
@@ -459,6 +510,7 @@ class NoirView extends WatchUi.WatchFace {
             _date = date;
             _place = place;
             draw(dc, titled, degs, true, true);
+            _log.frame(started, true);
             _pacer.want(false);
             return;
         }
@@ -517,6 +569,7 @@ class NoirView extends WatchUi.WatchFace {
             _spent += took;
             _slowest = (took > _slowest) ? took : _slowest;
         }
+        _log.frame(started, !(sweeping || striking) || hold >= 0);
         _pacer.want((sweeping || striking) && hold < 0);
     }
 
@@ -591,6 +644,9 @@ class NoirView extends WatchUi.WatchFace {
             if (n < 0) {
                 left += (Layout.SPACE + Layout.TEXT_GAP) * h;
                 continue;
+            }
+            if (n < digits) {
+                loadDigits();
             }
             var sheet = _digits[core ? 1 : 0];
             var cols = digits;
@@ -715,6 +771,7 @@ class NoirView extends WatchUi.WatchFace {
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
+        thin();
         var step = (SHIFT * _w + 0.5).toNumber();
         var off = Lib.Aod.offset(_minute, (step < 1) ? 1 : step);
         var cx = _c + off[0];

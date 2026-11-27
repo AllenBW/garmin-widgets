@@ -17,6 +17,52 @@ module EdgeTesting {
     }
 }
 
+// The pictures are kept: a start's first frame lays
+// the numerals from their sheets, the frame after the date's pictures go
+// over them, then a numeral's pictures a frame, and the face is laid again
+// from them; a wake with nothing changed lays nothing, a minute lays it
+// from the kept pictures and the struck one's
+(:test)
+function testEdgeKeepsPictures(logger as Logger) as Boolean {
+    var dc = EdgeTesting.dc();
+    var view = new EdgeView();
+    view.onLayout(dc);
+    view.setFrame(50);
+    view.setTime("10", "37", "TUE 15");
+    var started = System.getTimer();
+    view.onUpdate(dc);
+    logger.debug("the first frame: " + (System.getTimer() - started) + " ms");
+    Test.assertEqualMessage(view.keptNumerals(), 0, "the first frame: the numerals from their sheets");
+    Test.assertMessage(!view.keptDate(), "and no date");
+    var frames = 0;
+    var most = 0;
+    while ((view.keptNumerals() < 4 || !view.keptDate()) && frames < 10) {
+        started = System.getTimer();
+        view.onUpdate(dc);
+        var took = System.getTimer() - started;
+        most = (took > most) ? took : most;
+        frames++;
+    }
+    logger.debug("the pictures kept over " + frames + " more frames, " + most + " ms the slowest");
+    Test.assertEqualMessage(frames, 5, "the date, then a numeral a frame");
+    Test.assertEqualMessage(view.lays(), 2, "laid in the first frame and again from the kept pictures");
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.lays(), 2, "a wake with nothing changed lays nothing");
+    view.setTime("10", "38", "TUE 15");
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.striking(), 2, "the 7 dies, the 8 is struck");
+    while (view.striking() > 0) {
+        view.onUpdate(dc);
+    }
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.keptNumerals(), 4, "the struck 8 kept");
+    return true;
+}
+
 // Every digit in both rows, one and two digit hours, awake and in standby
 (:test)
 function testEdgeDrawsEveryMode(logger as Logger) as Boolean {

@@ -15,8 +15,19 @@ class TallyGlance extends WatchUi.GlanceView {
 
     private var _bigFont as FontType = Graphics.FONT_MEDIUM;
 
+    // The newest entry, read from Storage once a showing
+    // (only the app writes it, and never while the glance shows),
+    // not on every update
+    private var _last as Storage.ValueType? = null;
+    private var _read as Boolean = false;
+    var reads as Number = 0;            // how often it read it (the tests)
+
     function initialize() {
         GlanceView.initialize();
+    }
+
+    function onShow() as Void {
+        _read = false;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -31,7 +42,12 @@ class TallyGlance extends WatchUi.GlanceView {
         dc.setColor(CORAL, Graphics.COLOR_TRANSPARENT);
         dc.drawText((dc.getWidth() * 0.10).toNumber(), (h * 0.17).toNumber(), Graphics.FONT_GLANCE, "TALLY", left);
 
-        var last = Storage.getValue(TallyLog.LAST);
+        if (!_read) {
+            _last = Storage.getValue(TallyLog.LAST);
+            _read = true;
+            reads++;
+        }
+        var last = _last;
         if (!(last instanceof Array) || last.size() < 4) {
             dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
             dc.drawText(0, (h * 0.5).toNumber(), _bigFont, "Nothing yet", left);

@@ -278,8 +278,13 @@ function testDraw(logger as Logger) as Boolean {
     var glanceDc = (Graphics.createBufferedBitmap({:width => (w * 0.77).toNumber(), :height => (w * 0.29).toNumber()}).get() as Graphics.BufferedBitmap).getDc();
     var glance = new TallyGlance();
     glance.onLayout(glanceDc);
+    glance.onShow();
     glance.onUpdate(glanceDc);
+    glance.onUpdate(glanceDc);
+    Test.assertEqualMessage(glance.reads, 1, "the glance reads Storage once a showing, not each update");
     TallyTestKit.clearLog();
+    glance.onShow();
     glance.onUpdate(glanceDc);
+    Test.assertEqualMessage(glance.reads, 2, "and again when shown again");
     return true;
 }

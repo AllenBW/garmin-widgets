@@ -88,11 +88,18 @@ class TickerView extends WatchUi.WatchFace {
     private var _dirty as Array<Boolean> = [true, true, true] as Array<Boolean>;
     private var _cost as Array<Number> = [16, 16, 16] as Array<Number>;   // characters each band drew last
     private var _pending as Boolean = false;   // a band left for the next frame
-    private var _cursor as Number = 0;
+    private var _cursor as Number = TIME_BAND; // a start draws the time first
+    private var _late as Boolean = true;       // a start's first frame: the time alone
+    private var _building as Boolean = true;   // a start: the rest a band a frame, a frame straight after another
+    private var _asked as Boolean = false;     // this frame is one the build asked for, not the system's
+    private var _titleFont as Graphics.FontType? = null;   // made on the look's name's first frame, kept
     private var _frameChars as Number = 0;
+    private var _frameBands as Array<Number> = [] as Array<Number>;   // the bands the last frame drew
+    private var _log as Lib.Timing.Log;         // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Ticker");
         _burnIn = Lib.Aod.required();
         _tapes = [
             [Lib.Numbers.DATE, Lib.Numbers.SUN_TIME, Lib.Numbers.COUNTDOWN, BATTERY] as Array<Number>,
@@ -435,6 +442,7 @@ class TickerView extends WatchUi.WatchFace {
             }
         }
         _move = new TickerMove(shown, _values, minute - steps, steps, tape0, tape1, slides);
+        _building = false;      // a move draws its bands each frame, by the budget
         _shown = _values;
         _shownMinute = minute;
     }
@@ -460,9 +468,12 @@ class TickerView extends WatchUi.WatchFace {
         if (move != null) {
             land(move);
         }
-        _pos[0] = _rest[0];
-        _pos[1] = _rest[1];
-        dirtyAll();
+        for (var i = 0; i < 2; i++) {
+            if (_pos[i] != _rest[i]) {
+                _pos[i] = _rest[i];
+                _dirty[(i == 0) ? TOP_BAND : BOTTOM_BAND] = true;   // only a tape that turns back: the bitmap keeps the rest for the wake
+            }
+        }
     }
 
     // ------------------------------------------------------------ sleep and wake
@@ -478,6 +489,7 @@ class TickerView extends WatchUi.WatchFace {
     }
 
     function onExitSleep() as Void {
+        _log.wake();
         _pacer.onExitSleep();
         _minute = -1;
         _second = -1;
@@ -492,11 +504,12 @@ class TickerView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
-        var started = System.getTimer();
-        var gap = _pacer.step(now());
+        var gap = _asked ? 0 : _pacer.step(now());    // a frame the face asked for itself says nothing of the power mode
+        _asked = false;
         refresh();
         var awake = _pacer.awake;
         if (awake != _wasAwake) {
@@ -530,7 +543,9 @@ class TickerView extends WatchUi.WatchFace {
             dc.clear();
             dirtyAll();
         }
+        var bands = System.getTimer();
         drawBands(target, bitmap == null);
+        _log.part = System.getTimer() - bands;
         if (bitmap != null) {
             dc.drawBitmap(0, 0, bitmap);
         }
@@ -538,13 +553,26 @@ class TickerView extends WatchUi.WatchFace {
             if (dc has :setAntiAlias) {
                 dc.setAntiAlias(true);
             }
+            var font = _titleFont;
+            if (font == null) {
+                font = Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+                _titleFont = font;
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(dc.getWidth() / 2, dc.getHeight() * TITLE_Y,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(dc.getWidth() / 2, dc.getHeight() * TITLE_Y, font,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+        if (_building) {
+            if (_pending) {
+                _asked = true;
+                WatchUi.requestUpdate();     // the start's next band, straight away; the pacer's timer waits for proof of high power, which these frames must not give
+            } else {
+                _building = false;
+            }
         }
         _pacer.want(_move != null || _pending);
         measure(started);
+        _log.frame(started, _move == null && !_pending);
     }
 
     // The face's bitmap, from the graphics pool, made once and held. The pool
@@ -580,16 +608,24 @@ class TickerView extends WatchUi.WatchFace {
     }
 
     // The bands that changed or move, up to BUDGET characters a frame: a band
-    // over it waits for the next frame, each band's turn coming round. `all`
-    // draws them regardless.
+    // over it waits for the next frame, each band's turn coming round. A
+    // start lights the time alone, then a band a frame. `all` draws them
+    // regardless.
     private function drawBands(dc as Dc, all as Boolean) as Void {
-        var budget = BUDGET;
+        var budget = _building ? 0 : BUDGET;    // a start: a band a frame
         var drawn = 0;
+        var timeOnly = _late && !all;
+        _late = false;
         _pending = false;
+        _frameBands = [] as Array<Number>;
         for (var n = 0; n < BANDS; n++) {
             var b = (_cursor + n) % BANDS;
             var move = _move;
             if (!_dirty[b] && !(move != null && move.live[b])) {
+                continue;
+            }
+            if (timeOnly && b != TIME_BAND) {
+                _pending = true;
                 continue;
             }
             if (!all && drawn > 0 && _cost[b] > budget) {
@@ -603,6 +639,7 @@ class TickerView extends WatchUi.WatchFace {
             budget -= _type.count;
             drawn += _type.count;
             _dirty[b] = false;
+            _frameBands.add(b);
             if (move != null && move.t >= move.ends[b]) {
                 move.live[b] = false;   // drawn settled
             }
@@ -797,5 +834,10 @@ class TickerView extends WatchUi.WatchFace {
 
     function charsLastFrame() as Number {
         return _frameChars;
+    }
+
+    // Whether the last frame drew the time band and nothing else
+    function timeOnly() as Boolean {
+        return _frameBands.size() == 1 && _frameBands[0] == TIME_BAND;
     }
 }

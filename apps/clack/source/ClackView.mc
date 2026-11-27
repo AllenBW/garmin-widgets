@@ -104,13 +104,20 @@ class ClackView extends WatchUi.WatchFace {
 
     // The leaves: the digit each shows, its halves as bitmaps, the flip in progress
     private var _leaves as Array<String> = ["2", "1", "0", "5"] as Array<String>;
-    private var _top as Array<BufferedBitmapReference?> = [null, null, null, null] as Array<BufferedBitmapReference?>;
-    private var _bot as Array<BufferedBitmapReference?> = [null, null, null, null] as Array<BufferedBitmapReference?>;
+    private var _top as Array<BufferedBitmap?> = [null, null, null, null] as Array<BufferedBitmap?>;
+    private var _bot as Array<BufferedBitmap?> = [null, null, null, null] as Array<BufferedBitmap?>;
     private var _flips as Array<Roll.Flip?> = [null, null, null, null] as Array<Roll.Flip?>;
-    private var _nextTop as Array<BufferedBitmapReference?> = [null, null, null, null] as Array<BufferedBitmapReference?>;
-    private var _nextBot as Array<BufferedBitmapReference?> = [null, null, null, null] as Array<BufferedBitmapReference?>;
+    private var _nextTop as Array<BufferedBitmap?> = [null, null, null, null] as Array<BufferedBitmap?>;
+    private var _nextBot as Array<BufferedBitmap?> = [null, null, null, null] as Array<BufferedBitmap?>;
+    // The halves are held, not only their references: the pool purges a
+    // bitmap nothing holds, and get() then makes a blank one (pitfalls)
     private var _dirty as Boolean = true;        // the bitmaps need remaking (style, lamp or format changed)
-    private var _spill as BufferedBitmapReference? = null; // the lamp's pool on the black, drawn once
+    private var _made as Number = 8;             // the halves made since, in order, upper then lower, leaf by leaf (makeLeaves)
+    private var _flat as Boolean = true;         // the next frame draws the leaves flat, none made yet: a start's first lights at once
+    private var _spill as BufferedBitmap? = null; // the lamp's pool on the black, drawn once
+    private var _pouring as BufferedBitmap? = null; // the lamp's pool while its rings go in, a few a frame
+    private var _rings as Number = 0;            // the rings in it so far
+    private const RINGS_A_FRAME = 5;
     private const DEPTH = 16;                    // bits a pixel in the graphics pool: the fenix 8's own
     private const BAND = 8;                      // rows a band of a half's gradient covers (half)
     private const NEXT_BOT_AT = 2;               // frames into a push when the next lower half is built (advance)
@@ -126,6 +133,7 @@ class ClackView extends WatchUi.WatchFace {
     private var _timer as Timer.Timer? = null;
     private var _running as Boolean = false;
     private var _still as Boolean = false;       // the tests: no timer, no frames from onUpdate
+    private var _gradual as Boolean = true;      // the leaves and the lamp's pool made over frames (the tests: at once)
     private var _lastSec as Number = -1;
     private var _secStart as Number = 0;
     // The frames' clock: the last frame's time and the milliseconds not yet
@@ -137,8 +145,13 @@ class ClackView extends WatchUi.WatchFace {
     private var _quick as Number = 0;
     private var _noSpill as Boolean = false;     // the pool had no room for the lamp's pool
 
+    // How quickly the face lights: its part is making
+    // the leaves' halves and the lamp's pool
+    private var _timing as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _timing = new Lib.Timing.Log("Clack");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -181,6 +194,16 @@ class ClackView extends WatchUi.WatchFace {
         _stacks = _stackLines[0].size() > 0;
         makeFonts();
         _dirty = true;
+        dropLeaves();
+    }
+
+    // The halves made for another layout: the leaves flat until remade
+    private function dropLeaves() as Void {
+        _top = [null, null, null, null] as Array<BufferedBitmap?>;
+        _bot = [null, null, null, null] as Array<BufferedBitmap?>;
+        _nextTop = [null, null, null, null] as Array<BufferedBitmap?>;
+        _nextBot = [null, null, null, null] as Array<BufferedBitmap?>;
+        _flat = true;
     }
 
     // The leaves yet to fall and the fallen ones: their edges above and
@@ -367,7 +390,7 @@ class ClackView extends WatchUi.WatchFace {
 
     // For the tests: leaf i mid-flip to `to` at `angle` degrees
     function setFlip(i as Number, to as String, angle as Number) as Void {
-        makeLeaves();
+        makeLeaves(8);
         var before = _flips[i];
         _flips[i] = new Roll.Flip(_leaves[i], to, [angle.toFloat()] as Array<Float>, 0);
         if (before == null || !before.to.equals(to) || _nextTop[i] == null) {
@@ -378,12 +401,13 @@ class ClackView extends WatchUi.WatchFace {
 
     // For the tests: let the pool go
     function release() as Void {
-        _top = [null, null, null, null] as Array<BufferedBitmapReference?>;
-        _bot = [null, null, null, null] as Array<BufferedBitmapReference?>;
-        _nextTop = [null, null, null, null] as Array<BufferedBitmapReference?>;
-        _nextBot = [null, null, null, null] as Array<BufferedBitmapReference?>;
+        _top = [null, null, null, null] as Array<BufferedBitmap?>;
+        _bot = [null, null, null, null] as Array<BufferedBitmap?>;
+        _nextTop = [null, null, null, null] as Array<BufferedBitmap?>;
+        _nextBot = [null, null, null, null] as Array<BufferedBitmap?>;
         _flips = [null, null, null, null] as Array<Roll.Flip?>;
         _spill = null;
+        _pouring = null;
         _dirty = true;
     }
 
@@ -414,6 +438,7 @@ class ClackView extends WatchUi.WatchFace {
     // stays as set while it is drawn
     function setStill() as Void {
         _still = true;
+        _gradual = false;
     }
 
     // ------------------------------------------------------------ the roll
@@ -437,6 +462,7 @@ class ClackView extends WatchUi.WatchFace {
         _awake = true;
         _powerKnown = true;
         _minute = -1;
+        _timing.wake();
         start("wake");
     }
 
@@ -586,6 +612,27 @@ class ClackView extends WatchUi.WatchFace {
         System.println("clack: " + s);
     }
 
+    // Nothing moving and nothing left to make: no flip, none queued or
+    // resting, the leaves made, the lamp's pool made after sunset
+    private function settled() as Boolean {
+        return !busy() && _queue.size() == 0 && _hold == 0 && lit();
+    }
+
+    // Every half made and, after sunset, the lamp's pool
+    function lit() as Boolean {
+        return !_dirty && _made == 8 && (!_night || _spill != null || _noSpill);
+    }
+
+    // For the tests: the halves and the lamp's pool made over frames, as on the watch
+    function setGradual() as Void {
+        _gradual = true;
+    }
+
+    // For the tests: the halves made so far
+    function halvesMade() as Number {
+        return _dirty ? 0 : _made;
+    }
+
     private function busy() as Boolean {
         for (var i = 0; i < 4; i++) {
             if (_flips[i] != null) {
@@ -598,7 +645,7 @@ class ClackView extends WatchUi.WatchFace {
     // One minute's flips: the units leaf, the tens leaf with the same push
     // two frames behind, the hour leaves a beat after the minutes slip
     private function step(digits as Array<String>, creep as Float, catchup as Boolean) as Void {
-        makeLeaves();
+        makeLeaves(8);
         var slip = Roll.pushFrames(creep);
         var beat = Roll.between(Roll.BEAT_LO.toFloat(), Roll.BEAT_HI.toFloat()).toNumber();
         var hours = catchup ? Roll.HOUR_CATCHUP : Roll.HOUR_CREEP;
@@ -660,21 +707,31 @@ class ClackView extends WatchUi.WatchFace {
 
     // ------------------------------------------------------------ the leaves
 
-    // Every leaf's halves as bitmaps, when something changed them
-    private function makeLeaves() as Void {
-        if (!_dirty) {
-            return;
+    // Every leaf's halves as bitmaps, when something changed them: `most`
+    // halves this call, in order (a frame after a start makes one, so no
+    // frame makes all eight; a flip makes the rest first). A leaf shows
+    // flat until both its halves are made. Returns whether it made any.
+    private function makeLeaves(most as Number) as Boolean {
+        if (_dirty) {
+            _dirty = false;
+            _made = 0;
         }
-        for (var i = 0; i < 4; i++) {
-            _top[i] = half(i, _leaves[i], true);
-            _bot[i] = half(i, _leaves[i], false);
+        var any = false;
+        for (var n = 0; n < most && _made < 8; n++) {
+            var i = _made / 2;
+            var top = _made % 2 == 0;
             var f = _flips[i];
-            if (f != null) {
-                _nextTop[i] = half(i, f.to, true);
-                _nextBot[i] = half(i, f.to, false);
+            if (top) {
+                _top[i] = half(i, _leaves[i], true);
+                _nextTop[i] = (f != null) ? half(i, f.to, true) : _nextTop[i];
+            } else {
+                _bot[i] = half(i, _leaves[i], false);
+                _nextBot[i] = (f != null) ? half(i, f.to, false) : _nextBot[i];
             }
+            _made++;
+            any = true;
         }
-        _dirty = false;
+        return any;
     }
 
     // One half of leaf i showing `digit`: black plastic lit from above, the
@@ -683,7 +740,7 @@ class ClackView extends WatchUi.WatchFace {
     // hinge, so each half shows its share; the lit edge where the upper half
     // ends; zoomed, the caption printed on the lower flap. Under the lamp the
     // plastic and the ink warm by how much of the lamp reaches the leaf.
-    private function half(i as Number, digit as String, top as Boolean) as BufferedBitmapReference? {
+    private function half(i as Number, digit as String, top as Boolean) as BufferedBitmap? {
         var w = _leafW;
         var hh = top ? _hinge - _y0 : _y0 + _leafH - _hinge;
         var ref = Graphics.createBufferedBitmap({:width => w, :height => hh, :colorDepth => DEPTH});
@@ -745,7 +802,7 @@ class ClackView extends WatchUi.WatchFace {
         // squashed share over the next leaf's whole one, so they look
         // fixed, and a frame draws no circles
         pinsOn(d, 0, top ? hh : 0, pal);
-        return ref;
+        return b;
     }
 
     // The caption printed on leaf i's lower flap in the zoomed view: the
@@ -816,6 +873,7 @@ class ClackView extends WatchUi.WatchFace {
                 frame();
             }
             drawAwake(dc);
+            _timing.frame(started, settled());
         }
         measure(started);
     }
@@ -933,24 +991,34 @@ class ClackView extends WatchUi.WatchFace {
     // The face awake: the lamp's pool, the stacks' edges, each leaf whole or
     // mid-flip, the pins, and in the original view the captions under the leaves
     private function drawAwake(dc as Dc) as Void {
-        makeLeaves();
+        // A start's first frame draws the leaves flat (flatLeaf), so the time
+        // is on the screen before any bitmap is made; each frame after makes
+        // one half (a leaf shows flat until both of its are made), then the
+        // lamp's pool a few rings a frame, and asks for the next
+        // (the time first, no long frame). The tests make them all at once.
+        var made = System.getTimer();
+        var spare = true;                          // this frame may make the lamp's pool
+        if (!_gradual) {
+            makeLeaves(8);
+        } else if (_flat) {
+            spare = false;
+        } else if (makeLeaves(1)) {
+            spare = false;
+        }
+        _flat = false;
         var pal = _night ? NIGHT : DAY;
         if (_night) {
-            if (_spill == null && !_noSpill) {
-                var ref = Graphics.createBufferedBitmap({:width => _w, :height => _h, :colorDepth => DEPTH});
-                var fresh = pool(ref);
-                if (fresh != null) {
-                    spill(fresh.getDc());
-                    _spill = ref;
-                } else {
-                    _noSpill = true;
-                }
+            if (_spill == null && !_noSpill && spare && _made == 8 && !_dirty) {
+                pour(_gradual ? RINGS_A_FRAME : SPILL_RINGS);
             }
-            var spill = _spill;
-            var glow = (spill != null) ? pool(spill) : null;
-            if (glow != null) {
-                dc.drawBitmap(0, 0, glow);
-            }
+        }
+        _timing.part = System.getTimer() - made;
+        var glow = _night ? _spill : null;
+        if (glow != null) {
+            dc.drawBitmap(0, 0, glow);
+        }
+        if (_gradual && !lit()) {
+            WatchUi.requestUpdate();
         }
         if (!_zoomed) {
             // the captions under the leaves, before any fill tool is set
@@ -970,10 +1038,8 @@ class ClackView extends WatchUi.WatchFace {
         }
         for (var i = 0; i < 4; i++) {
             var f = _flips[i];
-            var topRef = _top[i];
-            var botRef = _bot[i];
-            var top = (topRef != null) ? pool(topRef) : null;
-            var bot = (botRef != null) ? pool(botRef) : null;
+            var top = _top[i];
+            var bot = _bot[i];
             if (top == null || bot == null) {
                 flatLeaf(dc, i, pal);              // the pool is short: the leaf plain, no flip
             } else if (f == null || f.angle() <= 0.0) {
@@ -992,8 +1058,7 @@ class ClackView extends WatchUi.WatchFace {
     // under it as it lands; the edge of the flap a line
     private function flapFrame(dc as Dc, i as Number, f as Roll.Flip, top as BufferedBitmap, bot as BufferedBitmap,
                                pal as Array<Number>) as Void {
-        var nextTopRef = _nextTop[i];
-        var nextTop = (nextTopRef != null) ? pool(nextTopRef) : null;
+        var nextTop = _nextTop[i];
         if (nextTop == null) {
             dc.drawBitmap(_x[i], _y0, top);
             dc.drawBitmap(_x[i], _hinge, bot);
@@ -1005,12 +1070,11 @@ class ClackView extends WatchUi.WatchFace {
         // when a stall skipped that frame
         var nextBot = null as BufferedBitmap?;
         if (theta > 90.0) {
-            var nextBotRef = _nextBot[i];
-            if (nextBotRef == null) {
-                nextBotRef = half(i, f.to, false);
-                _nextBot[i] = nextBotRef;
+            nextBot = _nextBot[i];
+            if (nextBot == null) {
+                nextBot = half(i, f.to, false);
+                _nextBot[i] = nextBot;
             }
-            nextBot = (nextBotRef != null) ? pool(nextBotRef) : null;
             if (nextBot == null) {
                 dc.drawBitmap(_x[i], _y0, top);
                 dc.drawBitmap(_x[i], _hinge, bot);
@@ -1179,15 +1243,38 @@ class ClackView extends WatchUi.WatchFace {
         }
     }
 
-    // The lamp's pool on the black after sunset: a radial falloff from the
-    // upper left, out of frame, as rings from the outside in
-    private function spill(dc as Dc) as Void {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.clear();
+    // The lamp's pool on the black after sunset, `most` rings more into its
+    // bitmap; shown once they are all in
+    private function pour(most as Number) as Void {
+        var b = _pouring;
+        if (b == null) {
+            b = pool(Graphics.createBufferedBitmap({:width => _w, :height => _h, :colorDepth => DEPTH}));
+            if (b == null) {
+                _noSpill = true;
+                return;
+            }
+            b.getDc().setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            b.getDc().clear();
+            _pouring = b;
+            _rings = 0;
+        }
+        var to = (_rings + most > SPILL_RINGS) ? SPILL_RINGS : _rings + most;
+        spill(b.getDc(), _rings, to);
+        _rings = to;
+        if (_rings >= SPILL_RINGS) {
+            _spill = b;
+            _pouring = null;
+        }
+    }
+
+    // Rings from..to-1 of the lamp's pool on the black after sunset: a
+    // radial falloff from the upper left, out of frame, as rings from the
+    // outside in
+    private function spill(dc as Dc, from as Number, to as Number) as Void {
         var cx = _w * 4 / 100;
         var cy = -_w * 6 / 100;
         var radius = _w * 75 / 100;
-        for (var k = SPILL_RINGS; k >= 1; k--) {
+        for (var k = SPILL_RINGS - from; k > SPILL_RINGS - to; k--) {
             var r = radius * k / SPILL_RINGS;
             var t = 1.0 - k.toFloat() / SPILL_RINGS;
             var share = Math.pow(t, 2.2).toFloat() * SPILL_SHARE;

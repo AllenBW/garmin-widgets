@@ -35,7 +35,9 @@ module ShuttleTest {
         v.setRolling(true);
         v.setClock(t);
         v.setValues(base());
-        v.onUpdate(d);
+        for (var n = 0; n < 10 && (n == 0 || v.isAnimating()); n++) {
+            v.onUpdate(d);     // a start builds over a few frames, the time first
+        }
         return v;
     }
 
@@ -287,5 +289,41 @@ function testShuttleTargets(logger as Logger) as Boolean {
     Test.assertMessage(view.targetAt((w * 0.8).toNumber(), (w * 0.26).toNumber()) == Complications.COMPLICATION_TYPE_BATTERY, "the battery");
     Test.assertMessage(view.targetAt((w * 0.3).toNumber(), (w * 0.65).toNumber()) == Complications.COMPLICATION_TYPE_HEART_RATE, "heart rate");
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.85).toNumber()) == Complications.COMPLICATION_TYPE_CURRENT_WEATHER, "the weather");
+    return true;
+}
+
+// A start lights the time alone, then builds the rest over a few frames; a
+// wake draws only the rows that changed
+(:test)
+function testShuttleLightsFast(logger as Logger) as Boolean {
+    var dc = ShuttleTest.dc();
+    var view = new ShuttleView();
+    view.onLayout(dc);
+    view.setRolling(false);
+    view.setValues(ShuttleTest.base());
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 1, "a start's first frame: the time alone");
+    Test.assertMessage(view.isAnimating(), "the rest to come");
+    var frames = 1;
+    while (view.isAnimating() && frames < 20) {
+        view.onUpdate(dc);
+        frames++;
+    }
+    Test.assertMessage(!view.isAnimating(), "built");
+    Test.assertMessage(frames > 2, "over a few frames");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 0, "a wake with nothing changed: a blit");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setValues(ShuttleTest.values("10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "72", "6900", "82", "87%"));
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 1, "a wake after the steps changed: their row alone");
     return true;
 }

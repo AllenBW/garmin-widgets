@@ -552,9 +552,17 @@ function testGlanceAndAppDraw(logger as Logger) as Boolean {
     SaunaHistory.clear();
     var glance = new SaunaGlance();
     glance.onLayout(glanceDc);
+    glance.onShow();
     glance.onUpdate(glanceDc);
+    glance.onUpdate(glanceDc);
+    Test.assertEqualMessage(glance.reads, 1, "the glance reads Storage and Properties once a showing, not each update");
     SaunaHistory.add([Time.now().value() - 3600, KIND_STEAM, 2, 1450, 1200, 131, 24, 441, 62, 51] as Array<Number>);
+    glance.onShow();
     glance.onUpdate(glanceDc);
+    Test.assertEqualMessage(glance.reads, 2, "and again when shown again");
+    glance.reload();
+    glance.onUpdate(glanceDc);
+    Test.assertEqualMessage(glance.reads, 3, "and after a settings change");
     Test.assertEqualMessage(SaunaText.fahrenheit, System.getDeviceSettings().temperatureUnits != System.UNIT_METRIC,
         "the glance applied the default unit, the watch's");
 

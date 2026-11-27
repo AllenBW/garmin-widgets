@@ -27,6 +27,7 @@ class DaylightView extends WatchUi.WatchFace {
     private const PRESSURE_WINDOW = 3 * 3600;   // seconds
     private const PRESSURE_TREND = 100.0;       // pascals over the window: 1 hPa
     private const CLIMB = 10.0;                 // metres: more than this in the window, no trend
+    private const TREND_EVERY = 10;             // minutes between reads of the window's history
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -48,14 +49,22 @@ class DaylightView extends WatchUi.WatchFace {
     private var _altitude as String = "";
     private var _pressure as String = "";
     private var _trend as Number = 0;              // -1 falling, 0 steady, 1 rising
+    // The trend's four history iterators are read every TREND_EVERY
+    // minutes, not each minute and wake
+    private var _trendMinute as Number = -TREND_EVERY;   // Unix minutes of the last read
+    var trendReads as Number = 0;                        // how often (the tests)
 
     private var _smallFont as FontType = Graphics.FONT_XTINY;
     private var _timesFont as FontType = Graphics.FONT_XTINY;
     private var _labelFont as FontType = Graphics.FONT_XTINY;
     private var _ticks as Array<Number> = [] as Array<Number>;   // x1, y1, x2, y2 per hour, from onLayout
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Daylight");
         _burnIn = Lib.Aod.required();
     }
 
@@ -78,7 +87,9 @@ class DaylightView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -88,6 +99,7 @@ class DaylightView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -98,6 +110,7 @@ class DaylightView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         _minute = -1;   // fresh altitude and pressure on the wrist turn
         WatchUi.requestUpdate();
     }
@@ -209,7 +222,11 @@ class DaylightView extends WatchUi.WatchFace {
             pressure = info.ambientPressure;
         }
         _pressure = (pressure != null) ? (pressure / 100.0 + 0.5).toNumber().toString() + " hPa" : "";
-        _trend = pressureTrend();
+        if (_minute - _trendMinute >= TREND_EVERY || _minute < _trendMinute) {
+            _trendMinute = _minute;
+            _trend = pressureTrend();
+            trendReads++;
+        }
     }
 
     // The barometer over the last few hours: newest against oldest sample.

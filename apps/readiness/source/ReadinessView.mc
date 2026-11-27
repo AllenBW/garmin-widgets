@@ -40,8 +40,12 @@ class ReadinessView extends WatchUi.WatchFace {
     // Press targets, [complication type, x, y, half width, half height]
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Readiness");
         _burnIn = Lib.Aod.required();
     }
 
@@ -79,7 +83,9 @@ class ReadinessView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -89,6 +95,7 @@ class ReadinessView extends WatchUi.WatchFace {
             drawAlwaysOn(dc, _readings as Readings);
         } else {
             drawActive(dc, _readings as Readings);
+            _log.frame(started, true);
         }
     }
 
@@ -99,6 +106,7 @@ class ReadinessView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         WatchUi.requestUpdate();
     }
 

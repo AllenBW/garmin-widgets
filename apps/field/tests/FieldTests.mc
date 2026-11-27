@@ -135,3 +135,37 @@ function testTimingLog(logger as Logger) as Boolean {
     Test.assertMessage(log.timing(), "a wake is timed");
     return true;
 }
+
+// The history and the forecast are read once a minute, not on every update
+//: Body Battery, stress, the day's high and
+// low, the footer's weather and the pressure history
+(:test)
+function testFieldReadsOnceAMinute(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get() as Graphics.BufferedBitmap).getDc();
+    Application.Properties.setValue("Slot1", Slots.BODY_BATTERY);
+    Application.Properties.setValue("Slot2", Slots.STRESS);
+    Application.Properties.setValue("Slot3", Slots.HIGH_LOW);
+    Application.Properties.setValue("Footer", 1);
+    var view = new FieldView();
+    view.onLayout(dc);
+    for (var tries = 0; tries < 2; tries++) {
+        var minute = Toybox.Time.now().value() / 60;
+        view.reloadSettings();
+        view.onUpdate(dc);
+        var first = view.reads;
+        view.onUpdate(dc);
+        view.onExitSleep();
+        view.onUpdate(dc);
+        if (Toybox.Time.now().value() / 60 == minute) {
+            Test.assertMessage(first >= 4, "the first update read the three slots and the weather: " + first);
+            Test.assertEqualMessage(view.reads, first, "later updates in the minute, a wake among them, read nothing");
+            break;
+        }
+    }
+    Application.Properties.setValue("Slot1", Slots.HEART_RATE);
+    Application.Properties.setValue("Slot2", Slots.STEPS);
+    Application.Properties.setValue("Slot3", Slots.BODY_BATTERY);
+    Application.Properties.setValue("Footer", 0);
+    return true;
+}

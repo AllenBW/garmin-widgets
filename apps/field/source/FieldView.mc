@@ -68,6 +68,7 @@ class FieldView extends WatchUi.WatchFace {
     private const RAIN_WINDOW = 3 * 3600;    // seconds
     private const PRESSURE_WINDOW = 3 * 3600;
     private const PRESSURE_DROP = -400.0;    // pascals over the window: 4 hPa, the usual storm-alert setting
+    private const PRESSURE_EVERY = 10;       // minutes between reads of the three hours' history
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
@@ -99,9 +100,24 @@ class FieldView extends WatchUi.WatchFace {
     private var _sunTimes as [Number?, Number?] = [null, null];
     private var _rainChance as Number? = null;
     private var _pressureFalling as Boolean = false;
+    private var _pressureMinute as Number = -PRESSURE_EVERY;   // Unix minutes of the last read
+
+    // What the history and the forecast give, kept rather than read on
+    // every update: the slots' Body Battery,
+    // stress and the day's high and low, and the footer's current
+    // conditions, read again each minute; the pressure history every
+    // PRESSURE_EVERY minutes
+    (:live) private var _slotText as Array<String?> = [null, null, null] as Array<String?>;
+    (:live) private var _weather as [String, String]? = null;   // the footer's [temperature and sky, temperature]
+    (:live) private var _readMinute as Number = -1;      // Unix minutes those are for
+    var reads as Number = 0;                             // how often they were read (the tests)
+
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Field");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -141,6 +157,7 @@ class FieldView extends WatchUi.WatchFace {
             _time = p[1];
         }
         _signalMinute = -1;
+        forget();
     }
 
     // Whether (x, y) is on the time, where a hold steps to the next look
@@ -150,6 +167,7 @@ class FieldView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -161,6 +179,7 @@ class FieldView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -171,6 +190,7 @@ class FieldView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         WatchUi.requestUpdate();
     }
 
@@ -232,7 +252,7 @@ class FieldView extends WatchUi.WatchFace {
             dc.setColor(_label, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, labelY, _labelFont, Slots.label(kind), center);
             dc.setColor(Slots.color(kind), Graphics.COLOR_TRANSPARENT);
-            dc.drawText(x, valueY, Graphics.FONT_SMALL, slotValue(kind), center);
+            dc.drawText(x, valueY, Graphics.FONT_SMALL, slotValue(i, kind), center);
             boxes.add([x, (labelY + valueY) / 2, (w * 0.13).toNumber(), (h * 0.10).toNumber()]);
         }
         _slotBoxes = boxes;
@@ -335,7 +355,12 @@ class FieldView extends WatchUi.WatchFace {
         }
         _signalMinute = minute;
         _rainChance = rainAhead();
-        _pressureFalling = pressureFalling();
+        var now = Time.now().value() / 60;
+        if (now - _pressureMinute >= PRESSURE_EVERY || now < _pressureMinute) {
+            _pressureMinute = now;
+            _pressureFalling = pressureFalling();
+            reads++;
+        }
         sample();
     }
 
@@ -494,14 +519,10 @@ class FieldView extends WatchUi.WatchFace {
     (:live)
     private function footerText(withSky as Boolean) as String {
         var parts = [] as Array<String>;
-        if (Toybox has :Weather) {
-            var cc = Weather.getCurrentConditions();
-            var celsius = (cc != null) ? cc.temperature : null;
-            if (cc != null && celsius != null) {
-                var temp = Lib.Fmt.temperature(celsius);
-                var sky = withSky ? WeatherText.describe(cc.condition) : "";
-                parts.add(sky.length() > 0 ? temp + " " + sky : temp);
-            }
+        var weather = conditions();
+        var temp = weather[withSky ? 0 : 1];
+        if (temp.length() > 0) {
+            parts.add(temp);
         }
         var n = System.getDeviceSettings().notificationCount;
         if (n > 0) {
@@ -512,6 +533,29 @@ class FieldView extends WatchUi.WatchFace {
             text += (i > 0 ? "  ·  " : "") + parts[i];
         }
         return text;
+    }
+
+    // The current conditions as the footer words them, [with the sky,
+    // without], "" when the watch has none; read once a minute
+    (:live)
+    private function conditions() as [String, String] {
+        fresh();
+        var weather = _weather;
+        if (weather == null) {
+            weather = ["", ""] as [String, String];
+            if (Toybox has :Weather) {
+                var cc = Weather.getCurrentConditions();
+                var celsius = (cc != null) ? cc.temperature : null;
+                if (cc != null && celsius != null) {
+                    var temp = Lib.Fmt.temperature(celsius);
+                    var sky = WeatherText.describe(cc.condition);
+                    weather = [sky.length() > 0 ? temp + " " + sky : temp, temp] as [String, String];
+                }
+            }
+            _weather = weather;
+            reads++;
+        }
+        return weather;
     }
 
     // The next sun event only ("▲ 6:52" before sunrise, "▼ 17:41" during the
@@ -650,13 +694,46 @@ class FieldView extends WatchUi.WatchFace {
         return long ? "FRI 31 OCT" : "FRI 31";
     }
 
+    // The slot's value: the history and forecast readings kept for the
+    // minute, the rest (heart rate, steps) as they are
     (:live)
-    private function slotValue(kind as Number) as String {
-        return Slots.value(kind);
+    private function slotValue(i as Number, kind as Number) as String {
+        if (kind != Slots.BODY_BATTERY && kind != Slots.STRESS && kind != Slots.HIGH_LOW) {
+            return Slots.value(kind);
+        }
+        fresh();
+        var text = _slotText[i];
+        if (text == null) {
+            text = Slots.value(kind);
+            _slotText[i] = text;
+            reads++;
+        }
+        return text;
+    }
+
+    // A settings change reads them all again
+    (:live)
+    private function forget() as Void {
+        _readMinute = -1;
     }
 
     (:sample)
-    private function slotValue(kind as Number) as String {
+    private function forget() as Void {
+    }
+
+    // Forget the kept readings when the minute has turned
+    (:live)
+    private function fresh() as Void {
+        var minute = Time.now().value() / 60;
+        if (minute != _readMinute) {
+            _readMinute = minute;
+            _slotText = [null, null, null] as Array<String?>;
+            _weather = null;
+        }
+    }
+
+    (:sample)
+    private function slotValue(i as Number, kind as Number) as String {
         switch (kind) {
             case Slots.HEART_RATE:   return "72";
             case Slots.STEPS:        return "6,214";

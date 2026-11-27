@@ -16,6 +16,7 @@ class EdgeTube {
     var coreRef as BufferedBitmapReference? = null;
     var digit as Number;       // 0 to 9, or -1 for the date
     var text as String;        // the date's text
+    var titled as Boolean = false;     // a look's name, in its lines (lines), not the date
     var x as Number;           // the digit's box, or the date's line
     var y as Number;
     var seed as Number;
@@ -49,8 +50,19 @@ class EdgeTube {
 // size, and drawBitmap2's tint colours them, so any tube of the chart
 // works. (A bitmap font's mask has four levels at most: steps in a halo.)
 // The lit face is laid into a bitmap when the minute, the look or the
-// title changes (ten bitmaps loaded and let go, about fifty draws) and an
-// update is one blit.
+// title changes and an update is one blit.
+//
+// How it stays quick (as Edge Pro): each numeral on
+// screen and the date are made once into two small pictures in their
+// colours (a strike's EdgeTube) and kept, so the face is laid from them
+// with ten plain draws and a minute or a wake loads nothing but a changed
+// digit (it loaded ten sheets and tinted some fifty draws each time); a
+// struck tube becomes the kept one and a dying one is drawn from the old.
+// Where the pool refuses, the sheets as before, logged, tried again a
+// minute on. A start's first frame is the numerals alone, from their
+// sheets; the date comes the frame after, then the numerals' pictures one
+// a frame while nothing moves. A wake with nothing changed draws nothing
+// again.
 //
 // The Forerunner 165 and 70 cannot tint a bitmap, and their bitmaps keep
 // one bit of alpha. For them (the functions marked :plain; monkey.jungle)
@@ -124,8 +136,27 @@ class EdgeView extends WatchUi.WatchFace {
     private var _since as Number = 0;
     private var _drawn as Number = 0;
     private var _slowest as Number = 0;
+    // The numerals on screen and the date, each kept as a strike's tube's
+    // two pictures in its colours (by place: the hours' two, the minutes' two)
+    private var _kept as Array<EdgeTube?> = [null, null, null, null] as Array<EdgeTube?>;
+    private var _words as EdgeTube? = null;
+    (:tinted)
+    private const RETRY = 60000;                  // ms: pictures the pool had no room for are tried again after this
+    (:tinted)
+    private var _noPics as Boolean = false;
+    (:tinted)
+    private var _picsFailed as Number = 0;
+    (:tinted)
+    private var _noWords as Boolean = false;
+    (:tinted)
+    private var _wordsFailed as Number = 0;
+    private var _late as Boolean = true;          // a start's first frame: the numerals alone
+    private var _dated as Boolean = false;        // the lit face's bitmap shows the date (or the look's name)
+    private var _lays as Number = 0;              // how often the lit face was laid whole (the tests')
+    private var _log as Lib.Timing.Log;           // how quickly it lights, for the watch's log
 
     function initialize() {
+        _log = new Lib.Timing.Log("Edge");
         WatchFace.initialize();
         _burnIn = Lib.Aod.required();
         _pacer = new Lib.Motion.Pacer(FRAME, MOST_FRAMES);
@@ -141,10 +172,18 @@ class EdgeView extends WatchUi.WatchFace {
         _colors = Lib.Neon.colors(_look);
         _day = Lib.Look.today();
         settle();       // a strike's pictures are in the old colours
+        recolor();
+    }
+
+    // The kept pictures are in the old colours
+    private function recolor() as Void {
+        _kept = [null, null, null, null] as Array<EdgeTube?>;
+        _words = null;
         _dirty = true;
     }
 
     function onLayout(dc as Dc) as Void {
+        _late = true;
         _dirty = true;
     }
 
@@ -156,6 +195,7 @@ class EdgeView extends WatchUi.WatchFace {
             return;
         }
         _minute = clock.min;
+        var was = _hours + ":" + _minutes + ":" + _date;
         var hour = clock.hour;
         if (System.getDeviceSettings().is24Hour) {
             _hours = hour.format("%02d");
@@ -167,7 +207,9 @@ class EdgeView extends WatchUi.WatchFace {
         var info = Time.Gregorian.info(Time.now(), Time.FORMAT_SHORT);
         _date = dateText(info.day_of_week as Number, info.day as Number);
         sample();
-        _dirty = true;
+        if (!was.equals(_hours + ":" + _minutes + ":" + _date)) {
+            _dirty = true;          // a wake re-reads the clock; the face is drawn again only if it changed
+        }
     }
 
     // "TUE 15": the lettering has A to Z only, so the weekday is not the
@@ -257,7 +299,27 @@ class EdgeView extends WatchUi.WatchFace {
     function setTubes(tubes as Array<Number>) as Void {
         settle();
         _colors = [Lib.Neon.TUBES[tubes[0]], Lib.Neon.TUBES[tubes[1]], Lib.Neon.TUBES[tubes[2]]] as Array<Number>;
-        _dirty = true;
+        recolor();
+    }
+
+    // For the tests: how many numerals on screen are laid from kept
+    // pictures, and whether the date is
+    function keptNumerals() as Number {
+        var n = 0;
+        for (var p = 0; p < 4; p++) {
+            n += (_kept[p] != null && (_kept[p] as EdgeTube).halo != null) ? 1 : 0;
+        }
+        return n;
+    }
+
+    function keptDate() as Boolean {
+        var w = _words;
+        return w != null && w.halo != null;
+    }
+
+    // For the tests: how often the lit face has been laid whole
+    function lays() as Number {
+        return _lays;
     }
 
     // For the tests: the power mode, and frames of a set length in place of
@@ -301,6 +363,7 @@ class EdgeView extends WatchUi.WatchFace {
         _awake = true;
         _waking = true;
         _minute = -1;
+        _log.wake();
         _pacer.onExitSleep();
         WatchUi.requestUpdate();
     }
@@ -326,6 +389,8 @@ class EdgeView extends WatchUi.WatchFace {
         if (lit == null) {
             _titled = titled;
             drawLit(dc);
+            _log.frame(started, !_late);
+            later();
             _pacer.want(false);
             return;
         }
@@ -360,10 +425,40 @@ class EdgeView extends WatchUi.WatchFace {
         if (_tubes.size() > 0 && (_motion >= _until || titled != _titled)) {
             settle();
         }
+        // While nothing moves, one piece of work a frame: the date's pictures
+        // made (and laid over the numerals, where the bitmap has no date),
+        // or a numeral's (the face laid again from them once all are kept)
+        var more = false;
+        var over = false;
+        if ((_tubes.size() == 0 || hold >= 0) && !_late) {     // (or a capture's strike, held)
+            if (titled != _titled) {
+                _titled = titled;
+                _dirty = true;
+            }
+            if (wordsDue()) {
+                makeWords();
+                if (_dated) {
+                    _dirty = true;
+                } else {
+                    over = _words != null;
+                }
+            } else if (!_dirty && numeralsDue()) {
+                keepNumerals(1);
+                _dirty = !numeralsDue();
+            }
+            more = wordsDue() || numeralsDue();
+        }
         if (_dirty || titled != _titled) {
             _titled = titled;
             drawLit(lit.getDc());
             _dirty = false;
+        } else if (over) {
+            // the date over the numerals: its light doesn't reach their cores (designs/preview_edge.py)
+            var w = _words as EdgeTube;
+            var ldc = lit.getDc();
+            ldc.drawBitmap(w.x, w.y, w.halo as BufferedBitmap);
+            ldc.drawBitmap(w.x, w.y, w.core as BufferedBitmap);
+            _dated = true;
         }
         dc.drawBitmap(0, 0, lit);
         strike(dc);
@@ -376,10 +471,29 @@ class EdgeView extends WatchUi.WatchFace {
             _drawn += took;
             _slowest = (took > _slowest) ? took : _slowest;
         }
+        if (more) {
+            WatchUi.requestUpdate();      // the next picture
+        }
+        _log.frame(started, (_tubes.size() == 0 || hold >= 0) && !_late && !more);
+        later();
         _pacer.want(_tubes.size() > 0 && hold < 0);
     }
 
+    // The frame after a start's first: the date, which that frame left out,
+    // laid over it once its pictures are made; or, where they won't be, the
+    // face drawn again with it
+    private function later() as Void {
+        if (_late) {
+            _late = false;
+            if (!wordsDue()) {
+                _dirty = true;
+            }
+            WatchUi.requestUpdate();
+        }
+    }
+
     // The lit face's bitmap; null when the graphics pool has no room for one
+    // (and nothing strikes)
     private function bitmap() as BufferedBitmap? {
         if (_noBitmap) {
             return null;
@@ -410,9 +524,11 @@ class EdgeView extends WatchUi.WatchFace {
 
     // The face awake, all but the tubes a strike is drawing: every halo
     // first, then the cores over them, as the preview lays them
-    // (designs/preview_edge.py, face). Each sheet is loaded for its numeral
-    // and let go: the halos are the largest thing the face has, and the
-    // graphics pool need hold only one at a time
+    // (designs/preview_edge.py, face). Each numeral and the date from its
+    // kept pictures (keepNumerals, makeWords); where the pool had no room,
+    // the numeral from its sheet and the date from the lettering's, each
+    // loaded and let go (the halos are the largest thing the face has). The
+    // date not in a start's first frame.
     (:tinted)
     private function drawLit(dc as Dc) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
@@ -420,16 +536,145 @@ class EdgeView extends WatchUi.WatchFace {
         var hours = _colors[0];
         var minutes = _colors[1];
         var detail = _colors[2];
-        var text = _titled ? lines(Lib.Neon.title(_look)) : [_date] as Array<String>;
-        var words = _titled || !_hidden[DATE];
+        var line = _titled ? Lib.Neon.title(_look) : _date;
+        var words = !_late && (_titled || !_hidden[DATE]);
+        var kept = _words;
+        if (kept != null && (!kept.text.equals(line) || kept.halo == null || kept.core == null)) {
+            kept = null;
+        }
+        var direct = words && kept == null;
+        var text = lines(line);
+        _dated = words;
+        _lays++;
         tubes(dc, true, hours, minutes);
-        if (words) {
+        if (words && kept != null) {
+            dc.drawBitmap(kept.x, kept.y, kept.halo as BufferedBitmap);
+        } else if (direct) {
             letters(dc, WatchUi.loadResource(Rez.Drawables.LettersGlow) as BitmapResource, text, detail, 0, 0);
         }
         tubes(dc, false, Lib.Neon.core(hours), Lib.Neon.core(minutes));
-        if (words) {
+        if (words && kept != null) {
+            dc.drawBitmap(kept.x, kept.y, kept.core as BufferedBitmap);
+        } else if (direct) {
             letters(dc, WatchUi.loadResource(Rez.Drawables.LettersCore) as BitmapResource, text, Lib.Neon.core(detail), 0, 0);
         }
+    }
+
+    // The date (or the look's name) is to be made into its pictures:
+    // wanted, and not yet made
+    (:tinted)
+    private function wordsDue() as Boolean {
+        if (_late || (!_titled && _hidden[DATE]) || _lit == null) {
+            return false;
+        }
+        if (_noWords) {
+            if (System.getTimer() - _wordsFailed < RETRY) {
+                return false;
+            }
+            _noWords = false;
+        }
+        var kept = _words;
+        return kept == null || !kept.text.equals(_titled ? Lib.Neon.title(_look) : _date);
+    }
+
+    (:plain)
+    private function wordsDue() as Boolean {
+        return false;
+    }
+
+    // The date, or the look's name, made into its two pictures (as a
+    // strike's date is), the old ones let go first
+    (:tinted)
+    private function makeWords() as Void {
+        var since = System.getTimer();
+        var t = new EdgeTube(-1, _titled ? Lib.Neon.title(_look) : _date, 0, 0, DATE, 0, false);
+        t.titled = _titled;
+        _words = null;
+        if (ready([t] as Array<EdgeTube>)) {
+            _words = t;
+        } else {
+            _noWords = true;
+            _wordsFailed = System.getTimer();
+            System.println("Edge: no room to keep the date's pictures: drawn from the lettering");
+        }
+        _log.part += System.getTimer() - since;
+    }
+
+    (:plain)
+    private function makeWords() as Void {
+    }
+
+    // Whether a numeral on screen waits for its pictures
+    (:tinted)
+    private function numeralsDue() as Boolean {
+        if (_noPics && System.getTimer() - _picsFailed < RETRY) {
+            return false;
+        }
+        var rows = [_hours, _minutes] as Array<String>;
+        for (var r = 0; r < 2; r++) {
+            var chars = rows[r].toCharArray();
+            for (var i = 0; i < chars.size() && i < 2; i++) {
+                var k = _kept[r * 2 + i];
+                if (!_hidden[r * 2 + i] && (k == null || k.digit != digit(chars[i]) || k.halo == null || k.core == null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    (:plain)
+    private function numeralsDue() as Boolean {
+        return false;
+    }
+
+    (:plain)
+    private function keepNumerals(most as Number) as Void {
+    }
+
+    // The pictures of the numerals on screen, made for up to `most` not
+    // kept (a strike makes its own); places a row doesn't have let go
+    (:tinted)
+    private function keepNumerals(most as Number) as Void {
+        if (_noPics) {
+            if (System.getTimer() - _picsFailed < RETRY) {
+                return;
+            }
+            _noPics = false;
+        }
+        var since = System.getTimer();
+        var rows = [_hours, _minutes] as Array<String>;
+        var missing = [] as Array<EdgeTube>;
+        for (var r = 0; r < 2; r++) {
+            var chars = rows[r].toCharArray();
+            for (var i = 0; i < 2; i++) {
+                var p = r * 2 + i;
+                if (i >= chars.size()) {
+                    _kept[p] = null;
+                    continue;
+                }
+                var d = digit(chars[i]);
+                var k = _kept[p];
+                if (_hidden[p] || (k != null && k.digit == d && k.halo != null && k.core != null) || missing.size() >= most) {
+                    continue;
+                }
+                _kept[p] = null;
+                missing.add(new EdgeTube(d, "", 0, 0, p, 0, false));
+            }
+        }
+        if (missing.size() == 0) {
+            return;
+        }
+        if (ready(missing)) {
+            for (var j = 0; j < missing.size(); j++) {
+                _kept[missing[j].seed] = missing[j];
+            }
+        } else {
+            _noPics = true;
+            _picsFailed = System.getTimer();
+            System.println("Edge: no room to keep the numerals' pictures: drawn from their sheets");
+        }
+        _log.part += System.getTimer() - since;
     }
 
     // The same on a watch that cannot tint a bitmap: each halo as three
@@ -442,7 +687,7 @@ class EdgeView extends WatchUi.WatchFace {
         var minutes = _colors[1];
         var detail = _colors[2];
         var text = _titled ? lines(Lib.Neon.title(_look)) : [_date] as Array<String>;
-        var words = _titled || !_hidden[DATE];
+        var words = !_late && (_titled || !_hidden[DATE]);      // the date not in a start's first frame
         var fonts = (_fonts.size() > 0) ? _fonts : plainFonts();
         for (var n = 0; n < Layout.LAYERS.size(); n++) {
             var level = Layout.LAYERS[n];
@@ -480,8 +725,15 @@ class EdgeView extends WatchUi.WatchFace {
             var y = _t[Layout.Y0 + r] - pad;
             for (var i = 0; i < chars.size(); i++) {
                 var d = digit(chars[i]);
-                if (!_hidden[r * 2 + i]) {
-                    numeral(dc, halos, d, x, y, upper, lower);
+                var p = r * 2 + i;
+                if (!_hidden[p]) {
+                    var k = _kept[p];
+                    var picture = (k != null && k.digit == d) ? (halos ? k.halo : k.core) : null;
+                    if (picture != null) {
+                        dc.drawBitmap(x, y, picture);
+                    } else {
+                        numeral(dc, halos, d, x, y, upper, lower);
+                    }
                 }
                 x += _adv[d];
             }
@@ -627,6 +879,25 @@ class EdgeView extends WatchUi.WatchFace {
         }
     }
 
+    // A lettering tube's lines: the date in one, a look's name in its own
+    private function lettering(t as EdgeTube) as Array<String> {
+        return t.titled ? lines(t.text) : [t.text] as Array<String>;
+    }
+
+    // The box the date's (or a look's name's) lettering takes, its halos'
+    // room all round, as letters lays it: [left, top, width, height]
+    private function wordsBox(rows as Array<String>) as Array<Number> {
+        var pad = _t[Layout.LETTER_PAD];
+        var step = _t[Layout.LETTER] + _t[Layout.LINE_GAP];
+        var most = 0;
+        for (var k = 0; k < rows.size(); k++) {
+            var w = lineWidth(rows[k].toCharArray());
+            most = (w > most) ? w : most;
+        }
+        var y = (_w - rows.size() * step + _t[Layout.LINE_GAP]) / 2 - pad;
+        return [_t[Layout.DATE_X] - most / 2 - pad, y, most + 2 * pad, rows.size() * step - _t[Layout.LINE_GAP] + 2 * pad] as Array<Number>;
+    }
+
     // The same from a font of the lettering: a glyph's cell is the letter's
     // box with the pad all round
     (:plain)
@@ -665,12 +936,15 @@ class EdgeView extends WatchUi.WatchFace {
         var struck = [] as Array<EdgeTube>;
         var hide = [false, false, false, false, false] as Array<Boolean>;
         var born = _motion + (death ? Lib.Strike.DEATH : 0);
-        // the date first: its sheets are the largest thing loaded, and are let go before the numerals' pictures are made
+        // A dying tube is drawn from the pictures kept of it; a struck one's
+        // are made, and kept once it is steady. Where nothing dies the old
+        // pictures go first, for room.
         if (!titled && !old[2].equals(fresh[2])) {
             hide[DATE] = true;
             if (death) {
-                dying.add(new EdgeTube(-1, old[2], 0, 0, DATE, _motion, true));
+                dying.add(lent(new EdgeTube(-1, old[2], 0, 0, DATE, _motion, true), _words));
             }
+            _words = null;
             struck.add(new EdgeTube(-1, fresh[2], 0, 0, DATE, born, false));
         }
         for (var r = 0; r < 2; r++) {
@@ -681,36 +955,50 @@ class EdgeView extends WatchUi.WatchFace {
             var y = _t[Layout.Y0 + r];
             var was = places(old[r]);
             var at = places(fresh[r]);
+            var gone = [] as Array<Number>;
             for (var k = 0; k < which.size(); k++) {
                 var i = which[k];
                 hide[r * 2 + i] = true;
-                if (death) {
-                    // the numeral that stood here, or the whole old row when the count of numerals changed
-                    for (var j = 0; j < was.size(); j++) {
-                        if ((was.size() == at.size()) ? j == i : k == 0) {
-                            dying.add(new EdgeTube(was[j][0], "", was[j][1], y, 0, _motion, true));
+                // the numeral that stood here, or the whole old row when the count of numerals changed
+                for (var j = 0; j < was.size(); j++) {
+                    if ((was.size() == at.size()) ? j == i : k == 0) {
+                        if (death) {
+                            dying.add(lent(new EdgeTube(was[j][0], "", was[j][1], y, 0, _motion, true), _kept[r * 2 + j]));
                         }
+                        gone.add(r * 2 + j);
                     }
                 }
                 struck.add(new EdgeTube(at[i][0], "", at[i][1], y, r * 2 + i, born, false));
+            }
+            for (var j = 0; j < gone.size(); j++) {
+                _kept[gone[j]] = null;
             }
         }
         if (struck.size() == 0) {
             return;
         }
-        // The steady tubes into the bitmap first, while the pool is free
-        // of the strike's pictures; then the pictures. If there is no room
-        // for the dying ones' too (four numerals dying and four struck is
-        // 2.2 MB at 454 px), the old numerals simply go out.
+        // The struck tubes' pictures first; if there is no room for them
+        // beside the dying ones' (four numerals dying and four struck, and
+        // the date both, is 2.2 MB at 454 px), the old numerals simply go out.
+        // Then the steady tubes into the bitmap, from their kept pictures.
         _hidden = hide;
         _titled = titled;
-        drawLit(lit.getDc());
-        _dirty = false;
         var tubes = [] as Array<EdgeTube>;
-        if (ready(struck)) {
+        var made = ready(struck);
+        if (!made && dying.size() > 0) {
+            dying = [] as Array<EdgeTube>;
+            made = ready(struck);
+        }
+        if (made) {
             tubes.addAll(struck);
-            if (dying.size() > 0 && ready(dying)) {
-                tubes.addAll(dying);
+            tubes.addAll(dying);
+            for (var i = 0; i < struck.size(); i++) {
+                var t = struck[i];
+                if (t.digit < 0) {
+                    _words = t;
+                } else {
+                    _kept[t.seed] = t;      // a struck numeral's seed is its place
+                }
             }
         }
         dying = [] as Array<EdgeTube>;
@@ -720,8 +1008,25 @@ class EdgeView extends WatchUi.WatchFace {
             _dirty = true;
             return;
         }
+        drawLit(lit.getDc());
+        _dirty = false;
         _tubes = tubes;
         _until = born + Lib.Strike.LONGEST;
+    }
+
+    // A dying tube given the pictures kept of what it was, if they are its
+    private function lent(t as EdgeTube, kept as EdgeTube?) as EdgeTube {
+        if (kept != null && kept.digit == t.digit && (t.digit >= 0 || kept.text.equals(t.text))) {
+            t.halo = kept.halo;
+            t.core = kept.core;
+            t.haloRef = kept.haloRef;
+            t.coreRef = kept.coreRef;
+            if (t.digit < 0) {
+                t.x = kept.x;
+                t.y = kept.y;
+            }
+        }
+        return t;
     }
 
     // Each numeral of a row and its box's left edge: [digit, x]
@@ -766,9 +1071,16 @@ class EdgeView extends WatchUi.WatchFace {
             for (var i = 0; i < n; i++) {
                 var t = tubes[i];
                 for (var pass = 0; pass < 2; pass++) {
-                    pad = (t.digit < 0) ? _t[Layout.LETTER_PAD] : _t[(pass == 0) ? Layout.PAD : Layout.CORE_PAD];
-                    var wide = ((t.digit < 0) ? lineWidth(t.text.toCharArray()) : _adv[t.digit]) + 2 * pad;
-                    var high = ((t.digit < 0) ? _t[Layout.LETTER] : _t[Layout.H]) + 2 * pad;
+                    pad = _t[(pass == 0) ? Layout.PAD : Layout.CORE_PAD];
+                    var wide = _adv[(t.digit < 0) ? 0 : t.digit] + 2 * pad;
+                    var high = _t[Layout.H] + 2 * pad;
+                    if (t.digit < 0) {
+                        var box = wordsBox(lettering(t));
+                        t.x = box[0];
+                        t.y = box[1];
+                        wide = box[2];
+                        high = box[3];
+                    }
                     var ref = Graphics.createBufferedBitmap({:width => wide, :height => high});
                     var b = ref.get();
                     if (!(b instanceof BufferedBitmap)) {
@@ -809,12 +1121,9 @@ class EdgeView extends WatchUi.WatchFace {
                 dc.setColor(Graphics.COLOR_TRANSPARENT, Graphics.COLOR_TRANSPARENT);
                 dc.clear();
                 if (t.digit < 0) {
-                    // the date's line stands at the date's place: move it to the picture's corner
-                    var pad = _t[Layout.LETTER_PAD];
-                    t.x = _t[Layout.DATE_X] - lineWidth(t.text.toCharArray()) / 2 - pad;
-                    t.y = (_w - _t[Layout.LETTER]) / 2 - pad;
+                    // the date (or a look's name, in its lines) stands at the date's place: moved to the picture's corner
                     letters(dc, WatchUi.loadResource(halos ? Rez.Drawables.LettersGlow : Rez.Drawables.LettersCore) as BitmapResource,
-                            [t.text] as Array<String>, halos ? detail : Lib.Neon.core(detail), -t.x, -t.y);
+                            lettering(t), halos ? detail : Lib.Neon.core(detail), -t.x, -t.y);
                 } else {
                     numeral(dc, halos, t.digit, 0, 0, halos ? hours : Lib.Neon.core(hours), halos ? minutes : Lib.Neon.core(minutes));
                 }

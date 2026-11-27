@@ -192,13 +192,23 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
     view.onLayout(dc);
     logger.debug("layout: " + (System.getTimer() - started) + " ms");
 
-    // The first frames fill the layers in; then the face is one blit and the readings
-    for (var f = 0; f < 8; f++) {
+    // A start's first frame draws the time alone; the
+    // frames after fill the layers in, at least one a frame and no more than
+    // the frame's time allows; then the face is one blit and the readings
+    started = System.getTimer();
+    view.onUpdate(dc);
+    logger.debug("awake frame 0, the time alone: " + (System.getTimer() - started) + " ms");
+    Test.assertMessage(!view.fieldReady(), "the first frame draws no layer");
+    Test.assertMessage(view.timeAt(w / 2, (h * 0.47).toNumber()), "but the time is there, and held");
+    var frames = 0;
+    while (!view.fieldReady() && frames < 100) {
         started = System.getTimer();
         view.onUpdate(dc);
-        logger.debug("awake frame " + f + ": " + (System.getTimer() - started) + " ms");
+        logger.debug("awake frame " + (frames + 1) + ": " + (System.getTimer() - started) + " ms");
+        frames++;
     }
-    Test.assertMessage(view.fieldReady(), "the layers are in after a few frames");
+    view.onUpdate(dc);
+    Test.assertMessage(view.fieldReady() && frames <= 78, "the layers are in after a frame each at most: " + frames);
     logger.debug(view.pebblesShown() + " stones shown");
 
     var hr = view.targetAt((w * 0.57).toNumber(), (h * 0.69).toNumber());
@@ -233,7 +243,7 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
             Application.Properties.setValue("Slot" + (n + 1), (c * 4 + n) % Readings.COUNT);
         }
         view.reloadSettings();
-        for (var f = 0; f < 7; f++) {
+        for (var f = 0; f < 78 && (f == 0 || !view.fieldReady()); f++) {
             view.onUpdate(dc);
         }
         Test.assertMessage(view.fieldReady(), "the layers are redrawn in the new colours: " + config);
@@ -249,7 +259,7 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
     for (var m = 0; m < Lib.Look.MODES; m++) {
         Test.assertEqualMessage(Lib.Look.next(), Lib.Look.ORDER[(m + 1) % Lib.Look.MODES], "the next look");
         view.reloadSettings();
-        for (var f = 0; f < 7; f++) {
+        for (var f = 0; f < 78 && (f == 0 || !view.fieldReady()); f++) {
             view.onUpdate(dc);
         }
         Test.assertMessage(view.fieldReady(), "the layers in look " + m);

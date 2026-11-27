@@ -163,3 +163,44 @@ function testClackRollsOnWake(logger as Logger) as Boolean {
     view.release();
     return true;
 }
+
+// A start lights at once: its first frame draws the
+// leaves flat, each frame after makes one half, then the lamp's pool goes
+// in over a few frames
+(:test)
+function testClackLightsFirst(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var view = new ClackView();
+    view.setStill();
+    view.setGradual();
+    view.onLayout(dc);
+    view.setState(21, 5, true, true);
+    var started = System.getTimer();
+    view.onUpdate(dc);
+    logger.debug("first frame, flat: " + (System.getTimer() - started) + " ms");
+    Test.assertEqualMessage(view.halvesMade(), 0, "the first frame makes no half");
+    Test.assertMessage(!view.lit(), "and the face is not yet lit through");
+    for (var n = 1; n <= 8; n++) {
+        view.onUpdate(dc);
+        Test.assertEqualMessage(view.halvesMade(), n, "one half a frame");
+    }
+    var frames = 0;
+    while (!view.lit() && frames < 10) {
+        view.onUpdate(dc);
+        frames++;
+    }
+    logger.debug("the lamp's pool in " + frames + " frames");
+    Test.assertMessage(view.lit() && frames >= 2 && frames <= 5, "the lamp's pool over a few frames");
+    // by day the face is lit once the halves are made; a flip makes the rest at once
+    view.setState(14, 38, false, true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.halvesMade(), 1, "remade a half a frame");
+    view.setFlip(3, "9", 30);
+    Test.assertEqualMessage(view.halvesMade(), 8, "a flip makes every half first");
+    view.onUpdate(dc);
+    Test.assertMessage(view.lit(), "lit by day with the halves made");
+    view.release();
+    return true;
+}

@@ -113,9 +113,19 @@ class InscriptionView extends WatchUi.WatchFace {
     private var _legendFont as FontType = Graphics.FONT_XTINY;
     private var _aodLegendFont as FontType = Graphics.FONT_XTINY;
     private var _legend as FontType = Graphics.FONT_XTINY;     // the one this draw uses
+    // Each legend character's width, by font (awake's, standby's), measured
+    // once: the legend is set a character at a time and fitted by trying
+    // its readings' long and short words, so each draw asked again for the
+    // same few widths dozens of times
+    private var _widths as Dictionary<String, Float> = {} as Dictionary<String, Float>;
+    private var _aodWidths as Dictionary<String, Float> = {} as Dictionary<String, Float>;
+    private var _known as Dictionary<String, Float> = _widths;   // the one this draw uses
+    // The beaded rim's dots, worked out once: x, y about the centre
+    private var _beads as Array<Float> = [] as Array<Float>;
 
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
+    private var _lit as Boolean = false;         // a lit frame drawn since the start
 
     // The once-a-minute state
     private var _minute as Number = -1;
@@ -132,8 +142,12 @@ class InscriptionView extends WatchUi.WatchFace {
     private const TIME = 10;
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
+    // How quickly the face lights: its part is the rim's legend
+    private var _timing as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _timing = new Lib.Timing.Log("Inscription");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -223,6 +237,14 @@ class InscriptionView extends WatchUi.WatchFace {
     function onLayout(dc as Dc) as Void {
         _w = dc.getWidth();
         makeFonts();
+        var r = _w * BEAD_RADIUS;
+        var beads = [] as Array<Float>;
+        for (var i = 0; i < BEADS; i++) {
+            var a = Math.PI * 2 * i / BEADS;
+            beads.add((r * Math.sin(a)).toFloat());
+            beads.add((-r * Math.cos(a)).toFloat());
+        }
+        _beads = beads;
     }
 
     private function makeFonts() as Void {
@@ -234,6 +256,8 @@ class InscriptionView extends WatchUi.WatchFace {
         var legend = Lib.Ink.resolve((_style == PRIDI) ? Lib.Ink.PRIDI : Lib.Ink.CONDENSED_BOLD);
         _legendFont = Lib.Ink.font(legend, _w * (_big ? BIG_LEGEND_EM : LEGEND_EM), Graphics.FONT_XTINY);
         _aodLegendFont = Lib.Ink.font(legend, _w * AOD_LEGEND_EM, Graphics.FONT_XTINY);
+        _widths = {} as Dictionary<String, Float>;
+        _aodWidths = {} as Dictionary<String, Float>;
     }
 
     // ------------------------------------------------------------ state
@@ -337,12 +361,14 @@ class InscriptionView extends WatchUi.WatchFace {
     function onExitSleep() as Void {
         _awake = true;
         _minute = -1;
+        _timing.wake();
         WatchUi.requestUpdate();
     }
 
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -357,8 +383,17 @@ class InscriptionView extends WatchUi.WatchFace {
             } else {
                 draw(dc, off[0], off[1], true);
             }
+        } else if (!_lit) {
+            // A start's first frame: the time alone, the legend and the
+            // beads from the next
+            _lit = true;
+            drawTime(dc, _w / 2.0, dc.getHeight() / 2.0, false, Lib.Config.scale(_data, _night ? NIGHT : 1.0),
+                     Lib.Config.scale(_accent, _night ? NIGHT : 1.0));
+            WatchUi.requestUpdate();
+            _timing.frame(started, false);
         } else {
             draw(dc, 0, 0, false);
+            _timing.frame(started, true);
         }
     }
 
@@ -373,10 +408,12 @@ class InscriptionView extends WatchUi.WatchFace {
         var data = Lib.Config.scale(_data, dim);
         var accent = Lib.Config.scale(_accent, dim);
         _legend = thin ? _aodLegendFont : _legendFont;
+        _known = thin ? _aodWidths : _widths;
         if (!thin) {
             drawBeads(dc, cx, cy, Lib.Config.scale(data, BEAD));
         }
         drawTime(dc, cx, cy, thin, thin ? Lib.Config.scale(data, 0.8) : data, thin ? Lib.Config.scale(accent, 0.8) : accent);
+        var rim = System.getTimer();
 
         // The date across the top (its short form if the long one is too
         // long), the alarm bell inside the beads at twelve
@@ -454,7 +491,7 @@ class InscriptionView extends WatchUi.WatchFace {
         var total = legend(dc, cx, cy, runs, 180.0, true);
         if (!thin) {
             // each bottom reading's press target, where it falls along the rim
-            var dot = dc.getTextWidthInPixels("·", _legend) + 2 * gap;
+            var dot = glyph(dc, "·") + 2 * gap;
             var start = 0.0;
             for (var k = 0; k < items.size(); k++) {
                 var size = runsLength(dc, items[k]);
@@ -462,17 +499,17 @@ class InscriptionView extends WatchUi.WatchFace {
                 target(k + 2, cx, cy, (180.0 - Math.toDegrees(middle / r)).toFloat(), size);
                 start += size + dot;
             }
+            _timing.part = System.getTimer() - rim;
         }
     }
 
     // The beaded rim: a dot every 5°
     private function drawBeads(dc as Dc, cx as Float, cy as Float, color as Number) as Void {
-        var r = _w * BEAD_RADIUS;
         var size = BEAD_SIZE * _w / 454.0;
+        var beads = _beads;
         dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        for (var i = 0; i < BEADS; i++) {
-            var a = Math.PI * 2 * i / BEADS;
-            dc.fillCircle(cx + r * Math.sin(a), cy - r * Math.cos(a), size);
+        for (var i = 0; i + 1 < beads.size(); i += 2) {
+            dc.fillCircle(cx + beads[i], cy + beads[i + 1], size);
         }
     }
 
@@ -566,7 +603,7 @@ class InscriptionView extends WatchUi.WatchFace {
             total += runsLength(dc, items[k]);
         }
         if (items.size() > 1) {
-            total += (items.size() - 1) * (dc.getTextWidthInPixels("·", _legend) + 2 * _w * (tight ? TIGHT_GAP : SEPARATOR_GAP));
+            total += (items.size() - 1) * (glyph(dc, "·") + 2 * _w * (tight ? TIGHT_GAP : SEPARATOR_GAP));
         }
         return total;
     }
@@ -580,7 +617,17 @@ class InscriptionView extends WatchUi.WatchFace {
         if (arrow(ch) != null) {
             return _w * ARROW;
         }
-        return dc.getTextWidthInPixels(ch, _legend).toFloat();
+        return glyph(dc, ch);
+    }
+
+    // A character's width in this draw's legend font, measured once
+    private function glyph(dc as Dc, ch as String) as Float {
+        var known = _known[ch];
+        if (known == null) {
+            known = dc.getTextWidthInPixels(ch, _legend).toFloat();
+            _known[ch] = known;
+        }
+        return known;
     }
 
     // The length along the rim of runs as legend() sets them

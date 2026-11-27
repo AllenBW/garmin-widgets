@@ -34,6 +34,7 @@ class OrbView extends WatchUi.WatchFace {
     const BATTERY = Lib.Numbers.VALUES;
     const TIME = Lib.Numbers.VALUES + 1;
     const KEYS = Lib.Numbers.VALUES + 2;
+    const TIME_BAND = 2;         // the bands' order is build()'s
 
     // The motion, as the approved sketch has it
     const TURNS = true;          // a band turns whole when most of it changed (measured)
@@ -65,7 +66,12 @@ class OrbView extends WatchUi.WatchFace {
     private var _titled as Boolean = false;
     private var _waking as Boolean = false;
     private var _pending as Boolean = false;    // bands left for the next frame
-    private var _cursor as Number = 0;
+    private var _cursor as Number = TIME_BAND;  // a start draws the time first
+    private var _late as Boolean = true;        // a start's first frame: the time alone
+    private var _building as Boolean = true;    // a start: the rest a band a frame, a frame straight after another
+    private var _asked as Boolean = false;      // this frame is one the build asked for, not the system's
+    private var _drewBands as Array<Number> = [] as Array<Number>;   // the bands the last update drew
+    private var _titleFont as Graphics.FontType? = null;   // made on the look's name's first frame, kept
     private var _fixed as Boolean = false;      // the tests' readings
     private var _clock as Number? = null;       // the tests' clock
     private var _t as Number = 0;               // the motion's clock: ms of drawn frames
@@ -73,9 +79,11 @@ class OrbView extends WatchUi.WatchFace {
     private var _pacer as Lib.Motion.Pacer;
     private var _ref as Graphics.BufferedBitmapReference? = null;
     private var _bitmap as Graphics.BufferedBitmap? = null;
+    private var _log as Lib.Timing.Log;         // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Orb");
         _burnIn = Lib.Aod.required();
         _pacer = new Lib.Motion.Pacer(PERIOD, MOST);
         reloadSettings();
@@ -235,6 +243,7 @@ class OrbView extends WatchUi.WatchFace {
     }
 
     private function plan(i as Number, was as Array<String>, now as Array<String>) as Void {
+        _building = false;      // a motion draws its bands each frame, by the budget
         var out = (i > 2) ? i - 2 : 2 - i;
         _bands[i].plan(was, now, TURNS, _t, i * TURN_STEP, TURN + TURN_GROW * out, i * DRUM_BAND, DRUM_STEP);
     }
@@ -294,6 +303,7 @@ class OrbView extends WatchUi.WatchFace {
     }
 
     function onExitSleep() as Void {
+        _log.wake();
         _awake = true;
         _waking = true;
         _minute = -1;
@@ -344,11 +354,12 @@ class OrbView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
-        var started = System.getTimer();
-        var step = _pacer.step(now());
+        var step = _asked ? 0 : _pacer.step(now());    // a frame the face asked for itself says nothing of the power mode
+        _asked = false;
         refresh();
         if (standbyRun(dc)) {
             return;
@@ -381,19 +392,34 @@ class OrbView extends WatchUi.WatchFace {
             dc.clear();
             onLayout(dc);
         }
+        var bands = System.getTimer();
         var polys = drawBands(target, bitmap == null);
+        _log.part = System.getTimer() - bands;
         if (bitmap != null) {
             dc.drawBitmap(0, 0, bitmap);
         }
         if (titled) {
+            var font = _titleFont;
+            if (font == null) {
+                font = Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+                _titleFont = font;
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09, font,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+        if (_building) {
+            if (_pending) {
+                _asked = true;
+                WatchUi.requestUpdate();     // the start's next band, straight away; the pacer's timer waits for proof of high power, which these frames must not give
+            } else {
+                _building = false;
+            }
         }
         var busy = animating();
         _pacer.want(busy);
         measure(started, polys, busy);
+        _log.frame(started, !busy);
     }
 
     // The face's bitmap, from the graphics pool, made once and held. The pool
@@ -430,18 +456,25 @@ class OrbView extends WatchUi.WatchFace {
 
     // The bands that need it, up to BUDGET polygons an update, each band's turn
     // coming round: a band left over moves on the next frame, its motion
-    // skipping rather than slowing. `all` draws them regardless. Returns the
-    // polygons drawn.
+    // skipping rather than slowing. A start lights the time alone, then a
+    // band a frame. `all` draws them regardless. Returns the polygons drawn.
     private function drawBands(dc as Dc, all as Boolean) as Number {
         var count = _bands.size();
-        var budget = allowance();
+        var budget = _building ? 0 : allowance();    // a start: a band a frame
         var drew = 0;
         var times = stress();
+        var timeOnly = _late && !all;
+        _late = false;
         _pending = false;
+        _drewBands = [] as Array<Number>;
         for (var n = 0; n < count; n++) {
             var at = (_cursor + n) % count;
             var b = _bands[at];
             if (b.mode == OrbMoves.NONE && !b.dirty) {
+                continue;
+            }
+            if (timeOnly && at != TIME_BAND) {
+                _pending = true;
                 continue;
             }
             var cost = b.cost() * times;
@@ -450,6 +483,7 @@ class OrbView extends WatchUi.WatchFace {
                 _cursor = at;
                 break;
             }
+            _drewBands.add(at);
             budget -= cost;
             for (var r = 0; r < times; r++) {
                 b.frame(dc, _t, DRUM);
@@ -685,6 +719,11 @@ class OrbView extends WatchUi.WatchFace {
 
     function isAnimating() as Boolean {
         return animating();
+    }
+
+    // The bands the last update drew, top to bottom 0 to 4
+    function bandsDrawn() as Array<Number> {
+        return _drewBands;
     }
 
     // What moves in band i: "turn", a mark per character for drums, or ""

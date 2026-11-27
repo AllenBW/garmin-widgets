@@ -31,6 +31,7 @@ class LockupView extends WatchUi.WatchFace {
     const ROLL = 380;          // ms a digit takes to roll
     const ROLL_FRAME = 100;    // ms between frames
     const BUDGET = 40;         // digits an update, about a full face: the watchdog allows three
+    const BUILD = 14;          // digits a frame while a start builds the face, the time alone first
     const TITLE = 0.050;       // the look's name, for a moment
     const ROW_GAP = 0.013;     // between rows
     const ITEM_GAP = 0.024;    // between readings in a row
@@ -54,6 +55,10 @@ class LockupView extends WatchUi.WatchFace {
     private var _waking as Boolean = false;
     private var _pending as Boolean = false;   // rows left for the next frame
     private var _cursor as Number = 0;
+    private var _late as Boolean = true;       // a start's first frame: the time alone
+    private var _building as Boolean = true;   // a start: the rest a few rows a frame, a frame straight after another
+    private var _drew as Number = 0;           // rows drawn by the last update
+    private var _titleFont as Graphics.FontType? = null;   // made on the look's name's first frame, kept
     private var _fixed as Boolean = false;     // the tests' readings
     private var _clock as Number? = null;      // the tests' clock
     private var _useTimer as Boolean = true;
@@ -62,9 +67,11 @@ class LockupView extends WatchUi.WatchFace {
     private var _bitmap as Graphics.BufferedBitmap? = null;
     private var _timer as Timer.Timer? = null;
     private var _ticking as Boolean = false;
+    private var _log as Lib.Timing.Log;         // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Lockup");
         _burnIn = Lib.Aod.required();
         _rollFrom = new [KEYS] as Array<String?>;
         _rollAt = new [KEYS] as Array<Number>;
@@ -201,6 +208,7 @@ class LockupView extends WatchUi.WatchFace {
                 if (_awake && _rolling && moves(k) && old.size() > k && old[k].length() == fresh[k].length()) {
                     _rollFrom[k] = old[k];
                     _rollAt[k] = now();
+                    _building = false;      // a roll draws its rows each frame, by the budget
                 }
                 dirtyKey(k);
             }
@@ -260,21 +268,26 @@ class LockupView extends WatchUi.WatchFace {
     }
 
     function onExitSleep() as Void {
+        _log.wake();
         _awake = true;
         _waking = true;
         _minute = -1;
         _second = -1;
-        dirtyAll();
-        WatchUi.requestUpdate();
+        WatchUi.requestUpdate();     // the bitmap is as it was: only what changed is drawn (woke, take)
     }
 
     function onHide() as Void {
         stopTimer();
     }
 
+    // A roll cut short by sleep left its row half drawn in the bitmap: drawn
+    // again at the next lit update
     private function clearEffects() as Void {
         for (var k = 0; k < KEYS; k++) {
-            _rollFrom[k] = null;
+            if (_rollFrom[k] != null) {
+                _rollFrom[k] = null;
+                dirtyKey(k);
+            }
         }
     }
 
@@ -294,6 +307,7 @@ class LockupView extends WatchUi.WatchFace {
             if (seen[k].length() == _values[k].length()) {
                 _rollFrom[k] = seen[k];
                 _rollAt[k] = t;
+                _building = false;
             }
         }
     }
@@ -343,6 +357,7 @@ class LockupView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
@@ -373,17 +388,32 @@ class LockupView extends WatchUi.WatchFace {
             dc.clear();
             dirtyAll();
         }
+        var rows = System.getTimer();
         drawRows(target, bitmap == null);
+        _log.part = System.getTimer() - rows;
         if (bitmap != null) {
             dc.drawBitmap(0, 0, bitmap);
         }
         if (titled) {
+            var font = _titleFont;
+            if (font == null) {
+                font = Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+                _titleFont = font;
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09, font,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
         }
-        schedule();
+        if (_building) {
+            if (_pending) {
+                WatchUi.requestUpdate();     // the start's next rows, straight away
+            } else {
+                _building = false;
+            }
+        } else {
+            schedule();
+        }
+        _log.frame(started, !animating());
     }
 
     // The face's bitmap, from the graphics pool, made once and held. The pool
@@ -420,12 +450,16 @@ class LockupView extends WatchUi.WatchFace {
 
     // The rows that need it, up to BUDGET digits an update: a wake where
     // everything rolls would pass the watchdog in one go, so it takes two or
-    // three frames, each row's turn coming round. `all` draws them regardless.
+    // three frames, each row's turn coming round. A start lights the time
+    // alone, then BUILD digits a frame. `all` draws them regardless.
     private function drawRows(dc as Dc, all as Boolean) as Void {
         var t = now();
         var count = _rows.size();
-        var budget = BUDGET;
+        var budget = _building ? BUILD : BUDGET;
+        var timeOnly = _late && !all;
+        _late = false;
         _pending = false;
+        _drew = 0;
         for (var n = 0; n < count; n++) {
             var at = (_cursor + n) % count;
             var r = _rows[at];
@@ -437,13 +471,18 @@ class LockupView extends WatchUi.WatchFace {
             if (!r.dirty) {
                 continue;
             }
+            if (timeOnly && k != TIME) {
+                _pending = true;
+                continue;
+            }
             var cost = (_values.size() > k ? _values[k].length() : 2) * (from != null ? 2 : 1);
-            if (!all && cost > budget) {
+            if (!all && !timeOnly && _drew > 0 && cost > budget) {
                 _pending = true;
                 _cursor = at;
                 break;
             }
             budget -= cost;
+            _drew++;
             r.dirty = false;
             var p = 1.0;
             if (from != null) {
@@ -509,6 +548,10 @@ class LockupView extends WatchUi.WatchFace {
 
     function isAnimating() as Boolean {
         return animating();
+    }
+
+    function rowsDrawn() as Number {
+        return _drew;
     }
 
     function isRolling(key as Number) as Boolean {

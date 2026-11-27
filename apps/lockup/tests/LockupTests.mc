@@ -178,3 +178,39 @@ function testLockupTargets(logger as Logger) as Boolean {
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.85).toNumber()) == Complications.COMPLICATION_TYPE_CURRENT_WEATHER, "the weather");
     return true;
 }
+
+// A start lights the time alone, then builds the rest over a few frames; a
+// wake draws only the rows that changed
+(:test)
+function testLockupLightsFast(logger as Logger) as Boolean {
+    var dc = lockupDc();
+    var view = new LockupView();
+    view.onLayout(dc);
+    view.setRolling(false);
+    view.setValues(lockupValues("10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "72", "6214", "82", "87%"));
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 1, "a start's first frame: the time alone");
+    Test.assertMessage(view.isAnimating(), "the rest to come");
+    var frames = 1;
+    while (view.isAnimating() && frames < 20) {
+        view.onUpdate(dc);
+        frames++;
+    }
+    Test.assertMessage(!view.isAnimating(), "built");
+    Test.assertMessage(frames > 2, "over a few frames");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 0, "a wake with nothing changed: a blit");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setValues(lockupValues("10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "72", "6900", "82", "87%"));
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.rowsDrawn(), 1, "a wake after the steps changed: their row alone");
+    return true;
+}

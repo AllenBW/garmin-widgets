@@ -19,10 +19,19 @@ function testInscriptionDrawsEveryMode(logger as Logger) as Boolean {
     var view = new InscriptionView();
     view.onLayout(dc);
 
-    // Whatever the simulator provides
+    // Whatever the simulator provides: a start's first frame the time alone,
+    // the legend from the next
     var started = System.getTimer();
     view.onUpdate(dc);
+    logger.debug("awake, the first frame: " + (System.getTimer() - started) + " ms");
+    Test.assertMessage(view.timeAt(w / 2, h / 2), "the first frame draws the time");
+    Test.assertMessage(view.slotAt((w * 0.075).toNumber(), (h * 0.5).toNumber()) == null, "and no legend yet");
+    started = System.getTimer();
+    view.onUpdate(dc);
     logger.debug("awake: " + (System.getTimer() - started) + " ms");
+    started = System.getTimer();
+    view.onUpdate(dc);
+    logger.debug("awake again, the widths known: " + (System.getTimer() - started) + " ms");
 
     // Nothing yet; long readings with labels; a one-digit hour; night
     var empty = [["--", "", null, null, 0], ["--", "", null, null, 0], ["--", "", null, null, 0],
@@ -68,6 +77,7 @@ function testInscriptionTargets(logger as Logger) as Boolean {
     var view = new InscriptionView();
     view.onLayout(dc);
     view.setState("14", "38", day(), 1, false, false);
+    view.onUpdate(dc);                            // the time alone
     view.onUpdate(dc);
 
     Test.assertEqualMessage(view.slotAt((w * 0.075).toNumber(), (h * 0.5).toNumber()) as Number, 1, "nine o'clock");
@@ -112,9 +122,11 @@ function testInscriptionPhoneSettings(logger as Logger) as Boolean {
     var view = new InscriptionView();
     view.onLayout(dc);
     view.onUpdate(dc);
+    view.onUpdate(dc);
     Application.Properties.setValue("Style", 0);
     var pridi = new InscriptionView();
     pridi.onLayout(dc);
+    pridi.onUpdate(dc);
     pridi.onUpdate(dc);
     var id = view.targetAt((w * 0.075).toNumber(), (h * 0.5).toNumber());
     var phone = id != null && id.getType() == Complications.COMPLICATION_TYPE_STRESS;

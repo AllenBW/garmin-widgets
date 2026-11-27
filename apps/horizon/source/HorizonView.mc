@@ -38,8 +38,12 @@ class HorizonView extends WatchUi.WatchFace {
     private var _temp as String = "";
     private var _smallFont as FontType = Graphics.FONT_XTINY;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Horizon");
         _burnIn = Lib.Aod.required();
     }
 
@@ -48,7 +52,9 @@ class HorizonView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -58,6 +64,7 @@ class HorizonView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -68,6 +75,7 @@ class HorizonView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         WatchUi.requestUpdate();
     }
 
@@ -99,10 +107,11 @@ class HorizonView extends WatchUi.WatchFace {
                 }
             }
         }
-        if (Toybox has :Weather) {
-            var cc = Weather.getCurrentConditions();
-            var seen = (cc != null) ? cc.observationTime : null;
-            var chance = (cc != null) ? cc.precipitationChance : null;
+        // the current conditions read once a minute, for the chance now and the temperature
+        var cc = (Toybox has :Weather) ? Weather.getCurrentConditions() : null;
+        if (cc != null) {
+            var seen = cc.observationTime;
+            var chance = cc.precipitationChance;
             if (chance != null && (seen == null || now - seen.value() < 3 * 3600)) {
                 hours.add([nowSecs, chance]);
             }
@@ -112,12 +121,9 @@ class HorizonView extends WatchUi.WatchFace {
         _outlook = HorizonModel.build(nowSecs, hours, sun[0], sun[1], sun[2], calendarText());
 
         _temp = "";
-        if (Toybox has :Weather) {
-            var cc = Weather.getCurrentConditions();
-            var celsius = (cc != null) ? cc.temperature : null;
-            if (celsius != null) {
-                _temp = Lib.Fmt.temperature(celsius);
-            }
+        var celsius = (cc != null) ? cc.temperature : null;
+        if (celsius != null) {
+            _temp = Lib.Fmt.temperature(celsius);
         }
         sample();
     }

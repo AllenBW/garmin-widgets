@@ -60,7 +60,9 @@ module OrbTest {
         view.setMotion(true);
         view.setClock(1000);
         view.setValues(values);
-        view.onUpdate(dc);
+        for (var n = 0; n < 10 && (n == 0 || view.isAnimating()); n++) {
+            view.onUpdate(dc);     // a start builds over a few frames, the time first
+        }
         return view;
     }
 }
@@ -264,5 +266,36 @@ function testOrbTargets(logger as Logger) as Boolean {
     Test.assertMessage(view.targetAt((w * 0.2).toNumber(), (w * 0.66).toNumber()) == Complications.COMPLICATION_TYPE_HEART_RATE, "heart rate");
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.66).toNumber()) == Complications.COMPLICATION_TYPE_STEPS, "steps");
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.85).toNumber()) == Complications.COMPLICATION_TYPE_CURRENT_WEATHER, "the weather");
+    return true;
+}
+
+// A start lights the time alone, then builds the rest a band a frame; a
+// wake with nothing changed draws nothing
+(:test)
+function testOrbLightsFast(logger as Logger) as Boolean {
+    var dc = OrbTest.dc();
+    var view = new OrbView();
+    view.onLayout(dc);
+    view.setMotion(true);
+    view.setClock(1000);
+    view.setValues(OrbTest.base());
+    view.onUpdate(dc);
+    var drawn = view.bandsDrawn();
+    Test.assertMessage(drawn.size() == 1 && drawn[0] == view.TIME_BAND, "a start's first frame: the time alone");
+    Test.assertMessage(view.isAnimating(), "the rest to come");
+    var frames = 1;
+    while (view.isAnimating() && frames < 10) {
+        view.onUpdate(dc);
+        Test.assertEqualMessage(view.bandsDrawn().size(), 1, "a band a frame");
+        frames++;
+    }
+    Test.assertMessage(!view.isAnimating(), "built");
+    Test.assertEqualMessage(frames, 5, "five bands");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.bandsDrawn().size(), 0, "a wake with nothing changed: a blit");
     return true;
 }

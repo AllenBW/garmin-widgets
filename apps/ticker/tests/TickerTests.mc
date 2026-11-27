@@ -35,7 +35,9 @@ module TickerTest {
         view.setClock(t);
         view.setValues(first);
         view.setAwake(true);
-        view.onUpdate(d);
+        for (var n = 0; n < 10 && (n == 0 || view.isAnimating()); n++) {
+            view.onUpdate(d);     // a start builds over a few frames, the time first
+        }
         return view;
     }
 
@@ -274,7 +276,9 @@ function tickerWaitsForAwake(logger as Test.Logger) as Boolean {
     view.onLayout(dc);
     view.setClock(1000);
     view.setValues(TickerTest.base());
-    view.onUpdate(dc);
+    for (var n = 0; n < 10 && (n == 0 || view.isAnimating()); n++) {
+        view.onUpdate(dc);     // a start builds over a few frames, the time first: frames it asks for, which prove nothing
+    }
     view.setValues(TickerTest.values("10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "74", "6214", "82", "87%"));
     view.setClock(5000);
     view.onUpdate(dc);
@@ -342,5 +346,35 @@ function tickerTargets(logger as Test.Logger) as Boolean {
     view.onUpdate(dc);
     TickerTest.settle(view, dc, 1100, logger);
     Test.assertMessage(view.targetAt((w * 0.5).toNumber(), (w * 0.785).toNumber()) == Complications.COMPLICATION_TYPE_HEART_RATE, "what it turned to");
+    return true;
+}
+
+// A start lights the time alone, then builds the rest a band a frame; a
+// wake with nothing changed draws nothing
+(:test)
+function tickerLightsFast(logger as Test.Logger) as Boolean {
+    var dc = TickerTest.dc();
+    var view = new TickerView();
+    view.onLayout(dc);
+    view.setClock(1000);
+    view.setValues(TickerTest.base());
+    view.setAwake(true);
+    view.onUpdate(dc);
+    Test.assertMessage(view.timeOnly(), "a start's first frame: the time alone");
+    Test.assertMessage(view.isAnimating(), "the rest to come");
+    var frames = 1;
+    while (view.isAnimating() && frames < 10) {
+        view.onUpdate(dc);
+        frames++;
+    }
+    Test.assertMessage(!view.isAnimating(), "built");
+    Test.assertEqualMessage(frames, 3, "a band a frame");
+
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.setClock(4000);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.charsLastFrame(), 0, "a wake with nothing changed: a blit");
     return true;
 }

@@ -4,6 +4,7 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.Test;
+import Toybox.Time;
 
 // Run No Evil tests for Blocks: scripts/test.sh blocks [device]. Lib.Numbers
 // is tested here; Wall uses it too.
@@ -45,6 +46,35 @@ function testBlocksDrawsEveryMode(logger as Logger) as Boolean {
     return true;
 }
 
+// A start: the time alone first, then everything, drawn into the bitmap once
+// the frame after. A wake within the minute draws nothing again.
+(:test)
+function testBlocksLights(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var view = new BlocksView();
+    view.onLayout(dc);
+    var minute = Time.now().value() / 60;
+    view.onUpdate(dc);
+    Test.assertMessage(!view.settled() && view.composed == 0, "the first frame: the time alone");
+    view.onUpdate(dc);
+    Test.assertMessage(view.settled() && view.composed == 0, "the second: everything, straight to the screen");
+    view.onUpdate(dc);
+    var composed = view.composed;
+    view.onUpdate(dc);
+    view.onEnterSleep();
+    view.onUpdate(dc);
+    view.onExitSleep();
+    view.onUpdate(dc);
+    Test.assertMessage(view.settled(), "settled again in the wake's first frame");
+    if (Time.now().value() / 60 == minute) {    // (the minute didn't turn while the test ran)
+        Test.assertEqualMessage(composed, 1, "drawn once on a start");
+        Test.assertEqualMessage(view.composed, composed, "nothing drawn again, awake or on a wake within the minute");
+    }
+    return true;
+}
+
 // A hold on a reading opens it; on the time it steps the look
 (:test)
 function testBlocksTargets(logger as Logger) as Boolean {
@@ -55,6 +85,7 @@ function testBlocksTargets(logger as Logger) as Boolean {
     view.onLayout(dc);
     view.setValues(["10/31", "14", "38", "19:22", "4:44", "46°", "52", "38", "72", "6214", "82", "1240", "12"] as Array<String>);
     view.onUpdate(dc);
+    view.onUpdate(dc);           // the readings come the frame after the time
     Test.assertMessage(view.targetAt((w * 0.35).toNumber(), (w * 0.35).toNumber()) == null, "the hours are no target");
     Test.assertMessage(view.targetAt((w * 0.70).toNumber(), (w * 0.65).toNumber()) == null, "the minutes are no target");
     Test.assertMessage(view.targetAt((w * 0.75).toNumber(), (w * 0.33).toNumber()) == Complications.COMPLICATION_TYPE_SUNRISE, "the sun");

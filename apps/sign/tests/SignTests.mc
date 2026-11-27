@@ -204,6 +204,46 @@ function testSignStrike(logger as Logger) as Boolean {
     return true;
 }
 
+// The pictures are kept: a start's first frame
+// tints the numerals' masks straight onto the screen, the frames after
+// put the date in and make each picture's bitmaps, one a frame; a wake
+// with nothing changed loads nothing, and a new minute loads only its new
+// digit, whose old picture is let go once it has died
+(:test)
+function testSignKeepsPictures(logger as Logger) as Boolean {
+    var dc = SignTesting.screen();
+    var view = new SignView();
+    view.onLayout(dc);
+    view.setFrame(50);
+    view.setMoment([10, 37, 3, 15] as Array<Number>, true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(SignTesting.joined(view.kept()), "4 0 4", "the first frame: the four numerals' masks, no bitmaps");
+    var frames = 0;
+    while (view.kept()[1] < view.kept()[0] && frames < 20) {
+        view.onUpdate(dc);
+        frames++;
+    }
+    logger.debug("every picture in its bitmaps after " + frames + " more frames");
+    Test.assertEqualMessage(SignTesting.joined(view.kept()), "9 9 9", "four numerals and TUE 15's five letters, each loaded once");
+    Test.assertMessage(frames <= 2 + 9, "a picture a frame: " + frames);
+    view.setAwake(false);
+    view.onUpdate(dc);
+    view.setAwake(true);
+    view.onUpdate(dc);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.kept()[2], 9, "a wake with nothing changed loads nothing");
+    view.setMoment([10, 38, 3, 15] as Array<Number>, true);
+    view.onUpdate(dc);
+    Test.assertEqualMessage(view.striking(), 2, "the 7 dies, the 8 is struck");
+    Test.assertEqualMessage(SignTesting.joined(view.kept()), "9 9 10", "the 8 loaded and made for its strike, the 7 held by its tube");
+    while (view.striking() > 0) {
+        view.onUpdate(dc);
+    }
+    view.onUpdate(dc);
+    Test.assertEqualMessage(SignTesting.joined(view.kept()), "9 9 10", "the 7 let go");
+    return true;
+}
+
 // Which numerals changed
 (:test)
 function testSignChanged(logger as Logger) as Boolean {

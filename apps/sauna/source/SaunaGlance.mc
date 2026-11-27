@@ -13,8 +13,33 @@ class SaunaGlance extends WatchUi.GlanceView {
 
     private var _bigFont as FontType = Graphics.FONT_MEDIUM;
 
+    // What the row shows, read from Storage and Properties once a showing
+    // and again when the settings change,
+    // not on every update; null until read
+    private var _headline as String? = null;
+    private var _week as String = "";
+    var reads as Number = 0;            // how often it read them (the tests)
+
     function initialize() {
         GlanceView.initialize();
+    }
+
+    function onShow() as Void {
+        reload();
+    }
+
+    // Read again on the next update: a showing, a settings change
+    function reload() as Void {
+        _headline = null;
+    }
+
+    private function read() as Void {
+        SaunaSettings.applyUnit();
+        var row = SaunaHistory.last();
+        var kind = row == null ? KIND_SAUNA : row[SaunaHistory.KIND];
+        _headline = SaunaText.headline(row);
+        _week = SaunaText.weekShort(SaunaSettings.plan(kind));
+        reads++;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -22,9 +47,9 @@ class SaunaGlance extends WatchUi.GlanceView {
     }
 
     function onUpdate(dc as Dc) as Void {
-        SaunaSettings.applyUnit();
-        var row = SaunaHistory.last();
-        var kind = row == null ? KIND_SAUNA : row[SaunaHistory.KIND];
+        if (_headline == null) {
+            read();
+        }
         var w = dc.getWidth();
         var h = dc.getHeight();
         var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
@@ -38,10 +63,10 @@ class SaunaGlance extends WatchUi.GlanceView {
         var inset = (w * 0.06).toNumber();
         dc.drawText(inset, (h * 0.17).toNumber(), Lib.Fmt.fitFont(dc, "SAUNA · STEAM", small, w - inset), "SAUNA · STEAM", left);
         dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(0, (h * 0.5).toNumber(), _bigFont, SaunaText.headline(row), left);
+        dc.drawText(0, (h * 0.5).toNumber(), _bigFont, _headline as String, left);
         // one line only: given the row's height the fit would wrap into the headline
         dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        var text = SaunaText.weekShort(SaunaSettings.plan(kind));
+        var text = _week;
         var font = Lib.Fmt.fitFont(dc, text, small, w);
         var week = Graphics.fitTextToArea(text, font, w, Graphics.getFontHeight(font), true);
         dc.drawText(0, (h * 0.85).toNumber(), font, week == null ? "" : week, left);

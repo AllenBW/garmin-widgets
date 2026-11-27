@@ -113,8 +113,12 @@ class VesselView extends WatchUi.WatchFace {
     private const TIME = 10;
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Vessel");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -321,6 +325,7 @@ class VesselView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         _minute = -1;
         WatchUi.requestUpdate();
     }
@@ -328,7 +333,9 @@ class VesselView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -344,6 +351,7 @@ class VesselView extends WatchUi.WatchFace {
             }
         } else {
             draw(dc, 0, 0, false);
+            _log.frame(started, true);
         }
     }
 

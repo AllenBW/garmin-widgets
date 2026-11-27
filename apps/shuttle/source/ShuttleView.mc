@@ -39,6 +39,7 @@ class ShuttleView extends WatchUi.WatchFace {
     const MOST_FRAMES = 4;     // frames' worth one drawn frame may move: a stall skips, never stretches
     const BAND_LAG = 50;       // ms each band waits for the one above it, so a busy wake sweeps down
     const BUDGET = 40;         // digits an update, about a full face: the watchdog allows three
+    const BUILD = 14;          // digits a frame while a start builds the face, the time alone first
     const TITLE = 0.050;       // the look's name, for a moment
     const ROW_GAP = 0.013;     // between rows
     const ITEM_GAP = 0.024;    // between readings in a row
@@ -65,6 +66,11 @@ class ShuttleView extends WatchUi.WatchFace {
     private var _waking as Boolean = false;
     private var _pending as Boolean = false;   // rows left for the next frame
     private var _cursor as Number = 0;
+    private var _late as Boolean = true;       // a start's first frame: the time alone
+    private var _building as Boolean = true;   // a start: the rest a few rows a frame, a frame straight after another
+    private var _asked as Boolean = false;     // this frame is one the build asked for, not the system's
+    private var _drew as Number = 0;           // rows drawn by the last update
+    private var _titleFont as Graphics.FontType? = null;   // made on the look's name's first frame, kept
     private var _fixed as Boolean = false;     // the tests' readings
     private var _clock as Number? = null;      // the tests' clock
     private var _motion as Number = 0;         // the motion's clock: ms of drawn frames
@@ -72,9 +78,11 @@ class ShuttleView extends WatchUi.WatchFace {
     private var _ref as Graphics.BufferedBitmapReference? = null;
     private var _bitmap as Graphics.BufferedBitmap? = null;
     private var _pacer as Lib.Motion.Pacer;
+    private var _log as Lib.Timing.Log;         // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Shuttle");
         _burnIn = Lib.Aod.required();
         _pacer = new Lib.Motion.Pacer(FRAME, MOST_FRAMES);
         _rollFrom = new [KEYS] as Array<String?>;
@@ -255,6 +263,7 @@ class ShuttleView extends WatchUi.WatchFace {
         if (n == 0) {
             return;
         }
+        _building = false;      // a move draws its rows each frame, by the budget
         var lag = BAND_LAG;
         var each = 0;
         for (var a = 0; a < n; a++) {
@@ -377,22 +386,27 @@ class ShuttleView extends WatchUi.WatchFace {
     }
 
     function onExitSleep() as Void {
+        _log.wake();
         _awake = true;
         _waking = true;
         _pacer.onExitSleep();
         _minute = -1;
         _second = -1;
-        dirtyAll();
-        WatchUi.requestUpdate();
+        WatchUi.requestUpdate();     // the bitmap is as it was: only what changed is drawn (woke, take)
     }
 
     function onHide() as Void {
         _pacer.onHide();
     }
 
+    // A move cut short by sleep left its row half drawn in the bitmap: drawn
+    // again at the next lit update
     private function clearEffects() as Void {
         for (var k = 0; k < KEYS; k++) {
-            _rollFrom[k] = null;
+            if (_rollFrom[k] != null) {
+                _rollFrom[k] = null;
+                dirtyKey(k);
+            }
         }
     }
 
@@ -437,11 +451,12 @@ class ShuttleView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
-        var started = System.getTimer();
-        _motion += _pacer.step(started);
+        _motion += _asked ? 0 : _pacer.step(started);    // a frame the face asked for itself says nothing of the power mode
+        _asked = false;
         refresh();
         var thin = !_awake && _burnIn;
         if (thin) {
@@ -470,19 +485,34 @@ class ShuttleView extends WatchUi.WatchFace {
             dc.clear();
             dirtyAll();
         }
+        var rows = System.getTimer();
         drawRows(target, bitmap == null);
+        _log.part = System.getTimer() - rows;
         if (bitmap != null) {
             dc.drawBitmap(0, 0, bitmap);
         }
         if (titled) {
+            var font = _titleFont;
+            if (font == null) {
+                font = Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+                _titleFont = font;
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (dc.getWidth() * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(dc.getWidth() / 2, dc.getHeight() * 0.09, font,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+        if (_building) {
+            if (_pending) {
+                _asked = true;
+                WatchUi.requestUpdate();     // the start's next rows, straight away; the pacer's timer waits for proof of high power, which these frames must not give
+            } else {
+                _building = false;
+            }
         }
         var busy = _awake && animating();
         _pacer.want(busy);
         measure(started, busy);
+        _log.frame(started, !animating());
     }
 
     // The face's bitmap, from the graphics pool, made once and held. The pool
@@ -520,12 +550,16 @@ class ShuttleView extends WatchUi.WatchFace {
     // The rows that need it, up to BUDGET digits an update (a moving digit
     // counts three: two glyphs and its clip): a wake where everything moves
     // would pass the watchdog in one go, so it takes two or three frames,
-    // each row's turn coming round. `all` draws them regardless.
+    // each row's turn coming round. A start lights the time alone, then
+    // BUILD digits a frame. `all` draws them regardless.
     private function drawRows(dc as Dc, all as Boolean) as Void {
         var t = now();
         var count = _rows.size();
-        var budget = BUDGET;
+        var budget = _building ? BUILD : BUDGET;
+        var timeOnly = _late && !all;
+        _late = false;
         _pending = false;
+        _drew = 0;
         for (var n = 0; n < count; n++) {
             var at = (_cursor + n) % count;
             var r = _rows[at];
@@ -537,13 +571,18 @@ class ShuttleView extends WatchUi.WatchFace {
             if (!r.dirty) {
                 continue;
             }
+            if (timeOnly && k != TIME) {
+                _pending = true;
+                continue;
+            }
             var cost = (_values.size() > k ? _values[k].length() : 2) + (from != null ? 2 * _moved[k] : 0);
-            if (!all && cost > budget) {
+            if (!all && !timeOnly && _drew > 0 && cost > budget) {
                 _pending = true;
                 _cursor = at;
                 break;
             }
             budget -= cost;
+            _drew++;
             r.dirty = false;
             var since = 0;
             if (from != null) {
@@ -646,6 +685,10 @@ class ShuttleView extends WatchUi.WatchFace {
 
     function isAnimating() as Boolean {
         return animating();
+    }
+
+    function rowsDrawn() as Number {
+        return _drew;
     }
 
     function isRolling(key as Number) as Boolean {

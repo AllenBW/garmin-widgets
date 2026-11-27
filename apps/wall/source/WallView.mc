@@ -1,8 +1,14 @@
 import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
+import Toybox.Time;
 import Toybox.WatchUi;
+
+// The most lit cells in a row of a numeral (the tests hold Numerals to it):
+// how far the lit digits' strip reaches past the readings' end
+const LIT_RUN = 13;
 
 // Wall: the whole screen a wall of small digits, every one from your
 // readings, and the time is where they light up: the hours above and the
@@ -18,8 +24,16 @@ import Toybox.WatchUi;
 // About 800 digits are too many to draw in one update (the watchdog), so the
 // dim wall goes into a full-screen bitmap a few rows per frame, a second
 // bitmap holds that with the time on it for the minute, and each update copies
-// that and draws the band. The digits are placed one by one: a string has
-// no letter spacing, and a digit is narrower than its cell.
+// that and draws the band. The digits are placed one to a cell: a string has
+// no letter spacing, and a digit is narrower than its cell. A row's digits
+// are the readings' in turn, so a run of them is copied from a strip of the
+// readings' digits made once for them (Strip), not set one by one.
+//
+// How quickly it lights: a start's first frame is the
+// time alone, on black; the band comes the frame after, and the wall fills
+// in behind over the next two and comes in with the time drawn again on it
+// once it is whole. A wake draws the time again only if the minute turned
+// while asleep.
 //
 // Standby (always-on): only the digits on the numerals' edges, an outline
 // made of digits, with the date and the next sun event; shifted each minute,
@@ -47,7 +61,7 @@ class WallView extends WatchUi.WatchFace {
     private const TITLE = 0.050;               // the look's name, for a moment
     private const COLS = 41;
     private const ROWS = 27;
-    private const BATCH = 6;                   // rows of the wall per frame
+    private const BATCH = 14;                  // rows of the wall per frame: it fills in two
     private const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] as Array<String>;
 
     private var _w as Float = 454.0;
@@ -76,6 +90,7 @@ class WallView extends WatchUi.WatchFace {
     private var _day as Number = 0;           // the daily look's day
     private var _minute as Number = -1;
     private var _hour as Number = -1;
+    private var _stamp as Number = -1;         // the minute read last, since 1970 (a long sleep can end on the same minute)
     private var _awake as Boolean = true;
     private var _burnIn as Boolean = false;
     private var _titled as Boolean = false;
@@ -90,10 +105,17 @@ class WallView extends WatchUi.WatchFace {
     private var _base as Graphics.BufferedBitmap? = null;
     private var _frame as Graphics.BufferedBitmap? = null;
     private var _baseRow as Number = 0;        // the next row of the wall to draw
-    private var _frameShown as Boolean = false;
+    private var _blank as Boolean = true;      // the wall's bitmap is black: no wall drawn in it yet
+    private var _late as Boolean = true;       // a start's first frame: the time alone
+    var composed as Number = 0;                // for the tests: how often the time was drawn into the frame
+    private var _lit as Strip? = null;         // the readings' digits in a row, lit and dim
+    private var _dim as Strip? = null;
+    private var _titleFont as FontType? = null;  // the look's name's
+    private var _log as Lib.Timing.Log;        // how quickly it lights
 
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Wall");
         _burnIn = Lib.Aod.required();
         reloadSettings();
     }
@@ -102,7 +124,7 @@ class WallView extends WatchUi.WatchFace {
         _look = Lib.Look.mode();
         _colors = Lib.Numbers.colors(_look);
         _day = Lib.Look.today();
-        _minute = -1;
+        _stamp = -1;
         _hour = -1;
         _baseRow = 0;
         _bandDirty = true;
@@ -151,7 +173,9 @@ class WallView extends WatchUi.WatchFace {
 
     private function refresh() as Void {
         var clock = System.getClockTime();
-        if (clock.min != _minute) {
+        var stamp = Time.now().value() / 60;
+        if (stamp != _stamp) {
+            _stamp = stamp;
             _minute = clock.min;
             _values = Lib.Numbers.read();
             sample();
@@ -213,23 +237,30 @@ class WallView extends WatchUi.WatchFace {
         return _baseRow >= ROWS;
     }
 
+    // Nothing left to draw over later frames: the wall whole and the time on it
+    function settled() as Boolean {
+        return !_late && !_bandDirty && (_failed || _base == null || (_baseRow >= ROWS && !_frameDirty));
+    }
+
     function onEnterSleep() as Void {
         _awake = false;
         _bandDirty = true;
         WatchUi.requestUpdate();
     }
 
+    // The frame keeps the time as it was last drawn awake; a minute that
+    // turned in standby has already marked it to be drawn again
     function onExitSleep() as Void {
+        _log.wake();
         _awake = true;
-        _minute = -1;
         _bandDirty = true;
-        _frameDirty = true;
         WatchUi.requestUpdate();
     }
 
     // ------------------------------------------------------------ drawing
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
             reloadSettings();     // a new day, and on a Monday perhaps a muted week
         }
@@ -243,7 +274,9 @@ class WallView extends WatchUi.WatchFace {
             _titled = titled;
             _bandDirty = true;
         }
-        if (_bandDirty) {
+        var late = _late && !thin;             // the band the frame after
+        _late = false;
+        if (_bandDirty && !late) {
             layoutBand(dc, thin);
             _bandDirty = false;
         }
@@ -253,49 +286,80 @@ class WallView extends WatchUi.WatchFace {
         if (thin) {
             off = Lib.Aod.offset(_minute, (_w * 0.006).toNumber());
             drawNumerals(dc, Numerals.EDGE, off[0], off[1], _dimFont, _dimEm, _dimAdvance,
-                         Lib.Numbers.scale(_colors.neutral, STANDBY));
+                         Lib.Numbers.scale(_colors.neutral, STANDBY), null);
         } else {
             drawAwake(dc);
         }
-        for (var i = 0; i < _pieces.size(); i++) {
+        for (var i = 0; i < _pieces.size() && !late; i++) {
             _pieces[i].draw(dc, off[0], off[1], false);
         }
+        if (late) {
+            WatchUi.requestUpdate();
+        }
         if (titled) {
+            if (_titleFont == null) {
+                _titleFont = Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY);
+            }
             dc.setColor(_colors.neutral, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(_w / 2.0, _w / 2.0,
-                        Lib.Fmt.vectorFont("RobotoCondensedBold", (_w * TITLE * 1.173).toNumber(), Graphics.FONT_XTINY),
+            dc.drawText(_w / 2.0, _w / 2.0, _titleFont as FontType,
                         Lib.Look.title(_look, Lib.Numbers.names()), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        }
+        if (!thin) {
+            _log.frame(started, settled());
         }
     }
 
-    // The wall and the time, from the bitmaps; without them, the time alone
+    // The wall and the time, from the bitmaps; without them, the time alone.
+    // A frame does one of two things: the time drawn again on the wall as
+    // it is (a new minute, or a start's first frame, on black), or the next
+    // rows of the wall, and the time on it once it is whole. So a new time
+    // is never late for the wall, and the time is drawn twice on a start.
     private function drawAwake(dc as Dc) as Void {
         var frame = bitmaps(dc);
         if (frame == null) {
             drawTime(dc);
             return;
         }
-        var base = _base as Graphics.BufferedBitmap;
-        var built = false;
-        if (_baseRow < ROWS) {
-            drawWall(base.getDc());
-            built = true;
-            if (_baseRow < ROWS) {
-                WatchUi.requestUpdate();   // keep going
+        if (_frameDirty) {
+            compose(frame);
+        } else if (_baseRow < ROWS) {
+            drawWall((_base as Graphics.BufferedBitmap).getDc());
+            if (_baseRow >= ROWS) {
+                compose(frame);
             }
         }
-        // The frame while the wall is first filling, then only for news
-        if (_frameDirty || (built && (!_frameShown || _baseRow >= ROWS))) {
-            var fdc = frame.getDc();
-            if (fdc has :setAntiAlias) {
-                fdc.setAntiAlias(true);
-            }
-            fdc.drawBitmap(0, 0, base);
-            drawTime(fdc);
-            _frameDirty = false;
-            _frameShown = _baseRow >= ROWS;
+        if (_baseRow < ROWS) {
+            WatchUi.requestUpdate();   // keep going
         }
         dc.drawBitmap(0, 0, frame);
+    }
+
+    // The frame: the wall, with the time on it
+    private function compose(frame as Graphics.BufferedBitmap) as Void {
+        var fdc = frame.getDc();
+        if (fdc has :setAntiAlias) {
+            fdc.setAntiAlias(true);
+        }
+        if (_blank) {
+            fdc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            fdc.clear();
+        } else {
+            fdc.drawBitmap(0, 0, _base as Graphics.BufferedBitmap);
+        }
+        drawTime(fdc);
+        _frameDirty = false;
+        composed++;
+    }
+
+    // The readings' digits in a strip `cells` past their end, made again
+    // only when the readings or the look's colour change; null when the pool
+    // has no room (then drawText)
+    private function strip(held as Strip?, font as FontType, color as Number, background as Number, advance as Float,
+                           cells as Number) as Strip? {
+        if (held != null && held.stream == _stream && held.color == color && held.font == font) {
+            return held;
+        }
+        return Strip.make(font, color, background, _stream, _stream.size() + cells, _cellW, _cellW / 2.0 - advance / 2.0);
     }
 
     // The bitmaps, made once; null when the pool has no room for them
@@ -332,21 +396,25 @@ class WallView extends WatchUi.WatchFace {
                 bdc.setAntiAlias(true);
             }
             _baseRow = 0;
+            _blank = true;
             _frameDirty = true;
-            _frameShown = false;
         }
         return _frame;
     }
 
     // The next few rows of the dim wall, each wiped first so a new wall
-    // replaces the old one without a flash
+    // replaces the old one without a flash. The readings are those of the
+    // wall's first row (a minute turning while it fills changes nothing).
     private function drawWall(dc as Dc) as Void {
         var color = Lib.Numbers.scale(_colors.neutral, _colors.fluorescent ? WALL_BRIGHT : WALL);
         var end = (_baseRow + BATCH < ROWS) ? _baseRow + BATCH : ROWS;
-        var left = Graphics.TEXT_JUSTIFY_LEFT;
         var radius = _w / 2.0 + _cellW;
         var centre = _w / 2.0;
-        var stream = _stream;
+        if (_baseRow == 0 || _dim == null) {
+            _dim = strip(_dim, _dimFont, color, Graphics.COLOR_BLACK, _dimAdvance, COLS);
+        }
+        var tiles = _dim;
+        var stream = (tiles != null) ? tiles.stream : _stream;
         var length = stream.size();
         for (var row = _baseRow; row < end; row++) {
             var y = _oy + row * _cellH;
@@ -359,16 +427,31 @@ class WallView extends WatchUi.WatchFace {
             var mid = y + _cellH / 2.0;
             var top = Lib.Ink.top(_dimFace, _dimFont, mid, _dimEm);
             var dy = (mid - centre) * (mid - centre);
+            if (dy > radius * radius) {
+                continue;
+            }
+            // the cells whose middles are within the circle: a run from c0 to c1
+            var reach = Math.sqrt(radius * radius - dy);
+            var c0 = Math.ceil((centre - reach - _ox) / _cellW - 0.5).toNumber();
+            var c1 = Math.floor((centre + reach - _ox) / _cellW - 0.5).toNumber();
+            c0 = (c0 < 0) ? 0 : c0;
+            c1 = (c1 > COLS - 1) ? COLS - 1 : c1;
+            if (c1 < c0) {
+                continue;
+            }
+            if (tiles != null) {
+                tiles.draw(dc, (row * COLS + c0) % length, _ox + c0 * _cellW, _ox + (c1 + 1) * _cellW, top, y, y + _cellH);
+                continue;
+            }
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-            for (var col = 0; col < COLS; col++) {
-                var cx = _ox + col * _cellW + _cellW / 2.0;
-                if ((cx - centre) * (cx - centre) + dy > radius * radius) {
-                    continue;
-                }
-                dc.drawText(cx - _dimAdvance / 2.0, top, _dimFont, DIGITS[stream[(row * COLS + col) % length]], left);
+            for (var col = c0; col <= c1; col++) {
+                dc.drawText(_ox + col * _cellW + _cellW / 2.0 - _dimAdvance / 2.0, top, _dimFont,
+                            DIGITS[stream[(row * COLS + col) % length]], Graphics.TEXT_JUSTIFY_LEFT);
             }
         }
+        dc.clearClip();
         _baseRow = end;
+        _blank = false;
     }
 
     // The numerals' mass, then their lit digits
@@ -383,12 +466,17 @@ class WallView extends WatchUi.WatchFace {
         var mid = TALL / 2.0;
         dc.drawText(pen, Lib.Ink.top(face, _bigFont, (TOPS[0] + mid) * _w, _bigEm), _bigFont, hours, Graphics.TEXT_JUSTIFY_LEFT);
         dc.drawText(pen, Lib.Ink.top(face, _bigFont, (TOPS[1] + mid) * _w, _bigEm), _bigFont, minutes, Graphics.TEXT_JUSTIFY_LEFT);
-        drawNumerals(dc, Numerals.LIT, 0, 0, _litFont, _litEm, _litAdvance, solid ? Graphics.COLOR_BLACK : _colors.neutral);
+        var color = solid ? Graphics.COLOR_BLACK : _colors.neutral;
+        _lit = strip(_lit, _litFont, color, Graphics.COLOR_TRANSPARENT, _litAdvance, LIT_RUN);
+        drawNumerals(dc, Numerals.LIT, 0, 0, _litFont, _litEm, _litAdvance, color, _lit);
+        dc.clearClip();
     }
 
-    // The digits a table says light up, for the time on the clock now
+    // The digits a table says light up, for the time on the clock now:
+    // each run of lit cells in a row copied from `tiles`, or without it each
+    // digit set as text
     private function drawNumerals(dc as Dc, table as Array<Array<Array<Number>>>, ox as Number, oy as Number, font as FontType,
-                                  em as Float, advance as Float, color as Number) as Void {
+                                  em as Float, advance as Float, color as Number, tiles as Strip?) as Void {
         var face = (font == _litFont) ? _litFace : _dimFace;
         var stream = _stream;
         var length = stream.size();
@@ -414,8 +502,19 @@ class WallView extends WatchUi.WatchFace {
                     var mid = _oy + row * _cellH + _cellH / 2.0;
                     var top = Lib.Ink.top(face, font, mid, em) + oy;
                     var j = 0;
-                    while (bits != 0) {
-                        if ((bits & 1) != 0) {
+                    var run = -1;                  // where the run of lit cells began
+                    while (bits != 0 || run >= 0) {
+                        var on = (bits & 1) != 0;
+                        if (tiles != null) {
+                            if (on && run < 0) {
+                                run = j;
+                            } else if (!on && run >= 0) {
+                                var a = first + run;
+                                var y = _oy + row * _cellH + oy;
+                                tiles.draw(dc, (row * COLS + a) % length, _ox + a * _cellW + ox, _ox + (first + j) * _cellW + ox, top, y, y + _cellH);
+                                run = -1;
+                            }
+                        } else if (on) {
                             var col = first + j;
                             dc.drawText(_ox + col * _cellW + _cellW / 2.0 - advance / 2.0 + ox, top, font,
                                         DIGITS[stream[(row * COLS + col) % length]], left);

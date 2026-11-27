@@ -48,8 +48,12 @@ class TodayView extends WatchUi.WatchFace {
     // Press targets, [complication type, x, y, half width, half height]
     private var _targets as Array<Array<Number>> = [] as Array<Array<Number>>;
 
+    // How quickly the face lights, for the watch's log
+    private var _log as Lib.Timing.Log;
+
     function initialize() {
         WatchFace.initialize();
+        _log = new Lib.Timing.Log("Today");
         _burnIn = Lib.Aod.required();
     }
 
@@ -115,7 +119,9 @@ class TodayView extends WatchUi.WatchFace {
     }
 
     function onUpdate(dc as Dc) as Void {
+        var started = System.getTimer();
         refresh();
+        _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
         }
@@ -125,6 +131,7 @@ class TodayView extends WatchUi.WatchFace {
             drawAlwaysOn(dc);
         } else {
             drawActive(dc);
+            _log.frame(started, true);
         }
     }
 
@@ -135,6 +142,7 @@ class TodayView extends WatchUi.WatchFace {
 
     function onExitSleep() as Void {
         _awake = true;
+        _log.wake();
         _minute = -1;   // re-read everything on the next draw
         WatchUi.requestUpdate();
     }
