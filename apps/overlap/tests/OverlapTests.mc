@@ -53,6 +53,12 @@ function testOverlapDrawsEveryMode(logger as Logger) as Boolean {
 
 (:test)
 function testOverlapTargets(logger as Logger) as Boolean {
+    // The targets are laid out in the default look: a look another test left
+    // (Lib.Look.next writes the phone's setting too, which the simulator
+    // keeps between runs) moves the readings
+    Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Look.SEEN);
+    Application.Properties.setValue(Lib.Look.KEY, Lib.Look.YOURS);
     var settings = System.getDeviceSettings();
     var w = settings.screenWidth;
     var h = settings.screenHeight;
@@ -126,6 +132,53 @@ function testOverlapLooks(logger as Logger) as Boolean {
         view.onUpdate(dc);
         view.setAwake(true);
     }
-    Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Look.KEY);         // the look back as it was, here and on the phone
+    Application.Storage.deleteValue(Lib.Look.SEEN);
+    Application.Properties.setValue(Lib.Look.KEY, Lib.Look.YOURS);
+    return true;
+}
+
+// Lib.WatchMenu: the settings on the watch are the phone app's list, the
+// look first, and a choice there writes the same property, winning over the
+// editor; the bedside clock a switch
+(:test)
+function testOverlapWatchMenu(logger as Logger) as Boolean {
+    var entries = Choices.entries();
+    Test.assertEqualMessage(entries.size(), 5 + 2, "the look, the typeface, two colours, 2 readings and the bedside clock");
+    Test.assertMessage(entries[0][1] == null, "the look first");
+    for (var i = 0; i < entries.size(); i++) {
+        Test.assertEqualMessage(entries[i][2].size(), entries[i][3].size(), "a label for every choice");
+    }
+    Test.assertEqualMessage(entries[2][3].size(), Lib.Config.ACCENTS.size(), "every accent offered");
+    Test.assertEqualMessage(entries[3][3].size(), Lib.Config.DATA.size(), "every data colour");
+    var look = Application.Storage.getValue(Lib.Look.KEY);
+    var source = Application.Storage.getValue(Lib.Config.SOURCE);
+    Lib.WatchMenu.choose(entries[2], 5);
+    Test.assertEqualMessage(Lib.WatchMenu.current(entries[2]), 5, "the choice is where the setting stands");
+    Test.assertEqualMessage(Lib.WatchMenu.label(entries[2]), entries[2][2][5], "and its label shows");
+    Test.assertMessage(Lib.Config.PHONE.equals(Application.Storage.getValue(Lib.Config.SOURCE)), "a choice on the watch wins over the editor");
+    Test.assertEqualMessage(Lib.Config.read(1, [] as Array<Complications.Type>)[1], Lib.Config.lift(Lib.Config.ACCENTS[5]), "and is the accent drawn");
+    var reading = entries[4];
+    Lib.WatchMenu.choose(reading, 4);
+    Test.assertEqualMessage(Application.Properties.getValue("Reading1"), reading[3][4], "a reading written as the phone writes it");
+    var bedside = entries[entries.size() - 1];
+    Lib.WatchMenu.choose(bedside, 1);
+    Test.assertEqualMessage(Application.Properties.getValue("Bedside"), false, "the switch off");
+    Test.assertEqualMessage(Lib.WatchMenu.label(bedside), bedside[2][1], "and shown off");
+    Lib.WatchMenu.choose(bedside, 0);
+    Lib.WatchMenu.choose(entries[0], 4);              // the fifth look in the order: low light
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.LOW, "the look chosen as a hold chooses it");
+    Application.Properties.setValue("Accent", 0);
+    Application.Properties.setValue("Reading1", 13);
+    if (look instanceof Number) {
+        Application.Storage.setValue(Lib.Look.KEY, look);
+    } else {
+        Application.Storage.deleteValue(Lib.Look.KEY);
+    }
+    if (source instanceof String) {
+        Application.Storage.setValue(Lib.Config.SOURCE, source);
+    } else {
+        Application.Storage.deleteValue(Lib.Config.SOURCE);
+    }
     return true;
 }

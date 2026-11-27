@@ -2,8 +2,9 @@
 """Render the Ticker face (design #25) with sample readings: what TickerView
 draws, from the same layout and the same digits (gen_lockup.glyph).
 
-    python3 -I designs/preview_ticker.py out.png [day|widest|empty] [standby] [look=yours|orange|...] [wake=MS]
+    python3 -I designs/preview_ticker.py out.png [day|widest|empty] [standby] [look=yours|orange|...] [colors=classic|gold|...|slate] [time=bone|silver|sand|ice|blush] [wake=MS]
     python3 -I designs/preview_ticker.py --check
+    python3 -I designs/preview_ticker.py --sheet out.png [standby]   # every palette and time colour
 
 FACE_W=416 (390, 360) for the smaller watches. Prints the share of the round
 screen lit. `wake=MS` draws the wake seven minutes after the last look (the
@@ -21,7 +22,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from gen_lockup import SLANTS, glyph  # noqa: E402
-from preview_numbers import LOOKS, rgb  # noqa: E402
+from preview_numbers import LOOKS, rgb, chosen, sheet  # noqa: E402
 
 SS = 4
 # The bands, top tape, time, bottom tape, as fractions of the width (TickerView.Y0, Y1)
@@ -274,12 +275,16 @@ def check():
 if __name__ == "__main__":
     if "--check" in sys.argv:
         check()
+    elif "--sheet" in sys.argv:
+        W = int(os.environ.get("FACE_W", 454))
+        words = sys.argv[1:]
+        sheet(words[words.index("--sheet") + 1], lambda lk: lit(standby(DAY, lk, W) if "standby" in words else awake(DAY, lk, W), W)[1])
     else:
         W = int(os.environ.get("FACE_W", 454))
         out = sys.argv[1]
         words = sys.argv[2:]
         sample = next((SAMPLES[a] for a in words if a in SAMPLES), DAY)
-        look = next((LOOKS[a[5:]] for a in words if a.startswith("look=")), LOOKS["yours"])
+        look = chosen(words)
         wake = next((int(a[5:]) for a in words if a.startswith("wake=")), None)
         if "standby" in words:
             share, im = lit(standby(sample, look, W), W)

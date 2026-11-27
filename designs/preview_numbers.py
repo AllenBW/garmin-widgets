@@ -176,9 +176,17 @@ def family(lk):
     return lk["data"], lk["sun"], lk["wx"], lk["body"], lk["s"], lk["t"]
 
 
+# Your look's choices, named as in the settings: the families' sets
+# (Lib.Numbers.PALETTES; the sets after Classic are the daily looks' of the
+# same names) and the time and date's colour (Lib.Config.DATA)
+PALETTES = ["classic", "gold", "ember", "orchard", "dusk", "sage", "smoke", "slate"]
+TIME = dict(bone=0xF2ECE2, silver=0xB4BAC2, sand=0xE6CFA0, ice=0xCFE6FF, blush=0xF8D2D8)
+
+
 def args(argv):
-    """out.png [day|night|widest] [standby] [look=yours]"""
-    sample, standby, look = "day", False, "yours"
+    """out.png [day|night|widest] [standby] [look=yours] [colors=classic] [time=bone]:
+    colors and time are your look's settings"""
+    sample, standby, look, colors, time = "day", False, "yours", "classic", "bone"
     for a in argv[2:]:
         if a in SAMPLES:
             sample = a
@@ -186,4 +194,42 @@ def args(argv):
             standby = True
         elif a.startswith("look="):
             look = a[5:]
-    return argv[1], SAMPLES[sample], LOOKS[look], standby
+        elif a.startswith("colors="):
+            colors = a[7:]
+        elif a.startswith("time="):
+            time = a[5:]
+    chosen = dict(LOOKS[look])
+    if look == "yours":
+        if colors != "classic":
+            chosen.update({k: LOOKS[colors][k] for k in ("sun", "wx", "body")})
+        chosen["data"] = TIME[time]
+    return argv[1], SAMPLES[sample], chosen, standby
+
+
+# What Lockup, Ticker, Shuttle and Orb's previews take (palette= is
+# colors= by another name; a look= wins)
+def chosen(words):
+    """The look the words name: look=<set>, or colors=<set> (palette=) with
+    time=<bone|silver|sand|ice|blush>"""
+    look = next((LOOKS[a[5:]] for a in words if a.startswith("look=")), None)
+    if look is not None:
+        return look
+    colors = next((a.split("=", 1)[1] for a in words if a.startswith(("colors=", "palette="))), "classic")
+    time = next((a[5:] for a in words if a.startswith("time=")), "bone")
+    return dict(LOOKS["yours" if colors == "classic" else colors], s=LOOKS["yours"]["s"], t=LOOKS["yours"]["t"],
+                data=TIME[time])
+
+
+def sheet(out, render, scale=0.5):
+    """Every choice of your own look: each set of colours with Bone, then
+    Classic with each other time and date colour. `render(look)` is a face's image."""
+    looks = [chosen([f"colors={c}"]) for c in PALETTES]
+    looks += [chosen([f"time={t}"]) for t in TIME if t != "bone"]
+    cells = [render(lk) for lk in looks]
+    cw, ch = int(cells[0].width * scale), int(cells[0].height * scale)
+    cols = 4
+    im = Image.new("RGB", (cw * cols, ch * math.ceil(len(cells) / cols)))
+    for i, c in enumerate(cells):
+        im.paste(c.convert("RGB").resize((cw, ch), Image.LANCZOS), ((i % cols) * cw, (i // cols) * ch))
+    im.save(out)
+    print(f"{out}: {len(PALETTES)} sets of colours, {len(TIME)} time and date colours")

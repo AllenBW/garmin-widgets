@@ -13,27 +13,21 @@ import Toybox.WatchUi;
 // Jupiter and Saturn, and by day the Sun. All of it rotates with the
 // sidereal clock, from the last known location, with no network.
 //
+// The colours are the sky's (Skies: the sky and the time colour chosen, or
+// the look's; red light keeps the eyes dark-adapted), the first sky the
+// face's own.
+//
 // Always-on: the twenty brightest stars up right now as single dim dots,
 // and the hollow time, shifted a few pixels each minute.
 class NightSkyView extends WatchUi.WatchFace {
-
-    private const WHITE = 0xF2F2F2;
-    private const STAR2 = 0xC8C8C8;
-    private const STAR3 = 0x8A8A8A;
-    private const STAR4 = 0x5A5A5A;
-    private const GRAY = 0x8A8A8A;
-    private const DIM = 0x5A5A5A;
-    private const LINE = 0x161E33;
-    private const AMBER = 0xFFB020;
-    private const MARS = 0xFF6B4A;
-    private const JUPITER = 0xF2E6C8;
-    private const SATURN = 0xE8D8A0;
-    private const VENUS = 0xFFFFFF;
 
     private const DAY_ALTITUDE = -6.0;   // the Sun above this: daytime, stars dimmed
     private const AOD_STARS = 80;        // always-on looks only at the brightest 80 for its 20 dots
 
     private var _awake as Boolean = true;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _today as Number = 0;              // the day the daily look's sky is for
+    private var _c as Array<Number> = Skies.SETS[0];   // the palette, a colour a place (Skies)
     private var _burnIn as Boolean = false;
     private var _minute as Number = -1;        // minute the sky was last placed
     private var _fullMinute as Number = -1;    // minute every star was placed (always-on does fewer)
@@ -75,6 +69,23 @@ class NightSkyView extends WatchUi.WatchFace {
             _sinDec[i] = Math.sin(decR).toFloat();
             _cosDec[i] = Math.cos(decR).toFloat();
         }
+        reloadSettings();
+    }
+
+    // The look and its colours, at a start and when a setting or the look changes
+    function reloadSettings() as Void {
+        _look = Lib.Look.mode();
+        _today = Lib.Look.today();
+        _c = Skies.colors(_look);
+    }
+
+    // The tests: a palette drawn as it is, every sky, look and time colour
+    function setColors(colors as Array<Number>) as Void {
+        _c = colors;
+    }
+
+    function setAwake(awake as Boolean) as Void {
+        _awake = awake;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -85,6 +96,9 @@ class NightSkyView extends WatchUi.WatchFace {
 
     function onUpdate(dc as Dc) as Void {
         var started = System.getTimer();
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _today) {
+            reloadSettings();     // a new day, a new sky
+        }
         refresh(dc.getWidth(), dc.getHeight(), _awake || !_burnIn);
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(true);
@@ -219,10 +233,11 @@ class NightSkyView extends WatchUi.WatchFace {
         var cy = h / 2;
         var r = horizonRadius(w);
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        var c = _c;
 
         // Horizon and the compass points
         dc.setPenWidth(1);
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.HORIZON], Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(cx, cy, r);
         var inset = (w * 0.04).toNumber();
         dc.drawText(cx, cy - r.toNumber() + inset, _labelFont, "N", center);
@@ -236,11 +251,11 @@ class NightSkyView extends WatchUi.WatchFace {
             drawPlanets(dc, cx, cy, r, w);
             if (_moon[0] > -2.0) {
                 var m = project(_moon[0], _moon[1], cx, cy, r);
-                Lib.Moon.draw(dc, m[0], m[1], (w * 0.028).toNumber(), moonPhase(), WHITE, DIM);
+                Lib.Moon.draw(dc, m[0], m[1], (w * 0.028).toNumber(), moonPhase(), c[Skies.MOON], c[Skies.HORIZON]);
             }
             if (_sun[0] > -1.0) {
                 var s = project(_sun[0], _sun[1], cx, cy, r);
-                dc.setColor(AMBER, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.SUN], Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(s[0], s[1], (w * 0.03).toNumber());
             }
         }
@@ -250,17 +265,19 @@ class NightSkyView extends WatchUi.WatchFace {
         var boxH = (h * 0.28).toNumber();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(cx - boxW / 2, cy - boxH / 2, boxW, boxH, (w * 0.03).toNumber());
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, cy - (h * 0.02).toNumber(), Graphics.FONT_NUMBER_MEDIUM, timeString(), center);
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         var date = dateText(Lang.format("$1$ $2$ $3$", [info.day_of_week, info.day, info.month]).toUpper());
-        dc.drawText(cx, cy + (h * 0.105).toNumber(), _dateFont, _located ? date : "no location yet", center);
+        // for a moment after a hold, the look's name in place of the date
+        dc.drawText(cx, cy + (h * 0.105).toNumber(), _dateFont,
+            Lib.Look.shown() ? Skies.title(_look) : (_located ? date : "no location yet"), center);
     }
 
     private function drawLines(dc as Dc) as Void {
         dc.setPenWidth(1);
-        dc.setColor(LINE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_c[Skies.LINE], Graphics.COLOR_TRANSPARENT);
         var lines = Stars.LINES;
         for (var k = 0; k + 1 < lines.size(); k += 2) {
             var a = lines[k];
@@ -278,32 +295,33 @@ class NightSkyView extends WatchUi.WatchFace {
         if (dc has :setAntiAlias) {
             dc.setAntiAlias(false);
         }
+        var c = _c;
         for (var i = 0; i < Stars.COUNT; i++) {
             if (_sx[i] < 0) {
                 continue;
             }
             var mag = Stars.MAG[i];
             if (_day) {
-                dc.setColor(STAR4, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR4], Graphics.COLOR_TRANSPARENT);
                 if (mag <= 15) {
                     dc.fillCircle(_sx[i], _sy[i], 1);
                 } else {
                     dc.drawPoint(_sx[i], _sy[i]);
                 }
             } else if (mag <= 5) {
-                dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR1], Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(_sx[i], _sy[i], 4);
             } else if (mag <= 15) {
-                dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR1], Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(_sx[i], _sy[i], 3);
             } else if (mag <= 25) {
-                dc.setColor(STAR2, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR2], Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(_sx[i], _sy[i], 2);
             } else if (mag <= 30) {
-                dc.setColor(STAR3, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR3], Graphics.COLOR_TRANSPARENT);
                 dc.fillCircle(_sx[i], _sy[i], 1);
             } else {
-                dc.setColor(STAR3, Graphics.COLOR_TRANSPARENT);
+                dc.setColor(c[Skies.STAR3], Graphics.COLOR_TRANSPARENT);
                 dc.drawPoint(_sx[i], _sy[i]);
             }
         }
@@ -314,7 +332,8 @@ class NightSkyView extends WatchUi.WatchFace {
 
     // Venus, Mars, Jupiter, Saturn with a letter so they are not taken for stars
     private function drawPlanets(dc as Dc, cx as Number, cy as Number, r as Float, w as Number) as Void {
-        var colors = [VENUS, MARS, JUPITER, SATURN];
+        var c = _c;
+        var colors = [c[Skies.VENUS], c[Skies.MARS], c[Skies.JUPITER], c[Skies.SATURN]];
         var letters = ["V", "M", "J", "S"];
         var sizes = [3, 2, 3, 2];
         var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
@@ -324,9 +343,9 @@ class NightSkyView extends WatchUi.WatchFace {
                 continue;
             }
             var pt = project(altAz[0], altAz[1], cx, cy, r);
-            dc.setColor(_day ? STAR3 : colors[p], Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_day ? c[Skies.STAR3] : colors[p], Graphics.COLOR_TRANSPARENT);
             dc.fillCircle(pt[0], pt[1], sizes[p]);
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(c[Skies.HORIZON], Graphics.COLOR_TRANSPARENT);
             dc.drawText(pt[0] + (w * 0.016).toNumber(), pt[1] - (w * 0.01).toNumber(), _labelFont, letters[p], left);
         }
     }
@@ -343,7 +362,7 @@ class NightSkyView extends WatchUi.WatchFace {
 
         // The brightest stars up right now, as single dim dots (the catalogue
         // is brightest first)
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_c[Skies.FAINT], Graphics.COLOR_TRANSPARENT);
         var drawn = 0;
         for (var i = 0; i < AOD_STARS && drawn < 20; i++) {
             if (_sx[i] >= 0) {
@@ -352,7 +371,7 @@ class NightSkyView extends WatchUi.WatchFace {
             }
         }
 
-        Lib.Aod.drawHollowText(dc, cx, cy, Graphics.FONT_NUMBER_MEDIUM, timeString(), GRAY,
+        Lib.Aod.drawHollowText(dc, cx, cy, Graphics.FONT_NUMBER_MEDIUM, timeString(), Skies.standby(_c[Skies.TIME]),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 

@@ -5,8 +5,9 @@ printed round a globe: each band's text spans +-1.25 rad about the vertical
 axis, projected orthographically, x = 0.5 + half(y) sin(angle), and dims
 toward the limb with cos(angle).
 
-    python3 -I designs/preview_orb.py out.png [day|night|widest|empty|short] [standby] [turn|drum] [look=yours|orange|...] [w=454]
+    python3 -I designs/preview_orb.py out.png [day|night|widest|empty|short] [standby] [turn|drum] [look=yours|orange|...] [colors=classic|gold|...|slate] [time=bone|silver|sand|ice|blush] [w=454]
     python3 -I designs/preview_orb.py --check
+    python3 -I designs/preview_orb.py --sheet out.png [standby]   # every palette and time colour
     python3 -I designs/preview_orb.py --motion out.gif [away|minute|heart] [look=...]
 
 `--motion` draws a move from the readings of a moment before, a frame every
@@ -30,7 +31,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from gen_lockup import SLANTS, glyph  # noqa: E402
-from preview_numbers import LOOKS, SAMPLES, rgb  # noqa: E402
+from preview_numbers import LOOKS, SAMPLES, rgb, chosen, sheet  # noqa: E402
 
 M = 0.012                 # from the bezel, all round (Lockup's)
 A = 1.25                  # each band's half span, in radians about the vertical axis
@@ -390,6 +391,9 @@ def check():
 if __name__ == "__main__":
     if "--check" in sys.argv:
         check()
+    elif "--sheet" in sys.argv:
+        words = sys.argv[1:]
+        sheet(words[words.index("--sheet") + 1], lambda lk: lit(standby(SAMPLES["day"], lk, 2) if "standby" in words else awake(SAMPLES["day"], lk))[1])
     elif "--motion" in sys.argv:
         args = [a for a in sys.argv[1:] if a != "--motion"]
         motion(args[0], next((a for a in args[1:] if a in SCENES), "away"),
@@ -399,7 +403,7 @@ if __name__ == "__main__":
         words = sys.argv[2:]
         W = next((int(a[2:]) for a in words if a.startswith("w=")), 454)
         sample = next((SAMPLES[a] for a in words if a in SAMPLES), SAMPLES["day"])
-        look = next((LOOKS[a[5:]] for a in words if a.startswith("look=")), LOOKS["yours"])
+        look = chosen(words)
         motion = next((a for a in words if a in ("turn", "drum")), None)
         share, im = lit(standby(sample, look, 2) if "standby" in words else awake(sample, look, motion))
         im.save(out)

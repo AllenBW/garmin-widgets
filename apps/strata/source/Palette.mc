@@ -34,19 +34,13 @@ module Palette {
     const ARC = 8;
     const MOONLIGHT = 0x9FB4C8;              // the temperature's layers at night: the strata half way to this
 
-    // The time, per TimeColor setting: Bone, the accent, Sandstone
+    // The time, per TimeColor setting: Bone, the accent, Sandstone, Ochre,
+    // Lichen, Ember (the editor's data colours, the same six)
     const TIME_BONE = 0;
     const TIME_ACCENT = 1;
     const TIME_SANDSTONE = 2;
-    const TIMES = [0xF2ECE2, 0, 0xD9B98C] as Array<Number>;
+    const TIMES = [0xF2ECE2, 0, 0xD9B98C, 0xE0B050, 0x6FA8A0, 0xC8703E] as Array<Number>;
     const CREAM = 0xE6DCCB;
-
-    // The strata setting whose day colour is `color` (the editor's accent
-    // colour), Soil for any other
-    function strataFromColor(color as Number) as Number {
-        var i = STRATA_DAY.indexOf(color);
-        return (i >= 0) ? i : 0;
-    }
 
     // The layers' colour for setting `choice` (Soil if out of range)
     function strata(choice as Number, night as Boolean) as Number {

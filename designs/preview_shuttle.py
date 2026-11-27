@@ -3,9 +3,10 @@
 draws, from the same rows and the same digits (gen_lockup.glyph), awake, in
 standby, and in motion.
 
-    python3 -I designs/preview_shuttle.py out.png [day|night|widest|empty|short] [standby] [look=yours|orange|blue|green|low|gold|ember|orchard|dusk]
+    python3 -I designs/preview_shuttle.py out.png [day|night|widest|empty|short] [standby] [look=yours|orange|blue|green|low|gold|ember|orchard|dusk] [colors=classic|gold|...|slate] [time=bone|silver|sand|ice|blush]
     python3 -I designs/preview_shuttle.py --motion out.png [minute|heart|away|midnight]
     python3 -I designs/preview_shuttle.py --check
+    python3 -I designs/preview_shuttle.py --sheet out.png [standby]   # every palette and time colour
 
 FACE_W=416 (390, 360) for the other screens. Prints the share of the round
 screen lit. Standby is drawn as on the watch: lines a pixel wide with no
@@ -26,7 +27,7 @@ from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))   # run with -I
 from gen_lockup import SLANTS, glyph  # noqa: E402
-from preview_numbers import LOOKS, SAMPLES, W, rgb  # noqa: E402
+from preview_numbers import LOOKS, SAMPLES, W, rgb, chosen, sheet  # noqa: E402
 
 M, GAP, ITEM, RG = 0.012, 0.010, 0.024, 0.013
 SIDE = 5
@@ -350,6 +351,9 @@ def check():
 if __name__ == "__main__":
     if "--check" in sys.argv:
         check()
+    elif "--sheet" in sys.argv:
+        words = sys.argv[1:]
+        sheet(words[words.index("--sheet") + 1], lambda lk: lit(standby(face(SAMPLES["day"], lk, True)) if "standby" in words else awake(face(SAMPLES["day"], lk, False)))[1])
     elif "--motion" in sys.argv:
         args = [a for a in sys.argv[1:] if a != "--motion"]
         motion(args[0], next((a for a in args[1:] if a in SCENES), "away"))
@@ -357,7 +361,7 @@ if __name__ == "__main__":
         out = sys.argv[1]
         words = sys.argv[2:]
         sample = next((SAMPLES[a] for a in words if a in SAMPLES), SAMPLES["day"])
-        look = next((LOOKS[a[5:]] for a in words if a.startswith("look=")), LOOKS["yours"])
+        look = chosen(words)
         aod = "standby" in words
         rows = face(sample, look, aod)
         share, im = lit(standby(rows) if aod else awake(rows))

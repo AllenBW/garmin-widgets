@@ -14,22 +14,17 @@ import Toybox.Weather;
 // calendar event is, and a hand at now. Centre: date, time, the rain
 // outlook in words, then temperature, the sun event and the event time.
 //
+// The colours are the sky's (Skies: the sky and the time colour chosen, or
+// the look's), the first sky the face's own.
+//
 // Always-on: a 2 px hairline with the rain hours in dim blue, a hollow hand,
 // hollow time; everything shifted a few pixels each minute.
 class HorizonView extends WatchUi.WatchFace {
 
-    private const WHITE = 0xF2F2F2;
-    private const GRAY = 0x8A8A8A;
-    private const DIM = 0x5A5A5A;
-    private const TRACK = 0x262626;
-    private const NIGHT = 0x1A2A4A;
-    private const AMBER = 0xFFB020;
-    private const ORANGE = 0xFF7A3D;
-    private const CYAN = 0x3EC6E0;
-    private const CYAN_MID = 0x2A8CA3;
-    private const CYAN_LOW = 0x1C5A6B;
-
     private var _awake as Boolean = true;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _day as Number = 0;                // the day the daily look's sky is for
+    private var _c as Array<Number> = Skies.SETS[0];   // the palette, a colour a place (Skies)
     private var _burnIn as Boolean = false;
     private var _minute as Number = -1;
     private var _sunKey as String = "";            // the day and place the sun times are for
@@ -45,6 +40,23 @@ class HorizonView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _log = new Lib.Timing.Log("Horizon");
         _burnIn = Lib.Aod.required();
+        reloadSettings();
+    }
+
+    // The look and its colours, at a start and when a setting or the look changes
+    function reloadSettings() as Void {
+        _look = Lib.Look.mode();
+        _day = Lib.Look.today();
+        _c = Skies.colors(_look);
+    }
+
+    // The tests: a palette drawn as it is, every sky, look and time colour
+    function setColors(colors as Array<Number>) as Void {
+        _c = colors;
+    }
+
+    function setAwake(awake as Boolean) as Void {
+        _awake = awake;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -53,6 +65,9 @@ class HorizonView extends WatchUi.WatchFace {
 
     function onUpdate(dc as Dc) as Void {
         var started = System.getTimer();
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();     // a new day, a new sky
+        }
         refresh();
         _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
@@ -211,6 +226,7 @@ class HorizonView extends WatchUi.WatchFace {
         var cx = w / 2;
         var cy = h / 2;
         var o = _outlook;
+        var c = _c;
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
         var ringR = w * 0.46;
         var ringW = (w * 0.05).toNumber();
@@ -218,7 +234,7 @@ class HorizonView extends WatchUi.WatchFace {
         // Twelve segments from the current hour, clockwise, with a small gap
         for (var k = 0; k < 12; k++) {
             var start = HorizonModel.dialDegrees(o.hourStart + k * 3600) + 1.5;
-            var color = o.night[k] ? NIGHT : TRACK;
+            var color = o.night[k] ? c[Skies.NIGHT] : c[Skies.TRACK];
             var chance = o.rain[k];
             if (chance < 0) {
                 // No forecast for this hour: a hairline, so it never reads as dry
@@ -227,11 +243,11 @@ class HorizonView extends WatchUi.WatchFace {
                 continue;
             }
             if (chance >= 60) {
-                color = CYAN;
+                color = c[Skies.RAIN];
             } else if (chance >= 40) {
-                color = CYAN_MID;
+                color = c[Skies.RAIN_MID];
             } else if (chance >= 20) {
-                color = CYAN_LOW;
+                color = c[Skies.RAIN_LOW];
             }
             dc.setColor(color, Graphics.COLOR_TRANSPARENT);
             Lib.Arcs.drawClockwise(dc, cx, cy, ringR, start, 27, ringW);
@@ -241,12 +257,12 @@ class HorizonView extends WatchUi.WatchFace {
         var sun = o.sunSecs;
         if (sun != null) {
             var p = Lib.Arcs.point(cx, cy, w * 0.405, HorizonModel.dialDegrees(sun));
-            drawTriangle(dc, p[0].toNumber(), p[1].toNumber(), (w * 0.03).toNumber(), o.sunIsRise, o.sunIsRise ? AMBER : ORANGE);
+            drawTriangle(dc, p[0].toNumber(), p[1].toNumber(), (w * 0.03).toNumber(), o.sunIsRise, o.sunIsRise ? c[Skies.RISE] : c[Skies.SET]);
         }
         var cal = o.calendarSecs;
         if (cal != null) {
             var p = Lib.Arcs.point(cx, cy, w * 0.405, HorizonModel.dialDegrees(cal));
-            drawDiamond(dc, p[0].toNumber(), p[1].toNumber(), (w * 0.016).toNumber(), WHITE);
+            drawDiamond(dc, p[0].toNumber(), p[1].toNumber(), (w * 0.016).toNumber(), c[Skies.TIME]);
         }
 
         // The hand: a dot on the ring at now
@@ -255,15 +271,16 @@ class HorizonView extends WatchUi.WatchFace {
         var dotR = (w * 0.03).toNumber();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(tip[0], tip[1], dotR + 3);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(tip[0], tip[1], dotR);
 
-        // Centre: date, time, rain, then temperature / sun / event
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.30).toNumber(), Graphics.FONT_TINY, dateText(), center);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        // Centre: date (for a moment after a hold, the look's name), time,
+        // rain, then temperature / sun / event
+        dc.setColor(c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.30).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Skies.title(_look) : dateText(), center);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.47).toNumber(), Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), center);
-        dc.setColor((o.rainFrom != null) ? CYAN : GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor((o.rainFrom != null) ? c[Skies.RAIN] : c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.635).toNumber(), _smallFont, HorizonModel.rainText(o), center);
         drawDetails(dc, cx, (h * 0.715).toNumber(), w, o);
     }
@@ -271,6 +288,7 @@ class HorizonView extends WatchUi.WatchFace {
     // "61°   ▼ 17:41   ◆ 16:00", centred, with the glyphs drawn
     private function drawDetails(dc as Dc, cx as Number, y as Number, w as Number, o as HorizonOutlook) as Void {
         var font = _smallFont;
+        var c = _c;
         var glyph = (w * 0.024).toNumber();
         var gap = (w * 0.014).toNumber();
         var between = (w * 0.05).toNumber();
@@ -295,20 +313,20 @@ class HorizonView extends WatchUi.WatchFace {
         total -= between;
         var x = cx - total / 2;
         var left = Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER;
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
         if (_temp.length() > 0) {
             dc.drawText(x, y, font, _temp, left);
             x += dc.getTextWidthInPixels(_temp, font) + between;
         }
         if (sun != null) {
-            drawTriangle(dc, x + glyph / 2, y, glyph, o.sunIsRise, o.sunIsRise ? AMBER : ORANGE);
-            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+            drawTriangle(dc, x + glyph / 2, y, glyph, o.sunIsRise, o.sunIsRise ? c[Skies.RISE] : c[Skies.SET]);
+            dc.setColor(c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + glyph + gap, y, font, sunText, left);
             x += glyph + gap + dc.getTextWidthInPixels(sunText, font) + between;
         }
         if (cal != null) {
-            drawDiamond(dc, x + glyph / 2, y, glyph / 2, WHITE);
-            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+            drawDiamond(dc, x + glyph / 2, y, glyph / 2, c[Skies.TIME]);
+            dc.setColor(c[Skies.TEXT], Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + glyph + gap, y, font, calText, left);
         }
     }
@@ -340,9 +358,10 @@ class HorizonView extends WatchUi.WatchFace {
         var cx = w / 2 + off[0];
         var cy = h / 2 + off[1];
         var ringR = w * 0.454;
+        var faint = _c[Skies.FAINT];
 
-        // Hairline: only the rain hours, in dim blue
-        dc.setColor(Lib.Aod.dim(CYAN), Graphics.COLOR_TRANSPARENT);
+        // Hairline: only the rain hours, in the rain's colour at a quarter
+        dc.setColor(Lib.Aod.dim(_c[Skies.RAIN]), Graphics.COLOR_TRANSPARENT);
         for (var k = 0; k < 12; k++) {
             if (o.rain[k] >= 40) {
                 Lib.Arcs.drawClockwise(dc, cx, cy, ringR, HorizonModel.dialDegrees(o.hourStart + k * 3600) + 1.5, 27, 2);
@@ -353,22 +372,22 @@ class HorizonView extends WatchUi.WatchFace {
         var nowSecs = nowSeconds();
         var tip = Lib.Arcs.point(cx, cy, ringR, HorizonModel.dialDegrees(nowSecs));
         dc.setPenWidth(2);
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(faint, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(tip[0], tip[1], (w * 0.016).toNumber());
 
-        Lib.Aod.drawHollowText(dc, cx, (h * 0.485).toNumber() + off[1], Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), GRAY,
+        Lib.Aod.drawHollowText(dc, cx, (h * 0.485).toNumber() + off[1], Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), Skies.standby(_c[Skies.TIME]),
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         var sun = o.sunSecs;
         if (sun != null) {
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(faint, Graphics.COLOR_TRANSPARENT);
             var text = Lib.Fmt.clock(sun);
             var tri = (w * 0.02).toNumber();
             var gap = (w * 0.015).toNumber();
             var x = cx - (tri + gap + dc.getTextWidthInPixels(text, Graphics.FONT_XTINY)) / 2;
             var y = (h * 0.70).toNumber() + off[1];
-            drawTriangle(dc, x + tri / 2, y, tri, o.sunIsRise, DIM);
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            drawTriangle(dc, x + tri / 2, y, tri, o.sunIsRise, faint);
+            dc.setColor(faint, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + tri + gap, y, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }

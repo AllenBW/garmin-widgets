@@ -140,7 +140,7 @@ function testFaceDrawsBothModes(logger as Logger) as Boolean {
     view.onExitSleep();
     view.onUpdate(dc);
     Test.assertMessage(view.targetAt(w / 2, (h * 0.7).toNumber()) != null, "hold on the comb opens the weather");
-    Test.assertMessage(view.targetAt(w / 2, (h * 0.3).toNumber()) == null, "hold on the time does nothing");
+    Test.assertMessage(view.targetAt(w / 2, (h * 0.3).toNumber()) == null, "hold on the time opens nothing: it steps the look");
     var stats = System.getSystemStats();
     logger.debug("memory: " + stats.usedMemory + " of " + stats.totalMemory + " bytes used");
     return true;

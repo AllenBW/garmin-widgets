@@ -77,6 +77,30 @@ module Lib {
         // 0 steps in the morning mustn't balloon its row and squeeze the next
         const LEAST = ["00/00", "00", "00", "00:00", "0:00", "00°", "00", "00", "00", "0000", "00", "0000", "00"] as Array<String>;
 
+        // Your look's colours, chosen on the phone, in the watch's settings
+        // menu or in the fēnix 8's watch face editor (the face reads them
+        // with Lib.Config.read: its Style setting and the editor's style pick
+        // a set of the families' colours, its DataColor setting and the
+        // editor's data colour the time and date's): [sun, weather, body] a
+        // set, each family still its own colour, the first YOURS's own. The
+        // other looks keep theirs.
+        const PALETTES = [
+            [0xFFB020, 0x4DB2FF, 0xFF5C9E],     // Classic
+            [0xFFB020, 0x2EE6B0, 0xFF5A36],     // Gold
+            [0xFF5A36, 0xE8D44A, 0xFF5C9E],     // Ember
+            [0x8CE03C, 0x2EE6B0, 0xE8D44A],     // Orchard
+            [0xA77BFF, 0x38A8FF, 0xFF5C9E],     // Dusk
+            [0xD9A15C, 0x8DB08A, 0xC48A80],     // Sage
+            [0xE39B5B, 0x9AA7BF, 0xB98AA6],     // Smoke
+            [0xD8A26A, 0x6F9CC4, 0xBF8697]      // Slate
+        ] as Array<Array<Number>>;
+
+        // Your look with the families' set `palette` and the time and date in `neutral`
+        function yours(palette as Number, neutral as Number) as Colors {
+            var p = PALETTES[(palette >= 0 && palette < PALETTES.size()) ? palette : 0];
+            return new Colors([neutral, p[0], p[1], p[2], YOURS[4], YOURS[5], false] as Array<Number or Float or Boolean>);
+        }
+
         // The colours of a look, as a Colors
         function colors(mode as Number) as Colors {
             var c = YOURS;

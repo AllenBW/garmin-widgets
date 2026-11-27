@@ -105,6 +105,8 @@ function tickerDrawsEveryMode(logger as Test.Logger) as Boolean {
 function tickerLooks(logger as Test.Logger) as Boolean {
     var dc = TickerTest.dc();
     var view = TickerTest.awake(dc, TickerTest.base(), 1000);
+    var phone = Application.Properties.getValue(Lib.Look.KEY);    // a hold moves the phone's Look too: put it back
+    var seen = Application.Storage.getValue(Lib.Look.SEEN);
     Application.Storage.setValue(Lib.Look.KEY, Lib.Look.LOW);
     for (var m = 0; m < Lib.Look.MODES; m++) {
         Lib.Look.next();
@@ -116,6 +118,14 @@ function tickerLooks(logger as Test.Logger) as Boolean {
         view.onUpdate(dc);
     }
     Application.Storage.deleteValue(Lib.Look.KEY);
+    if (phone != null) {
+        Application.Properties.setValue(Lib.Look.KEY, phone as Number);
+    }
+    if (seen != null) {
+        Application.Storage.setValue(Lib.Look.SEEN, seen as Number);
+    } else {
+        Application.Storage.deleteValue(Lib.Look.SEEN);
+    }
     return true;
 }
 

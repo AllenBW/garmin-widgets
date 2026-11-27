@@ -495,7 +495,7 @@ function testWatchMenu(logger as Logger) as Boolean {
     var entries = Choices.entries();
     Test.assertEqualMessage(entries.size(), 4, "the look and three tubes, as on the phone");
     Test.assertMessage(entries[0][1] == null, "the look first");
-    Test.assertEqualMessage(SignTesting.joined(entries[0][3]), SignTesting.joined(Lib.Look.ORDER), "the looks in Lib.Look's order");
+    Test.assertEqualMessage(SignTesting.joined(entries[0][3] as Array<Number>), SignTesting.joined(Lib.Look.ORDER), "the looks in Lib.Look's order");
     for (var i = 1; i < entries.size(); i++) {
         Test.assertEqualMessage(entries[i][2].size(), Lib.Neon.TUBES.size(), "every tube offered");
         Test.assertEqualMessage(entries[i][2].size(), entries[i][3].size(), "a label for every choice");

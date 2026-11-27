@@ -47,7 +47,7 @@ module Lib {
             var data = DATA[number("DataColor", 0, DATA.size() - 1)];
             var ids = [] as Array<Complications.Id>;
             for (var n = 0; n < defaults.size(); n++) {
-                var type = Application.Properties.getValue("Reading" + (n + 1));
+                var type = value("Reading" + (n + 1));
                 ids.add(new Complications.Id(((type instanceof Number && type > 0) ? type : defaults[n]) as Complications.Type));
             }
             if (Application has :WatchFaceConfig && !PHONE.equals(Application.Storage.getValue(SOURCE))) {
@@ -77,7 +77,7 @@ module Lib {
                     }
                 }
             }
-            var bedside = Application.Properties.getValue("Bedside");
+            var bedside = value("Bedside");
             return [style, lift(accent), data, ids, (bedside instanceof Boolean) ? bedside : true];
         }
 
@@ -114,8 +114,20 @@ module Lib {
 
         // A number property within 0..most, else the fallback
         function number(key as String, fallback as Number, most as Number) as Number {
-            var value = Application.Properties.getValue(key);
-            return (value instanceof Number && value >= 0 && value <= most) ? value : fallback;
+            var v = value(key);
+            return (v instanceof Number && v >= 0 && v <= most) ? v : fallback;
+        }
+
+        // A property, or null where the face has none: a face may offer only
+        // some of the settings (the faces made of numbers have no Accent, no
+        // readings and no bedside clock), and reading a key a face lacks
+        // throws
+        function value(key as String) as Application.Properties.ValueType or Null {
+            try {
+                return Application.Properties.getValue(key);
+            } catch (e) {
+                return null;
+            }
         }
 
         // The accent as drawn: a dark pick is first brightened until its

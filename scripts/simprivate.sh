@@ -40,6 +40,9 @@ case "${1:-}" in
             exit 0
         fi
         mkdir -p "$DIR/home/Library/Application Support" "$DIR/tmp"
+        # a lock file a killed simulator left (Sim-<user>) makes the next one
+        # quit at once; none of ours is running, so it is stale
+        rm -f "$DIR/home"/Sim-*
         ln -sfn "$HOME/Library/Application Support/Garmin" "$DIR/home/Library/Application Support/Garmin"
         ln -sfn "$HOME/.garmin" "$DIR/home/.garmin"
         # the first free port from 1241
@@ -66,10 +69,14 @@ case "${1:-}" in
             echo "$SDK" >"$DIR/sdk"
         fi
         (cd "$DIR/tmp" && HOME="$DIR/home" TMPDIR="$DIR/tmp/" SHELL_SERVER_PORT="$PORT" \
-            exec nohup "$APP/Contents/MacOS/ciqprivate" >"$DIR/log" 2>&1) &
+            exec nohup "$APP/Contents/MacOS/ciqprivate" -ApplePersistenceIgnoreState YES >"$DIR/log" 2>&1) &
         echo $! >"$DIR/pid"
         echo "$PORT" >"$DIR/port"
-        for _ in $(seq 30); do
+        # A simulator macOS offers to "reopen windows" for never listens until
+        # the dialog is answered: ApplePersistenceIgnoreState skips it
+        # (2026-11-26, every private simulator stuck that way under load).
+        # A loaded machine can take most of a minute to listen.
+        for _ in $(seq 60); do
             lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1 && break
             sleep 1
         done
@@ -95,8 +102,9 @@ case "${1:-}" in
     stop)
         if running; then
             kill "$(cat "$DIR/pid")"
+            for _ in $(seq 10); do running || break; sleep 1; done
         fi
-        rm -f "$DIR/pid" "$DIR/port"
+        rm -f "$DIR/pid" "$DIR/port" "$DIR/home"/Sim-*
         ;;
     *)
         echo "usage: scripts/simprivate.sh start|port|pid|stop|do" >&2

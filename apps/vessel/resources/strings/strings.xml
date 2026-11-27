@@ -53,4 +53,6 @@
     <string id="ReadingPressure">Pressure</string>
     <string id="ReadingNextCalendarEvent">Next calendar event</string>
     <string id="BedsideTitle">Bedside clock in standby during sleep hours</string>
+    <string id="SwitchOn">On</string>
+    <string id="SwitchOff">Off</string>
 </strings>

@@ -382,11 +382,31 @@ module Lib {
             return [Math.round(pa / 100.0).toNumber().toString(), "HPA", null, null, trend];
         }
 
+        // The trend is kept for ten minutes: it moves over hours, and each
+        // read opens four history iterators, which a face would otherwise do
+        // every minute and every wake
+        const TREND_EVERY = 600000;
+        var trendAt as Number? = null;      // System.getTimer() at the last read
+        var trendKept as Number = 0;
+
         // The barometer over the last three hours, newest sample against
-        // oldest: 1 rising, -1 falling, 0 steady (or not known). Climbing or
-        // descending moves the pressure too (about 12 Pa a metre), so the
-        // trend is left out when the altitude changed in the window.
+        // oldest: 1 rising, -1 falling, 0 steady (or not known), as last
+        // read within TREND_EVERY
         function pressureTrend() as Number {
+            var now = System.getTimer();
+            var at = trendAt;
+            if (at != null && now - at >= 0 && now - at < TREND_EVERY) {
+                return trendKept;
+            }
+            trendKept = readTrend();
+            trendAt = now;
+            return trendKept;
+        }
+
+        // The same, read now. Climbing or descending moves the pressure too
+        // (about 12 Pa a metre), so the trend is left out when the altitude
+        // changed in the window.
+        function readTrend() as Number {
             if (!(Toybox has :SensorHistory) || !(Toybox.SensorHistory has :getPressureHistory)) {
                 return 0;
             }

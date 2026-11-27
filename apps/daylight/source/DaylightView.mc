@@ -13,16 +13,12 @@ import Toybox.WatchUi;
 // altitude and the pressure trend. Every position is a fraction of the
 // screen size.
 //
+// The colours are the sky's (Skies: the sky and the time colour chosen, or
+// the look's), the first sky the face's own.
+//
 // Always-on: four cardinal ticks, a hollow sun marker, hollow time and the
 // next sun event, shifted a few pixels each minute. Well under 10 % lit.
 class DaylightView extends WatchUi.WatchFace {
-
-    private const WHITE = 0xF2F2F2;
-    private const GRAY = 0x8A8A8A;
-    private const DIM = 0x5A5A5A;
-    private const NIGHT = 0x1A2A4A;
-    private const AMBER = 0xFFB020;
-    private const ORANGE = 0xFF7A3D;
 
     private const PRESSURE_WINDOW = 3 * 3600;   // seconds
     private const PRESSURE_TREND = 100.0;       // pascals over the window: 1 hPa
@@ -30,6 +26,9 @@ class DaylightView extends WatchUi.WatchFace {
     private const TREND_EVERY = 10;             // minutes between reads of the window's history
 
     private var _awake as Boolean = true;
+    private var _look as Number = Lib.Look.YOURS;
+    private var _day as Number = 0;                // the day the daily look's sky is for
+    private var _c as Array<Number> = Skies.SETS[0];   // the palette, a colour a place (Skies)
     private var _burnIn as Boolean = false;
     private var _minute as Number = -1;
 
@@ -66,6 +65,23 @@ class DaylightView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _log = new Lib.Timing.Log("Daylight");
         _burnIn = Lib.Aod.required();
+        reloadSettings();
+    }
+
+    // The look and its colours, at a start and when a setting or the look changes
+    function reloadSettings() as Void {
+        _look = Lib.Look.mode();
+        _day = Lib.Look.today();
+        _c = Skies.colors(_look);
+    }
+
+    // The tests: a palette drawn as it is, every sky, look and time colour
+    function setColors(colors as Array<Number>) as Void {
+        _c = colors;
+    }
+
+    function setAwake(awake as Boolean) as Void {
+        _awake = awake;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -88,6 +104,9 @@ class DaylightView extends WatchUi.WatchFace {
 
     function onUpdate(dc as Dc) as Void {
         var started = System.getTimer();
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();     // a new day, a new sky
+        }
         refresh();
         _log.part = System.getTimer() - started;   // the readings: the face's costly part
         if (dc has :setAntiAlias) {
@@ -291,20 +310,21 @@ class DaylightView extends WatchUi.WatchFace {
         var ringW = (w * 0.057).toNumber();
 
         // Night, then the day band, then the golden hours on top
-        dc.setColor(_polarDay ? AMBER : NIGHT, Graphics.COLOR_TRANSPARENT);
+        var c = _c;
+        dc.setColor(_polarDay ? c[Skies.DAY] : c[Skies.NIGHT], Graphics.COLOR_TRANSPARENT);
         Lib.Arcs.drawClockwise(dc, cx, cy, ringR, 0, 360, ringW);
-        drawSpan(dc, cx, cy, ringR, ringW, _rise, _set, AMBER);
-        drawSpan(dc, cx, cy, ringR, ringW, _goldenMorningStart, _goldenMorningEnd, ORANGE);
-        drawSpan(dc, cx, cy, ringR, ringW, _goldenEveningStart, _goldenEveningEnd, ORANGE);
+        drawSpan(dc, cx, cy, ringR, ringW, _rise, _set, c[Skies.DAY]);
+        drawSpan(dc, cx, cy, ringR, ringW, _goldenMorningStart, _goldenMorningEnd, c[Skies.GOLDEN]);
+        drawSpan(dc, cx, cy, ringR, ringW, _goldenEveningStart, _goldenEveningEnd, c[Skies.GOLDEN]);
 
         // Hour ticks outside the ring, 0 / 6 / 12 / 18 labelled inside it
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TICK], Graphics.COLOR_TRANSPARENT);
         for (var hour = 0; hour < 24 && 4 * hour + 3 < _ticks.size(); hour++) {
             var t = 4 * hour;
             dc.setPenWidth((hour % 6 == 0) ? 3 : 2);
             dc.drawLine(_ticks[t], _ticks[t + 1], _ticks[t + 2], _ticks[t + 3]);
         }
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.LABEL], Graphics.COLOR_TRANSPARENT);
         var labels = ["0", "6", "12", "18"];
         for (var i = 0; i < 4; i++) {
             var p = Lib.Arcs.point(cx, cy, w * 0.366, Lib.Sun.dialDegrees(i * 6 * 3600));
@@ -317,21 +337,22 @@ class DaylightView extends WatchUi.WatchFace {
         var tip = Lib.Arcs.point(cx, cy, ringR, deg);
         var base = Lib.Arcs.point(cx, cy, w * 0.33, deg);
         dc.setPenWidth(4);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.drawLine(base[0], base[1], tip[0], tip[1]);
         var dotR = (w * 0.033).toNumber();
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(tip[0], tip[1], dotR + 3);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(tip[0], tip[1], dotR);
 
-        // Centre stack
-        dc.setColor(AMBER, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.37).toNumber(), _smallFont,
-            DaylightText.light(nowSecs, _rise, _set, _tomorrowRise, _dayStart, _located, _polarDay), center);
-        dc.setColor(WHITE, Graphics.COLOR_TRANSPARENT);
+        // Centre stack; for a moment after a hold, the look's name in place
+        // of the light left
+        dc.setColor(c[Skies.DAY], Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.37).toNumber(), _smallFont, Lib.Look.shown() ? Skies.title(_look)
+            : DaylightText.light(nowSecs, _rise, _set, _tomorrowRise, _dayStart, _located, _polarDay), center);
+        dc.setColor(c[Skies.TIME], Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.489).toNumber(), Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), center);
-        drawSunTimes(dc, cx, (h * 0.612).toNumber(), w, _timesFont, GRAY, AMBER, ORANGE);
+        drawSunTimes(dc, cx, (h * 0.612).toNumber(), w, _timesFont, c[Skies.TEXT], c[Skies.DAY], c[Skies.GOLDEN]);
         drawEnvironment(dc, cx, (h * 0.692).toNumber(), w);
     }
 
@@ -387,10 +408,10 @@ class DaylightView extends WatchUi.WatchFace {
         var gap = (tri > 0) ? (w * 0.012).toNumber() : 0;
         var textW = dc.getTextWidthInPixels(text, _smallFont);
         var x = cx - (textW + gap + tri) / 2;
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_c[Skies.QUIET], Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, _smallFont, text, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         if (tri > 0) {
-            drawTriangle(dc, x + textW + gap, y, tri, _trend > 0, DIM);
+            drawTriangle(dc, x + textW + gap, y, tri, _trend > 0, _c[Skies.QUIET]);
         }
     }
 
@@ -418,8 +439,10 @@ class DaylightView extends WatchUi.WatchFace {
         var cy = h / 2 + off[1];
 
         // Four cardinal ticks
+        var faint = _c[Skies.FAINT];
+        var time = Skies.standby(_c[Skies.TIME]);
         dc.setPenWidth(2);
-        dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(faint, Graphics.COLOR_TRANSPARENT);
         for (var i = 0; i < 4; i++) {
             var deg = i * 90;
             var inner = Lib.Arcs.point(cx, cy, w * 0.454, deg);
@@ -430,11 +453,11 @@ class DaylightView extends WatchUi.WatchFace {
         // Hollow sun marker on the ring
         var nowSecs = nowSeconds();
         var sun = Lib.Arcs.point(cx, cy, w * 0.432, Lib.Sun.dialDegrees(nowSecs));
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(time, Graphics.COLOR_TRANSPARENT);
         dc.drawCircle(sun[0], sun[1], (w * 0.026).toNumber());
 
         // Hollow time
-        Lib.Aod.drawHollowText(dc, cx, (h * 0.498).toNumber() + off[1], Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), GRAY, center);
+        Lib.Aod.drawHollowText(dc, cx, (h * 0.498).toNumber() + off[1], Graphics.FONT_NUMBER_MEDIUM, Lib.Fmt.clock(nowSecs), time, center);
 
         // Next sun event; after sunset, tomorrow's sunrise
         var next = Lib.Sun.next([_rise, _set]);
@@ -449,8 +472,8 @@ class DaylightView extends WatchUi.WatchFace {
             var text = Lib.Fmt.clock(next[1]);
             var x = cx - (tri + gap + dc.getTextWidthInPixels(text, Graphics.FONT_XTINY)) / 2;
             var y = (h * 0.62).toNumber() + off[1];
-            drawTriangle(dc, x, y, tri, next[0], DIM);
-            dc.setColor(DIM, Graphics.COLOR_TRANSPARENT);
+            drawTriangle(dc, x, y, tri, next[0], faint);
+            dc.setColor(faint, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x + tri + gap, y, Graphics.FONT_XTINY, text, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
         }
     }

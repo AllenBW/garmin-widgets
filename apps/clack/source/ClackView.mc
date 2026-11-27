@@ -17,6 +17,15 @@ import Toybox.WatchUi;
 // lamp from the upper left lights the hour leaves and leaves the minutes in
 // shadow.
 //
+// The colours: the leaves' plastic and the digits' ink, a few of each as a
+// split-flap display comes (Choices, from the settings generator); the
+// plastics other than black are shaded as the black is, and warmed by the
+// lamp after sunset. The looks (Lib.Look, a hold on the face): your leaves;
+// high visibility, the hours' digits in the fluorescent colour and the
+// minutes' white, the lamp off; low light, the lamp on all day; a new
+// plastic and ink each day (Choices.PERSONAS). The look's name stands in for
+// the date for a moment after a hold.
+//
 // The roll: awake, the face draws at twenty frames a second (a timer, started
 // only once the watch has shown it is in high power mode: onExitSleep, or the
 // system's own once-a-second updates; Timer.start in low power mode kills a
@@ -45,6 +54,15 @@ class ClackView extends WatchUi.WatchFace {
     private const AOD_DAY = 0x808080;
     private const AOD_NIGHT = 0x966836;
     private const AOD_STEP = 4;                  // Lib.Aod.offset's step on 454
+    private const AOD_INK = 0.55;                // standby's digits: an ink at this (AOD_DAY of the white)
+    private const AOD_BRIGHT = 0.7;              // and a fluorescent colour at this
+    // A plastic's shades for TOP..STACK, of its own (the black's: DAY), and
+    // how far toward NIGHT's the lamp takes them after sunset
+    private const SHADES = [1.0, 0.59, 0.32, 0.73, 1.77, 1.36, 2.73, 0.91] as Array<Float>;
+    private const LAMP_PLASTIC = 0.6;
+    private const INK_SHADOW = 0.59;             // after sunset an ink in shadow, of its lit (NIGHT's INK of INK_LIT)
+    private const DATE_DAY = 0.73;               // the captions, of the ink (DAY's DATE of INK)
+    private const DATE_NIGHT = 0.84;
     private const DARK_DAY = 0.35;               // the falling flap's darkening, turned from the lamp
     private const DARK_NIGHT = 0.6;
     private const EM_HEIGHT = 1.173;             // Roboto Condensed's height per em (Lib.Ink.HEIGHT)
@@ -61,6 +79,14 @@ class ClackView extends WatchUi.WatchFace {
     // Settings
     private var _style as Number = 1;
     private var _date as Boolean = true;
+    private var _look as Number = -1;            // none yet: the first reloadSettings sets the colours
+    private var _leaf as Number = 0;             // the plastic, its place in Choices.LEAVES
+    private var _digit as Number = 0;            // the ink, in Choices.DIGITS
+    private var _day as Number = 0;              // the daily look's day
+    private var _pal as Array<Number> = DAY;     // the colours drawn: DAY or NIGHT, or the chosen plastic and ink
+    private var _hourInk as Number = 0xE8E8E8;   // the hour leaves' digits by day (high visibility: fluorescent)
+    private var _aod as Number = AOD_DAY;        // standby's hour digits
+    private var _titled as Boolean = false;      // the look's name standing in for the date
 
     // The layout for this device and style (Layout.table)
     private var _w as Number = 454;
@@ -99,7 +125,8 @@ class ClackView extends WatchUi.WatchFace {
     // The once-a-minute state
     private var _minute as Number = -1;
     private var _is24 as Boolean = true;
-    private var _night as Boolean = false;
+    private var _dusk as Boolean = false;        // after sunset
+    private var _night as Boolean = false;       // the lamp on: after sunset, or all day in low light
     private var _dateText as String = "";
 
     // The leaves: the digit each shows, its halves as bitmaps, the flip in progress
@@ -159,14 +186,74 @@ class ClackView extends WatchUi.WatchFace {
     // ------------------------------------------------------------ settings
 
     function reloadSettings() as Void {
-        var style = ClackSettings.style();
+        var s = ClackSettings.read();
+        var style = s[0];
         var date = ClackSettings.date();
         var changed = style != _style || date != _date;
         _style = style;
         _date = date;
+        var look = Lib.Look.mode();
+        var c = [s[1], s[2]] as [Number, Number];
+        _day = Lib.Look.today();
+        if (look == Lib.Look.DAILY) {
+            c = Choices.PERSONAS[Lib.Look.dayOf(_day, Choices.PERSONAS.size())];
+        } else if (look != Lib.Look.YOURS) {
+            c = [0, 0] as [Number, Number];
+        }
+        if (look != _look || c[0] != _leaf || c[1] != _digit) {
+            _look = look;
+            _leaf = c[0];
+            _digit = c[1];
+            lamp();
+            _dirty = true;
+        }
         if (changed && _laidOut) {
             relayout();
         }
+    }
+
+    // The lamp, by the sun and the look, and the colours under it
+    private function lamp() as Void {
+        _night = (_look == Lib.Look.LOW) || (_dusk && !Lib.Look.bright(_look));
+        var pal = (_night ? NIGHT : DAY).slice(0, null);
+        if (_leaf > 0) {
+            var plastic = (Choices.LEAVES[_leaf] >> 1) & 0x7F7F7F;     // the editor shows it at twice its shade
+            for (var k = TOP; k <= STACK; k++) {
+                var c = scale(plastic, SHADES[k]);
+                pal[k] = _night ? mix(c, NIGHT[k], LAMP_PLASTIC) : c;
+            }
+        }
+        var bright = Lib.Look.bright(_look);
+        if (bright) {
+            pal[INK] = 0xFFFFFF;
+            pal[INK_LIT] = 0xFFFFFF;
+            pal[DATE] = Lib.Look.blaze(_look);
+        } else if (_digit > 0) {
+            var ink = Choices.DIGITS[_digit];
+            if (_night) {
+                var lit = mix(ink, NIGHT[INK_LIT], 0.5);
+                pal[INK_LIT] = lit;
+                pal[INK] = scale(lit, INK_SHADOW);
+                pal[DATE] = scale(lit, DATE_NIGHT);
+            } else {
+                pal[INK] = ink;
+                pal[INK_LIT] = ink;
+                pal[DATE] = scale(ink, DATE_DAY);
+            }
+        }
+        _pal = pal;
+        _hourInk = bright ? Lib.Look.blaze(_look) : pal[INK];
+        _aod = bright ? scale(Lib.Look.blaze(_look), AOD_BRIGHT)
+                      : ((_digit > 0) ? scale(_night ? pal[INK_LIT] : pal[INK], AOD_INK) : (_night ? AOD_NIGHT : AOD_DAY));
+    }
+
+    // A leaf's digit colour: under the lamp by how much of it reaches the
+    // leaf, else the hours' or the minutes' ink
+    private function inkOf(i as Number, f as Float) as Number {
+        if (_night) {
+            return mix(_pal[INK], _pal[INK_LIT], f);
+        }
+        return (i < 2) ? _hourInk : _pal[INK];
     }
 
     // ------------------------------------------------------------ layout
@@ -278,14 +365,18 @@ class ClackView extends WatchUi.WatchFace {
         var is24 = System.getDeviceSettings().is24Hour;
         var next = Lib.Sun.next(Lib.Sun.today());
         var night = next != null && next[0];
-        if (is24 != _is24 || night != _night) {
+        if (is24 != _is24 || night != _dusk) {
             _is24 = is24;
-            _night = night;
+            _dusk = night;
             _dirty = true;
         }
         var info = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         _dateText = (info.day_of_week + " " + info.day).toUpper();
         sample();
+        lamp();
+        if (_look == Lib.Look.DAILY && Lib.Look.today() != _day) {
+            reloadSettings();                      // the next day's plastic and ink
+        }
     }
 
     (:live)
@@ -297,14 +388,14 @@ class ClackView extends WatchUi.WatchFace {
     // face rolls to it on load (and again each real minute), as a wake does
     (:sample, :night)
     private function sample() as Void {
-        _night = true;
+        _dusk = true;
         _dateText = "SAT 31";
         roll();
     }
 
     (:sample, :day)
     private function sample() as Void {
-        _night = false;
+        _dusk = false;
         _dateText = "SAT 31";
         roll();
     }
@@ -378,7 +469,8 @@ class ClackView extends WatchUi.WatchFace {
     function setState(hours as Number, minutes as Number, night as Boolean, is24 as Boolean) as Void {
         refresh();
         _is24 = is24;
-        _night = night;
+        _dusk = night;
+        lamp();
         _dateText = "SAT 31";
         _shownMinute = hours * 60 + minutes;
         _leaves = Roll.digits(_shownMinute, is24);
@@ -426,6 +518,13 @@ class ClackView extends WatchUi.WatchFace {
 
     function shows() as Array<String> {
         return _leaves;
+    }
+
+    // For the tests: the colours drawn, the hours' ink by day, standby's
+    function colors() as Array<Number> {
+        var out = _pal.slice(0, null);
+        out.addAll([_hourInk, _aod] as Array<Number>);
+        return out;
     }
 
     function setAwake(awake as Boolean) as Void {
@@ -754,7 +853,7 @@ class ClackView extends WatchUi.WatchFace {
         if (d has :setAntiAlias) {
             d.setAntiAlias(true);
         }
-        var pal = _night ? NIGHT : DAY;
+        var pal = _pal;
         var f = _lamp[i];
         var slot = _t[Layout.SLOT];
         var r = _t[Layout.CORNER];
@@ -788,8 +887,7 @@ class ClackView extends WatchUi.WatchFace {
             d.fillRectangle(inset, y, w - 2 * inset, step);
             y += step;
         }
-        var ink = _night ? mix(pal[INK], pal[INK_LIT], f) : pal[INK];
-        drawDigit(d, digit, w / 2, top ? hh : 0, ink);
+        drawDigit(d, digit, w / 2, top ? hh : 0, inkOf(i, f));
         ink(d, pal[EDGE]);
         d.fillRectangle(r / 2, (top ? hh - slot : hh) - 1, w - r, 1);
         if (!top && _zoomed) {
@@ -808,6 +906,9 @@ class ClackView extends WatchUi.WatchFace {
     // The caption printed on leaf i's lower flap in the zoomed view: the
     // date on the minute tens leaf, the AM/PM flag on the hour units leaf
     private function leafCaption(i as Number) as String? {
+        if (_titled) {
+            return null;                           // the look's name is over the leaves (drawAwake)
+        }
         if (i == 2 && _date) {
             return _dateText;
         }
@@ -996,6 +1097,13 @@ class ClackView extends WatchUi.WatchFace {
         // one half (a leaf shows flat until both of its are made), then the
         // lamp's pool a few rings a frame, and asks for the next
         // (the time first, no long frame). The tests make them all at once.
+        var titled = Lib.Look.shown();
+        if (titled != _titled) {
+            _titled = titled;
+            if (!titled && _zoomed && !_dirty) {
+                recaption();
+            }
+        }
         var made = System.getTimer();
         var spare = true;                          // this frame may make the lamp's pool
         if (!_gradual) {
@@ -1006,7 +1114,7 @@ class ClackView extends WatchUi.WatchFace {
             spare = false;
         }
         _flat = false;
-        var pal = _night ? NIGHT : DAY;
+        var pal = _pal;
         if (_night) {
             if (_spill == null && !_noSpill && spare && _made == 8 && !_dirty) {
                 pour(_gradual ? RINGS_A_FRAME : SPILL_RINGS);
@@ -1020,7 +1128,7 @@ class ClackView extends WatchUi.WatchFace {
         if (_gradual && !lit()) {
             WatchUi.requestUpdate();
         }
-        if (!_zoomed) {
+        if (!_zoomed && !_titled) {
             // the captions under the leaves, before any fill tool is set
             var y = _t[Layout.CAPTION_Y].toFloat();
             if (_date) {
@@ -1047,6 +1155,19 @@ class ClackView extends WatchUi.WatchFace {
                 dc.drawBitmap(_x[i], _hinge, bot);
             } else {
                 flapFrame(dc, i, f, top, bot, pal);
+            }
+        }
+        if (_titled) {
+            paint(dc, pal[DATE]);
+            spaced(dc, Lib.Look.title(_look, Choices.NAMES), (_w / 2).toFloat(), _t[Layout.CAPTION_Y].toFloat(), pal[DATE]);
+        }
+    }
+
+    // The look's name gone: the captions back on the leaves that print them
+    private function recaption() as Void {
+        for (var i = 1; i <= 2; i++) {
+            if (_flips[i] == null && _bot[i] != null) {
+                _bot[i] = half(i, _leaves[i], false);
             }
         }
     }
@@ -1183,8 +1304,7 @@ class ClackView extends WatchUi.WatchFace {
         dc.fillRectangle(x, _y0, w, _hinge - _y0);
         paint(dc, down);
         dc.fillRectangle(x, _hinge, w, _y0 + _leafH - _hinge);
-        var ink = _night ? mix(pal[INK], pal[INK_LIT], f) : pal[INK];
-        drawDigit(dc, _leaves[i], x + w / 2, _hinge, ink);
+        drawDigit(dc, _leaves[i], x + w / 2, _hinge, inkOf(i, f));
         paint(dc, pal[EDGE]);
         dc.fillRectangle(x, _hinge - 1, w, 2);
         pinsOn(dc, x, _hinge, pal);
@@ -1291,7 +1411,7 @@ class ClackView extends WatchUi.WatchFace {
         var off = Lib.Aod.offset(System.getClockTime().min, AOD_STEP * _w / 454);
         var dx = off[0];
         var dy = off[1];
-        var col = _night ? AOD_NIGHT : AOD_DAY;
+        var col = _aod;
         var dim = scale(col, 0.8);
         var fill = _t[Layout.AOD_FILL] == 1;
         var standby = _standbyFont;

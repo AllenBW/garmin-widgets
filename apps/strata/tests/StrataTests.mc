@@ -144,9 +144,19 @@ function testEditorChoices(logger as Logger) as Boolean {
     Test.assertMessage(Readings.fromComplication(Complications.COMPLICATION_TYPE_ALTITUDE) == Readings.ELEVATION, "altitude");
     Test.assertMessage(Readings.fromComplication(Complications.COMPLICATION_TYPE_STRESS) == null, "a complication Strata doesn't offer");
     for (var i = 0; i < Palette.STRATA_DAY.size(); i++) {
-        Test.assertEqualMessage(Palette.strataFromColor(Palette.STRATA_DAY[i]), i, "accent colour " + i + " picks its strata");
+        Test.assertEqualMessage(Choices.STRATA[i], Palette.STRATA_DAY[i], "the editor's swatch " + i + " is its strata by day");
+        var out = {} as Dictionary<String, Number>;
+        Choices.pick(out, "Strata", Palette.STRATA_DAY[i], Choices.STRATA, [0, 1, 2, 3, 4] as Array<Number>);
+        Test.assertMessage(out["Strata"] == i, "accent colour " + i + " picks its strata");
     }
-    Test.assertEqualMessage(Palette.strataFromColor(0x123456), 0, "any other colour: Soil");
+    var none = {} as Dictionary<String, Number>;
+    Choices.pick(none, "Strata", 0x123456, Choices.STRATA, [0, 1, 2, 3, 4] as Array<Number>);
+    Test.assertMessage(!none.hasKey("Strata"), "any other colour: the phone's");
+    for (var i = 0; i < Choices.TIME_COLOR.size(); i++) {
+        if (i != Palette.TIME_ACCENT) {
+            Test.assertEqualMessage(Choices.TIME_COLOR[i], Palette.TIMES[i], "the editor's time colour " + i + " is the face's");
+        }
+    }
 
     // A tap on a reading picks its slot
     var view = new StrataView();
@@ -228,8 +238,11 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
     view.drawSunLine(dc, w / 2, (h * 0.15).toNumber(), w, true, "07:12", 0xE9B04F, 0xE6DCCB, 2);
     view.drawSunLine(dc, w / 2, (h * 0.15).toNumber(), w, false, "19:22", 0xE8854A, 0xE6DCCB, 1);
 
-    // Every strata colour, every accent and every time colour, with the switches off
-    var configs = [[1, 1, 1, false, false], [2, 2, 2, true, true], [3, 3, 0, true, false], [4, 4, 1, false, true], [0, 0, 0, true, true]] as Array<Array>;
+    // Every strata colour, every accent and every time colour, with the
+    // switches off (the phone's, changed last)
+    Lib.Config.changedOnPhone();
+    var configs = [[1, 1, 1, false, false], [2, 2, 2, true, true], [3, 3, 3, true, false], [4, 4, 4, false, true],
+                   [0, 1, 5, true, true], [0, 0, 0, true, true]] as Array<Array>;
     for (var c = 0; c < configs.size(); c++) {
         var config = configs[c];
         Application.Properties.setValue("Strata", config[0] as Number);
@@ -253,6 +266,7 @@ function testStrataDrawsBothModes(logger as Logger) as Boolean {
         Application.Properties.setValue("Slot" + (n + 1), Readings.DEFAULTS[n]);
     }
     Application.Properties.setValue("TimeStyle", 0);
+    Application.Storage.deleteValue(Lib.Config.SOURCE);
 
     // Each look, the hold stepping from one to the next, the layers redrawn in its colours
     Application.Storage.deleteValue(Lib.Look.KEY);

@@ -18,8 +18,15 @@ class VesselApp extends Application.AppBase {
         return [view, new VesselDelegate(view)];
     }
 
-    // The settings changed in the phone app (or the simulator's settings
-    // editor): they win over the watch face editor until it is next used
+    // The settings on the watch itself, for every watch: the phone app's
+    // list as a menu (Lib.WatchMenu, Choices)
+    function getSettingsView() as [Views] or [Views, InputDelegates] or Null {
+        return Lib.WatchMenu.view(WatchUi.loadResource(Rez.Strings.AppName) as String, Choices.entries());
+    }
+
+    // The settings changed in the phone app, the watch's settings menu (or
+    // the simulator's settings editor): they win over the watch face editor
+    // until it is next used
     function onSettingsChanged() as Void {
         Lib.Config.changedOnPhone();
         var view = _view;

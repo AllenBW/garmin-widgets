@@ -39,9 +39,11 @@ class RingsDelegate extends WatchUi.WatchFaceDelegate {
         }
     }
 
-    // The watch face editor changed the theme
+    // The watch face editor changed the colour set: it wins over the
+    // phone app's settings until they are next changed (Choices.editor)
     function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
                                                  :committed as Boolean}) as Void {
+        Lib.Config.changedInEditor();
         _view.reloadSettings();
         WatchUi.requestUpdate();
     }

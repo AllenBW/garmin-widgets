@@ -122,13 +122,25 @@ class WallView extends WatchUi.WatchFace {
 
     function reloadSettings() as Void {
         _look = Lib.Look.mode();
-        _colors = Lib.Numbers.colors(_look);
+        _colors = colors(_look);
         _day = Lib.Look.today();
         _stamp = -1;
         _hour = -1;
         _baseRow = 0;
         _bandDirty = true;
         _frameDirty = true;
+    }
+
+    // The look's colours: your look's as chosen in the phone app, the
+    // watch's settings menu or the watch face editor, whichever was changed
+    // last (Lib.Config.read): the set of the families' colours (Style) and
+    // the time and date's (DataColor)
+    private function colors(look as Number) as Lib.Numbers.Colors {
+        if (look != Lib.Look.YOURS) {
+            return Lib.Numbers.colors(look);
+        }
+        var s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+        return Lib.Numbers.yours(s[0], s[2]);
     }
 
     // The complication a press and hold at (x, y) opens, or null on the time

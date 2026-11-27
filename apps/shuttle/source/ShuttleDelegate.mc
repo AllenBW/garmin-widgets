@@ -1,3 +1,4 @@
+import Toybox.Application.WatchFaceConfig;
 import Toybox.Complications;
 import Toybox.Lang;
 import Toybox.System;
@@ -32,6 +33,15 @@ class ShuttleDelegate extends WatchUi.WatchFaceDelegate {
         } catch (e) {
             return false;   // no widget for this on this watch
         }
+    }
+
+    // The editor changed the palette or the time colour: it wins over the
+    // phone app's settings until they are next changed (Lib.Config.read)
+    function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
+                                                 :committed as Boolean}) as Void {
+        Lib.Config.changedInEditor();
+        _view.reloadSettings();
+        WatchUi.requestUpdate();
     }
 
     // The firmware calls this when onUpdate takes too long in low power mode

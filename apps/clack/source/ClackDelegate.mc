@@ -4,8 +4,9 @@ import Toybox.System;
 import Toybox.WatchUi;
 
 // The watch face editor's edits: the view (the layout and the digits' face)
-// is a style there; each edit redraws. A touch and hold on the face steps
-// to the next style.
+// is a style there, the leaves' plastic the accent colour and the digits'
+// ink the data colour; each edit redraws. A press and hold on the face
+// steps to the next look (Lib.Look).
 class ClackDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as ClackView;
@@ -15,8 +16,8 @@ class ClackDelegate extends WatchUi.WatchFaceDelegate {
         _view = view;
     }
 
-    // The editor changed the view: it wins over the phone app's settings
-    // until they are next changed
+    // The editor changed the view or a colour: it wins over the phone
+    // app's settings until they are next changed
     function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
                                                  :committed as Boolean}) as Void {
         ClackSettings.changedInEditor();
@@ -24,10 +25,10 @@ class ClackDelegate extends WatchUi.WatchFaceDelegate {
         WatchUi.requestUpdate();
     }
 
-    // A touch and hold on the face: the next style, round the five, kept
-    // as the phone's setting
+    // A press and hold on the face: the next look, its name shown for a
+    // moment where the date is
     function onPress(clickEvent as ClickEvent) as Boolean {
-        ClackSettings.nextStyle();
+        Lib.Look.next();
         _view.reloadSettings();
         WatchUi.requestUpdate();
         return true;

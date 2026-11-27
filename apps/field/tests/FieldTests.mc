@@ -22,6 +22,7 @@ function testFieldDrawsEveryMode(logger as Logger) as Boolean {
 
     var view = new FieldView();
     view.onLayout(dc);
+    Lib.Config.changedOnPhone();             // the settings below are the phone's, changed last
 
     var rings = [3, 0, 1, 2];
     var footers = [0, 1, 2];
@@ -69,6 +70,7 @@ function testFieldDrawsEveryMode(logger as Logger) as Boolean {
         view.onUpdate(dc);
     }
     Application.Storage.deleteValue(Lib.Look.KEY);
+    Application.Storage.deleteValue(Lib.Config.SOURCE);
     view.reloadSettings();
     Test.assertMessage(view.slotAt(w / 2, (h * 0.9).toNumber()) == null, "the footer is not a slot");
 

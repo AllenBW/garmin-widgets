@@ -1,5 +1,4 @@
 import Toybox.Application;
-import Toybox.Application.WatchFaceConfig;
 import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -91,17 +90,12 @@ class RingsView extends WatchUi.WatchFace {
         reloadSettings();
     }
 
-    // The theme from the fēnix 8's watch face editor (its style), else the
-    // Theme property (the phone app, the simulator)
+    // The theme from the fēnix 8's watch face editor (its style) or the
+    // Theme property (the phone app, the watch's menu, the simulator),
+    // whichever was changed last (Choices.editor)
     function reloadSettings() as Void {
-        var theme = Application.Properties.getValue("Theme");
-        if (Application has :WatchFaceConfig) {
-            var config = WatchFaceConfig.getSettings(null);
-            if (config != null && config.styleId != null) {
-                theme = config.styleId;
-            }
-        }
-        theme = (theme instanceof Number && theme >= 0 && theme < Themes.BLAZE) ? theme : Themes.SUNSET;
+        var theme = Choices.number(Choices.editor(), "Theme", Themes.SUNSET);
+        theme = (theme >= 0 && theme < Themes.BLAZE) ? theme : Themes.SUNSET;
         _look = Lib.Look.mode();
         if (_look == Lib.Look.BRIGHT) {
             theme = Themes.BRIGHT;
@@ -116,6 +110,11 @@ class RingsView extends WatchUi.WatchFace {
         }
         _theme = Themes.colors(theme);
         _white = Lib.Look.bright(_look) ? Lib.Look.WHITE : ((_look == Lib.Look.LOW) ? Lib.Look.CREAM : WHITE);
+    }
+
+    // The colours, [outer, middle, inner, time], as drawn (the tests)
+    function colors() as Array<Number> {
+        return _theme;
     }
 
     // Whether (x, y) is on the time, where a hold steps to the next look

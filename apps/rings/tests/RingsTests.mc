@@ -48,13 +48,15 @@ function testRingsDrawsEveryState(logger as Logger) as Boolean {
     view.setGoals(500, 10000, 5, 60, 50);   // too many floors for segments: a plain ring
     view.onUpdate(dc);
 
-    // Every theme draws
+    // Every theme draws (the phone's, changed last)
+    Lib.Config.changedOnPhone();
     for (var theme = 0; theme <= Themes.LOW; theme++) {
         Application.Properties.setValue("Theme", theme);
         view.reloadSettings();
         view.onUpdate(dc);
     }
     Application.Properties.setValue("Theme", 0);
+    Application.Storage.deleteValue(Lib.Config.SOURCE);
     view.reloadSettings();
     view.onUpdate(dc);
 

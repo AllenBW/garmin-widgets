@@ -1,4 +1,5 @@
 import Toybox.Application;
+import Toybox.Application.WatchFaceConfig;
 import Toybox.Complications;
 import Toybox.Graphics;
 import Toybox.Lang;
@@ -146,4 +147,124 @@ function testWallNumerals(logger as Logger) as Boolean {
         }
     }
     return true;
+}
+
+// Your look in every set of the families' colours and every colour for the
+// time, awake and in standby; the defaults are the face's own colours
+(:test)
+function testWallColors(logger as Logger) as Boolean {
+    var settings = System.getDeviceSettings();
+    var dc = (Graphics.createBufferedBitmap({:width => settings.screenWidth, :height => settings.screenHeight}).get()
+              as Graphics.BufferedBitmap).getDc();
+    var c = Lib.Numbers.yours(0, Lib.Config.DATA[0]);
+    var own = Lib.Numbers.colors(Lib.Look.YOURS);
+    Test.assertMessage(c.neutral == own.neutral && c.sun == own.sun && c.weather == own.weather && c.body == own.body
+                       && c.second == own.second && c.third == own.third && !c.fluorescent, "the defaults are the face's own");
+    Test.assertEqualMessage(Lib.Numbers.yours(99, 0x123456).sun, own.sun, "a set out of range is Classic");
+
+    var look = Application.Storage.getValue(Lib.Look.KEY);
+    var source = Application.Storage.getValue(Lib.Config.SOURCE);
+    Application.Storage.setValue(Lib.Look.KEY, Lib.Look.YOURS);
+    var view = new WallView();
+    view.onLayout(dc);
+    for (var p = 0; p < Lib.Numbers.PALETTES.size(); p++) {
+        for (var d = 0; d < Lib.Config.DATA.size(); d++) {
+            if (d != p % Lib.Config.DATA.size() && p > 0) {
+                continue;                          // every set once, and every colour for the time with Classic
+            }
+            Application.Properties.setValue("Style", p);
+            Application.Properties.setValue("DataColor", d);
+            Lib.Config.changedOnPhone();
+            view.reloadSettings();
+            wallFill(view, dc);
+            view.setAwake(false);
+            view.onUpdate(dc);
+            view.setAwake(true);
+            var s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+            Test.assertMessage(s[0] == p && s[2] == Lib.Config.DATA[d], "the phone's colours are read");
+            var drawn = Lib.Numbers.yours(s[0], s[2]);
+            Test.assertMessage(drawn.sun == Lib.Numbers.PALETTES[p][0] && drawn.neutral == Lib.Config.DATA[d], "and drawn");
+        }
+    }
+    Application.Properties.setValue("Style", 0);
+    Application.Properties.setValue("DataColor", 0);
+    WallHelp.restore(look, source);
+    return true;
+}
+
+// A change in the phone app (or the watch's settings menu) and one in the
+// watch face editor each take, the later winning
+(:test)
+function testWallPhoneAndEditor(logger as Logger) as Boolean {
+    var look = Application.Storage.getValue(Lib.Look.KEY);
+    var source = Application.Storage.getValue(Lib.Config.SOURCE);
+    Application.Properties.setValue("Style", 3);
+    Application.Properties.setValue("DataColor", 2);
+    Lib.Config.changedOnPhone();
+    var s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+    Test.assertMessage(s[0] == 3 && s[2] == Lib.Config.DATA[2], "the phone changed last: Orchard and Sand");
+    Lib.Config.changedInEditor();
+    s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+    Test.assertMessage(s[0] >= 0 && s[0] < Lib.Numbers.PALETTES.size(), "then the editor: one of the sets");
+    Test.assertMessage(Lib.Config.DATA.indexOf(s[2]) >= 0, "and one of the time's colours");
+    if (Application has :WatchFaceConfig && WatchFaceConfig.getSettings(null) != null) {
+        Test.assertEqualMessage(s[0], (WatchFaceConfig.getSettings(null) as WatchFaceConfig.Settings).styleId, "the editor's set");
+    }
+    Lib.Config.changedOnPhone();
+    s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+    Test.assertMessage(s[0] == 3 && s[2] == Lib.Config.DATA[2], "and the phone again");
+    Application.Properties.setValue("Style", 0);
+    Application.Properties.setValue("DataColor", 0);
+    WallHelp.restore(look, source);
+    return true;
+}
+
+// Lib.WatchMenu: the settings on the watch are the phone app's list, the
+// look first, and a choice there writes the same property, winning over the
+// editor; the muted weeks a switch
+(:test)
+function testWallWatchMenu(logger as Logger) as Boolean {
+    var entries = Choices.entries();
+    Test.assertEqualMessage(entries.size(), 4, "the look, the colours, the time's colour and the muted weeks");
+    Test.assertMessage(entries[0][1] == null, "the look first");
+    for (var i = 0; i < entries.size(); i++) {
+        Test.assertEqualMessage(entries[i][2].size(), entries[i][3].size(), "a label for every choice");
+    }
+    Test.assertEqualMessage(entries[1][3].size(), Lib.Numbers.PALETTES.size(), "every set offered");
+    Test.assertEqualMessage(entries[2][3].size(), Lib.Config.DATA.size(), "every colour for the time");
+    var look = Application.Storage.getValue(Lib.Look.KEY);
+    var source = Application.Storage.getValue(Lib.Config.SOURCE);
+    Lib.WatchMenu.choose(entries[1], 4);
+    Test.assertEqualMessage(Lib.WatchMenu.current(entries[1]), 4, "the choice is where the setting stands");
+    Test.assertMessage(Lib.Config.PHONE.equals(Application.Storage.getValue(Lib.Config.SOURCE)), "a choice on the watch wins over the editor");
+    Test.assertEqualMessage(Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>)[0], 4, "and is the set drawn");
+    var muted = entries[3];
+    Lib.WatchMenu.choose(muted, 1);
+    Test.assertEqualMessage(Application.Properties.getValue("MutedWeeks"), false, "the switch off");
+    Test.assertEqualMessage(Lib.WatchMenu.label(muted), muted[2][1], "and shown off");
+    Lib.WatchMenu.choose(muted, 0);
+    Test.assertEqualMessage(Lib.WatchMenu.current(muted), 0, "and on again");
+    Lib.WatchMenu.choose(entries[0], 4);              // the fifth look in the order: low light
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.LOW, "the look chosen as a hold chooses it");
+    Application.Properties.setValue("Style", 0);
+    WallHelp.restore(look, source);
+    return true;
+}
+
+// Put the look and the settings' source back as they were
+(:test)
+module WallHelp {
+
+    function restore(look as Application.Storage.ValueType, source as Application.Storage.ValueType) as Void {
+        if (look instanceof Number) {
+            Application.Storage.setValue(Lib.Look.KEY, look);
+        } else {
+            Application.Storage.deleteValue(Lib.Look.KEY);
+        }
+        if (source instanceof String) {
+            Application.Storage.setValue(Lib.Config.SOURCE, source);
+        } else {
+            Application.Storage.deleteValue(Lib.Config.SOURCE);
+        }
+    }
 }

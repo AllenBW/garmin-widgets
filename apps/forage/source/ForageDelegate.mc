@@ -1,10 +1,12 @@
+import Toybox.Application.WatchFaceConfig;
 import Toybox.Complications;
 import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
 // Watch faces get one gesture: press and hold. Holding on the verdict, the
-// hive line or the comb opens the native weather widget.
+// hive line or the comb opens the native weather widget, and holding on the
+// time or the date steps to the next look (Lib.Look).
 class ForageDelegate extends WatchUi.WatchFaceDelegate {
 
     private var _view as ForageView;
@@ -15,10 +17,16 @@ class ForageDelegate extends WatchUi.WatchFaceDelegate {
     }
 
     function onPress(clickEvent as ClickEvent) as Boolean {
+        var xy = clickEvent.getCoordinates();
+        if (_view.timeAt(xy[0], xy[1])) {
+            Lib.Look.next();
+            _view.reloadSettings();
+            WatchUi.requestUpdate();
+            return true;
+        }
         if (!(Toybox has :Complications)) {
             return false;
         }
-        var xy = clickEvent.getCoordinates();
         var type = _view.targetAt(xy[0], xy[1]);
         if (type == null) {
             return false;
@@ -29,6 +37,15 @@ class ForageDelegate extends WatchUi.WatchFaceDelegate {
         } catch (e instanceof Lang.InvalidValueException) {
             return false;   // no widget for this on this watch
         }
+    }
+
+    // The watch face editor changed the honey or the time's colour: it wins
+    // over the phone app's settings until they are next changed (Choices.editor)
+    function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
+                                                 :committed as Boolean}) as Void {
+        Lib.Config.changedInEditor();
+        _view.reloadSettings();
+        WatchUi.requestUpdate();
     }
 
     // The firmware calls this when onUpdate takes too long in low power mode

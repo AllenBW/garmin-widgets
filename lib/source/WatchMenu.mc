@@ -17,8 +17,9 @@ module Lib {
     module WatchMenu {
 
         // A setting: [its title, its property (null for the look), the
-        // choices' labels, the choices' values]
-        typedef Entry as [String, String?, Array<String>, Array<Number>];
+        // choices' labels, the choices' values (numbers, or true and false
+        // for a switch)]
+        typedef Entry as [String, String?, Array<String>, Array<Number> or Array<Boolean>];
 
         // The menu and its delegate, for getSettingsView
         function view(title as String, entries as Array<Entry>) as [WatchUi.Views, WatchUi.InputDelegates] {
@@ -39,8 +40,22 @@ module Lib {
             } catch (e) {
                 value = null;
             }
-            var i = (value instanceof Number) ? entry[3].indexOf(value) : -1;
-            return (i >= 0) ? i : 0;
+            var values = entry[3];
+            for (var i = 0; i < values.size(); i++) {
+                if (same(values[i], value)) {
+                    return i;
+                }
+            }
+            return 0;
+        }
+
+        // Whether a property's value is a choice's: a number the same
+        // number, a switch the same way
+        function same(choice as Number or Boolean, value as Object?) as Boolean {
+            if (choice instanceof Number) {
+                return (value instanceof Number) && choice == value;
+            }
+            return (value instanceof Boolean) && choice == value;
         }
 
         function label(entry as Entry) as String {

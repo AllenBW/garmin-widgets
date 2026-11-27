@@ -64,29 +64,80 @@ numbers). Each hold moves to the next look and shows its name for a
 moment where the date is: your own settings, high visibility in orange,
 then blue, then green (the ring fluorescent, the text white), low light
 for a dark room (ember and cream), a new accent each day, and back to
-your own. The Look setting in the phone app picks one too. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that shifts each
+your own. The Look setting in the phone app picks one too. Choose the
+accent (amber, cyan, green, orange or white), the ring, the readings, the
+alerts and the footer in the phone app or in the face's settings on the
+watch, and the ring and the accent in the watch face editor (Customize)
+on the fēnix 8 and newer. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that shifts each
 minute.
 
 **Daylight** (Watch face). A 24-hour sun dial. The day's light runs round
 the edge, with golden hours marked and how much light is left, plus
 altitude and the pressure trend (left out while you climb or descend).
+Choose the sky: Clear, Summer, Winter, Azure, Desert or Dusk, each its own
+night, day and golden hours on the ring, and a colour for the time and the
+sun hand (white, sunlight, moonlight, amber or alpenglow), in the phone
+app, in the face's settings on the watch, or in the watch's own face
+editor. To change the look, press and hold anywhere on the face. Each hold
+moves to the next look and shows its name for a moment in place of the
+light left: your own sky, high visibility in orange, then blue, then green
+(the daylight fluorescent, the text white), low light for a dark room
+(ember and cream), a new sky each day, and back to your own. The Look
+setting in the phone app picks one too. Built for Garmin's round AMOLED
+watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with
+a dim always-on mode that shifts each minute.
 
 **Readiness** (Watch face). Your body metrics without opening a widget:
 Body Battery and stress as two gauges round the time, with the sleep
 score, recovery time and resting heart rate below it and your training
 status at the foot. The sleep score needs a watch on Connect IQ 6 (the
 fēnix 8 and 9, Venu 4, Forerunner 570 and 970); the others show it as a
-dash. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix,
-Forerunner, Venu, vívoactive and more), with a dim always-on mode that
-shows the time and one line of readings.
+dash. Press and hold a gauge or a number to open it. Choose the Body
+Battery gauge's colour (green, mint, lime, blue or violet) and the stress
+gauge's (orange, amber, red, rose or gold) in the phone app, in the
+face's settings on the watch, or in the watch face editor (Customize) on
+the fēnix 8 and newer. To change the look, press and hold the time (the
+big numbers). Each hold moves to the next look and shows its name for a
+moment where the date is: your own colours, high visibility in orange,
+then blue, then green (the Body Battery gauge fluorescent, the rest
+white), low light for a dark room (ember and cream), a new pair of
+colours each day (Alpine, Meadow, Reef, Dusk, Volt), and back to your
+own. The Look setting in the phone app picks one too. Built for Garmin's
+round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive
+and more), with a dim always-on mode that shows the time and one line of
+readings.
 
 **Night Sky** (Watch face). The real sky over you right now: the bright
 stars, the constellations, the Moon and the planets, worked out on the
-watch from your last known position. No phone needed.
+watch from your last known position. No phone needed. Choose the sky:
+Clear, Red light (every star, line and letter red, the way astronomers
+keep their eyes used to the dark), Moonlit, Desert or Aurora, and a colour
+for the time (white, starlight, moonlight, red light or aurora), in the
+phone app, in the face's settings on the watch, or in the watch's own face
+editor. To change the look, press and hold anywhere on the face. Each hold
+moves to the next look and shows its name for a moment where the date is:
+your own sky, high visibility in orange, then blue, then green (white
+stars, the horizon fluorescent), low light for a dark room (the stars in
+warm cream), a new sky each day, and back to your own. The Look setting in
+the phone app picks one too. Built for Garmin's round AMOLED watches
+(fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim
+always-on mode of the brightest stars that shifts each minute.
 
 **Horizon** (Watch face). The bezel is the next twelve hours: the chance of
 rain each hour, dark after sunset, and where the sun sets or rises and
-your next calendar event fall.
+your next calendar event fall. Choose the sky: Clear, Storm, Ocean, Dusk
+or Winter (the rain as falling snow), each its own dry hours, dark hours,
+rain and sun marks, and a colour for the time and the hand (white,
+moonlight, sunlight, rain or amber), in the phone app, in the face's
+settings on the watch, or in the watch's own face editor. To change the
+look, press and hold anywhere on the face. Each hold moves to the next
+look and shows its name for a moment where the date is: your own sky,
+high visibility in orange, then blue, then green (the rain fluorescent,
+the text white), low light for a dark room (ember and cream), a new sky
+each day, and back to your own. The Look setting in the phone app picks
+one too. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix,
+Forerunner, Venu, vívoactive and more), with a dim always-on mode that
+shifts each minute.
 
 **Forage** (Watch face). For beekeepers. Whether your bees are flying right
 now, the next good hours to open the hive (warm, calm, dry, late morning to
@@ -95,7 +146,18 @@ beekeeper's year along the bottom of the bezel. Uses the hourly forecast
 from your phone; it says nothing rather than guess when the weather is
 hours old. The time is in 24-hour form. The nectar calendar follows the
 mid-Atlantic United States (Virginia, Maryland); elsewhere the seasons
-along the bezel will be early or late.
+along the bezel will be early or late. The comb, the flows and the bee
+are the colour of a honey you choose (clover, acacia, heather, buckwheat
+or manuka) and the time a hive's (cream, beeswax, smoke, propolis or
+lavender), in the phone app, in the face's settings on the watch, or in
+the watch face editor (Customize) on the fēnix 8 and newer. Press and
+hold the comb to open the weather. To change the look, press and hold
+the time (the big numbers). Each hold moves to the next look and shows
+its name for a moment where the date is: your own colours, high
+visibility in orange, then blue, then green (the honey fluorescent, the
+text white), low light for a dark room (ember and cream), a new honey
+each day, and back to your own. The Look setting in the phone app picks
+one too.
 
 **Today** (Watch face). One plain list and nothing else: the next sunrise
 or sunset, the time in 24-hour form, the date, the moon and its phase,
@@ -113,7 +175,11 @@ the next look and shows its name for a moment where the date is: your
 own settings, high visibility in orange, then blue, then green (the
 layers dimmed, the time fluorescent, the text white), low light for a
 dark room (soil, ember and sandstone), a new look each day, and back to
-your own. The Look setting in the phone app picks one too.
+your own. The Look setting in the phone app picks one too. Every setting
+is in the phone app and in the face's settings on the watch; the strata,
+the time's colour and style and the four readings are in the watch face
+editor (Customize) on the fēnix 8 and newer too, and whichever you
+changed last is the one shown.
 
 **Rings** (Watch face). Three goal rings open to the right (steps,
 floors and Body Battery) with their numbers written along the curves,
@@ -123,7 +189,10 @@ the next look and shows its name for a moment where the date is: your
 own settings, high visibility in orange, then blue, then green
 (fluorescent rings, the text white), low light for a dark room (ember
 and cream), a new colour set each day, and back to your own. The Look
-setting in the phone app picks one too.
+setting in the phone app picks one too. Choose the colour set (Sunset,
+Berry or Forest) in the phone app, in the face's settings on the watch,
+or in the watch face editor (Customize) on the fēnix 8 and newer;
+whichever you changed last is the one shown.
 
 **Vessel** (Watch face). The time as two glasses that fill to your
 readings: the hours fill to the temperature (between today's low and
@@ -131,7 +200,7 @@ high) and the minutes to your heart rate, each number sitting on its
 waterline, and the next sunrise or sunset at the foot. Pick any reading
 for each glass and the foot (complications from other apps too), any
 accent colour, a data colour and one of three typefaces, in the watch's
-own face editor or the phone app. Press and hold a reading to open it. A
+own face editor, the face's settings on the watch or the phone app. Press and hold a reading to open it. A
 dim always-on mode keeps the waterlines, and a red bedside clock takes
 over during your sleep hours. To change the look, press and hold the
 time (the big numbers). Each hold moves to the next look and shows its
@@ -146,7 +215,8 @@ middle, the date and five readings set round the rim in capitals inside
 a beaded edge: the weather, the barometer with its trend, heart rate,
 steps and the next sunrise or sunset. Choose each reading (complications
 from other apps too), any accent colour, a data colour and the typeface
-(a serif by default), in the watch's own face editor or the phone app.
+(a serif by default), in the watch's own face editor, the face's settings
+on the watch or the phone app.
 Press and hold a reading to open it. A dim always-on mode and a red
 bedside clock during your sleep hours. To change the look, press and
 hold the time (the big numbers). Each hold moves to the next look and
@@ -161,8 +231,8 @@ and quiet, cropped by the edge of the screen and tinted by your accent,
 with the minutes bright in front of them, the date and two readings
 tucked below (the next sunrise or sunset and the temperature). Choose
 the readings (complications from other apps too), any accent colour, a
-data colour and one of three typefaces, in the watch's own face editor
-or the phone app. A dim always-on mode and a red bedside clock during
+data colour and one of three typefaces, in the watch's own face editor,
+the face's settings on the watch or the phone app. A dim always-on mode and a red bedside clock during
 your sleep hours. To change the look, press and hold the time (the big
 numbers). Each hold moves to the next look and shows its name for a
 moment where the date is: your own settings, high visibility in orange,
@@ -186,7 +256,11 @@ Left of the minutes: your heart rate in rose and the temperature in blue,
 Bottom: your steps and Body Battery in rose, and the altitude in grey.
 
 Colour tells the families apart: white for the time and date, amber for the
-sun, blue for the weather, rose for your body. Press and hold a reading to
+sun, blue for the weather, rose for your body. Choose your colours as a set
+that keeps the four families apart (Classic, Gold, Ember, Orchard, Dusk,
+Sage, Smoke or Slate) and a colour for the time and date (Bone, Silver,
+Sand, Ice or Blush), in the watch's own face editor, the face's settings
+on the watch or the phone app. Press and hold a reading to
 open it. To change the look, press and hold the time (the big numbers). Each
 hold moves to the next look and shows its name for a moment: your own
 colours, high visibility in orange, then blue, then green, low light for a
@@ -206,8 +280,12 @@ The band across the middle, left to right: the date as month/day in white,
 The small digits everywhere else are those same readings, repeated as
   texture; they refresh each hour.
 
-In the high visibility looks the time turns solid colour with black digits
-through it. Press and hold a reading to open it. To change the look, press
+Choose your colours as a set that keeps the families apart (Classic, Gold,
+Ember, Orchard, Dusk, Sage, Smoke or Slate) and a colour for the time and
+date (Bone, Silver, Sand, Ice or Blush), in the watch's own face editor,
+the face's settings on the watch or the phone app. In the high visibility
+looks the time turns solid colour with black digits through it.
+Press and hold a reading to open it. To change the look, press
 and hold the time (the big numbers). Each hold moves to the next look and
 shows its name for a moment: your own colours, high visibility in orange,
 then blue, then green, low light for a dark room, a new look each day, and
@@ -235,7 +313,7 @@ turns that off. Press and hold a reading to open it. To change the look,
 press and hold the time (the big numbers). Each hold moves to the next look
 and shows its name for a moment: your own colours, high visibility in
 orange, then blue, then green, low light for a dark room, a new look each
-day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+day, and back to your own. The Look setting in the phone app picks one too. Choose your own look's colours as a set that keeps the four families apart (Classic, Gold, Ember, Orchard, Dusk, Sage, Smoke or Slate) and a colour for the time and date (Bone, Silver, Sand, Ice or Blush), in the watch's own face editor, the face's settings on the watch or the phone app. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
 that draws the date, the sun, the time and the temperature as outlines and
 shifts each minute.
@@ -246,11 +324,18 @@ the numbers as large as the circle allows. Each minute the leaves flip as
 the mechanism does, the push off the stop, the fall, the bounce, the next
 number already in view behind the falling flap; wake the watch and the
 minutes you missed roll by. After sunset an amber lamp from the upper left
-lights the hours and leaves the minutes in shadow. Five styles, in the
-watch's face editor or the phone app: the original view in Roboto, or the
-zoomed view where the bezel cuts the leaves, in League Gothic, Antonio,
-Bebas Neue or Roboto; press and hold the face to step to the next. The date
-on a leaf or under them, 12- or 24-hour with the AM/PM flag. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the
+lights the hours and leaves the minutes in shadow. Five views: the original
+in Roboto, or zoomed in where the bezel cuts the leaves, in League Gothic,
+Antonio, Bebas Neue or Roboto. The leaves come in black, navy, oxblood,
+forest, teak or slate, the digits in white, cream, amber, lemon or ice. The
+view and the colours in the watch's own face editor, the face's settings
+on the watch or the phone app. To change the look, press and hold the
+face. Each hold moves to the next look and shows its name for a moment
+where the date is: your own leaves, high visibility in orange, then blue,
+then green (the hours in the fluorescent colour, the minutes white), low
+light (the lamp on all day), a new plastic and ink each day, and back to
+your own. The Look setting in the phone app picks one too. The date on a
+leaf or under them, 12- or 24-hour with the AM/PM flag. Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode that draws the
 digits as outlines and shifts each minute.
 
 **Ticker** (Watch face). The time as a tape of minutes across the middle,
@@ -276,7 +361,7 @@ Learn the four and the face reads at a glance with no labels at all.
 reading in the middle of a tape to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
 and shows its name for a moment: your own colours, high visibility in
 orange, then blue, then green, low light for a dark room, a new look each
-day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+day, and back to your own. The Look setting in the phone app picks one too. Choose your own look's colours as a set that keeps the four families apart (Classic, Gold, Ember, Orchard, Dusk, Sage, Smoke or Slate) and a colour for the time and date (Bone, Silver, Sand, Ice or Blush), in the watch's own face editor, the face's settings on the watch or the phone app. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
 that draws the time and two readings as outlines and shifts each
 minute.
@@ -305,7 +390,7 @@ Learn the four and the face reads at a glance with no labels at all.
 reading to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
 and shows its name for a moment: your own colours, high visibility in
 orange, then blue, then green, low light for a dark room, a new look each
-day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+day, and back to your own. The Look setting in the phone app picks one too. Choose your own look's colours as a set that keeps the four families apart (Classic, Gold, Ember, Orchard, Dusk, Sage, Smoke or Slate) and a colour for the time and date (Bone, Silver, Sand, Ice or Blush), in the watch's own face editor, the face's settings on the watch or the phone app. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
 that draws the date, the sun, the time and the temperature as outlines and
 shifts each minute.
@@ -333,7 +418,7 @@ Learn the four and the face reads at a glance with no labels at all.
 reading to open it. To change the look, press and hold the time (the big numbers). Each hold moves to the next look
 and shows its name for a moment: your own colours, high visibility in
 orange, then blue, then green, low light for a dark room, a new look each
-day, and back to your own. The Look setting in the phone app picks one too. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
+day, and back to your own. The Look setting in the phone app picks one too. Choose your own look's colours as a set that keeps the four families apart (Classic, Gold, Ember, Orchard, Dusk, Sage, Smoke or Slate) and a colour for the time and date (Bone, Silver, Sand, Ice or Blush), in the watch's own face editor, the face's settings on the watch or the phone app. Every other week, from Monday, the daily look turns muted: seven softer sets in the same four families. Turn off Muted weeks in the phone app to keep the bright ones.
 Built for Garmin's round AMOLED watches (fēnix 8 and 9, epix, Forerunner, Venu, vívoactive and more), with a dim always-on mode
 that draws the date, the sun, the time and the temperature as outlines, the
 globe turning a little each minute.

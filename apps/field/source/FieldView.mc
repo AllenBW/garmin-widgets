@@ -46,11 +46,11 @@ class FieldView extends WatchUi.WatchFace {
     private const CYAN = 0x3EC6E0;
     private const RED = 0xFF4D4D;
     // The personas, the next each day: [the accent, the time's colour]
-    private const PERSONAS = [
+    private const DAYS = [
         [AMBER, WHITE], [CYAN, WHITE], [0x46D18A, WHITE], [Lib.Look.BLAZE, Lib.Look.BLAZE],
         [Lib.Look.VOLT, Lib.Look.VOLT], [Lib.Look.FLARE, Lib.Look.FLARE]
     ] as Array<Array<Number>>;
-    private const NAMES = ["AMBER", "CYAN", "GREEN", "BLAZE", "VOLT", "FLARE"] as Array<String>;
+    private const DAY_NAMES = ["AMBER", "CYAN", "GREEN", "BLAZE", "VOLT", "FLARE"] as Array<String>;
 
     // What the bezel ring shows (resources/settings/properties.xml "Ring")
     private const RING_STEPS = 0;
@@ -127,8 +127,9 @@ class FieldView extends WatchUi.WatchFace {
     }
 
     function reloadSettings() as Void {
-        _accent = numberProperty("AccentColor", AMBER);
-        _ring = numberProperty("Ring", RING_DAYLIGHT);
+        var editor = Choices.editor();
+        _accent = Choices.number(editor, "AccentColor", AMBER);
+        _ring = Choices.number(editor, "Ring", RING_DAYLIGHT);
         _footer = numberProperty("Footer", FOOTER_SUN);
         var signals = Application.Properties.getValue("Signals");
         _signals = (signals instanceof Boolean) ? signals : true;
@@ -152,12 +153,17 @@ class FieldView extends WatchUi.WatchFace {
             _text = Lib.Look.CREAM;
             _label = 0x8A7A62;
         } else if (_look == Lib.Look.DAILY) {
-            var p = PERSONAS[Lib.Look.day(PERSONAS.size())];
+            var p = DAYS[Lib.Look.day(DAYS.size())];
             _accent = p[0];
             _time = p[1];
         }
         _signalMinute = -1;
         forget();
+    }
+
+    // The accent and the ring as drawn (the tests)
+    function chosen() as [Number, Number] {
+        return [_accent, _ring];
     }
 
     // Whether (x, y) is on the time, where a hold steps to the next look
@@ -234,7 +240,7 @@ class FieldView extends WatchUi.WatchFace {
 
         // Date (TINY: 47 px box, sits above the time box)
         dc.setColor(_text, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Lib.Look.title(_look, NAMES) : dateText(true), center);
+        dc.drawText(cx, (h * 0.22).toNumber(), Graphics.FONT_TINY, Lib.Look.shown() ? Lib.Look.title(_look, DAY_NAMES) : dateText(true), center);
 
         // Time (NUMBER_MEDIUM: 153 px box, ink about 105 px, 264 px wide)
         dc.setColor(_time, Graphics.COLOR_TRANSPARENT);

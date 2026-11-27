@@ -14,6 +14,14 @@ import Toybox.Weather;
 // rain), and the beekeeper's year along the bottom of the bezel.
 //
 // Always-on: the hollow time and the verdict, dim, shifted each minute.
+//
+// The colours are a honey's and a hive's: the honey (Honey: clover, acacia,
+// heather, buckwheat or manuka) is the capped cells, the flows on the bezel,
+// the bee and the verdict; the time is cream, beeswax, smoke, propolis or
+// lavender (TimeColor). Holding the time steps through the looks
+// (Lib.Look): your colours, high visibility (the honey fluorescent, the
+// text white), low light (ember and cream), and a honey a day; the date
+// shows the look's name for a moment.
 class ForageView extends WatchUi.WatchFace {
 
     private const CREAM = 0xF2ECE2;
@@ -21,10 +29,29 @@ class ForageView extends WatchUi.WatchFace {
     private const DIM = 0x5A5A5A;
     private const TRACK = 0x262626;
     private const CELL = 0x3A3A3A;
-    private const HONEY = 0xB8730F;
-    private const WAX = 0xFFC94A;
-    private const WAX_RIM = 0xFFE3A0;
     private const CYAN = 0x3EC6E0;
+    // The honeys, one per Honey setting (Clover, Acacia, Heather, Buckwheat,
+    // Manuka): [the capped wax, its rim, the honey, the verdict always-on];
+    // the wax is the editor's swatch (Choices.HONEY)
+    private const HONEYS = [
+        [0xFFC94A, 0xFFE3A0, 0xB8730F, 0x7A5A20], [0xF0E06A, 0xF8F0B8, 0x9A8A2A, 0x6E6428],
+        [0xF0A040, 0xF8CC90, 0xA0501E, 0x734D1F], [0xE08A3C, 0xF0BC88, 0x7A3E16, 0x6B4220],
+        [0xE8B870, 0xF4DAB0, 0x96642A, 0x6F5835]
+    ] as Array<[Number, Number, Number, Number]>;
+    // The daily look: a honey a day, each with its time colour (Choices.TIME_COLOR)
+    private const DAY_NAMES = ["CLOVER", "ACACIA", "HEATHER", "BUCKWHEAT", "MANUKA"] as Array<String>;
+    private const PERSONA_TIMES = [0, 1, 4, 2, 3] as Array<Number>;
+
+    // The colours as set and as the look has them
+    private var _look as Number = Lib.Look.YOURS;
+    private var _wax as Number = 0xFFC94A;
+    private var _rim as Number = 0xFFE3A0;
+    private var _honey as Number = 0xB8730F;
+    private var _dimHoney as Number = 0x7A5A20;
+    private var _time as Number = CREAM;     // the time
+    private var _cream as Number = CREAM;    // the temperature, today's dot, this hour's cell
+    private var _gray as Number = GRAY;      // the date, the hive line, the season
+    private var _dim as Number = DIM;        // an empty cell's hour
     private const WING = 0xB9B4AC;
     private const STALE = 3 * 3600;     // seconds: current conditions older than this are ignored
 
@@ -55,6 +82,59 @@ class ForageView extends WatchUi.WatchFace {
         WatchFace.initialize();
         _log = new Lib.Timing.Log("Forage");
         _burnIn = Lib.Aod.required();
+        reloadSettings();
+    }
+
+    // The honey and the time's colour from the phone app, the watch's menu
+    // or the watch face editor, whichever was changed last (Choices.editor),
+    // then the look
+    function reloadSettings() as Void {
+        var editor = Choices.editor();
+        var honey = Choices.number(editor, "Honey", 0);
+        var time = Choices.number(editor, "TimeColor", 0);
+        _look = Lib.Look.mode();
+        if (_look == Lib.Look.DAILY) {
+            honey = Lib.Look.day(DAY_NAMES.size());
+            time = PERSONA_TIMES[honey];
+        }
+        var h = HONEYS[(honey >= 0 && honey < HONEYS.size()) ? honey : 0];
+        _wax = h[0];
+        _rim = h[1];
+        _honey = h[2];
+        _dimHoney = h[3];
+        _time = Choices.TIME_COLOR[(time >= 0 && time < Choices.TIME_COLOR.size()) ? time : 0];
+        _cream = CREAM;
+        _gray = GRAY;
+        _dim = DIM;
+        if (Lib.Look.bright(_look)) {
+            _wax = Lib.Look.blaze(_look);
+            _rim = Lib.Look.WHITE;
+            _honey = Lib.Config.scale(_wax, 0.6);
+            _dimHoney = Lib.Config.scale(_wax, 0.45);
+            _time = Lib.Look.WHITE;
+            _cream = Lib.Look.WHITE;
+            _gray = Lib.Look.WHITE;
+            _dim = GRAY;
+        } else if (_look == Lib.Look.LOW) {
+            _wax = Lib.Look.GLOW;
+            _rim = 0xFFC890;
+            _honey = 0x9A4A14;
+            _dimHoney = 0x6A3A18;
+            _time = Lib.Look.CREAM;
+            _cream = Lib.Look.CREAM;
+            _gray = 0x8A7A62;
+        }
+    }
+
+    // The capped wax and the time's colour as drawn (the tests)
+    function colors() as [Number, Number] {
+        return [_wax, _time];
+    }
+
+    // Whether (x, y) is on the time or the date, above the readings, where
+    // a hold steps to the next look
+    function timeAt(x as Number, y as Number) as Boolean {
+        return targetAt(x, y) == null;
     }
 
     function onLayout(dc as Dc) as Void {
@@ -247,19 +327,19 @@ class ForageView extends WatchUi.WatchFace {
         var cx = w / 2;
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, (h * 0.176).toNumber(), _labelFont, _date, center);
-        dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_gray, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(cx, (h * 0.176).toNumber(), _labelFont, Lib.Look.shown() ? Lib.Look.title(_look, DAY_NAMES) : _date, center);
+        dc.setColor(_time, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.335).toNumber(), _timeFont, ForageModel.clock24(clockSeconds()), center);
 
         drawVerdict(dc, cx, (h * 0.496).toNumber(), w);
         var window = ForageModel.windowText(_outlook);
         if (window.length() > 0) {
-            dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_gray, Graphics.COLOR_TRANSPARENT);
             dc.drawText(cx, (h * 0.577).toNumber(), _smallFont, window, center);
         }
         drawComb(dc, cx, (h * 0.709).toNumber(), w * 0.044);
-        dc.setColor(GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_gray, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.85).toNumber(), _labelFont, ForageModel.season(_dayOfYear), center);
         drawYear(dc, w, h);
     }
@@ -284,11 +364,11 @@ class ForageView extends WatchUi.WatchFace {
             drawBee(dc, x + bee / 2, y, bee);
             x += bee + gap;
         }
-        dc.setColor(flying ? WAX : GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(flying ? _wax : _gray, Graphics.COLOR_TRANSPARENT);
         dc.drawText(x, y, _verdictFont, words, left);
         x += dc.getTextWidthInPixels(words, _verdictFont) + gap;
         if (extra.length() > 0) {
-            dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(_cream, Graphics.COLOR_TRANSPARENT);
             dc.drawText(x, y, _verdictFont, extra, left);
         }
     }
@@ -299,7 +379,7 @@ class ForageView extends WatchUi.WatchFace {
         dc.setColor(WING, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x - size * 0.18, y - size * 0.3, wing);
         dc.fillCircle(x + size * 0.18, y - size * 0.3, wing);
-        dc.setColor(WAX, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_wax, Graphics.COLOR_TRANSPARENT);
         dc.fillEllipse(x, y, size * 0.45, size * 0.3);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         var stripe = (size * 0.09).toNumber() + 1;
@@ -320,20 +400,20 @@ class ForageView extends WatchUi.WatchFace {
             var y = cy + ((k % 2 == 0) ? -dy : dy);
             var kind = o.kinds[k];
             if (k == 0) {
-                fillHex(dc, x, y, r + 1, CREAM);
+                fillHex(dc, x, y, r + 1, _cream);
                 fillHex(dc, x, y, r - 1, Graphics.COLOR_BLACK);
             }
-            var label = DIM;
+            var label = _dim;
             if (kind == BEES_OPEN) {
-                fillHex(dc, x, y, inner, WAX);
-                fillHex(dc, x, y, inner - 4, WAX_RIM);
-                fillHex(dc, x, y, inner - 5.5, WAX);
+                fillHex(dc, x, y, inner, _wax);
+                fillHex(dc, x, y, inner - 4, _rim);
+                fillHex(dc, x, y, inner - 5.5, _wax);
                 label = Graphics.COLOR_BLACK;
             } else if (kind == BEES_FLY) {
-                fillHex(dc, x, y, inner, HONEY);
+                fillHex(dc, x, y, inner, _honey);
                 label = Graphics.COLOR_BLACK;
             } else {
-                fillHex(dc, x, y, inner, (kind == BEES_CLEANSE) ? HONEY : CELL);
+                fillHex(dc, x, y, inner, (kind == BEES_CLEANSE) ? _honey : CELL);
                 fillHex(dc, x, y, inner - 2, Graphics.COLOR_BLACK);
             }
             if (kind == BEES_RAIN) {
@@ -376,7 +456,7 @@ class ForageView extends WatchUi.WatchFace {
         dc.drawArc(cx, cy, r, Graphics.ARC_COUNTER_CLOCKWISE, yearAngle(1), yearAngle(365));
         var flows = ForageModel.flows();
         for (var i = 0; i < flows.size(); i++) {
-            dc.setColor(flows[i][2] ? WAX : HONEY, Graphics.COLOR_TRANSPARENT);
+            dc.setColor(flows[i][2] ? _wax : _honey, Graphics.COLOR_TRANSPARENT);
             dc.drawArc(cx, cy, r, Graphics.ARC_COUNTER_CLOCKWISE, yearAngle(flows[i][0]), yearAngle(flows[i][1]));
         }
         var a = Math.toRadians(yearAngle(_dayOfYear));
@@ -384,7 +464,7 @@ class ForageView extends WatchUi.WatchFace {
         var y = cy - r * Math.sin(a);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y, w * 0.013 + 2);
-        dc.setColor(CREAM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_cream, Graphics.COLOR_TRANSPARENT);
         dc.fillCircle(x, y, w * 0.013);
         dc.setPenWidth(1);
     }
@@ -411,7 +491,7 @@ class ForageView extends WatchUi.WatchFace {
             line += " · " + _temp;
         }
         var flying = _now == BEES_FLY || _now == BEES_OPEN || _now == BEES_CLEANSE;
-        dc.setColor(flying ? 0x7A5A20 : DIM, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(flying ? _dimHoney : DIM, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (h * 0.542).toNumber() + off[1], _smallFont, line, center);
     }
 }

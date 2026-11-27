@@ -104,6 +104,8 @@ function testShuttleLooks(logger as Logger) as Boolean {
     var dc = ShuttleTest.dc();
     var view = new ShuttleView();
     view.onLayout(dc);
+    var phone = Application.Properties.getValue(Lib.Look.KEY);    // a hold moves the phone's Look too: put it back
+    var seen = Application.Storage.getValue(Lib.Look.SEEN);
     Application.Storage.setValue(Lib.Look.KEY, Lib.Look.LOW);
     for (var m = 0; m < Lib.Look.MODES; m++) {
         Lib.Look.next();
@@ -115,6 +117,14 @@ function testShuttleLooks(logger as Logger) as Boolean {
         view.onUpdate(dc);
     }
     Application.Storage.deleteValue(Lib.Look.KEY);
+    if (phone != null) {
+        Application.Properties.setValue(Lib.Look.KEY, phone as Number);
+    }
+    if (seen != null) {
+        Application.Storage.setValue(Lib.Look.SEEN, seen as Number);
+    } else {
+        Application.Storage.deleteValue(Lib.Look.SEEN);
+    }
     return true;
 }
 

@@ -1,3 +1,4 @@
+import Toybox.Application.WatchFaceConfig;
 import Toybox.Complications;
 import Toybox.Lang;
 import Toybox.System;
@@ -41,6 +42,15 @@ class FieldDelegate extends WatchUi.WatchFaceDelegate {
             // No app registered for this complication on this watch
             return false;
         }
+    }
+
+    // The watch face editor changed the ring or the accent: it wins over the
+    // phone app's settings until they are next changed (Choices.editor)
+    function onWatchFaceConfigEdited(options as {:configId as WatchFaceConfig.Id, :type as WatchUi.WatchFaceConfigType?,
+                                                 :committed as Boolean}) as Void {
+        Lib.Config.changedInEditor();
+        _view.reloadSettings();
+        WatchUi.requestUpdate();
     }
 
     // The firmware calls this when onUpdate takes too long in low power mode.

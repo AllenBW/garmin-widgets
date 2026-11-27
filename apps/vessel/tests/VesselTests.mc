@@ -86,6 +86,13 @@ function testBarometerAndWeather(logger as Logger) as Boolean {
     Test.assertEqualMessage(Lib.Slots.trend(-300.0, 25.0), 0, "a climb moves the pressure: no trend");
     var trend = Lib.Slots.pressureTrend();
     Test.assertMessage(trend >= -1 && trend <= 1, "the watch's own trend reads");
+    // kept for ten minutes, then read again
+    Lib.Slots.trendKept = 1;
+    Lib.Slots.trendAt = System.getTimer();
+    Test.assertEqualMessage(Lib.Slots.pressureTrend(), 1, "the trend is kept, not read again");
+    Lib.Slots.trendAt = System.getTimer() - Lib.Slots.TREND_EVERY;
+    Test.assertEqualMessage(Lib.Slots.pressureTrend(), Lib.Slots.readTrend(), "ten minutes on, it is read again");
+    Lib.Slots.trendAt = null;
     var temp = new Complications.Id(Complications.COMPLICATION_TYPE_CURRENT_TEMPERATURE);
     Test.assertEqualMessage(Lib.Slots.opens(Lib.Slots.TEMPERATURE, temp).getType(), Complications.COMPLICATION_TYPE_CURRENT_WEATHER,
                             "a hold on the temperature opens the weather");
@@ -309,5 +316,50 @@ function testLooks(logger as Logger) as Boolean {
     Application.Storage.deleteValue(Lib.Look.KEY);
     Application.Storage.deleteValue(Lib.Look.SEEN);
     Application.Properties.setValue("Look", Lib.Look.YOURS);
+    return true;
+}
+
+// Lib.WatchMenu: the settings on the watch are the phone app's list, the
+// look first, and a choice there writes the same property, winning over the
+// editor; the bedside clock a switch
+(:test)
+function testVesselWatchMenu(logger as Logger) as Boolean {
+    var entries = Choices.entries();
+    Test.assertEqualMessage(entries.size(), 5 + 3, "the look, the typeface, two colours, 3 readings and the bedside clock");
+    Test.assertMessage(entries[0][1] == null, "the look first");
+    for (var i = 0; i < entries.size(); i++) {
+        Test.assertEqualMessage(entries[i][2].size(), entries[i][3].size(), "a label for every choice");
+    }
+    Test.assertEqualMessage(entries[2][3].size(), Lib.Config.ACCENTS.size(), "every accent offered");
+    Test.assertEqualMessage(entries[3][3].size(), Lib.Config.DATA.size(), "every data colour");
+    var look = Application.Storage.getValue(Lib.Look.KEY);
+    var source = Application.Storage.getValue(Lib.Config.SOURCE);
+    Lib.WatchMenu.choose(entries[2], 5);
+    Test.assertEqualMessage(Lib.WatchMenu.current(entries[2]), 5, "the choice is where the setting stands");
+    Test.assertEqualMessage(Lib.WatchMenu.label(entries[2]), entries[2][2][5], "and its label shows");
+    Test.assertMessage(Lib.Config.PHONE.equals(Application.Storage.getValue(Lib.Config.SOURCE)), "a choice on the watch wins over the editor");
+    Test.assertEqualMessage(Lib.Config.read(1, [] as Array<Complications.Type>)[1], Lib.Config.lift(Lib.Config.ACCENTS[5]), "and is the accent drawn");
+    var reading = entries[4];
+    Lib.WatchMenu.choose(reading, 4);
+    Test.assertEqualMessage(Application.Properties.getValue("Reading1"), reading[3][4], "a reading written as the phone writes it");
+    var bedside = entries[entries.size() - 1];
+    Lib.WatchMenu.choose(bedside, 1);
+    Test.assertEqualMessage(Application.Properties.getValue("Bedside"), false, "the switch off");
+    Test.assertEqualMessage(Lib.WatchMenu.label(bedside), bedside[2][1], "and shown off");
+    Lib.WatchMenu.choose(bedside, 0);
+    Lib.WatchMenu.choose(entries[0], 4);              // the fifth look in the order: low light
+    Test.assertEqualMessage(Lib.Look.mode(), Lib.Look.LOW, "the look chosen as a hold chooses it");
+    Application.Properties.setValue("Accent", 0);
+    Application.Properties.setValue("Reading1", 8);
+    if (look instanceof Number) {
+        Application.Storage.setValue(Lib.Look.KEY, look);
+    } else {
+        Application.Storage.deleteValue(Lib.Look.KEY);
+    }
+    if (source instanceof String) {
+        Application.Storage.setValue(Lib.Config.SOURCE, source);
+    } else {
+        Application.Storage.deleteValue(Lib.Config.SOURCE);
+    }
     return true;
 }

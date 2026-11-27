@@ -83,11 +83,23 @@ class LockupView extends WatchUi.WatchFace {
 
     function reloadSettings() as Void {
         _look = Lib.Look.mode();
-        _colors = Lib.Numbers.colors(_look);
+        _colors = colors(_look);
         _day = Lib.Look.today();
         _rolling = setting("RollingDigits", true);
         _minute = -1;
         build();
+    }
+
+    // The look's colours: your look's as chosen in the phone app, the
+    // watch's settings menu or the watch face editor, whichever was changed
+    // last (Lib.Config.read): the set of the families' colours (Style) and
+    // the time and date's (DataColor). The other looks keep their own
+    function colors(look as Number) as Lib.Numbers.Colors {
+        if (look != Lib.Look.YOURS) {
+            return Lib.Numbers.colors(look);
+        }
+        var s = Lib.Config.read(Lib.Numbers.PALETTES.size(), [] as Array<Complications.Type>);
+        return Lib.Numbers.yours(s[0], s[2]);
     }
 
     private function setting(key as String, fallback as Boolean) as Boolean {
