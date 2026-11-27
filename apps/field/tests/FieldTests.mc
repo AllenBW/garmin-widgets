@@ -117,3 +117,21 @@ function testLookRepick(logger as Logger) as Boolean {
     Application.Properties.setValue(Lib.Look.KEY, Lib.Look.YOURS);
     return true;
 }
+
+// Lib.Timing: a start is timed until it settles, and a wake times again
+(:test)
+function testTimingLog(logger as Logger) as Boolean {
+    var log = new Lib.Timing.Log("Field test");
+    Test.assertMessage(log.timing(), "a start is timed");
+    log.part = 5;
+    log.frame(System.getTimer(), false);
+    Test.assertMessage(log.timing(), "still timed until settled");
+    Test.assertEqualMessage(log.part, 0, "the part is counted afresh each frame");
+    log.frame(System.getTimer(), true);
+    Test.assertMessage(!log.timing(), "settled");
+    log.frame(System.getTimer(), true);
+    Test.assertMessage(!log.timing(), "a settled log stays quiet");
+    log.wake();
+    Test.assertMessage(log.timing(), "a wake is timed");
+    return true;
+}

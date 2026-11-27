@@ -89,6 +89,7 @@
             <iq:annotation>config</iq:annotation>
             <iq:annotation>ink</iq:annotation>
             <iq:annotation>numbers</iq:annotation>
+            <iq:annotation>timing</iq:annotation>
         </iq:annotations>
     </iq:barrel>
 </iq:manifest>
